@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Perfumes Trade</title>
+<style>
+html,body{height:100%;margin:0;background:#17171D;color:#ECECF1;
+ font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+ display:flex;align-items:center;justify-content:center}
+.b{text-align:center;line-height:1.7}
+.n{font-size:22px;font-weight:600;letter-spacing:.14em;text-transform:uppercase}
+.s{font-size:13px;color:#80808E;margin-top:10px}
+a{color:#A99AE0}
+</style></head><body>
+<div class="b">
+  <div class="n">Perfumes&nbsp;Trade</div>
+  <div class="s">ouverture…<br><a id="l" href="accueil.html">si rien ne se passe, clique ici</a></div>
+</div>
+<script>
+/* Cette page ne sert qu'à une chose : entrer dans l'outil par une adresse
+   que le navigateur n'a jamais vue. Safari garde longtemps en mémoire les
+   pages ouvertes depuis un fichier local, et sert alors une version d'avant
+   sans que personne ne comprenne pourquoi. En ajoutant l'heure à l'adresse,
+   l'adresse est neuve à chaque fois, donc la page est forcément relue.
+   C'est cette page-ci qu'il faut mettre en favori. */
+var u = 'accueil.html?t=' + Date.now();
+document.getElementById('l').href = u;
+location.replace(u);
+</script>
+</body></html>

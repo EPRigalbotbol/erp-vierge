@@ -1,0 +1,8 @@
+Dépose ici les logos officiels de tes canaux, un fichier par canal, nommé par l'identifiant du canal :
+  amazon.png   shopify.png   site.png   perfumecity.png   (amazon et shopify sont déjà là)
+(PNG ou SVG, fond transparent de préférence, 200 px de large suffisent.)
+Les identifiants des canaux ajoutés dans Réglages commencent par « c » (ex. c1k2m3.png) : le nom exact
+apparaît dans la fenêtre Réglages en survolant le canal.
+Tant que le fichier n'existe pas, la fiche affiche le nom du canal en toutes lettres.
+Les logos sont des marques déposées : fichiers officiels fournis par toi, pas dessinés par l'outil.
+Un logo ajouté ici est incorporé dans catalogue.html à la prochaine génération (outils/build_html.py).

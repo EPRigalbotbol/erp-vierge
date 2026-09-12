@@ -1,0 +1,6 @@
+.DS_Store
+__pycache__/
+*.tgz
+*.patch
+.secrets/
+_to_delete/

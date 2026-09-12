@@ -1,0 +1,3007 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+
+<title>Messages — Perfumes Trade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap">
+<style>
+/* L'attribut hidden doit gagner sur tout display: sinon un bloc masqué en JS reste visible
+   dès qu'une règle lui donne display:flex ou display:grid (bug vu sur Factures et Étude). */
+[hidden]{display:none !important}
+
+:root{--ground:#F4F4F1;--surface:#FFF;--surface-2:#FAFAF8;--ink:#17171D;--ink-2:#4A4A56;--ink-3:#7C7C88;
+--line:#E0E0DC;--line-2:#EDEDE9;--iris:#5B4B8A;--iris-soft:#EDE9F6;
+--good:#2C6E4E;--good-soft:#E9F3ED;--warn:#8A5A00;--warn-soft:#FBF3E2;--crit:#A4262C;--crit-soft:#FBECEC;}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
+--ground:#121217;--surface:#1A1A21;--surface-2:#202028;--ink:#ECECF1;--ink-2:#B0B0BC;--ink-3:#80808E;
+--line:#2C2C36;--line-2:#26262F;--iris:#A99AE0;--iris-soft:#272036;
+--good:#77C79C;--good-soft:#152A20;--warn:#D9A94A;--warn-soft:#2E2411;--crit:#E8898D;--crit-soft:#33191B;}}
+:root[data-theme="dark"]{--ground:#121217;--surface:#1A1A21;--surface-2:#202028;--ink:#ECECF1;--ink-2:#B0B0BC;
+--ink-3:#80808E;--line:#2C2C36;--line-2:#26262F;--iris:#A99AE0;--iris-soft:#272036;
+--good:#77C79C;--good-soft:#152A20;--warn:#D9A94A;--warn-soft:#2E2411;--crit:#E8898D;--crit-soft:#33191B;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;font-size:15px;
+-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.mono{font-family:Inter,sans-serif;font-variant-numeric:tabular-nums}
+.eyebrow{font-family:Inter,sans-serif;font-size:11px;letter-spacing:.13em;
+text-transform:uppercase;color:var(--ink-3);font-weight:500}
+/* ---------- COQUILLE CRM ---------- */
+.app{display:flex;align-items:flex-start;min-height:100vh}
+.side{width:234px;flex:0 0 234px;position:sticky;top:0;height:100vh;overflow-y:auto;
+background:var(--surface);border-right:1px solid var(--line);
+display:flex;flex-direction:column;padding:20px 0 16px}
+.logo{padding:0 18px 18px;border-bottom:1px solid var(--line-2);margin-bottom:14px}
+.logo .n{font-size:16px;font-weight:700;letter-spacing:-.02em;line-height:1.2}
+.logo .s{font-family:Inter,sans-serif;font-size:9.5px;letter-spacing:.15em;
+text-transform:uppercase;color:var(--ink-3);margin-top:3px}
+nav{display:flex;flex-direction:column;gap:1px;padding:0 10px}
+.navlab{font-family:Inter,sans-serif;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;
+color:var(--iris);font-weight:800;padding:16px 8px 6px}
+.nv{display:flex;align-items:center;gap:9px;padding:8px 10px;white-space:nowrap;border-radius:4px;font-size:14px;
+color:var(--ink);font-weight:600;text-decoration:none;line-height:1.3;border-left:2px solid transparent}
+.nv .ic{width:15px;text-align:center;flex:0 0 15px;opacity:.75}
+.nv .ct{margin-left:auto;font-family:Inter,sans-serif;font-size:10.5px;font-weight:500;color:var(--ink-3);
+font-variant-numeric:tabular-nums}
+.nv .ct.pt{background:var(--iris-soft);color:var(--iris);font-weight:700;font-size:10.5px;border-radius:10px;padding:2px 7px;min-width:20px;text-align:center;line-height:1.5}
+.nv:hover{background:var(--surface-2);color:var(--ink)}
+.nv.on{background:var(--iris-soft);color:var(--iris);font-weight:700;border-left-color:var(--iris)}
+.nv.on .ic{opacity:1}
+.nv.soon{color:var(--ink-3);font-weight:500;cursor:default;pointer-events:none}
+.nv.soon .ct{font-size:9px;letter-spacing:.08em;text-transform:uppercase;opacity:.8}
+.sfoot{margin-top:auto;padding:14px 18px 14px;border-top:1px solid var(--line-2);
+font-family:Inter,sans-serif;font-size:10px;color:var(--ink-3);line-height:1.7}
+.main{flex:1;min-width:0;max-width:100%}   /* sur un téléphone (colonne, align-items:flex-start) : jamais plus large que l'écran, le contenu défile dans ses cadres */
+.wrap{max-width:1400px;margin:0 auto;padding:26px 26px 70px}
+@media(max-width:900px){
+ .app{flex-direction:column}
+ .side{width:100%;flex:none;height:auto;position:static;border-right:0;
+  border-bottom:1px solid var(--line);padding:14px 0 10px}
+ .logo{padding:0 16px 12px}
+ nav{flex-direction:row;overflow-x:auto;gap:4px;padding:0 12px;scrollbar-width:none}
+ nav::-webkit-scrollbar{display:none}
+ .navlab{display:none}
+ .nv{white-space:nowrap;border-left:0;border-bottom:2px solid transparent;border-radius:3px}
+ .nv.on{border-left:0;border-bottom-color:var(--iris)}
+ .nv .ct,.nv .ic{display:none}
+ /* Le pied de barre portait « Se déconnecter » et « Une question ? ». Le masquer
+    sous 900 px enlevait la SEULE sortie de session : sur un écran étroit,
+    impossible de changer de compte. On garde l'identité et les boutons, on ne
+    laisse tomber que les chiffres, qui ne sont qu'un rappel. */
+ .sfoot{display:flex;align-items:center;gap:14px;margin-top:0;padding:8px 16px 10px;
+  border-top:1px solid var(--line-2)}
+ .sfoot #sfoot,.sfoot .ver{display:none}
+ .sfoot .sfu{display:flex;align-items:center;gap:8px}
+ .sfoot .sfu b,.sfoot .sfu span{display:inline!important}
+ .wrap{padding:20px 16px 60px}
+}
+header{border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:18px;display:flex;
+flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between}
+h1{margin:0;font-size:clamp(25px,4vw,34px);font-weight:700;letter-spacing:-.028em;line-height:1.05}
+.src{text-align:right;font-family:Inter,sans-serif;font-size:11.5px;color:var(--ink-2);line-height:1.7}
+body{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+.sfu{margin-bottom:9px;padding-bottom:9px;border-bottom:1px solid var(--line-2);
+font-family:Inter,sans-serif;font-size:11.5px;color:var(--ink-3);line-height:1.5}
+.sfu b{color:var(--iris);font-weight:600}
+.lnk{background:none;border:0;padding:0;font-family:inherit;font-size:11.5px;color:var(--ink-3);
+text-decoration:underline;cursor:pointer}
+.lnk:hover{color:var(--iris)}
+.ver{margin-top:9px;font-family:Inter,sans-serif;font-size:10px;color:var(--ink-3);opacity:.75;
+letter-spacing:.02em}
+/* ---------- AJOUT D'ARTICLE ---------- */
+.ov{position:fixed;inset:0;background:rgba(23,23,29,.55);backdrop-filter:blur(2px);
+z-index:50;display:none;align-items:flex-start;justify-content:center;padding:36px 18px;overflow-y:auto}
+.ov.on{display:flex}
+.mod{background:var(--surface);border:1px solid var(--line);border-radius:6px;width:100%;
+max-width:820px;box-shadow:0 18px 48px rgba(0,0,0,.22);display:flex;flex-direction:column}
+.mh{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px}
+.mh h2{margin:0;font-size:18px;font-weight:700;letter-spacing:-.02em}
+.mh .x{margin-left:auto;background:none;border:0;font-size:22px;color:var(--ink-3);
+cursor:pointer;line-height:1;padding:2px 6px}
+.mh .x:hover{color:var(--ink)}
+.tabs{display:flex;gap:2px;padding:0 22px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.tab{background:none;border:0;border-bottom:2px solid transparent;padding:11px 14px;font-family:inherit;
+font-size:13.5px;font-weight:500;color:var(--ink-3);cursor:pointer}
+.tab.on{color:var(--iris);border-bottom-color:var(--iris);font-weight:600}
+.mb{padding:20px 22px;display:flex;flex-direction:column;gap:16px}
+.pane{display:none;flex-direction:column;gap:16px}
+.pane.on{display:flex}
+.fg{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:13px}
+.fld{display:flex;flex-direction:column;gap:5px}
+.fld label{font-family:Inter,sans-serif;font-size:9.5px;letter-spacing:.12em;
+text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.fld label b{color:var(--crit)}
+.fld input,.fld select,.mb textarea{font-family:inherit;font-size:13.5px;color:var(--ink);
+background:var(--surface-2);border:1px solid var(--line);border-radius:3px;padding:8px 10px;width:100%}
+.fld input:focus,.fld select:focus,.mb textarea:focus{outline:2px solid var(--iris);outline-offset:1px;background:var(--surface)}
+.mb textarea{min-height:150px;resize:vertical;font-family:Inter,sans-serif;font-size:12px;line-height:1.6}
+.hint{font-size:12.5px;color:var(--ink-3);line-height:1.6;margin:0}
+.hint code{font-family:Inter,sans-serif;font-size:11.5px;background:var(--line-2);
+padding:1px 5px;border-radius:2px;color:var(--ink-2)}
+.mf{padding:15px 22px;border-top:1px solid var(--line);display:flex;gap:9px;align-items:center;background:var(--surface-2)}
+.mf .msg{font-size:12.5px;color:var(--ink-3);margin-right:auto}
+.mf .msg.err{color:var(--crit)} .mf .msg.ok{color:var(--good)}
+.btn{font-family:inherit;font-size:13.5px;font-weight:500;color:var(--ink-2);background:var(--surface);
+border:1px solid var(--line);border-radius:3px;padding:9px 16px;cursor:pointer}
+.btn:hover{border-color:var(--iris);color:var(--iris)}
+.btn.pri{background:var(--iris);border-color:var(--iris);color:#fff;font-weight:600}
+.btn.pri:hover{filter:brightness(1.08);color:#fff}
+.prev{border:1px solid var(--line);border-radius:3px;overflow:auto;max-height:280px}
+.prev table{width:100%;border-collapse:collapse;font-size:12.5px}
+.prev th{position:sticky;top:0;background:var(--surface-2);text-align:left;padding:7px 10px;
+font-family:Inter,sans-serif;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+color:var(--ink-3);border-bottom:1px solid var(--line);white-space:nowrap}
+.prev td{padding:6px 10px;border-bottom:1px solid var(--line-2)}
+.prev td.n{font-family:Inter,sans-serif;text-align:right;font-variant-numeric:tabular-nums}
+.prev .vide{color:var(--warn);font-style:italic}
+.card.neuf{border-color:var(--iris);border-width:1px;box-shadow:inset 3px 0 0 var(--iris)}
+.chipn{position:absolute;top:9px;left:9px;font-family:Inter,sans-serif;font-size:9px;
+letter-spacing:.08em;text-transform:uppercase;padding:3px 7px;border-radius:99px;
+background:var(--iris);color:#fff;font-weight:600}
+.fl.todo{background:var(--iris-soft);color:var(--iris)}
+.empty{text-align:center;padding:70px 20px;color:var(--ink-3)}
+#more{display:block;margin:26px auto 0;font-family:inherit;font-size:14px;font-weight:500;color:var(--ink);
+background:var(--surface);border:1px solid var(--line);border-radius:3px;padding:11px 26px;cursor:pointer}
+#more:hover{border-color:var(--iris);color:var(--iris)}
+.legend{margin-top:20px;padding:14px 18px;background:var(--iris-soft);border-left:3px solid var(--iris);
+border-radius:0 3px 3px 0;font-size:13px;color:var(--ink-2);line-height:1.65;max-width:78ch}
+.legend b{color:var(--ink)}
+.legend .k{font-family:Inter,sans-serif;font-weight:700;color:var(--iris)}
+.legend .k.bad{color:var(--crit)}
+footer{margin-top:40px;border-top:1px solid var(--line);padding-top:15px;font-size:12.5px;color:var(--ink-3);
+display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between}
+
+.ctco{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:13px}
+.ctf{display:flex;flex-direction:column;gap:5px}
+.ctf label{font-family:Inter,sans-serif;font-size:10px;letter-spacing:.11em;text-transform:uppercase;
+ color:var(--ink-3);font-weight:600}
+.ctf input,.ctf textarea{padding:10px 12px;font-family:inherit;font-size:14px;
+ border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.ctf textarea{resize:vertical;line-height:1.6}
+.ctaide{font-size:12px;color:var(--ink-3);line-height:1.55;margin:8px 0 0}
+.ctch{display:flex;flex-wrap:wrap;gap:7px;margin-top:16px}
+.ctb{padding:7px 13px;font-family:inherit;font-size:13px;border:1px solid var(--line);
+ border-radius:20px;background:var(--surface);color:var(--ink-2);cursor:pointer}
+.ctb:hover{border-color:var(--iris);color:var(--iris)}
+.ctb.on{background:var(--iris);border-color:var(--iris);color:#fff;font-weight:600}
+.ecr{background:none;border:0;padding:4px 7px;font-family:inherit;font-size:12.5px;
+ color:var(--ink-3);text-decoration:underline;cursor:pointer;border-radius:5px}
+.ecr:hover{color:var(--iris)}
+
+
+.aid-b{display:block;margin-top:7px;position:relative}
+.aid-b .pt{display:inline-block;min-width:16px;padding:0 5px;margin-left:6px;border-radius:99px;
+background:var(--iris);color:#fff;font-size:10px;font-weight:700;line-height:16px;text-align:center;
+text-decoration:none}
+.aid-ov{position:fixed;inset:0;background:rgba(23,23,29,.55);backdrop-filter:blur(2px);z-index:9990;
+display:none;align-items:flex-start;justify-content:center;padding:40px 18px;overflow-y:auto}
+.aid-ov.on{display:flex}
+.aid-m{background:var(--surface);border:1px solid var(--line);border-radius:8px;width:100%;
+max-width:560px;box-shadow:0 18px 48px rgba(0,0,0,.24)}
+.aid-h{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px}
+.aid-h h2{margin:0;font-size:17px;font-weight:700;letter-spacing:-.02em}
+.aid-h .x{margin-left:auto;background:none;border:0;font-size:22px;color:var(--ink-3);cursor:pointer;
+line-height:1;padding:2px 6px;font-family:inherit}
+.aid-h .x:hover{color:var(--ink)}
+.aid-b2{padding:18px 20px;display:flex;flex-direction:column;gap:13px}
+.aid-lab{font-family:Inter,sans-serif;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+color:var(--ink-3);font-weight:500}
+.aid-u{display:flex;gap:8px;flex-wrap:wrap}
+.aid-u button{font-family:inherit;font-size:13px;font-weight:600;padding:8px 13px;border-radius:99px;
+border:1px solid var(--line);background:var(--surface-2);color:var(--ink-2);cursor:pointer}
+.aid-u button.on{background:var(--iris);border-color:var(--iris);color:#fff}
+.aid-u button.on[data-u="bloque"]{background:var(--crit);border-color:var(--crit)}
+.aid-m textarea{font-family:Inter,sans-serif;font-size:13.5px;line-height:1.6;color:var(--ink);
+background:var(--surface-2);border:1px solid var(--line);border-radius:4px;padding:10px 12px;
+width:100%;min-height:110px;resize:vertical}
+.aid-m textarea:focus{outline:2px solid var(--iris);outline-offset:1px;background:var(--surface)}
+.aid-ou{font-size:12.5px;color:var(--ink-3);line-height:1.6}
+.aid-ou b{color:var(--ink-2)}
+.aid-go{font-family:inherit;font-size:14px;font-weight:600;padding:10px 18px;border-radius:5px;
+border:1px solid var(--iris);background:var(--iris);color:#fff;cursor:pointer;align-self:flex-start}
+.aid-go:disabled{opacity:.5;cursor:default}
+.aid-msg{font-size:13px;line-height:1.6;margin:0}
+.aid-msg.ok{color:var(--ok,#1e7a3c)}.aid-msg.err{color:var(--crit)}
+.aid-hist{border-top:1px solid var(--line);padding:14px 20px 18px;max-height:280px;overflow-y:auto}
+.aid-q{border-left:2px solid var(--line);padding:2px 0 2px 11px;margin-bottom:12px}
+.aid-q .m{font-size:11.5px;color:var(--ink-3);margin-bottom:3px}
+.aid-q .t{font-size:13px;white-space:pre-wrap}
+.aid-q .r{margin-top:7px;background:var(--surface-2);border-radius:5px;padding:8px 11px;
+font-size:13px;white-space:pre-wrap}
+.aid-q .r b{display:block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+color:var(--iris);margin-bottom:3px}
+
+
+.xlong{display:flex;flex-wrap:wrap;gap:7px;margin-top:13px;align-items:center}
+.xlong .lab{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);
+ font-weight:700;margin-right:3px}
+.xlb{padding:6px 12px;font-family:inherit;font-size:13px;border:1px solid var(--line);
+ border-radius:20px;background:var(--surface);color:var(--ink-2);cursor:pointer}
+.xlb:hover{border-color:var(--iris);color:var(--iris)}
+.xlb.on{background:var(--iris);border-color:var(--iris);color:#fff;font-weight:600}
+
+
+/* le bouton Exporter et son petit menu */
+.sbar{display:inline-block;position:relative}
+.sbar>summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:7px;
+border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 14px;
+font:600 13px Inter,sans-serif;color:var(--ink-2)}
+.sbar>summary::-webkit-details-marker{display:none}
+.sbar>summary:hover{border-color:var(--iris);color:var(--iris)}
+.sbar[open]>summary{border-color:var(--iris);color:var(--iris)}
+.sbar .smenu{position:absolute;top:calc(100% + 5px);right:0;z-index:30;min-width:250px;
+background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px;
+box-shadow:0 14px 34px rgba(0,0,0,.16)}
+.sbar .smenu button{display:block;width:100%;text-align:left;border:0;background:none;
+border-radius:7px;padding:9px 11px;font:inherit;font-size:13.5px;color:var(--ink);cursor:pointer}
+.sbar .smenu button:hover{background:var(--surface-2)}
+.sbar .smenu button b{display:block;font-weight:700}
+.sbar .smenu button span{display:block;font-size:11.5px;color:var(--ink-3);line-height:1.4;margin-top:1px}
+.sbar .smenu .squoi{padding:8px 11px 9px;border-top:1px solid var(--line-2);margin-top:4px;
+font-size:11.5px;color:var(--ink-3);line-height:1.5}
+
+/* la feuille à imprimer : invisible à l'écran, seule visible sur papier */
+#imprzone{display:none}
+.imprtete h2{margin:0 0 3px;font-size:19px;font-weight:800;letter-spacing:-.02em}
+.imprtete p{margin:0;font-family:Inter,sans-serif;font-size:11px;color:#555;line-height:1.6}
+@media print{
+  body.impr-tab > *{display:none !important}
+  body.impr-tab #imprzone{display:block !important}
+  #imprzone .imprtete{margin:0 0 10px;padding-bottom:8px;border-bottom:2px solid #111}
+  #imprzone table{width:100%;border-collapse:collapse;font-family:Inter,Arial,sans-serif;font-size:9.5px}
+  #imprzone thead{display:table-header-group}       /* l'en-tête revient à chaque page */
+  #imprzone tr{break-inside:avoid;page-break-inside:avoid}
+  #imprzone th{text-align:left;border-bottom:1.5px solid #111;padding:5px 6px;
+    font-size:8.5px;letter-spacing:.06em;text-transform:uppercase}
+  #imprzone td{border-bottom:.5px solid #ddd;padding:4px 6px;vertical-align:top}
+  #imprzone .r{text-align:right;white-space:nowrap}
+  #imprzone tfoot td{border-top:1.5px solid #111;border-bottom:0;font-weight:700;padding-top:6px}
+  @page{margin:11mm}
+}
+
+
+.bandeau{background:var(--warn-soft);border-left:3px solid var(--warn);border-radius:0 9px 9px 0;
+ padding:14px 17px;font-size:13.5px;color:var(--ink-2);line-height:1.62;margin:0 0 22px;max-width:88ch}
+.bandeau b{color:var(--ink)}
+
+.deux{display:grid;grid-template-columns:280px 1fr;gap:18px;align-items:start}
+@media(max-width:900px){.deux{grid-template-columns:1fr}}
+
+.gens{border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.gens h3{margin:0;padding:12px 15px;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;
+ color:var(--ink-3);font-weight:700;background:var(--surface-2);border-bottom:1px solid var(--line)}
+.gens button{display:flex;width:100%;gap:11px;align-items:center;padding:12px 15px;background:none;
+ border:0;border-bottom:1px solid var(--line-2);font-family:inherit;text-align:left;cursor:pointer}
+.gens button:last-child{border-bottom:0}
+.gens button:hover{background:var(--surface-2)}
+.gens button.on{background:var(--iris-soft)}
+.gens .pa{flex:none;width:34px;height:34px;border-radius:50%;background:var(--surface-2);
+ color:var(--ink-2);display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700}
+.gens button.on .pa{background:var(--iris);color:#fff}
+.gens .nn{flex:1;min-width:0}
+.gens .nn b{display:block;font-size:14px;font-weight:600;color:var(--ink);line-height:1.25}
+.gens .nn span{display:block;font-size:11.5px;color:var(--ink-3)}
+.gens .pt{flex:none;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--crit);
+ color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.gens .pt.z{display:none}
+
+.fil{border:1px solid var(--line);border-radius:12px;background:var(--surface);
+ display:flex;flex-direction:column;min-height:440px}
+.fil .th{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:10px}
+.fil .th b{font-size:16px;font-weight:700;color:var(--ink)}
+.fil .th span{font-size:12.5px;color:var(--ink-3)}
+.fil .co{flex:1;overflow-y:auto;max-height:480px;padding:18px;display:flex;flex-direction:column;gap:13px}
+.fil .vide{margin:auto;text-align:center;color:var(--ink-3);font-size:13.5px;line-height:1.7;max-width:44ch}
+
+.bulle{max-width:78%;padding:11px 14px;border-radius:13px;font-size:13.5px;line-height:1.6;
+ color:var(--ink);white-space:pre-wrap;word-break:break-word}
+.bulle.moi{align-self:flex-end;background:var(--iris);color:#fff;border-bottom-right-radius:4px}
+.bulle.lui{align-self:flex-start;background:var(--surface-2);border:1px solid var(--line);
+ border-bottom-left-radius:4px}
+.bulle .q{display:block;margin-top:6px;font-size:11px;opacity:.72}
+.bulle.moi .q{color:#fff}
+.jourlab{align-self:center;font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+ color:var(--ink-3);font-weight:600;padding:2px 0}
+
+.ecr{border-top:1px solid var(--line);padding:13px 15px;display:flex;gap:10px;align-items:flex-end}
+.ecr textarea{flex:1;min-height:44px;max-height:150px;padding:11px 13px;font-family:inherit;
+ font-size:14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);
+ color:var(--ink);resize:vertical;line-height:1.55}
+.ecr .btn{flex:none}
+.aidefld{font-size:12px;color:var(--ink-3);line-height:1.55;margin:9px 0 0}
+.mur{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:34px 32px;
+ max-width:62ch;margin:40px auto;text-align:center}
+.mur h2{margin:0 0 10px;font-size:20px;font-weight:700}
+.mur p{margin:0;color:var(--ink-2);font-size:14.5px;line-height:1.65}
+
+</style></head><body>
+<div class="app">
+<aside class="side">
+  <div class="logo"><div class="n">Perfumes Trade</div><div class="s">ERP</div></div>
+  <nav>
+    <div class="navlab">Produits</div>
+    <a class="nv" href="catalogue.html?v=202609120126"><span class="ic">▦</span>Catalogue<span class="ct" id="ct-catalogue">0</span></a>
+    <a class="nv" href="stock.html?v=202609120126"><span class="ic">▤</span>Inventaire<span class="ct" id="ct-inventaire">0</span></a>
+    <a class="nv" href="inventaire_pc.html?v=202609120126"><span class="ic">▥</span>Inventaire Perfume City<span class="ct" id="ct-pcity">boutique</span></a>
+    <div class="navlab">Commerce</div>
+    <a class="nv" href="etude.html?v=202609120126"><span class="ic">◈</span>Étude de devis<span class="ct" id="ct-étude">fournisseur</span></a>
+    <a class="nv" href="factures.html?v=202609120126"><span class="ic">▧</span>Factures<span class="ct" id="ct-factures">—</span></a>
+    <a class="nv" href="ventes.html?v=202609120126"><span class="ic">◔</span>Ventes<span class="ct" id="ct-ventes">par canal</span></a>
+    <a class="nv" href="quotes.html?v=202609120126"><span class="ic">◇</span>Quotes<span class="ct" id="ct-quotes">devis clients</span></a>
+    <a class="nv" href="fournisseurs.html?v=202609120126"><span class="ic">⬒</span>Fournisseurs<span class="ct" id="ct-fournisseurs">—</span></a>
+    <a class="nv" href="clients.html?v=202609120126"><span class="ic">◉</span>VIP wholesale<span class="ct" id="ct-vip">0</span></a>
+    <a class="nv" href="retail.html?v=202609120126"><span class="ic">◍</span>Retail<span class="ct" id="ct-retail">site</span></a>
+    <a class="nv" href="connecteurs.html?v=202609120126"><span class="ic">⇄</span>Connecteurs<span class="ct" id="ct-connecteurs">à brancher</span></a>
+    <div class="navlab">Pilotage</div>
+    <a class="nv on" href="messages.html?v=202609120126"><span class="ic">✉</span>Messages<span class="ct" id="ct-messages">équipe</span></a>
+    <a class="nv" href="journal.html?v=202609120126"><span class="ic">◷</span>Journal<span class="ct" id="ct-journal">—</span></a>
+    <a class="nv" href="tableau.html?v=202609120126"><span class="ic">◧</span>Tableau de bord<span class="ct" id="ct-tableau">—</span></a>
+    <a class="nv" href="acces.html?v=202609120126"><span class="ic">⛨</span>Accès<span class="ct" id="ct-accès">comptes</span></a>
+    <a class="nv" href="https://app.gusto.com" target="_blank" rel="noopener" title="Ouvre Gusto dans un nouvel onglet"><span class="ic">$</span>Payroll<span class="ct" id="ct-payroll">Gusto</span></a>
+    <a class="nv" href="reglages.html?v=202609120126"><span class="ic">⚙</span>Réglages<span class="ct" id="ct-réglages">—</span></a>
+  </nav>
+  <div class="sfoot"><div id="sfu" class="sfu"></div><span id="sfoot"></span>
+    <div class="ver" title="Si cette date n'est pas la derni&egrave;re, recharge avec Cmd+Option+R">version du 12/09/2026 à 01h26</div></div>
+</aside>
+<main class="main"><div class="wrap">
+<header><div><h1>Messages</h1><p class="sous">Écrire aux gens de l'équipe, sans sortir de l'outil</p></div><div class="src" id="src"></div></header>
+
+<div class="bandeau" id="ban"></div>
+<div class="deux" id="tout" hidden>
+  <div class="gens"><h3>L'équipe</h3><div id="liste"></div></div>
+  <div class="fil">
+    <div class="th"><b id="qui">—</b><span id="role"></span></div>
+    <div class="co" id="co"></div>
+    <div class="ecr">
+      <textarea id="txt" rows="2" placeholder="Écris ton message…"></textarea>
+      <button class="btn pri" id="env">Envoyer</button>
+    </div>
+  </div>
+</div>
+
+</div></main>
+</div>
+<script>/* à qui appartient cette installation : posé par nouveau_client.py, lu par _comptes.py et _serveur.py */window.COCKPIT_ORG="demo";</script><script src="donnees/langue.js"></script>
+
+
+<script type="text/plain" id="page-js">
+const VER_URL='202609120126';
+const $=i=>document.getElementById(i);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const nf=v=>Number(v||0).toLocaleString('fr-FR');
+const money=v=>v==null?'—':Number(v).toLocaleString('fr-FR',{maximumFractionDigits:0})+' $';
+const money2=v=>v==null?'—':Number(v).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' $';
+/* 1,151.50 (US) ou 1 151,50 (FR) : le dernier separateur est le decimal, l'autre marque les milliers. */
+const nombre=v=>{
+  if(v==null) return null;
+  let t=String(v).replace(/[$\u00a0\u202f\s]/g,'').replace(/[^0-9.,\-]/g,'');
+  if(t===''||t==='-'||t==='.'||t===',') return null;
+  const dp=t.lastIndexOf('.'), dv=t.lastIndexOf(',');
+  if(dp>=0&&dv>=0){ const dec=Math.max(dp,dv), mil=Math.min(dp,dv);
+    t=t.slice(0,mil).replace(/[.,]/g,'')+t.slice(mil+1,dec).replace(/[.,]/g,'')+'.'+t.slice(dec+1); }
+  else if(dv>=0){ t = /^-?\d{1,3}(,\d{3})+$/.test(t) ? t.replace(/,/g,'') : t.replace(',','.'); }
+  else if(dp>=0){ if(/^-?\d{1,3}(\.\d{3})+$/.test(t)) t=t.replace(/\./g,''); }
+  t=t.replace(/(?!^)-/g,'');
+  const n=parseFloat(t); return isNaN(n)?null:n; };
+
+/* ============ ECRITURE PARTAGEE ENTRE ONGLETS ============ */
+const _REF={};
+const _cp=v=>{ try{ return JSON.parse(JSON.stringify(v)); }catch(e){ return null; } };
+const _sig=v=>JSON.stringify(v===undefined?null:v);
+const _dq=(cle,vide)=>{ try{ const t=localStorage.getItem(cle); return t==null?vide:JSON.parse(t); }catch(e){ return vide; } };
+/* a appeler juste apres avoir lu un magasin : c'est le point de comparaison */
+function base(cle,val){ _REF[cle]=_cp(val); return val; }
+/* identite d'une ligne, pour reconnaitre la meme entree ecrite par l'autre onglet */
+const _IDdef=x=>_sig(x);
+/* Les lignes ajoutées par CET onglet reçoivent un identifiant unique avant d'être écrites.
+   Sans lui, deux lignes de journal écrites dans la même milliseconde (une facture de 30
+   lignes en écrit 30 d'un coup) avaient la même identité et se dévoraient entre elles. */
+const _UID={'crm-journal-v1':1,'factures-v1':1,'ajustements-v1':1,'articles-ajoutes-v1':1,
+            'caisse-file-v1':1};
+let _seq=0;
+const _neuf=()=>'x'+Date.now().toString(36)+(++_seq).toString(36)+Math.random().toString(36).slice(2,6);
+const _ID={
+  'crm-journal-v1': x=>x._i||[x.t,x.act||'',x.lib||'',x.ref||'',x.bc||''].join('|'),
+  'factures-v1'   : x=>x._i||x.id||[x.num||'',x.d||'',x.montant].join('|'),
+  'ajustements-v1': x=>x._i||[x.t,x.cle||''].join('|'),
+  /* la file des ventes de caisse : l'identifiant vient du serveur, on ne le refabrique jamais */
+  'caisse-file-v1' : x=>x._i||''};
+const _MAX={'crm-journal-v1':4000,'ajustements-v1':4000};
+/* pour ces magasins, on garde les plus RÉCENTS quand le plafond est atteint */
+const _DATE={'crm-journal-v1':x=>x.t||'','ajustements-v1':x=>x.t||''};
+/* magasins objet dont chaque valeur est elle-meme une liste a fusionner */
+const _IMBR={'ventes-v1'         : x=>x._i||[x.d||'',x.num||'',x.q,x.p,x.c||'',x.k||''].join('|'),
+             'prix-achat-hist-v1': x=>[x.d||'',x.p,x.f||'',x.q,x.num||'',x.src||''].join('|')};
+/* magasins dont une sous-clé est elle-même une carte à fusionner clé par clé */
+const _SOUSMAP={'stock-externe-v1':['q']};
+/* magasins ou chaque fiche est un paquet de champs : on fusionne champ par champ,
+   pour que deux onglets puissent corriger deux champs differents du meme produit */
+const _CHAMPS={'fiches-modifiees-v1':1,'clients-v1':1,'reglements-v1':1,'fournisseurs-v1':1,'marche-v1':1};
+function fusChamps(dq,ref,cour){
+  const o=(dq&&typeof dq==='object'&&!Array.isArray(dq))?Object.assign({},dq):{};
+  const r=ref||{};
+  Object.keys(cour).forEach(f=>{ if(_sig(cour[f])!==_sig(r[f])) o[f]=cour[f]; });
+  Object.keys(r).forEach(f=>{ if(!(f in cour)) delete o[f]; });
+  return o;
+}
+
+function fusListe(disque,ref,cour,idf){
+  const mR=new Map((ref||[]).map(x=>[idf(x),x])), mC=new Map((cour||[]).map(x=>[idf(x),x]));
+  const out=[], vus=new Set();
+  (disque||[]).forEach(x=>{ const i=idf(x);
+    if(vus.has(i)) return;
+    if(mR.has(i)&&!mC.has(i)) return;                 /* supprimee ici : on la retire aussi */
+    out.push(mC.has(i)&&_sig(mC.get(i))!==_sig(mR.get(i)) ? mC.get(i) : x); vus.add(i); });
+  (cour||[]).forEach(x=>{ const i=idf(x); if(!vus.has(i)){ out.push(x); vus.add(i); } });
+  return out;
+}
+
+/* Le cœur : à partir de ce qui est sur le disque (ou sur le serveur), de ce que cet onglet
+   avait lu (ref) et de ce qu'il veut écrire (val), la version à garder. */
+function fusionne(cle,disque,ref,val){
+  let sortie=val;
+  try{
+  if(ref!=null && val!=null && typeof val==='object'){
+    if(Array.isArray(val)&&Array.isArray(ref)){
+      sortie=fusListe(Array.isArray(disque)?disque:[],ref,val,_ID[cle]||_IDdef);
+      const m=_MAX[cle];
+      if(m&&sortie.length>m){
+        /* on garde les plus récentes, pas les dernières arrivées dans le tableau :
+           sinon des lignes anciennes ressuscitées chassaient des lignes réelles */
+        const dt=_DATE[cle];
+        if(dt) sortie=sortie.slice().sort((a,b)=>String(dt(a)).localeCompare(String(dt(b))));
+        sortie=sortie.slice(-m);
+      }
+    } else if(!Array.isArray(val)&&!Array.isArray(ref)){
+      const dq=(disque&&typeof disque==='object'&&!Array.isArray(disque))?disque:{}, imb=_IMBR[cle], sm=_SOUSMAP[cle]||[];
+      Object.keys(val).forEach(k=>{
+        if(_sig(val[k])===_sig(ref[k])) return;       /* pas touche par cet onglet */
+        if(imb&&Array.isArray(val[k])) dq[k]=fusListe(Array.isArray(dq[k])?dq[k]:[],ref[k]||[],val[k],imb);
+        else if(sm.indexOf(k)>=0&&val[k]&&typeof val[k]==='object'&&!Array.isArray(val[k])) dq[k]=fusChamps(dq[k],ref[k],val[k]);
+        else if(_CHAMPS[cle]&&val[k]&&typeof val[k]==='object'&&!Array.isArray(val[k])) dq[k]=fusChamps(dq[k],ref[k],val[k]);
+        else dq[k]=val[k]; });
+      Object.keys(ref).forEach(k=>{ if(!(k in val)) delete dq[k]; });
+      sortie=dq;
+    }
+  }
+  }catch(e){ sortie=val; }   /* forme inattendue sur le disque : on écrit au moins notre version */
+  return sortie;
+}
+/* l'onglet repart de la version fusionnée : on remplace le contenu de son objet, pas sa référence */
+function _adopte(val,sortie){
+  if(sortie===val || !val || typeof val!=='object') return;
+  if(Array.isArray(val)&&Array.isArray(sortie)){ val.length=0; sortie.forEach(x=>val.push(x)); }
+  else if(!Array.isArray(val)&&!Array.isArray(sortie)){ Object.keys(val).forEach(k=>delete val[k]); Object.assign(val,sortie); }
+}
+/* après une écriture locale : le serveur, s'il y en a un, est prévenu ici (voir _serveur.py) */
+const _apresEcrit=[];
+function ecrit(cle,val){
+  const ref=_REF[cle];
+  /* on marque les lignes que cet onglet vient d'ajouter, pour qu'elles restent reconnaissables */
+  if(_UID[cle]&&Array.isArray(val)){
+    const deja=new Set((Array.isArray(ref)?ref:[]).map(x=>_sig(x)));
+    val.forEach(x=>{ if(x&&typeof x==='object'&&!x._i&&!deja.has(_sig(x))){ x._i=_neuf();
+      if(cle==='crm-journal-v1'){ /* d'où vient l'action, et avec quel rôle : le journal le montre */
+        if(!x.pg) x.pg=(location.pathname.split('/').pop()||'').replace(/\.html$/,'')||'catalogue';
+        if(!x.r){ try{ const sx=(typeof session==='function')?session():null; if(sx&&sx.role) x.r=sx.role; }catch(e){} } } } });
+  }
+  const sortie=fusionne(cle,_dq(cle,Array.isArray(val)?[]:{}),ref,val);
+  try{ localStorage.setItem(cle,typeof sortie==='string'?sortie:JSON.stringify(sortie)); }catch(e){ return val; }
+  _adopte(val,sortie);
+  const avant=_REF[cle];
+  _REF[cle]=_cp(val);
+  _apresEcrit.forEach(f=>{ try{ f(cle,val,avant); }catch(e){} });
+  return val;
+}
+/* ================= LE JOUR, VU DE LA BOUTIQUE =================
+   `new Date().toISOString().slice(0,10)` donne le jour à GREENWICH. Le magasin
+   est à Miami, quatre heures derrière l'été, cinq l'hiver. Tout ce qui se vend
+   après 20 h (19 h l'hiver) était donc daté du LENDEMAIN :
+
+     mercredi 9 septembre, 22 h 30 à Miami  →  l'ERP écrivait « 2026-09-10 »
+
+   Conséquences, toutes silencieuses : le chiffre du jour au tableau de bord est
+   faux tous les soirs, la caisse du soir ne tombe jamais juste, une facture part
+   chez le client datée de demain, et l'entrée du journal se range au mauvais
+   jour. Rien ne s'affiche en rouge : les chiffres sont simplement décalés d'un
+   cran, ce qui est bien pire qu'une erreur visible.
+
+   D'où ces deux fonctions, à utiliser partout où l'on veut UN JOUR. L'heure
+   pleine, elle, reste en UTC dans les champs `t:` — un instant daté en UTC est
+   exact et sans ambiguïté ; c'est seulement le découpage en journées qui doit
+   se faire à l'heure du comptoir. */
+function isoJour(d){
+  const x = (d==null) ? new Date() : (d instanceof Date ? d : new Date(d));
+  if(isNaN(x.getTime())) return '';
+  return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')
+         +'-'+String(x.getDate()).padStart(2,'0');
+}
+function ajd(){ return isoJour(); }
+/* L'HEURE, vue de la boutique : « 14:32 » à Miami, quel que soit l'ordinateur qui
+   enregistre. Sert à horodater les ventes ; sans argument, c'est maintenant. */
+function heureMiami(t){
+  try{ const x=(t==null)?new Date():(t instanceof Date?t:new Date(t)); if(isNaN(x.getTime())) return '';
+    return x.toLocaleTimeString('en-GB',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit',hour12:false}); }
+  catch(e){ return ''; }
+}
+
+/* Un magasin dont la FORME ne correspond plus à ce qu'on attend.
+   `lit` rattrapait déjà le JSON illisible. Il ne rattrapait pas le JSON
+   parfaitement lisible mais de la mauvaise forme : un objet là où le code
+   attend une liste, une chaîne là où il attend un objet. La page recevait
+   alors sa valeur sans broncher et mourait deux lignes plus loin sur un
+   « FACT.slice is not a function » — écran figé, aucune explication.
+   Ça n'a rien de théorique : un onglet fermé pendant une écriture, un quota
+   atteint, une synchro coupée en deux suffisent. On compare donc la forme
+   reçue à celle de la valeur par défaut, et on garde le défaut si elles ne
+   se ressemblent pas : mieux vaut une page vide qu'une page morte. */
+function _memeForme(v,d){
+  if(d===null||d===undefined) return true;      // pas d'attente : on ne juge pas
+  if(Array.isArray(d)) return Array.isArray(v);
+  if(typeof d==='object') return v!==null && typeof v==='object' && !Array.isArray(v);
+  return typeof v===typeof d;
+}
+/* lecture d'un magasin : on memorise au passage le point de comparaison */
+let lit=(k,d)=>{
+  let v=d;
+  try{ const t=localStorage.getItem(k); if(t!=null) v=JSON.parse(t); }catch(e){ v=d; }
+  if(!_memeForme(v,d)){
+    try{ console.warn('donnée « '+k+' » de forme inattendue : on repart du défaut'); }catch(e){}
+    v=d;
+  }
+  return base(k,v);
+};
+
+
+/* Le catalogue complet : les références du fichier (D_PROD) + les articles ajoutés à la main
+   (articles-ajoutes-v1), mis au même format. Chaque page qui indexe les produits passe par ici,
+   sinon un article créé dans le catalogue n'existe ni pour les factures ni pour les ventes. */
+function D_TOUS(){
+  const A=_dq('articles-ajoutes-v1',[]); const L=Array.isArray(A)?A:[];
+  const n=v=>(v==null||v==='')?null:+v;
+  const rows=L.map((o,i)=>[String(o.bc||'').trim(),o.nom||'',o.marque||'',String(o.ml||'').trim(),String(o.type||'').toUpperCase(),
+    String(o.genre||'').toUpperCase(),n(o.qte)||0,n(o.pvr),n(o.pvw),'',0,[],n(o.pa),o.nom||'','',o.id||('a'+i),null,null]);
+  return (window.D_PROD||[]).concat(rows);
+}
+
+/* quelqu'un d'autre (autre onglet, autre personne) vient d'écrire : on le dit, sans rien écraser */
+let _averti=false;
+function avertitMaj(msg){
+  if(_averti||!document.body) return;
+  _averti=true;
+  const b=document.createElement('div');
+  b.style.cssText='position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:9999;'
+   +'background:#1c1b22;color:#fff;padding:11px 16px;border-radius:10px;'
+   +'font:500 13px Inter,system-ui,sans-serif;box-shadow:0 10px 34px rgba(0,0,0,.34);'
+   +'display:flex;gap:13px;align-items:center;max-width:92vw';
+  b.appendChild(document.createTextNode(msg||'Un autre onglet vient de modifier les données.'));
+  const r=document.createElement('button'); r.textContent='Recharger cette page';
+  r.style.cssText='background:#6b5cff;color:#fff;border:0;border-radius:7px;padding:7px 11px;font:600 12.5px Inter,system-ui,sans-serif;cursor:pointer;white-space:nowrap';
+  r.onclick=()=>location.reload();
+  const x=document.createElement('button'); x.textContent='Plus tard';
+  x.style.cssText='background:none;border:0;color:#b9b7c4;font:500 12.5px Inter,system-ui,sans-serif;cursor:pointer';
+  x.onclick=()=>{ b.remove(); _averti=false; };
+  b.appendChild(r); b.appendChild(x); document.body.appendChild(b);
+}
+addEventListener('storage',e=>{
+  if(!e.key||!(e.key in _REF)) return;
+  avertitMaj('Un autre onglet vient de modifier les données.');
+});
+
+
+/* ============ COMPTES, RÔLES ET SESSION ============ */
+const K_USERS='sam-comptes-v1';
+const K_SESS ='sam-session-v1';
+const K_NOM  ='crm-utilisateur-v1';     /* conservé : le journal l'utilise déjà */
+const K_NOMS ='crm-utilisateurs-v1';
+const K_ROLES='sam-roles-v1';           /* les rôles fabriqués par le patron */
+
+const _cLit=(k,d)=>{ try{ const t=localStorage.getItem(k); return t==null?d:JSON.parse(t); }catch(e){ return d; } };
+const _cEcr=(k,v)=>{ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} };
+
+/* Les huit droits, une bonne fois. La rubrique Accès s'en sert pour dessiner
+   les cases à cocher : ajouter un droit ici suffit à le voir apparaître là-bas. */
+const DROITS=[
+  ['voirPA',    "Voit les prix d'achat"],
+  ['voirMarge', 'Voit les marges'],
+  ['modPrix',   'Modifie les prix'],
+  ['vendre',    'Saisit des ventes et des remboursements'],
+  ['compter',   "Compte le stock et l'ajuste"],
+  ['reglages',  'Change les réglages'],
+  ['acces',     'Ouvre et ferme les accès'],
+  ['annuler',   'Annule une facture enregistrée (le stock et les prix reviennent en arrière)'],
+  ['technique', 'Branche les services extérieurs et leurs clés']];
+
+/* Les quatre rôles d'origine. On ne les touche pas : ils servent de repère,
+   et un compte qui pointe dessus doit continuer de marcher quoi qu'il arrive.
+   « voirPA » est le plus sensible : le prix d'achat révèle la marge, et tout
+   le monde n'a pas à la connaître. */
+const ROLES_BASE={
+  /* Admin est au-dessus de Patron, et d'un seul cran : la plomberie technique.
+     Brancher un service extérieur, c'est manipuler des clés d'API qui donnent
+     accès au site, à la caisse et à l'argent qui y transite. Sam dirige son
+     entreprise ; il n'a pas à toucher à ça, et la première erreur à cet
+     endroit-là ne se voit pas — elle se découvre.
+     Admin peut aussi modifier le compte du Patron : sans ça, un patron qui perd
+     son mot de passe n'a plus personne pour le lui rendre. */
+  admin:     {lib:'Admin',             aide:'Tout, plus le branchement des services extérieurs et leurs clés',
+              voirPA:1, voirMarge:1, modPrix:1, vendre:1, compter:1, reglages:1, acces:1, annuler:1, technique:1},
+  patron:    {lib:'Patron',            aide:'Tout sur son entreprise — sauf le branchement des services extérieurs',
+              voirPA:1, voirMarge:1, modPrix:1, vendre:1, compter:1, reglages:1, acces:1, annuler:1, technique:0},
+  commercial:{lib:'Commercial',        aide:'Vend et voit les prix de vente — pas les prix d\'achat',
+              voirPA:0, voirMarge:0, modPrix:0, vendre:1, compter:0, reglages:0, acces:0, annuler:0},
+  entrepot:  {lib:'Entrepôt',          aide:'Compte le stock et ajuste — ne voit aucun prix',
+              voirPA:0, voirMarge:0, modPrix:0, vendre:0, compter:1, reglages:0, acces:0, annuler:0},
+  comptable: {lib:'Comptable',         aide:'Lit tout, y compris les prix d\'achat — ne modifie rien',
+              voirPA:1, voirMarge:1, modPrix:0, vendre:0, compter:0, reglages:0, acces:0, annuler:0}};
+
+/* ROLES = les quatre d'origine + ceux que le patron a fabriqués. Toutes les
+   pages lisent ROLES[...] sans savoir d'où vient le rôle : c'est le but. */
+const ROLES=Object.assign({}, ROLES_BASE);
+function rolesPerso(){ const P=_cLit(K_ROLES,{}); return (P&&typeof P==='object'&&!Array.isArray(P))?P:{}; }
+/* Le droit « technique » n'est JAMAIS ajustable : c'est lui qui fait que le rôle
+   Admin veut dire quelque chose. Le donner d'un clic à n'importe quel rôle rendrait
+   la hiérarchie décorative — et elle se serait défaite sans que personne ne le voie. */
+const DROITS_FIGES=['technique'];
+function _rolesMonte(){
+  Object.keys(ROLES).forEach(k=>{ if(!ROLES_BASE[k]) delete ROLES[k]; else ROLES[k]=Object.assign({},ROLES_BASE[k]); });
+  const P=rolesPerso();
+  for(const k in P){
+    if(ROLES_BASE[k]){
+      /* un rôle d'origine ajusté : la base, puis l'ajustement, puis les droits
+         figés remis de force. « ajuste » sert à l'écran, pour qu'il puisse dire
+         que ce n'est plus le rôle d'origine. */
+      ROLES[k]=Object.assign({}, ROLES_BASE[k], P[k], {ajuste:1});
+      DROITS_FIGES.forEach(d=>{ ROLES[k][d]=ROLES_BASE[k][d]; });
+    } else {
+      ROLES[k]=Object.assign({perso:1}, P[k]);
+    }
+  }
+}
+function sauveRoles(P){ _cEcr(K_ROLES,P); _rolesMonte(); }
+function roleDOrigine(k){ return !!ROLES_BASE[k]; }
+_rolesMonte();
+
+function comptes(){ const L=_cLit(K_USERS,[]); return Array.isArray(L)?L:[]; }
+function sauveComptes(L){ _cEcr(K_USERS,L); }
+/* Le rôle est RELU dans la liste des comptes à chaque appel, jamais pris tel quel
+   dans la session. Sans cela, la session garde une photo du rôle prise au moment
+   de la connexion : un rôle changé ou un accès fermé n'aurait d'effet qu'à la
+   prochaine connexion — or personne ne se déconnecte jamais. Quelqu'un qu'on
+   vient de rétrograder continuerait de voir les prix d'achat et les marges.
+   On ne touche pas au cas « compte introuvable » : la liste peut être vide une
+   fraction de seconde au premier chargement, et déconnecter tout le monde
+   pendant ce laps de temps serait pire que le mal. */
+let _sBrut='', _sListe=null;
+function session(){
+  const s=_cLit(K_SESS,null);
+  if(!s||!s.id) return null;
+  let brut=''; try{ brut=localStorage.getItem(K_USERS)||''; }catch(e){}
+  if(brut!==_sBrut){ _sBrut=brut; _sListe=comptes(); }
+  const u=(_sListe||[]).find(x=>x.ident===s.id);
+  if(!u) return s;
+  if(u.actif===false) return null;
+  return (u.role===s.role && u.nom===s.nom) ? s : Object.assign({},s,{role:u.role,nom:u.nom});
+}
+function role(){ const s=session(); return (s&&ROLES[s.role])?ROLES[s.role]:null; }
+function peut(d){ const r=role(); return r?!!r[d]:false; }
+
+/* empreinte du mot de passe : on ne garde jamais le mot de passe en clair,
+   même si ce n'est pas une protection contre quelqu'un de déterminé */
+async function empreinte(mdp,sel){
+  const t=new TextEncoder().encode('sam:'+sel+':'+mdp);
+  const h=await crypto.subtle.digest('SHA-256',t);
+  return [...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+const selNeuf=()=>[...crypto.getRandomValues(new Uint8Array(8))].map(b=>b.toString(16).padStart(2,'0')).join('');
+
+async function creeCompte({nom,ident,mdp,role,par,email,provisoire}){
+  const L=comptes();
+  const id=String(ident||'').trim().toLowerCase();
+  if(!id) throw new Error('Il faut un identifiant.');
+  if(L.some(u=>u.ident===id)) throw new Error('Cet identifiant existe déjà.');
+  const sel=selNeuf();
+  L.push({ident:id, nom:String(nom||'').trim()||id, role:role||'commercial',
+          sel, emp:await empreinte(mdp,sel), actif:true, email:String(email||'').trim(),
+          /* un mot de passe pose par quelqu'un d'autre est provisoire : celui qui
+             l'a choisi le connait. Le premier compte fait exception — c'est la
+             personne elle-meme qui vient de le choisir. */
+          doitChanger: provisoire===false ? false : true,
+          cree:new Date().toISOString(), par:par||'', dernier:null});
+  sauveComptes(L);
+  return id;
+}
+async function verifie(ident,mdp){
+  const id=String(ident||'').trim().toLowerCase();
+  const u=comptes().find(x=>x.ident===id);
+  if(!u) return null;
+  if(!u.actif) return {bloque:true};
+  const e=await empreinte(mdp,u.sel);
+  return e===u.emp ? u : null;
+}
+function ouvreSession(u){
+  _cEcr(K_SESS,{id:u.ident,nom:u.nom,role:u.role,depuis:new Date().toISOString()});
+  try{ localStorage.setItem(K_NOM,u.nom); }catch(e){}
+  const L=comptes(); const t=L.find(x=>x.ident===u.ident);
+  if(t){ t.dernier=new Date().toISOString(); sauveComptes(L); }
+  let N=_cLit(K_NOMS,[]); if(!Array.isArray(N)) N=[];
+  if(!N.includes(u.nom)){ N.unshift(u.nom); _cEcr(K_NOMS,N.slice(0,12)); }
+}
+/* Quitter la session SANS quitter la page. « Ce n'est pas moi — changer de compte »,
+   sur l'accueil, doit rendre le badge local ET le jeton du serveur : avant, seul le
+   badge partait, et le navigateur gardait un jeton valide au nom de la personne
+   précédente jusqu'à la connexion suivante — pour toujours si on refermait l'onglet
+   là. Quelqu'un d'autre pouvait donc repartir avec les droits du patron. */
+let quitteSession=function(){ try{ localStorage.removeItem(K_SESS); }catch(e){} };
+function fermeSession(){
+  quitteSession();
+  location.href='accueil.html'+versUrl();
+}
+
+/* Où arrive chacun en entrant : sur ce qu'il a à faire, pas sur le catalogue.
+   Le tableau de bord parle d'argent (marges, marchandise à perte) : on n'y envoie
+   que ceux qui ont le droit de voir les marges. */
+const ACCUEIL_ROLE={patron:'tableau.html', comptable:'tableau.html',
+                    commercial:'ventes.html', entrepot:'stock.html'};
+const DEPARTS=[['tableau.html','Tableau de bord'],['ventes.html','Ventes'],
+               ['stock.html','Inventaire'],['catalogue.html','Catalogue'],
+               ['factures.html','Factures'],['clients.html','VIP wholesale']];
+/* Le ?v=… collé au bout : le navigateur garde longtemps en mémoire une page
+   ouverte depuis un fichier local, et sert alors une version d'avant. Une
+   adresse qui change à chaque livraison le force à relire. */
+const versUrl=()=> (typeof VER_URL!=='undefined' && VER_URL) ? ('?v='+VER_URL) : '';
+/* pageDeDepart rend le NOM de la page — c'est une identité, comparable.
+   urlDepart rend l'adresse où aller, avec le ?v=… qui force la relecture. */
+function pageDeDepart(r){
+  const d=(ROLES[r]||{}).depart;
+  if(d && DEPARTS.some(x=>x[0]===d)) return d;
+  return ACCUEIL_ROLE[r]||'catalogue.html';
+}
+function urlDepart(r){ return pageDeDepart(r)+versUrl(); }
+
+/* Toute page de SAM commence par vérifier qu'une session est ouverte.
+   Sinon on renvoie à l'accueil — sans effacer quoi que ce soit. */
+function exigeSession(){
+  if(session()) return true;
+  if(!comptes().length) { location.href='accueil.html'+versUrl(); return false; }
+  location.href='accueil.html'+versUrl();
+  return false;
+}
+
+/* Remettre un mot de passe : en local on refait l'empreinte, en ligne on le dit au cockpit. */
+/* Un TIERS repose le mot de passe de quelqu'un : il redevient provisoire, puisque
+   celui qui l'a choisi le connait. */
+async function remetMotDePasse(ident,mdp){
+  const L=comptes(); const u=L.find(x=>x.ident===ident); if(!u) throw new Error('Compte inconnu.');
+  u.sel=selNeuf(); u.emp=await empreinte(mdp,u.sel); u.doitChanger=true; sauveComptes(L);
+}
+/* La personne choisit ELLE-MEME le sien : l'ancien est exigé, et la marque tombe.
+   Deux fonctions séparées, pas un drapeau : elles n'ont ni les mêmes droits, ni
+   les mêmes vérifications, et les confondre finirait par laisser quelqu'un
+   changer le mot de passe d'un autre sans le connaître. */
+async function changeMonMotDePasse(ident,ancien,nouveau){
+  const u=comptes().find(x=>x.ident===ident); if(!u) throw new Error('Compte inconnu.');
+  if(await empreinte(ancien,u.sel)!==u.emp) throw new Error('Ancien mot de passe incorrect.');
+  if(String(nouveau)===String(ancien)) throw new Error("Choisis un mot de passe différent de celui qu'on t'a donné.");
+  const L=comptes(); const t=L.find(x=>x.ident===ident);
+  t.sel=selNeuf(); t.emp=await empreinte(nouveau,t.sel); t.doitChanger=false; sauveComptes(L);
+}
+
+/* ============ EN LIGNE : LE COCKPIT DÉCIDE ============
+   Sur le serveur, les comptes ne vivent plus dans le navigateur : c'est le cockpit
+   (le socle d'Igal) qui les tient, les mêmes pour tout le monde, sur tous les
+   appareils. Les fonctions ci-dessus gardent leur nom : les pages ne changent pas.
+   En local (localhost, fichier), rien de tout ceci ne s'active. */
+const CK_URL=(typeof COCKPIT_URL!=='undefined'&&COCKPIT_URL)||'https://cockpit.igalbotbol.com';
+const CK_ORG=(typeof COCKPIT_ORG!=='undefined'&&COCKPIT_ORG)||'dasy';
+const EN_LIGNE=location.protocol!=='file:' && !/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+const K_TOK='ck-token';
+const ckTok=()=>{ try{ return localStorage.getItem(K_TOK)||''; }catch(e){ return ''; } };
+function ckPerdu(){
+  /* session refusée par le serveur : on efface le badge local et on retourne à l'entrée */
+  try{ localStorage.removeItem(K_TOK); localStorage.removeItem(K_SESS); }catch(e){}
+  if(!/accueil\.html$/.test(location.pathname)) location.replace('accueil.html'+versUrl());
+}
+async function ck(m,u,b){
+  let r;
+  try{
+    r=await fetch(CK_URL+'/api/o/'+CK_ORG+u,{method:m,
+      headers:Object.assign({'Content-Type':'application/json'}, ckTok()?{Authorization:'Bearer '+ckTok()}:{}),
+      body:b==null?undefined:JSON.stringify(b)});
+  }catch(e){ throw new Error('Le serveur ne répond pas. Vérifie la connexion et réessaie.'); }
+  const j=await r.json().catch(()=>({}));
+  if(r.status===401 && !/\/login$|\/premier$/.test(u)){ ckPerdu(); throw new Error(j.erreur||'Session expirée.'); }
+  if(!r.ok){ const e=new Error(j.erreur||('Erreur '+r.status)); e.status=r.status; throw e; }
+  return j;
+}
+function ckMiroirRoles(R){
+  const P={}; for(const k in R||{}) if(!ROLES_BASE[k] || (R[k]&&R[k].ajuste)) P[k]=R[k];
+  _cEcr(K_ROLES,P); _rolesMonte();
+}
+/* Rafraîchit les comptes et les rôles depuis le cockpit, puis prévient les pages. */
+async function pretComptes(){
+  if(!EN_LIGNE||!ckTok()) return false;
+  const [L,R]=await Promise.all([ck('GET','/comptes'),ck('GET','/roles')]);
+  _cEcr(K_USERS,L); ckMiroirRoles(R);
+  try{ window.dispatchEvent(new Event('comptes-maj')); }catch(e){}
+  return true;
+}
+if(EN_LIGNE){
+  sauveComptes=function(L){
+    /* les pages modifient la liste puis l'enregistrent : on envoie au cockpit ce qui a changé */
+    const avant=comptes();
+    for(const u of L){
+      const a=avant.find(x=>x.ident===u.ident); if(!a) continue;
+      const d={};
+      if(!!a.actif!==!!u.actif) d.actif=u.actif?1:0;
+      if(a.role!==u.role) d.role=u.role;
+      if(a.nom!==u.nom) d.nom=u.nom;
+      if((a.email||'')!==(u.email||'')) d.email=u.email||'';
+      if(!!a.doitChanger!==!!u.doitChanger) d.doitChanger=!!u.doitChanger;
+      if(Object.keys(d).length) ck('PATCH','/comptes/'+encodeURIComponent(u.ident),d).then(pretComptes).catch(e=>alert(e.message));
+    }
+    _cEcr(K_USERS,L);
+  };
+  creeCompte=async function({nom,ident,mdp,role,email,provisoire}){
+    const id=String(ident||'').trim().toLowerCase();
+    const mail=String(email||'').trim();
+    if(!ckTok()) await ck('POST','/premier',{nom,ident:id,mdp,email:mail});   /* tout premier compte : le patron */
+    else await ck('POST','/comptes',{nom,ident:id,mdp,role:role||'commercial',email:mail,
+                                     provisoire: provisoire===false?false:true});
+    try{ await pretComptes(); }catch(e){}
+    return id;
+  };
+  remetMotDePasse=async function(ident,mdp){ await ck('PATCH','/comptes/'+encodeURIComponent(ident),{mdp}); };
+  changeMonMotDePasse=async function(ident,ancien,nouveau){
+    await ck('POST','/moi/mdp',{ancien,nouveau});
+    try{ await pretComptes(); }catch(e){}
+  };
+  verifie=async function(ident,mdp){
+    try{
+      const j=await ck('POST','/login',{ident,mdp});
+      try{ localStorage.setItem(K_TOK,j.token); }catch(e){}
+      ckMiroirRoles(j.roles);
+      return j.compte;
+    }catch(e){
+      if(e.status===403) return {bloque:true};
+      if(e.status===401) return null;
+      throw e;
+    }
+  };
+  quitteSession=function(){
+    const t=ckTok();
+    try{ localStorage.removeItem(K_SESS); localStorage.removeItem(K_TOK); }catch(e){}
+    if(t) fetch(CK_URL+'/api/o/'+CK_ORG+'/logout',{method:'POST',headers:{Authorization:'Bearer '+t},keepalive:true}).catch(()=>{});
+  };
+  fermeSession=function(){ quitteSession(); location.href='accueil.html'+versUrl(); };
+  sauveRoles=function(P){ _cEcr(K_ROLES,P); _rolesMonte();
+    ck('PUT','/roles',P).then(R=>{ ckMiroirRoles(R); try{ window.dispatchEvent(new Event('comptes-maj')); }catch(e){} }).catch(e=>alert(e.message)); };
+  /* à chaque page : le badge local ne suffit pas, le cockpit confirme — ou renvoie à l'entrée */
+  if(session()){
+    if(!ckTok()) ckPerdu();
+    else pretComptes().catch(()=>{});
+  }
+}
+
+/* ============ L'ŒIL SUR LES MOTS DE PASSE ============
+   Tout champ « mot de passe », où qu'il apparaisse (entrée, premier démarrage, création
+   d'un accès, remise d'un mot de passe), reçoit un petit œil pour afficher ce qu'on tape. */
+function poseOeil(inp){
+  if(!inp||inp.dataset.oeil||inp.type!=='password') return;
+  inp.dataset.oeil='1';
+  const w=document.createElement('span'); w.className='pw-wrap';
+  w.style.cssText='position:relative;display:block';
+  inp.parentNode.insertBefore(w,inp); w.appendChild(inp);
+  inp.style.paddingRight='40px';
+  const b=document.createElement('button'); b.type='button'; b.className='pw-oeil'; b.tabIndex=-1;
+  b.setAttribute('aria-label','Afficher le mot de passe'); b.title='Afficher / masquer';
+  b.style.cssText='position:absolute;right:8px;top:50%;transform:translateY(-50%);width:28px;height:28px;border:0;background:none;cursor:pointer;color:#6b6b78;padding:0;display:flex;align-items:center;justify-content:center;border-radius:6px';
+  const on='<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const off='<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+  b.innerHTML=on;
+  b.onmousedown=e=>e.preventDefault();
+  b.onclick=()=>{ const v=inp.type==='password'; inp.type=v?'text':'password'; b.innerHTML=v?off:on; b.style.color=v?'#4f56d8':'#6b6b78'; inp.focus(); };
+  w.appendChild(b);
+}
+function poseOeils(r){ (r||document).querySelectorAll('input[type=password]').forEach(poseOeil); }
+document.addEventListener('DOMContentLoaded',()=>{
+  poseOeils();
+  try{ new MutationObserver(m=>{ for(const x of m){ for(const n of x.addedNodes){ if(n.nodeType===1){ if(n.matches&&n.matches('input[type=password]')) poseOeil(n); else poseOeils(n); } } } })
+    .observe(document.body,{childList:true,subtree:true}); }catch(e){}
+});
+
+/* ============ EN LIGNE : LES DONNÉES VIVENT SUR LE SERVEUR ============ */
+const _SY_EXCLUS=new Set(["sam-session-v1", "ck-token", "ck-versions", "crm-utilisateur-v1", "crm-utilisateurs-v1", "sam-comptes-v1", "sam-roles-v1", "sam-comptes-demo-v1", "frn-demo-galou-v1", "vue-catalogue-v1", "tri-colonne-v1", "retail-vue-v1", "langue-v1", "menu-perso-v1", "dossier-outil-v1", "repere-installation-v1", "derniere-sauvegarde-v1", "derniere-sauvegarde-compte-v1", "connecteurs-v1"]);
+const _SY_ON=EN_LIGNE && !!ckTok();
+const _SY_K='ck-versions';
+let _SY_V={}; try{ _SY_V=JSON.parse(localStorage.getItem(_SY_K)||'{}')||{}; }catch(e){ _SY_V={}; }
+const _SY_BASE={};          /* la valeur telle qu'on l'a reçue du serveur (point de comparaison pour fusionner) */
+const _SY_ATT=new Map();    /* magasins en attente d'envoi : cle -> {val} */
+const _SY_ENVOI=new Set();  /* envois en cours */
+let _SY_HORS=!!(window.__CK&&window.__CK.hors);
+const _sySauveV=()=>{ try{ localStorage.setItem(_SY_K,JSON.stringify(_SY_V)); }catch(e){} };
+const _syOk=cle=>_SY_ON && !_SY_EXCLUS.has(cle) && /^[a-z0-9-]+-v\d+$/.test(cle);
+
+/* on garde la version "serveur" de chaque magasin lu, pour savoir plus tard ce que CET appareil a changé */
+{ const _lit0=lit; lit=(k,d)=>{ const v=_lit0(k,d); if(_syOk(k)&&!(k in _SY_BASE)) _SY_BASE[k]=_cp(v); return v; }; }
+
+/* le voyant : ce qui n'est pas encore parti */
+function _syVoyant(){
+  let b=document.getElementById('sy-voyant');
+  const n=_SY_ATT.size+_SY_ENVOI.size;
+  if(!n&&!_SY_HORS){ if(b) b.remove(); return; }
+  if(!document.body) return;
+  if(!b){ b=document.createElement('div'); b.id='sy-voyant';
+    b.style.cssText='position:fixed;right:16px;bottom:16px;z-index:9998;background:#1c1b22;color:#fff;padding:8px 12px;border-radius:9px;font:500 12px Inter,system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.3);display:flex;gap:8px;align-items:center';
+    document.body.appendChild(b); }
+  b.textContent=_SY_HORS?('⚠ Serveur injoignable — '+n+' modification'+(n>1?'s':'')+' en attente'):('Enregistrement… '+n);
+  b.style.background=_SY_HORS?'#8a2f2f':'#1c1b22';
+}
+
+async function _syPut(cle,val){
+  const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/donnees/'+encodeURIComponent(cle),{method:'PUT',
+    headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},
+    body:JSON.stringify({val,base:_SY_V[cle]||0})});
+  if(r.status===401){ ckPerdu(); throw new Error('session'); }
+  const j=await r.json().catch(()=>({}));
+  if(r.status===409){
+    /* quelqu'un a écrit entre-temps : on fusionne sa version avec ce que cet appareil a changé */
+    const fus=fusionne(cle,j.val,_SY_BASE[cle],val);
+    _SY_V[cle]=j.ver; _SY_BASE[cle]=_cp(j.val);
+    try{ localStorage.setItem(cle,JSON.stringify(fus)); }catch(e){}
+    _adopte(val,fus); _REF[cle]=_cp(val);
+    avertitMaj('Quelqu\'un d\'autre vient de modifier les données ('+(j.par||'')+'). Elles ont été fusionnées.');
+    return _syPut(cle,val);
+  }
+  if(!r.ok) throw new Error(j.erreur||('serveur '+r.status));
+  _SY_V[cle]=j.ver; _SY_BASE[cle]=_cp(val); _sySauveV();
+}
+
+/* pour les listes à identifiant (journal, factures…) : on n'envoie que ce qui a été ajouté ou retiré */
+async function _syPatch(cle,val,avant){
+  const idf=_ID[cle]||_IDdef;
+  const mA=new Map((avant||[]).map(x=>[idf(x),x])), mV=new Map((val||[]).map(x=>[idf(x),x]));
+  const ajoute=[], retire=[];
+  for(const [i,x] of mV){ if(!mA.has(i)) ajoute.push(x); else if(_sig(mA.get(i))!==_sig(x)) return _syPut(cle,val); }
+  for(const i of mA.keys()) if(!mV.has(i)) retire.push(i);
+  if(!ajoute.length&&!retire.length) return;
+  const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/donnees/'+encodeURIComponent(cle)+'/delta',{method:'POST',
+    headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},
+    body:JSON.stringify({ajoute,retire,max:_MAX[cle]||0,date:_DATE[cle]?'t':''})});
+  if(r.status===401){ ckPerdu(); throw new Error('session'); }
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(j.erreur||('serveur '+r.status));
+  _SY_V[cle]=j.ver; _SY_BASE[cle]=_cp(val); _sySauveV();
+}
+
+async function _syPousse(cle){
+  if(_SY_ENVOI.has(cle)) return;
+  const e=_SY_ATT.get(cle); if(!e) return;
+  _SY_ATT.delete(cle); _SY_ENVOI.add(cle); _syVoyant();
+  try{
+    if(_UID[cle]&&Array.isArray(e.val)&&Array.isArray(e.avant)&&_SY_V[cle]) await _syPatch(cle,e.val,e.avant);
+    else await _syPut(cle,e.val);
+    _SY_HORS=false;
+  }catch(err){
+    if(err.message!=='session'){ _SY_HORS=true; if(!_SY_ATT.has(cle)) _SY_ATT.set(cle,e); }
+  }
+  _SY_ENVOI.delete(cle); _syVoyant();
+  if(_SY_ATT.has(cle)&&!_SY_HORS) _syPousse(cle);
+}
+_apresEcrit.push((cle,val,avant)=>{
+  if(!_syOk(cle)) return;
+  const e=_SY_ATT.get(cle);
+  _SY_ATT.set(cle,{val,avant:e?e.avant:avant});
+  _syPousse(cle);
+});
+/* ce qui n'est pas parti (serveur injoignable) repart tout seul */
+setInterval(()=>{ if(_SY_ATT.size&&!_SY_ENVOI.size){ _SY_HORS=false; for(const k of _SY_ATT.keys()) _syPousse(k); } },20000);
+window.addEventListener('beforeunload',e=>{ if(_SY_ATT.size||_SY_ENVOI.size){ e.preventDefault(); e.returnValue='Des modifications ne sont pas encore enregistrées sur le serveur.'; } });
+
+/* premier passage : le serveur n'a encore rien, cet appareil a tout → on l'y dépose */
+if(_SY_ON && window.__CK && window.__CK.charge && !Object.keys(window.__CK.charge).length){
+  const cles=[]; try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(_syOk(k)) cles.push(k); } }catch(e){}
+  cles.forEach(k=>{ const v=_dq(k,null); if(v!=null){ _SY_ATT.set(k,{val:v,avant:null}); } });
+  if(cles.length){ console.log('cockpit : premier dépôt de',cles.length,'magasins'); for(const k of _SY_ATT.keys()) _syPousse(k); }
+}
+
+/* toutes les 45 s : quelqu'un d'autre a-t-il écrit ? */
+async function _syVeille(){
+  if(!_SY_ON||_SY_ENVOI.size||_SY_ATT.size||document.hidden) return;
+  try{
+    const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/donnees/versions',{headers:{Authorization:'Bearer '+ckTok()}});
+    if(r.status===401){ ckPerdu(); return; }
+    if(!r.ok) return;
+    const V=await r.json();
+    const chg=Object.keys(V).filter(k=>_syOk(k)&&V[k]!==(_SY_V[k]||0));
+    if(!chg.length) return;
+    const r2=await fetch(CK_URL+'/api/o/'+CK_ORG+'/donnees/lire',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},body:JSON.stringify({versions:_SY_V})});
+    if(!r2.ok) return;
+    const j=await r2.json(); let qui='', touche=false;
+    for(const k in j.magasins){ if(!_syOk(k)) continue;
+      try{ localStorage.setItem(k,JSON.stringify(j.magasins[k].val)); }catch(e){}
+      _SY_BASE[k]=_cp(j.magasins[k].val); qui=j.magasins[k].par||qui; if(k in _REF) touche=true; }
+    _SY_V=j.versions||_SY_V; _sySauveV();
+    if(touche) avertitMaj('Les données ont été modifiées'+(qui?' par '+qui:'')+'.');
+  }catch(e){}
+}
+setInterval(_syVeille,45000);
+
+/* ---------- Poser une question au support technique ---------- */
+/* Elle part vers le cockpit, pas dans le navigateur : une question enfermée
+   dans le localStorage de celui qui est bloqué n'a jamais aidé personne. */
+const AID_VU='aide-vu-v1';
+let AID_URG='question', AID_LISTE=[];
+
+function aidPage(){
+  const h=document.querySelector('.main h1');
+  return ((h&&h.textContent)||document.title||'').replace(/ — Perfumes Trade.*$/,'').trim().slice(0,60);
+}
+function aidPeut(){
+  try{ return location.protocol!=='file:' && !!ckTok(); }catch(e){ return false; }
+}
+async function aidApi(methode,corps){
+  const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/support',{method:methode,
+    headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},
+    body:corps===undefined?undefined:JSON.stringify(corps)});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(j.erreur||('serveur '+r.status));
+  return j;
+}
+
+/* La pastille : une réponse est arrivée et n'a pas encore été ouverte. On
+   retient le dernier numéro vu — pas « lu / non lu » par question, parce
+   qu'une case à cocher de plus est une case qu'on oublie de cocher. */
+function aidVu(){ try{ return +(localStorage.getItem(AID_VU)||0)||0; }catch(e){ return 0; } }
+function aidPastille(n){
+  const b=document.getElementById('aid-btn'); if(!b) return;
+  let p=b.querySelector('.pt');
+  if(!n){ if(p) p.remove(); return; }
+  if(!p){ p=document.createElement('span'); p.className='pt'; b.appendChild(p); }
+  p.textContent=String(n);
+  b.title=n+(n>1?' réponses du support':' réponse du support');
+}
+async function aidRegarde(){
+  if(!aidPeut()) return;
+  try{
+    AID_LISTE=await aidApi('GET');
+    const vu=aidVu();
+    aidPastille(AID_LISTE.filter(q=>q.reponse&&q.id>vu).length);
+  }catch(e){}
+}
+
+function aidOuvre(){
+  let ov=document.getElementById('aid-ov');
+  if(!ov){
+    ov=document.createElement('div'); ov.id='aid-ov'; ov.className='aid-ov';
+    ov.innerHTML='<div class="aid-m">'
+      +'<div class="aid-h"><h2>Une question au support</h2><button class="x" id="aid-x">&times;</button></div>'
+      +'<div class="aid-b2">'
+      +'<div><div class="aid-lab">C\'est à quel point gênant ?</div>'
+      +'<div class="aid-u" id="aid-u">'
+      +'<button data-u="question" class="on">Juste une question</button>'
+      +'<button data-u="gene">Ça me gêne</button>'
+      +'<button data-u="bloque">Je suis bloqué</button></div></div>'
+      +'<div><div class="aid-lab">Ta question</div>'
+      +'<textarea id="aid-t" placeholder="Dis simplement ce que tu essayais de faire, et ce qui s\'est passé."></textarea></div>'
+      +'<div class="aid-ou" id="aid-ou"></div>'
+      +'<button class="aid-go" id="aid-go">Envoyer</button>'
+      +'<p class="aid-msg" id="aid-msg"></p></div>'
+      +'<div class="aid-hist" id="aid-hist"></div></div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click',e=>{ if(e.target===ov) aidFerme(); });
+    document.getElementById('aid-x').onclick=aidFerme;
+    document.getElementById('aid-u').addEventListener('click',e=>{
+      const b=e.target.closest('[data-u]'); if(!b) return;
+      AID_URG=b.dataset.u;
+      ov.querySelectorAll('#aid-u button').forEach(x=>x.classList.toggle('on',x===b));
+    });
+    document.getElementById('aid-go').onclick=aidEnvoie;
+    document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&ov.classList.contains('on')) aidFerme(); });
+  }
+  const util=(typeof NOM_UTIL!=='undefined'&&NOM_UTIL)?NOM_UTIL:'';
+  document.getElementById('aid-ou').innerHTML=
+    'Partent avec ta question, sans que tu aies à les écrire : la page <b>'+aidEsc(aidPage())+'</b>'
+    +(util?' et ton nom, <b>'+aidEsc(util)+'</b>':'')+'.';
+  const msg=document.getElementById('aid-msg'); msg.textContent=''; msg.className='aid-msg';
+  const go=document.getElementById('aid-go');
+  if(!aidPeut()){
+    msg.textContent='Cette copie de l\'outil n\'est pas reliée au serveur : la question ne peut pas partir d\'ici.';
+    msg.className='aid-msg err'; go.disabled=true;
+  } else { go.disabled=false; }
+  ov.classList.add('on');
+  const t=document.getElementById('aid-t'); if(t&&aidPeut()) setTimeout(()=>t.focus(),60);
+  aidHistorique();
+}
+function aidFerme(){
+  const ov=document.getElementById('aid-ov'); if(ov) ov.classList.remove('on');
+  /* fermer, c'est avoir vu : les réponses affichées ne clignotent plus */
+  const max=AID_LISTE.reduce((a,q)=>Math.max(a,q.reponse?q.id:0),0);
+  if(max){ try{ localStorage.setItem(AID_VU,String(max)); }catch(e){} }
+  aidPastille(0);
+}
+function aidEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+async function aidEnvoie(){
+  const t=document.getElementById('aid-t'), msg=document.getElementById('aid-msg'),
+        go=document.getElementById('aid-go');
+  const texte=(t.value||'').trim();
+  if(texte.length<3){ msg.textContent='Écris ta question, même en deux mots.'; msg.className='aid-msg err'; t.focus(); return; }
+  go.disabled=true; msg.textContent='Envoi…'; msg.className='aid-msg';
+  try{
+    await aidApi('POST',{texte,urgence:AID_URG,page:aidPage()});
+    t.value='';
+    msg.textContent=AID_URG==='bloque'
+      ? 'C\'est parti, et le téléphone d\'Igal sonne. Laisse cet onglet ouvert.'
+      : 'C\'est parti. La réponse reviendra ici même, sur le bouton « Une question ».';
+    msg.className='aid-msg ok';
+    await aidRegarde(); aidHistorique();
+  }catch(e){
+    msg.textContent='Pas partie : '+e.message+'. Réessaie dans un instant — rien n\'est perdu, ton texte est toujours là.';
+    msg.className='aid-msg err';
+  }
+  go.disabled=false;
+}
+
+function aidHistorique(){
+  const h=document.getElementById('aid-hist'); if(!h) return;
+  if(!AID_LISTE.length){ h.innerHTML=''; return; }
+  const dfr=s=>{ try{ return new Date(s).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } };
+  const nom={question:'question',gene:'gêne',bloque:'bloqué'};
+  h.innerHTML='<div class="aid-lab" style="margin-bottom:9px">Tes questions précédentes</div>'
+    +AID_LISTE.slice(0,12).map(q=>'<div class="aid-q"><div class="m">'+dfr(q.cree)+' · '
+      +aidEsc(nom[q.urgence]||q.urgence)+(q.page?' · '+aidEsc(q.page):'')+'</div>'
+      +'<div class="t">'+aidEsc(q.texte)+'</div>'
+      +(q.reponse?'<div class="r"><b>Réponse du support</b>'+aidEsc(q.reponse)+'</div>'
+                 :'<div class="m" style="margin-top:5px">en attente de réponse</div>')
+      +'</div>').join('');
+}
+
+/* Le bouton, au bas de la barre de gauche, sur toutes les pages.
+   Il se remet tout seul : l'Inventaire réécrit le bas de sa barre une fois ses
+   chiffres calculés (« 4 812 références, 1 203 en stock… »), et cette
+   réécriture emportait le bouton. Le défaut ne se voyait que sur deux pages
+   sur quinze, et il aurait suffi qu'une autre page fasse pareil demain pour
+   qu'il revienne ailleurs. Plutôt que de courir après l'ordre d'exécution, on
+   surveille : si le bas de la barre est refait, le bouton revient. */
+let AID_PREMIER=true;
+function aidBouton(){
+  const p=document.querySelector('.side .sfoot'); if(!p) return;
+  if(!document.getElementById('aid-btn')){
+    const b=document.createElement('button');
+    b.id='aid-btn'; b.className='lnk aid-b'; b.textContent='Une question ?';
+    b.onclick=aidOuvre;
+    p.appendChild(b);
+  }
+  if(AID_PREMIER){ AID_PREMIER=false; aidRegarde(); }
+  if(!p.__aidVu){ p.__aidVu=true;
+    try{ new MutationObserver(()=>aidBouton()).observe(p,{childList:true}); }catch(e){}
+  }
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',aidBouton);
+else aidBouton();
+/* et une fois le chargement complet : certaines pages ne dessinent leur barre
+   qu'après avoir lu leurs données */
+window.addEventListener('load',()=>setTimeout(aidBouton,0));
+/* on regarde de temps en temps : une réponse arrivée pendant la journée doit
+   se voir sans recharger la page */
+setInterval(aidRegarde,180000);
+
+
+/* ============ SESSION OUVERTE ============ */
+let NOM_UTIL='';
+(function(){
+  const s=session();
+  if(!s){
+    /* pas de session : on renvoie à l'accueil sans rien effacer */
+    document.documentElement.style.visibility='hidden';
+    location.replace('accueil.html');
+    return;
+  }
+  NOM_UTIL=s.nom||'';
+  try{ localStorage.setItem('crm-utilisateur-v1',NOM_UTIL); }catch(e){}
+})();
+
+window.__nomChange=window.__nomChange||[];
+/* compatibilité : ces deux fonctions étaient appelées partout dans les pages */
+function signe(action,apres){
+  if(NOM_UTIL) return NOM_UTIL;
+  location.href='accueil.html';
+  return '';
+}
+function fenetreNom(){ location.href='acces.html'; }
+
+/* pied de la barre latérale : qui est connecté, son rôle, et la sortie.
+
+   « Se déconnecter » était un lien discret, de la taille du texte autour. Sur un
+   ordinateur partagé c'est le bouton le plus important de la page : celui qui
+   empêche la personne suivante de travailler sous le nom de la précédente. Il est
+   donc dessiné comme un bouton, et il se voit. */
+const CSS_SORTIR = `
+.sfu{margin-bottom:9px}
+.sfu b{font-size:12px;color:var(--ink);letter-spacing:-.01em}
+#sortir{display:block;width:100%;margin-top:7px;padding:6px 10px;border:1px solid var(--line);
+ border-radius:7px;background:var(--surface);color:var(--ink-2);font-family:Inter,sans-serif;
+ font-size:11.5px;font-weight:600;cursor:pointer;text-align:center;letter-spacing:.01em}
+#sortir:hover{border-color:var(--crit);color:var(--crit);background:var(--crit-soft)}
+@media(max-width:900px){ #sortir{display:inline-block;width:auto;margin-top:0} }
+`;
+(function(){ try{ const st=document.createElement('style'); st.textContent=CSS_SORTIR;
+  document.head.appendChild(st); }catch(e){} })();
+
+function piedSession(){
+  const el=document.getElementById('sfu'); if(!el) return;
+  const s=session(); if(!s) return;
+  const r=ROLES[s.role]||{lib:s.role};
+  el.innerHTML='<b>'+String(s.nom).replace(/[&<>"]/g,'')+'</b>'
+    +'<span style="display:block;color:var(--ink-3)">'+r.lib+'</span>'
+    +'<button type="button" id="sortir">Se déconnecter</button>';
+}
+/* Le clic est posé UNE fois, sur le document, et pas sur le bouton : plusieurs
+   pages réécrivent le pied de la barre après coup (Inventaire recalculait ses
+   chiffres et recopiait le bloc en innerHTML). Un écouteur posé sur le bouton
+   disparaissait avec lui, et « Se déconnecter » restait affiché mais mort. */
+document.addEventListener('click',e=>{
+  const b=e.target&&e.target.closest&&e.target.closest('#sortir'); if(!b) return;
+  e.preventDefault();
+  const s=session(); if(!s) return;
+  try{ const J=lit('crm-journal-v1',[]);
+    J.push({t:new Date().toISOString(),u:s.nom,act:'acces',lib:'déconnexion',ref:s.id,av:null,ap:null});
+    ecrit('crm-journal-v1',J); }catch(e2){}
+  fermeSession();
+});
+/* et si une page vide quand même le bloc, on le redessine */
+function veillePied(){
+  const p=document.querySelector('.side .sfoot'); if(!p||p.__pieduVu) return;
+  p.__pieduVu=true;
+  try{ new MutationObserver(()=>{ const u=document.getElementById('sfu');
+    if(!u||!u.querySelector('#sortir')) piedSession(); }).observe(p,{childList:true,subtree:true}); }catch(e){}
+}
+function montePied(){ piedSession(); veillePied(); }
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',montePied);
+else setTimeout(montePied,0);
+
+/* ============ CHANGER DE COMPTE, EN HAUT À DROITE ============
+   Pendant une démonstration, on veut montrer qu'un message part d'une boîte et
+   arrive dans une autre. Retourner à l'accueil et retaper un mot de passe entre
+   chaque envoi rend la démonstration illisible : on passe son temps à se
+   reconnecter au lieu de montrer l'outil.
+
+   Hors démonstration, ce raccourci N'EXISTE PAS, et c'est délibéré. Un sélecteur
+   de compte sans mot de passe sur l'ordinateur du comptoir permettrait à
+   n'importe qui de devenir le patron et de voir les prix d'achat et les marges —
+   tout le système de rôles ne servirait plus à rien. Hors démonstration, le
+   bouton renvoie donc à l'écran de connexion, qui demande le mot de passe.
+
+   Le sélecteur affiche aussi le nombre de messages non lus de chaque compte :
+   c'est exactement ce qu'on cherche à vérifier quand on teste que les messages
+   circulent. */
+const _K_DEMO='sam-comptes-demo-v1', _K_MSG='messages-v1';
+const _estDemo=()=>{ try{ return localStorage.getItem(_K_DEMO)==='1'; }catch(e){ return false; } };
+const _ini=n=>String(n||'?').trim().split(/\s+/).slice(0,2).map(m=>m[0]||'').join('').toUpperCase()||'?';
+function _nonLus(ident){
+  try{ const L=lit(_K_MSG,[]); if(!Array.isArray(L)) return 0;
+    return L.filter(m=>m && m.a===ident && !m.lu).length; }catch(e){ return 0; }
+}
+
+const CSS_QUI = `
+.bqui{position:relative;font-family:Inter,sans-serif}
+.bqui .qs{list-style:none;cursor:pointer;display:flex;align-items:center;gap:9px;
+border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:5px 13px 5px 5px}
+.bqui .qs::-webkit-details-marker{display:none}
+.bqui .qs:hover{border-color:var(--iris)}
+.bqui[open] .qs{border-color:var(--iris)}
+.bqui .pa{flex:none;width:30px;height:30px;border-radius:50%;background:var(--iris-soft);
+color:var(--iris);display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:800}
+.bqui .nn{display:flex;flex-direction:column;line-height:1.25;text-align:left}
+.bqui .nn b{font-size:13px;font-weight:700;color:var(--ink)}
+.bqui .nn i{font-style:normal;font-size:10.5px;color:var(--ink-3)}
+.bqui .dm{margin-left:4px;padding:1px 7px;border-radius:99px;background:var(--warn-soft);
+color:var(--warn);font-size:9.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
+.bqui .qmenu{position:absolute;top:calc(100% + 6px);right:0;z-index:60;min-width:264px;
+background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:6px;
+box-shadow:0 16px 38px rgba(0,0,0,.17)}
+.bqui .qlab{padding:8px 11px 6px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+color:var(--ink-3);font-weight:800}
+.bqui .qmenu button,.bqui .qmenu a{display:flex;width:100%;align-items:center;gap:10px;
+border:0;background:none;border-radius:8px;padding:8px 11px;font:inherit;font-size:13px;
+color:var(--ink);cursor:pointer;text-decoration:none;text-align:left}
+.bqui .qmenu button:hover,.bqui .qmenu a:hover{background:var(--surface-2)}
+.bqui .qmenu .pt{margin-left:auto;flex:none;min-width:20px;height:20px;border-radius:99px;
+background:var(--crit);color:#fff;font-size:11px;font-weight:800;display:flex;
+align-items:center;justify-content:center;padding:0 6px}
+.bqui .qmenu .pt.z{display:none}
+.bqui .qnote{padding:8px 11px 9px;border-top:1px solid var(--line-2);margin-top:4px;
+font-size:11.5px;color:var(--ink-3);line-height:1.5}
+@media(max-width:700px){ .bqui .qmenu{right:auto;left:0} }
+`;
+
+function barreCompte(){
+  const h=document.querySelector('header'); if(!h) return;
+  const s=session(); if(!s) return;
+  if(document.getElementById('bqui')) return;
+  if(!document.getElementById('css-qui')){
+    const st=document.createElement('style'); st.id='css-qui'; st.textContent=CSS_QUI;
+    document.head.appendChild(st);
+  }
+  const demo=_estDemo();
+  const r=ROLES[s.role]||{lib:s.role};
+  const d=document.createElement('details'); d.className='bqui'; d.id='bqui';
+  const autres=(typeof comptes==='function'?comptes():[]).filter(u=>u.ident!==s.id && u.actif!==false);
+  const moiNL=_nonLus(s.id);
+
+  d.innerHTML=`<summary class="qs">
+      <span class="pa">${_ini(s.nom)}</span>
+      <span class="nn"><b>${String(s.nom).replace(/[&<>"]/g,'')}</b><i>${String(r.lib||'').replace(/[&<>"]/g,'')}</i></span>
+      ${demo?'<span class="dm">démo</span>':''}
+      ${moiNL?`<span class="pt">${moiNL}</span>`:''}
+    </summary>
+    <div class="qmenu">
+      <div class="qlab">${demo?"Passer sur un autre compte":'Comptes ouverts'}</div>
+      ${autres.length?autres.map(u=>{ const n=_nonLus(u.ident), rl=ROLES[u.role]||{lib:u.role};
+        return `<${demo?`button data-q="${String(u.ident).replace(/[&<>"]/g,'')}"`:'a href="accueil.html"'}>
+          <span class="pa">${_ini(u.nom)}</span>
+          <span class="nn"><b>${String(u.nom).replace(/[&<>"]/g,'')}</b><i>${String(rl.lib||'').replace(/[&<>"]/g,'')}</i></span>
+          <span class="pt ${n?'':'z'}">${n}</span></${demo?'button':'a'}>`; }).join('')
+       :'<div class="qnote">Il n\'y a que toi pour l\'instant. Ouvre un accès dans <b>Accès</b>.</div>'}
+      <div class="qnote">${demo
+        ? "Démonstration en cours : un clic suffit pour changer de compte. Le chiffre rouge est le nombre de messages non lus — c'est lui qui montre qu'un message est bien arrivé.<br><b>Ce raccourci disparaît</b> dès que les comptes d'essai sont fermés dans Accès."
+        : "Changer de compte demande le mot de passe : sans ça, n'importe qui au comptoir deviendrait le patron et verrait les prix d'achat."}</div>
+      <a href="accueil.html" id="qsortir">Se déconnecter</a>
+    </div>`;
+
+  const z=document.createElement('div'); z.style.cssText='display:flex;align-items:center;gap:12px';
+  const src=document.getElementById('src');
+  h.appendChild(z); z.appendChild(d);
+  if(src && src.parentNode===h){ h.insertBefore(z, src); }
+
+  d.querySelectorAll('[data-q]').forEach(b=>b.onclick=async()=>{
+    const id=b.dataset.q;
+    try{
+      const u=await verifie(id, id+'123');       /* mot de passe des comptes d'essai */
+      if(!u){ location.href='accueil.html'; return; }
+      try{ const J=lit('crm-journal-v1',[]);
+        J.push({t:new Date().toISOString(),u:u.nom,act:'acces',
+                lib:'changement de compte (démonstration)',ref:u.ident,av:s.nom,ap:u.nom});
+        ecrit('crm-journal-v1',J); }catch(e){}
+      ouvreSession(u);
+      location.reload();
+    }catch(e){ location.href='accueil.html'; }
+  });
+  document.getElementById('qsortir').onclick=e=>{
+    e.preventDefault();
+    try{ const J=lit('crm-journal-v1',[]);
+      J.push({t:new Date().toISOString(),u:s.nom,act:'acces',lib:'déconnexion',ref:s.id,av:null,ap:null});
+      ecrit('crm-journal-v1',J); }catch(e){}
+    fermeSession();
+  };
+  document.addEventListener('click',e=>{ if(d.open && !d.contains(e.target)) d.open=false; });
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(barreCompte,60));
+else setTimeout(barreCompte,60);
+
+
+/* Ce que le rôle cache à l'écran. Le prix d'achat est le plus sensible :
+   il révèle la marge, et tout le monde n'a pas à la connaître. */
+(function appliqueRole(){
+  const pose=()=>{
+    if(!document.body) return;
+    const r=role(); if(!r) return;
+    document.body.classList.toggle('sansPA', !r.voirPA);
+    if(!r.voirPA) document.body.classList.add('client');   /* réutilise le mode qui masque déjà les prix d'achat */
+  };
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',pose);
+  else setTimeout(pose,0);
+})();
+
+
+/* ============ SAUVEGARDE AUTOMATIQUE ============ */
+const SV_CLES=['fiches-modifiees-v1','articles-ajoutes-v1','stock-externe-v1','comptage-parfums-v1',
+  'crm-journal-v1','prix-achat-hist-v1','marche-v1','fournisseurs-v1','factures-installees-v1',
+  'factures-v1','ventes-v1','clients-v1','reglements-v1','commandes-v1','connecteurs-v1',
+  'ventes-numeros-v1','ajustements-v1','reglages-v1','crm-utilisateur-v1','crm-utilisateurs-v1',
+  'sheet-installe-2026-09-03','repere-installation-v1','derniere-sauvegarde-compte-v1'];
+const SV_DATE='derniere-sauvegarde-v1';
+const SV_AUTO='derniere-sauvegarde-auto-v1';
+const SV_REPERE='repere-installation-v1';
+
+const _svLit=k=>{ try{ const t=localStorage.getItem(k); return t==null?null:JSON.parse(t); }catch(e){ return null; } };
+const _svN={
+  'fiches-modifiees-v1':v=>Object.keys(v||{}).length,
+  'articles-ajoutes-v1':v=>(v||[]).length,
+  'stock-externe-v1':v=>Object.keys((v&&v.q)||{}).length,
+  'comptage-parfums-v1':v=>Object.keys(v||{}).length,
+  'crm-journal-v1':v=>(v||[]).length,
+  'prix-achat-hist-v1':v=>Object.values(v||{}).reduce((a,l)=>a+(l||[]).length,0),
+  'marche-v1':v=>Object.keys(v||{}).length,
+  'fournisseurs-v1':v=>Object.keys(v||{}).length,
+  'factures-v1':v=>(v||[]).length,
+  'ventes-v1':v=>Object.values(v||{}).reduce((a,l)=>a+(l||[]).length,0),
+  'clients-v1':v=>Object.keys(v||{}).length,
+  'reglements-v1':v=>Object.keys(v||{}).length,
+  'ajustements-v1':v=>(v||[]).length};
+const SV_COMPTE='derniere-sauvegarde-compte-v1';
+/* Les compteurs de chaque magasin, à l'instant présent. */
+function svCompte(){
+  const o={}; Object.entries(_svN).forEach(([k,f])=>{ o[k]=f(_svLit(k)); }); return o;
+}
+/* Ce qui a changé DEPUIS LA DERNIÈRE SAUVEGARDE — c'est ça qui serait perdu.
+   S'il n'y a jamais eu de sauvegarde, on part de ce que les fichiers ont installé
+   eux-mêmes : ces données-là se réinstallent seules et ne peuvent pas être perdues. */
+function svSaisies(){
+  const ref=_svLit(SV_COMPTE)||_svLit(SV_REPERE)||{};
+  const now=svCompte();
+  let n=0;
+  Object.keys(now).forEach(k=>{ n+=Math.abs(now[k]-(+ref[k]||0)); });
+  return n;
+}
+function svPaquet(){
+  /* on range les valeurs déjà décodées, comme le fait la fenêtre de sauvegarde :
+     le fichier reste lisible et la restauration existante le comprend sans rien changer */
+  const d={};
+  SV_CLES.forEach(k=>{ try{ const t=localStorage.getItem(k); if(t==null) return;
+    let v; try{ v=JSON.parse(t); }catch(e){ v=t; }
+    d[k]=v; }catch(e){} });
+  return {format:'crm-parfums-sauvegarde',version:1,le:new Date().toISOString(),
+          par:(function(){try{return localStorage.getItem('crm-utilisateur-v1')||'';}catch(e){return '';}})(),
+          saisies:svSaisies(), donnees:d};
+}
+function svTelecharge(auto){
+  try{
+    const p=svPaquet();
+    const b=new Blob([JSON.stringify(p,null,1)],{type:'application/json'});
+    const a=document.createElement('a');
+    const d=new Date(), z=n=>String(n).padStart(2,'0');
+    a.href=URL.createObjectURL(b);
+    a.download='sam-sauvegarde-'+d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())
+               +(auto?'':'-'+z(d.getHours())+z(d.getMinutes()))+'.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    try{ localStorage.setItem(SV_DATE,String(Date.now()));
+         localStorage.setItem(SV_COMPTE,JSON.stringify(svCompte()));
+         if(auto) localStorage.setItem(SV_AUTO,ajd()); }catch(e){}
+    svTemoin();
+    return true;
+  }catch(e){ return false; }
+}
+
+/* le témoin, en bas à gauche, sur toutes les pages */
+function svTemoin(){
+  let el=document.getElementById('svtem');
+  const n=svSaisies();
+  /* en ligne, les données vivent sur le serveur : le rappel de sauvegarde n'a plus lieu d'être
+     (le fichier reste disponible dans Réglages pour qui veut une copie) */
+  if(typeof _SY_ON!=='undefined'&&_SY_ON){ if(el) el.remove(); return; }
+  if(n<5){ if(el) el.remove(); return; }
+  let d=0; try{ d=+(localStorage.getItem(SV_DATE)||0); }catch(e){}
+  const j = d ? Math.floor((Date.now()-d)/86400000) : null;
+  const tard = j===null || j>=2;
+  if(!el){
+    el=document.createElement('div'); el.id='svtem';
+    document.body.appendChild(el);
+  }
+  /* à droite : à gauche, le témoin se posait sur le bas de la barre de navigation
+     et empêchait de cliquer le choix de langue */
+  el.style.cssText='position:fixed;right:14px;bottom:14px;z-index:9998;display:flex;align-items:center;'
+    +'gap:9px;padding:8px 12px;border-radius:9px;font:500 12px Inter,system-ui,sans-serif;'
+    +'box-shadow:0 4px 16px rgba(0,0,0,.13);max-width:330px;line-height:1.4;'
+    +(tard?'background:#FBECEC;color:#7E1D22;border:1px solid #E9BFC0'
+          :'background:#EDF3EF;color:#245A41;border:1px solid #CBDFD3');
+  const S=n.toLocaleString('fr-FR')+' modification'+(n>1?'s':'');
+  el.innerHTML='<span>'+(j===null
+      ? '<b>'+S+'</b> jamais sauvegardée'+(n>1?'s':'')
+      : (tard ? '<b>'+S+'</b> depuis la sauvegarde d\'il y a '+j+' jour'+(j>1?'s':'')
+              : '<b>'+S+'</b> depuis la sauvegarde d\''+(j===0?"aujourd'hui":'hier')))
+    +'</span>';
+  const b=document.createElement('button');
+  b.textContent='Sauvegarder';
+  b.style.cssText='border:0;border-radius:6px;padding:5px 9px;font:600 11.5px Inter,system-ui,sans-serif;'
+    +'cursor:pointer;flex:none;'+(tard?'background:#A4262C;color:#fff':'background:#2C6E4E;color:#fff');
+  b.onclick=()=>svTelecharge(false);
+  el.appendChild(b);
+}
+
+/* Le témoin se remet à jour tout seul : quelqu'un peut travailler une journée
+   entière sans jamais recharger la page. Et une fois par jour, le fichier part
+   dans Téléchargements sans qu'on ait rien à demander. */
+(function svAuto(){
+  const go=()=>{
+    try{
+      svTemoin();
+      if(svSaisies()<5) return;
+      const auj=ajd();
+      if(localStorage.getItem(SV_AUTO)===auj) return;    /* déjà fait aujourd'hui */
+      let d=0; try{ d=+(localStorage.getItem(SV_DATE)||0); }catch(e){}
+      if(d && Date.now()-d < 20*3600000) return;          /* sauvegardé il y a moins de 20 h */
+      svTelecharge(true);
+    }catch(e){}
+  };
+  const demarre=()=>{ setTimeout(go,1500); setInterval(go,20000); };
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',demarre);
+  else demarre();
+  addEventListener('storage',()=>{ try{ svTemoin(); }catch(e){} });
+  /* si on ferme la page avec du travail non sauvegardé, on prévient */
+  addEventListener('beforeunload',e=>{
+    try{ let d=0; try{ d=+(localStorage.getItem(SV_DATE)||0); }catch(x){}
+      if(svSaisies()>=25 && (!d || Date.now()-d > 3*86400000)){ e.preventDefault(); e.returnValue=''; }
+    }catch(x){}
+  });
+})();
+
+
+/* ============ LE MENU DE GAUCHE, RÉGLABLE ============ */
+const K_MENU='menu-perso-v1';
+
+/* Identité d'une rubrique : le fichier vers lequel elle mène.
+   Pour celles qui n'existent pas encore (« bientôt »), son libellé d'origine. */
+function mnId(a){
+  const h=a.getAttribute('href');
+  /* le ?v=… qui force le navigateur à relire la page ne fait pas partie de
+     l'identité de la rubrique : sinon le menu réglé serait perdu à chaque
+     nouvelle version */
+  if(h) return h.replace(/^.*\//,'').replace(/[?#].*$/,'');
+  return 'soon:'+mnNomOrigine(a);
+}
+function mnNomOrigine(a){
+  if(a.dataset.nom0!=null) return a.dataset.nom0;
+  const t=[...a.childNodes].find(n=>n.nodeType===3&&n.textContent.trim());
+  const v=t?t.textContent.trim():'';
+  a.dataset.nom0=v;
+  return v;
+}
+function mnEcritNom(a,nom){
+  const t=[...a.childNodes].find(n=>n.nodeType===3&&n.textContent.trim());
+  if(t) t.textContent=nom;
+}
+const mnNav=()=>document.querySelector('.side nav');
+const mnItems=()=>mnNav()?[...mnNav().querySelectorAll('a.nv')]:[];
+
+function mnLit(){
+  try{ const v=lit(K_MENU,null);
+    return (v&&typeof v==='object')
+      ?{ordre:v.ordre||[],noms:v.noms||{},caches:v.caches||[]}
+      :{ordre:[],noms:{},caches:[]}; }
+  catch(e){ return {ordre:[],noms:{},caches:[]}; }
+}
+function mnSauve(c){ try{ ecrit(K_MENU,c); }catch(e){} }
+
+/* Applique le réglage : d'abord les noms, puis l'ordre.
+   Dès qu'un ordre existe, les titres de groupe (Produits / Commerce / Pilotage)
+   disparaissent : ils ne voudraient plus rien dire une fois les rubriques
+   déplacées librement. */
+function mnApplique(){
+  const nav=mnNav(); if(!nav) return;
+  const c=mnLit(), items=mnItems();
+  /* Avant de toucher à l'ordre : chaque rubrique retient sa section d'origine
+     (Produits / Commerce / Pilotage). La fenêtre de réglage s'en sert pour
+     retrouver les titres d'un menu réglé avant qu'ils ne soient modifiables. */
+  if(!nav.dataset.sec0){ let cur=''; [...nav.children].forEach(el=>{
+      if(el.classList.contains('navlab')&&!el.dataset.perso) cur=el.textContent.trim();
+      else if(el.classList.contains('nv')) el.dataset.sec0=cur; });
+    nav.dataset.sec0='1'; }
+  items.forEach(a=>{
+    mnNomOrigine(a);
+    const id=mnId(a);
+    const n=c.noms[id];
+    mnEcritNom(a, (n&&String(n).trim())?String(n).trim():a.dataset.nom0);
+    /* Retirée du menu : elle n'est plus affichée. La page existe toujours et
+       reste accessible par son adresse — on cache, on ne casse pas. */
+    a.style.display = (c.caches||[]).includes(id) ? 'none' : '';
+  });
+  if(c.ordre&&c.ordre.length){
+    const par={}; items.forEach(a=>par[mnId(a)]=a);
+    /* les titres d'origine s'effacent : ce sont ceux de l'utilisateur qui comptent */
+    nav.querySelectorAll('.navlab').forEach(l=>{ if(!l.dataset.perso) l.style.display='none'; });
+    nav.querySelectorAll('.navlab[data-perso]').forEach(l=>l.remove());
+    const vus=[];
+    mnOrdre(c).forEach(e=>{
+      if(e.t==='h'){
+        const d=document.createElement('span');
+        d.className='navlab'; d.dataset.perso='1'; d.textContent=e.x||'';
+        nav.appendChild(d);
+      } else if(par[e.id]){ nav.appendChild(par[e.id]); vus.push(e.id); }
+    });
+    /* une rubrique ajoutée après coup n'est dans aucun ordre : elle va à la fin */
+    items.forEach(a=>{ if(!vus.includes(mnId(a))) nav.appendChild(a); });
+    /* Un titre dont toutes les rubriques ont été retirées ne sert plus à rien :
+       on le cache. Mais un titre volontairement seul, sans aucune rubrique
+       derrière lui, est un choix de l'utilisateur — on le laisse. */
+    [...nav.querySelectorAll('.navlab[data-perso]')].forEach(l=>{
+      let n=l.nextElementSibling, total=0, vus=0;
+      while(n&&!n.classList.contains('navlab')){
+        if(n.classList.contains('nv')){ total++; if(n.style.display!=='none') vus++; }
+        n=n.nextElementSibling;
+      }
+      l.style.display = (total>0 && vus===0) ? 'none' : '';
+    });
+  }
+}
+
+/* L'ordre enregistré peut être ancien (une simple liste d'identifiants) ou
+   nouveau (des rubriques et des titres mêlés). On lit les deux. */
+function mnOrdre(c){
+  return (c.ordre||[]).map(e=> (typeof e==='string') ? {t:'nv',id:e} : e);
+}
+
+/* ---------- la fenêtre de réglage ---------- */
+function mnOuvre(){
+  let ov=document.getElementById('mnov');
+  if(!ov){
+    ov=document.createElement('div'); ov.className='ov'; ov.id='mnov';
+    ov.innerHTML=`<div class="mod" style="max-width:520px;max-height:86vh;display:flex;flex-direction:column">
+      <div class="mh"><h2>Mon menu</h2><button class="x" id="mn-x">&times;</button></div>
+      <div class="mb" style="overflow:auto;flex:1;min-height:0">
+        <p class="hint">Renomme une rubrique comme tu veux, déplace-la avec les flèches,
+        ou décoche-la pour la retirer du menu. Le lien ne change pas : seul le mot affiché change,
+        et une rubrique retirée n'est pas supprimée — elle disparaît du menu, c'est tout.</p>
+        <button class="btn" id="mn-titre" style="width:100%;justify-content:center;margin:0 0 10px">
+          + Ajouter un titre de section</button>
+        <p class="hint" style="margin:0 0 12px">Le titre se pose en haut de la liste : donne-lui un nom,
+        descends-le à sa place avec la flèche &darr;, et il coiffe toutes les rubriques
+        qui le suivent jusqu'au titre suivant.</p>
+        <div id="mn-liste" style="display:flex;flex-direction:column;gap:6px"></div>
+      </div>
+      <div class="mf" style="flex:none"><span class="msg" id="mn-msg"></span>
+        <button class="btn" id="mn-raz">Tout remettre comme avant</button>
+        <button class="btn" id="mn-non">Annuler</button>
+        <button class="btn pri" id="mn-ok">Enregistrer</button></div>
+    </div>`;
+    document.body.appendChild(ov);
+    document.getElementById('mn-x').onclick=()=>ov.classList.remove('on');
+    document.getElementById('mn-non').onclick=()=>ov.classList.remove('on');
+    ov.addEventListener('click',e=>{ if(e.target===ov) ov.classList.remove('on'); });
+  }
+  const items=mnItems(), c=mnLit();
+  const fiche=a=>({t:'nv', id:mnId(a), nom0:a.dataset.nom0,
+                   nom:(c.noms[mnId(a)]||a.dataset.nom0),
+                   vu:!(c.caches||[]).includes(mnId(a))});
+  let L;
+  const ord=mnOrdre(c);
+  if(ord.length){
+    const par={}; items.forEach(a=>par[mnId(a)]=a);
+    /* Un menu réglé avant que les titres existent n'en a aucun : on les
+       retrouve depuis la page d'origine (chaque rubrique se souvient de sa
+       section) et on les repose devant la première rubrique de chaque section,
+       dans l'ordre choisi. Sinon Sam ne pourrait plus jamais les renommer. */
+    const sansTitre=!ord.some(e=>e.t==='h');
+    const section={}; if(sansTitre) items.forEach(a=>{ section[mnId(a)]=a.dataset.sec0||''; });
+    L=[]; const vus=[]; let derSec=null;
+    ord.forEach(e=>{
+      if(e.t==='h') L.push({t:'h', x:e.x||''});
+      else if(par[e.id]){
+        if(sansTitre){ const sec=section[e.id]; if(sec&&sec!==derSec){ L.push({t:'h', x:sec}); derSec=sec; } }
+        L.push(fiche(par[e.id])); vus.push(e.id); }
+    });
+    /* les rubriques absentes de l'ordre enregistré (ajoutées depuis) : à la
+       fin, mais regroupées sous leur section d'origine plutôt qu'en vrac */
+    let derFin=null;
+    items.filter(a=>!vus.includes(mnId(a))).forEach(a=>{
+      const sec=a.dataset.sec0||'';
+      if(sec && sec!==derFin && !L.some(x=>x.t==='h'&&x.x===sec&&L.indexOf(x)===L.length-1)){ L.push({t:'h', x:sec}); }
+      derFin=sec; L.push(fiche(a)); });
+  } else {
+    /* premier passage : on reprend les titres déjà écrits dans la page */
+    L=[]; const nav=mnNav();
+    if(nav) [...nav.children].forEach(el=>{
+      if(el.classList.contains('navlab')) L.push({t:'h', x:el.textContent.trim()});
+      else if(el.classList.contains('nv')) L.push(fiche(el));
+    });
+    if(!L.length) L=items.map(fiche);
+  }
+  const fl=(i)=>`<button class="btn" data-h="${i}" ${i===0?'disabled':''} style="padding:8px 11px"
+      title="Monter">&uarr;</button>
+    <button class="btn" data-b="${i}" ${i===L.length-1?'disabled':''} style="padding:8px 11px"
+      title="Descendre">&darr;</button>`;
+  const peint=()=>{
+    document.getElementById('mn-liste').innerHTML=L.map((x,i)=> x.t==='h' ? `
+      <div style="display:flex;gap:6px;align-items:center;margin-top:6px">
+        <span style="width:26px;text-align:center;font-size:11px;color:var(--ink-3)">≡</span>
+        <input type="text" data-x="${i}" value="${String(x.x||'').replace(/"/g,'&quot;')}"
+               placeholder="Titre de section (ex : Boutique)"
+               style="flex:1;font-family:inherit;font-size:11px;font-weight:700;letter-spacing:.1em;
+               text-transform:uppercase;color:var(--ink-2);background:var(--surface-2);
+               border:1px dashed var(--line);border-radius:3px;padding:8px 10px">
+        <button class="btn" data-sup="${i}" style="padding:8px 11px" title="Enlever ce titre">&times;</button>
+        ${fl(i)}
+      </div>` : `
+      <div style="display:flex;gap:6px;align-items:center;${x.vu?'':'opacity:.5'}">
+        <label title="Décoche pour retirer cette rubrique du menu"
+          style="display:flex;align-items:center;padding:0 3px;cursor:pointer">
+          <input type="checkbox" data-v="${i}" ${x.vu?'checked':''}></label>
+        <input type="text" data-i="${i}" value="${String(x.nom).replace(/"/g,'&quot;')}"
+               style="flex:1;font-family:inherit;font-size:13.5px;color:var(--ink);
+               background:var(--surface-2);border:1px solid var(--line);border-radius:3px;padding:8px 10px">
+        ${fl(i)}
+      </div>`).join('');
+  };
+  peint();
+  const liste=document.getElementById('mn-liste');
+  liste.oninput=e=>{
+    const i=e.target.dataset.i; if(i!=null){ L[+i].nom=e.target.value; return; }
+    const x=e.target.dataset.x; if(x!=null){ L[+x].x=e.target.value; return; }
+    const v=e.target.dataset.v; if(v!=null){ L[+v].vu=e.target.checked; peint(); }
+  };
+  liste.onclick=e=>{
+    const s=e.target.closest('[data-sup]');
+    if(s){ L.splice(+s.dataset.sup,1); peint(); return; }
+    const b=e.target.closest('[data-h],[data-b]'); if(!b) return;
+    const bouge=(i,j)=>{ [L[i],L[j]]=[L[j],L[i]]; peint(); };
+    if(b.dataset.h!=null){ const i=+b.dataset.h; if(i>0) bouge(i,i-1); }
+    else { const i=+b.dataset.b; if(i<L.length-1) bouge(i,i+1); }
+  };
+  document.getElementById('mn-titre').onclick=()=>{
+    L.unshift({t:'h', x:''}); peint();
+    const c0=document.querySelector('#mn-liste input[data-x]');
+    if(c0){ c0.scrollIntoView({block:'nearest'}); c0.focus(); }
+  };
+  document.getElementById('mn-raz').onclick=()=>{
+    mnSauve({ordre:[],noms:{},caches:[]});
+    if(typeof jlogMenu==='function') jlogMenu('menu remis par défaut');
+    location.reload();
+  };
+  document.getElementById('mn-ok').onclick=()=>{
+    const noms={};
+    L.filter(x=>x.t!=='h').forEach(x=>{ const v=String(x.nom||'').trim();
+      if(v && v!==x.nom0) noms[x.id]=v.slice(0,28); });
+    /* un titre laissé vide n'est pas enregistré */
+    const ordre=L.filter(x=>x.t!=='h'||String(x.x||'').trim())
+                 .map(x=> x.t==='h' ? {t:'h', x:String(x.x).trim().slice(0,28)} : {t:'nv', id:x.id});
+    mnSauve({ordre, noms, caches:L.filter(x=>x.t!=='h'&&!x.vu).map(x=>x.id)});
+    if(typeof jlogMenu==='function') jlogMenu('menu réorganisé');
+    location.reload();
+  };
+  ov.classList.add('on');
+}
+
+/* trace au journal, comme toute modification du système */
+function jlogMenu(lib){
+  try{
+    const J=lit('crm-journal-v1',[]);
+    J.push({t:new Date().toISOString(), u:(typeof NOM_UTIL!=='undefined'?NOM_UTIL:''),
+            act:'reglage', lib, ref:'menu', av:null, ap:null});
+    ecrit('crm-journal-v1',J);
+  }catch(e){}
+}
+
+/* le bouton, au bas de la barre de gauche */
+function mnBouton(){
+  const p=document.querySelector('.side .sfoot'); if(!p) return;
+  if(document.getElementById('mn-btn')) return;
+  const b=document.createElement('button');
+  b.id='mn-btn'; b.className='lnk'; b.textContent='Modifier le menu';
+  b.style.cssText='display:block;margin-top:7px';
+  b.onclick=mnOuvre;
+  p.appendChild(b);
+}
+
+/* La pastille des messages non lus, à côté de la rubrique Messages, sur
+   toutes les pages. Elle lit la même boîte que la rubrique elle-même et se
+   met à jour quand un autre onglet écrit dedans. */
+function mnPastilleMessages(){
+  const el=document.getElementById('ct-messages'); if(!el) return;
+  let n=0;
+  try{
+    const s=(typeof session==='function')?session():null;
+    const L=JSON.parse(localStorage.getItem('messages-v1')||'[]');
+    if(s&&Array.isArray(L)) n=L.filter(m=>m.a===s.id && !m.lu).length;
+  }catch(e){}
+  if(n){ el.textContent=String(n); el.classList.add('pt');
+         el.title=n+(n>1?' messages non lus':' message non lu'); }
+  else { el.textContent='équipe'; el.classList.remove('pt'); el.title=''; }
+}
+window.addEventListener('storage',e=>{ if(e.key==='messages-v1'||e.key==='sam-session-v1') mnPastilleMessages(); });
+
+(function(){
+  const go=()=>{ try{ mnApplique(); mnBouton(); mnPastilleMessages(); }catch(e){} };
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',go);
+  else setTimeout(go,0);
+})();
+
+
+/* ============ TROIS LANGUES ============ */
+const K_LANG='langue-v1';
+/* Le dictionnaire vit dans donnees/langue.js, chargé par chaque page avant son
+   propre code — comme les produits. Avant, il était recopié dans chaque page :
+   700 phrases en deux langues, seize fois. S'il manque, MOTS est vide et la
+   page reste simplement en français. */
+const MOTS=(typeof window!=='undefined'&&window.D_LANGUE)||{};
+const LANGUES={fr:'Français', en:'English', es:'Español'};
+const lgLit=()=>{ try{ const v=localStorage.getItem(K_LANG); return LANGUES[v]?v:'fr'; }catch(e){ return 'fr'; } };
+let LANG=lgLit();
+
+/* i = 0 pour l'anglais, 1 pour l'espagnol */
+/* Les nombres varient, la phrase autour non : « 1 892 références en stock » est
+   la même phrase que « 40 références en stock ». On remplace chaque nombre par
+   {n}, on cherche la phrase à trous dans le dictionnaire, puis on remet les
+   nombres dans l'ordre. Un « [s] » dans la traduction devient « s » si le premier
+   nombre n'est pas 1 : « {n} reference[s] ». Les montants gardent leur forme
+   d'origine (l'espace fine, la virgule) : ce sont des données, pas du texte. */
+const LG_NUM=/\bB0[A-Z0-9]{8}\b|\d(?:[\d\s  .,:/h]*\d)?/g;   /* nombres, et codes ASIN */
+function lgTrous(k,lg){
+  if(!/\d|«/.test(k)) return null;
+  /* les « mots entre guillemets » sont des trous eux aussi : « Facture » ou
+     « Devis » se traduisent à part, et la phrase autour reste une seule entrée */
+  const cit=[]; let gab=k.replace(/«\s*([^»]*?)\s*»/g,(m,q)=>{ cit.push(q); return '{q}'; });
+  const nums=[]; gab=gab.replace(LG_NUM,m=>{ nums.push(m); return '{n}'; });
+  const e=MOTS[gab]; if(!e) return null;
+  let v=e[lg==='en'?0:1]; if(!v||v===gab) return null;
+  const un=String(nums[0]||'').replace(/[\s  ]/g,'')==='1';
+  v=v.replace(/\[s\]/g,un?'':'s').replace(/\[es\]/g,un?'':'es');
+  let i=0; v=v.replace(/\{n\}/g,()=>nums[i++]!==undefined?nums[i-1]:'');
+  let j=0; v=v.replace(/\{q\}/g,()=>{ const q=cit[j++]; if(q===undefined) return '';
+    const t=lgMot(q,lg)||q; return lg==='en'?('“'+t+'”'):('«\u00a0'+t+'\u00a0»'); });
+  return v;
+}
+/* ---- le vocabulaire de la maison, en français ----
+   Sam et son équipe ne disent pas « devis » : ils disent « cote » (la quote de
+   la caisse). Plutôt que de réécrire des centaines de phrases à la main — avec
+   les fautes d'accord que ça sème — le mot est remplacé au moment de l'affichage,
+   avec ses articles et ses participes. Le dictionnaire EN/ES, lui, part toujours
+   du français d'origine : rien ne change pour les autres langues. */
+const LG_VOCAB_EXACT=[
+  ["Un devis ne sort rien du stock. Il pourra être transformé en facture en un clic, quand le client confirme.",
+   "Une cote ne sort rien du stock. Elle pourra être transformée en facture en un clic, quand le client confirme."],
+  ["Le devis est gardé et devient une facture en un clic.","La cote est gardée et devient une facture en un clic."],
+  ["Un fournisseur propose un devis : vaut-il le coup ?","Un fournisseur propose une cote : vaut-elle le coup ?"],
+  ["Un devis de fournisseur, ligne par ligne, comparé à","Une cote de fournisseur, ligne par ligne, comparée à"],
+  ["Dépose le devis ici, ou clique pour le choisir","Dépose la cote ici, ou clique pour la choisir"],
+  ["Un devis se lit s'il porte","Une cote se lit si elle porte"],
+  ["Un devis, c'est une ligne","Une cote, c'est une ligne"],
+  ["Devis restés sans commande","Cotes restées sans commande"],
+  ["Devis proposé","Cote proposée"],
+  ["Devis chargé","Cote chargée"],
+  ["Étudier un autre devis","Étudier une autre cote"],
+  ["Étudier un devis","Étudier une cote"],
+  ["Faire un devis","Faire une cote"],
+  ["Factures et devis","Factures et cotes"]];
+const LG_PART='(enregistré|converti|archivé|désarchivé|gardé|chargé|supprimé|envoyé|ouvert|jeté|corrigé|refermé|émis|payé|transformé|créé|accepté|refusé|mémorisé|déposé|lu|reçu|proposé|effacé|retrouvé|rangé)';
+/* \b ne connaît pas les lettres accentuées en JavaScript : on borne à la main */
+const L_='(?<![A-Za-zÀ-ÿ])', _L='(?![A-Za-zÀ-ÿ])';
+function lgVocab(t){
+  let s=String(t); if(!/devis/i.test(s)) return s;
+  LG_VOCAB_EXACT.forEach(([a,b])=>{ if(s.includes(a)) s=s.split(a).join(b); });
+  /* le pluriel : « les devis », « des devis », « 3 devis », « factures et devis » */
+  s=s.replace(new RegExp(L_+'(tous|certains|nouveaux|derniers|anciens|vieux)\\s+(les\\s+|des\\s+)?devis'+_L,'gi'),(m,a,b)=>{
+    const A={tous:'toutes',certains:'certaines',nouveaux:'nouvelles',derniers:'dernières',anciens:'anciennes',vieux:'vieilles'};
+    let r=A[a.toLowerCase()]||a; if(a[0]===a[0].toUpperCase()) r=r[0].toUpperCase()+r.slice(1); return r+' '+(b||'')+'cotes'; });
+  s=s.replace(new RegExp(L_+'(les|des|ces|mes|tes|ses|nos|vos|leurs|aux|plusieurs|quelques|deux|trois|\\d+)\\s+devis'+_L,'gi'),(m,a)=>a+' cotes');
+  s=s.replace(new RegExp(L_+'devis (clients|restés|gardés|convertis|archivés|créés|en attente)'+_L,'gi'),(m,a)=>'cotes '+a.replace(/és$/,'ées'));
+  s=s.replace(/(Factures?|factures?) et devis/g,(m,a)=>a+' et cotes');
+  /* le singulier avec son article */
+  s=s.replace(new RegExp(L_+'(le|un|ce|du|au|mon|ton|son|nouveau|premier|dernier|seul|quel|tout|aucun|chaque|cet)\\s+devis'+_L,'gi'),(m,a)=>{
+    const A={le:'la',un:'une',ce:'cette',cet:'cette',du:'de la',au:'à la',mon:'ma',ton:'ta',son:'sa',nouveau:'nouvelle',premier:'première',dernier:'dernière',seul:'seule',quel:'quelle',tout:'toute',aucun:'aucune',chaque:'chaque'};
+    const k=a.toLowerCase(); let r=A[k]||a; if(a[0]===a[0].toUpperCase()) r=r[0].toUpperCase()+r.slice(1); return r+' cote'; });
+  /* le mot seul, majuscules respectées */
+  s=s.replace(new RegExp(L_+'DEVIS'+_L,'g'),'COTE').replace(new RegExp(L_+'Devis'+_L,'g'),'Cote').replace(new RegExp(L_+'devis'+_L,'g'),'cote');
+  /* l'accord du participe qui suit : « cote DV-2026-0003 enregistré » → « enregistrée »,
+     « la cote a été enregistré » → « enregistrée », « 1 cotes créées » → « 1 cote créée » */
+  s=s.replace(new RegExp(L_+'([Cc]otes?)((?:\\s+[A-Z]{2}-[\\d-]+)?)((?:\\s+(?:a été|est|sera|ont été|sont|seront))?)\\s+'+LG_PART+'s?'+_L,'g'),(m,c,n,v,p)=>c+n+v+' '+p+(c.endsWith('s')?'es':'e'));
+  s=s.replace(new RegExp(L_+'1 cotes'+_L,'g'),'1 cote').replace(new RegExp(L_+'1 cote ([a-zé]+)es'+_L,'g'),'1 cote $1e');
+  return s;
+}
+/* pour les textes fabriqués en JavaScript (WhatsApp, courrier, fenêtres de confirmation) */
+function vf(t,l){ return ((l||LANG)==='fr')?lgVocab(t):t; }
+function lgMot(t,l){
+  const lg=l||LANG;
+  if(lg==='fr'){ const k=String(t).replace(/\s+/g,' ').trim(); const v=lgVocab(k); return v!==k?v:null; }
+  const k=String(t).replace(/\s+/g,' ').trim();
+  const e=MOTS[k];
+  if(e){ const v=e[lg==='en'?0:1]; return (v&&v!==k)?v:null; }
+  return lgTrous(k,lg);
+}
+/* ---- une zone peut imposer SA langue, quelle que soit celle de l'écran ----
+   Une facture ne part pas chez celui qui la regarde : elle part chez le client.
+   Elle porte donc data-lang="en" et reste en anglais même si Sam travaille en
+   français — et le contraire est vrai aussi. C'est la seule façon d'avoir un
+   outil en français et des documents dans la langue du destinataire. */
+function lgLangDe(n){
+  let e=(n&&n.nodeType===1)?n:(n&&n.parentNode);
+  while(e&&e.nodeType===1){
+    const v=e.getAttribute&&e.getAttribute('data-lang');
+    if(v&&LANGUES[v]) return v;
+    e=e.parentNode;
+  }
+  return LANG;
+}
+/* on garde le français d'origine pour pouvoir revenir en arrière sans recharger */
+function lgTexte(n){
+  /* On repart toujours du français d'origine, jamais de ce qui est affiché :
+     sinon, passer de l'anglais à l'espagnol chercherait « Catalogue » dans un
+     texte qui dit déjà « Catalog », et ne trouverait rien. */
+  const orig=(n.__fr!==undefined)?n.__fr:n.nodeValue;
+  if(!orig||!/[A-Za-zÀ-ÿ]/.test(orig)) return;
+  const v=lgMot(orig,lgLangDe(n));
+  if(v!==null){ if(n.__fr===undefined) n.__fr=orig; n.nodeValue=orig.replace(orig.trim(),v); }
+  else if(n.__fr!==undefined && n.nodeValue!==n.__fr) n.nodeValue=n.__fr;
+}
+const LG_ATTR=['placeholder','title','aria-label'];
+function lgAttrs(el){
+  LG_ATTR.forEach(a=>{
+    if(!el.hasAttribute(a)) return;
+    const cle='__fr_'+a;
+    const src=el[cle]!==undefined?el[cle]:el.getAttribute(a);
+    const v=lgMot(src,lgLangDe(el));
+    if(v!==null){ if(el[cle]===undefined) el[cle]=src; el.setAttribute(a,v); }
+    else if(el[cle]!==undefined) el.setAttribute(a,el[cle]);
+  });
+}
+/* Les zones de saisie ne sont jamais touchées : ce que l'utilisateur a tapé
+   lui appartient. Les données non plus — elles ne sont pas dans le dictionnaire. */
+const LG_SAUT={SCRIPT:1,STYLE:1,TEXTAREA:1,CODE:1,PRE:1,INPUT:1,OPTION:0};
+/* Les noms de parfums, de marques et de clients ne se traduisent jamais.
+   Le dictionnaire ne les contient pas — mais on met en plus une barrière :
+   tout ce qui porte une de ces classes est laissé strictement intact. */
+const LG_DATA='.lnm,.lmq,.nom,.nm,.mq,.marque,.produit,.bc,.lbc,.lid,.pd,td.ref,[data-nolang]';
+function lgDonnee(n){
+  let e=n.parentNode;
+  while(e&&e!==document.body){
+    if(e.nodeType===1&&(e.matches&&e.matches(LG_DATA))) return true;
+    e=e.parentNode;
+  }
+  return false;
+}
+/* ---- les phrases coupées par un mot en gras ----
+   « Compte ce qui porte <b>l'argent</b> » fait trois morceaux de texte, et
+   aucun des trois n'est une phrase du dictionnaire. On regarde donc aussi
+   l'élément entier : si son texte complet est au dictionnaire, on remplace son
+   contenu — la traduction peut porter ses propres <b>. On ne le fait que sur des
+   éléments courts qui contiennent une balise, jamais sur une zone de données. */
+const LG_BLOC='p,li,span,label,small,div,td,th,h1,h2,h3,h4,button,a,em,strong,summary,legend,dt,dd';
+function lgTexteFr(el){
+  /* les morceaux sont joints par une espace : « Sam<br>Patron » se lit
+     « Sam Patron », pas « SamPatron » — la clé du dictionnaire reste lisible */
+  let s=''; const it=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);
+  let n; while((n=it.nextNode())) s+=' '+(n.__fr!==undefined?n.__fr:n.nodeValue);
+  return s.replace(/\s+/g,' ').trim();
+}
+/* La traduction d'un bloc peut désigner les balises d'origine par leur rang :
+   <1>texte</1> reprend la 1re balise du bloc (avec son href, sa classe, son id)
+   et y met ce texte ; <3/> recopie la 3e telle quelle (un <br>, un chiffre, un
+   nom). Les balises écrites en clair (<b>…</b>) passent aussi. Ainsi un lien
+   traduit reste un lien, et un bouton traduit garde son identifiant. */
+function lgRendBloc(el,v){
+  if(!/<\d+\/?>/.test(v)){ el.innerHTML=v; return; }
+  const tpl=document.createElement('template'); tpl.innerHTML=el.__frHTML;
+  const kids=[...tpl.content.querySelectorAll('*')];
+  let html=v.replace(/<(\d+)\/>/g,(m,i)=>{ const k=kids[+i-1]; return k?k.outerHTML:''; });
+  html=html.replace(/<(\d+)>([\s\S]*?)<\/\1>/g,(m,i,txt)=>{ const k=kids[+i-1]; if(!k) return txt;
+    const c=k.cloneNode(false); c.innerHTML=txt; return c.outerHTML; });
+  el.innerHTML=html;
+}
+function lgHtmlFr(el){
+  /* le HTML français d'origine, reconstruit : chaque nœud de texte garde son __fr */
+  const c=el.cloneNode(true);
+  const A=document.createTreeWalker(el,NodeFilter.SHOW_TEXT), B=document.createTreeWalker(c,NodeFilter.SHOW_TEXT);
+  let x,y; while((x=A.nextNode())&&(y=B.nextNode())){ if(x.__fr!==undefined) y.nodeValue=x.__fr; }
+  return c.innerHTML;
+}
+function lgBlocs(r){
+  if(!r.querySelectorAll) return;
+  r.querySelectorAll(LG_BLOC).forEach(el=>{
+    if(LG_SAUT[el.nodeName]||el.children.length===0||el.children.length>12) return;
+    if(el.querySelector('input,textarea,select,table,ul,ol,img,svg,canvas')) return;
+    if(el.textContent.length>1200) return;      /* un conteneur, pas une phrase */
+    if(el.matches(LG_DATA)||lgDonnee(el)) return;
+    const lg=lgLangDe(el);
+    /* « rendu » : le bloc est encore exactement tel que je l'ai laissé. Sinon, la
+       page l'a réécrit (un compteur qui change) : on relit le français dedans. */
+    const rendu = el.__lgRendu!==undefined && el.innerHTML===el.__lgRendu;
+    if(rendu && lg==='fr'){ el.innerHTML=el.__frHTML; el.__lgRendu=undefined; el.__lgLang=undefined; return; }
+    if(lg==='fr') return;
+    const orig=rendu?el.__frTxt:lgTexteFr(el);
+    if(!orig||orig.length>900||!/[A-Za-zÀ-ÿ]/.test(orig)) return;
+    const v=lgMot(orig,lg); if(v===null) return;
+    if(rendu && lg===el.__lgLang) return;
+    if(!rendu){ el.__frHTML=lgHtmlFr(el); el.__frTxt=orig; }
+    lgRendBloc(el,v); el.__lgLang=lg; el.__lgRendu=el.innerHTML;
+  });
+}
+function lgApplique(racine){
+  const r=racine||document.body; if(!r) return;
+  lgBlocs(r);
+  const it=document.createTreeWalker(r,NodeFilter.SHOW_TEXT,{acceptNode:n=>
+    ((n.parentNode&&LG_SAUT[n.parentNode.nodeName])||lgDonnee(n))
+      ?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
+  const L=[]; let n; while((n=it.nextNode())) L.push(n);
+  L.forEach(lgTexte);
+  if(r.querySelectorAll) r.querySelectorAll('[placeholder],[title],[aria-label]').forEach(lgAttrs);
+  if(r.nodeType===1) lgAttrs(r);
+}
+function lgChange(l){
+  if(!LANGUES[l]) return;
+  LANG=l; try{ localStorage.setItem(K_LANG,l); }catch(e){}
+  lgApplique(document.body);
+  document.querySelectorAll('#lgsel button').forEach(b=>b.classList.toggle('on',b.dataset.l===l));
+  document.documentElement.lang=l;
+  try{ const J=lit('crm-journal-v1',[]);
+    J.push({t:new Date().toISOString(),u:(typeof NOM_UTIL!=='undefined'?NOM_UTIL:''),
+            act:'reglage',lib:'langue de l\'écran',ref:'langue',av:null,ap:LANGUES[l]});
+    ecrit('crm-journal-v1',J); }catch(e){}
+}
+/* le choix, au bas de la barre de gauche */
+function lgBouton(){
+  const p=document.querySelector('.side .sfoot'); if(!p||document.getElementById('lgsel')) return;
+  const d=document.createElement('div'); d.id='lgsel';
+  d.style.cssText='display:flex;gap:4px;margin-top:8px';
+  d.innerHTML=Object.keys(LANGUES).map(l=>
+    `<button data-l="${l}" class="${l===LANG?'on':''}" title="${LANGUES[l]}"
+      style="font-family:inherit;font-size:10.5px;font-weight:600;letter-spacing:.06em;
+      padding:3px 7px;border-radius:3px;cursor:pointer;border:1px solid var(--line-2);
+      background:transparent;color:var(--ink-3)">${l.toUpperCase()}</button>`).join('');
+  p.appendChild(d);
+  d.addEventListener('click',e=>{ const b=e.target.closest('[data-l]'); if(b) lgChange(b.dataset.l); });
+  const st=document.createElement('style');
+  st.textContent='#lgsel button.on{background:var(--iris);border-color:var(--iris);color:#fff}';
+  document.head.appendChild(st);
+}
+/* En français, le vocabulaire de la maison (« cote ») demande de parcourir la page
+   aussi. On s'en dispense sur les pages à milliers de lignes (catalogue, stock),
+   où le mot n'apparaît pas et où le parcours coûterait cher à chaque redessin. */
+const LG_FR_PARCOURS=!/catalogue|stock|inventaire/.test(location.pathname);
+(function(){
+  const go=()=>{
+    try{ lgBouton();
+      if(LANG!=='fr'){ document.documentElement.lang=LANG; lgApplique(document.body); }
+      else if(LG_FR_PARCOURS) lgApplique(document.body);
+      else document.querySelectorAll('[data-lang]').forEach(z=>{ try{ lgApplique(z); }catch(e){} });
+    }catch(e){}
+    /* le JavaScript des pages redessine des morceaux en permanence :
+       on repasse dessus, mais groupé, pour ne pas ralentir l'écran */
+    try{
+      let t=null;
+      /* En français, on ne repasse PAS sur toute la page : sur le catalogue, ce
+         serait parcourir des milliers de lignes à chaque redessin. On ne visite
+         alors que les zones qui imposent leur propre langue — un document. */
+      new MutationObserver(()=>{ if(t) return;
+        if(LANG==='fr' && !LG_FR_PARCOURS && !document.querySelector('[data-lang]')) return;
+        t=setTimeout(()=>{ t=null; try{
+          if(LANG==='fr' && !LG_FR_PARCOURS) document.querySelectorAll('[data-lang]').forEach(z=>lgApplique(z));
+          else lgApplique(document.body);
+        }catch(e){} },120); })
+        .observe(document.body,{childList:true,subtree:true});
+    }catch(e){}
+  };
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',go);
+  else setTimeout(go,0);
+})();
+
+
+/* ============ ÉCRIRE À QUELQU'UN ============ */
+const CT_MODELES={
+ fr:{
+  promo:{o:"Une offre pour vous", t:"Bonjour NOM,\n\nNous avons en ce moment de belles pièces à des prix intéressants. Dites-moi ce qui vous intéresse et je vous prépare une offre.\n\nÀ bientôt,\nPerfumes Trade"},
+  relance:{o:"Votre facture", t:"Bonjour NOM,\n\nJe reviens vers vous au sujet de votre facture, qui reste ouverte à ce jour. Pouvez-vous me dire où cela en est de votre côté ?\n\nMerci d'avance,\nPerfumes Trade"},
+  merci:{o:"Merci pour votre commande", t:"Bonjour NOM,\n\nMerci pour votre commande. Elle est bien enregistrée. N'hésitez pas si vous avez la moindre question.\n\nÀ bientôt,\nPerfumes Trade"},
+  libre:{o:"", t:"Bonjour NOM,\n\n"}},
+ en:{
+  promo:{o:"An offer for you", t:"Hello NOM,\n\nWe currently have some great pieces at good prices. Let me know what you are looking for and I will put together an offer.\n\nBest regards,\nPerfumes Trade"},
+  relance:{o:"Your invoice", t:"Hello NOM,\n\nI am following up on your invoice, which is still open. Could you let me know where things stand on your side?\n\nThank you,\nPerfumes Trade"},
+  merci:{o:"Thank you for your order", t:"Hello NOM,\n\nThank you for your order — it is confirmed. Please reach out with any question.\n\nBest regards,\nPerfumes Trade"},
+  libre:{o:"", t:"Hello NOM,\n\n"}},
+ es:{
+  promo:{o:"Una oferta para usted", t:"Hola NOM,\n\nTenemos ahora mismo buenas piezas a precios interesantes. Dígame qué le interesa y le preparo una oferta.\n\nUn saludo,\nPerfumes Trade"},
+  relance:{o:"Su factura", t:"Hola NOM,\n\nLe escribo por su factura, que sigue pendiente. ¿Puede decirme cómo está por su parte?\n\nGracias,\nPerfumes Trade"},
+  merci:{o:"Gracias por su pedido", t:"Hola NOM,\n\nGracias por su pedido, queda registrado. Cualquier duda, aquí estoy.\n\nUn saludo,\nPerfumes Trade"},
+  libre:{o:"", t:"Hola NOM,\n\n"}}};
+
+const CT_LIB={promo:'Promotion', relance:'Relance de facture',
+              merci:'Remerciement', libre:'Message libre'};
+
+const ctMail=v=>/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(v||'').trim());
+
+/* Ce que le patron a mis dans Réglages : sa signature, son adresse, et par où
+   il veut que le message s'ouvre. Réglages vit dans le même navigateur, donc
+   on le relit à chaque fois plutôt que de le figer au chargement. */
+function ctReg(){
+  try{ const r=JSON.parse(localStorage.getItem('reglages-v1')||'null');
+    return (r&&typeof r==='object')?r:{}; }catch(e){ return {}; }
+}
+
+/* La signature : ce que le patron a écrit dans Réglages remplace le
+   « Perfumes Trade » des modèles, et son adresse et son téléphone suivent. */
+function ctSigne(txt){
+  const r=ctReg();
+  const nom=String(r.signature||'').trim();
+  let bas=nom||'Perfumes Trade';
+  const co=[String(r.monMail||'').trim(), String(r.monTel||'').trim()].filter(Boolean);
+  if(co.length) bas+='\n'+co.join(' · ');
+  return String(txt).replace(/Perfumes Trade$/, bas);
+}
+
+/* Où s'ouvre le message. « mailto: » passe par le logiciel de mail du poste ;
+   ceux qui lisent leur courrier dans Gmail ou Outlook.com ne verraient rien
+   s'ouvrir — d'où le choix dans Réglages. */
+function ctLienMail(dest,obj,txt){
+  const b=ctReg().boite||'defaut';
+  const d=encodeURIComponent(dest), o=encodeURIComponent(obj), c=encodeURIComponent(txt);
+  if(b==='gmail')
+    return 'https://mail.google.com/mail/?view=cm&fs=1&to='+d+'&su='+o+'&body='+c;
+  if(b==='outlook')
+    return 'https://outlook.live.com/mail/0/deeplink/compose?to='+d+'&subject='+o+'&body='+c;
+  return 'mailto:'+d+'?subject='+o+'&body='+c;
+}
+
+/* Le numéro tel qu'il part chez WhatsApp : que des chiffres, indicatif compris. */
+function ctNum(v){
+  let d=String(v||'').replace(/\D/g,'');
+  if(!d) return '';
+  if(d.length===10) d='1'+d;                 /* numéro américain sans indicatif */
+  if(d.length===11 && d[0]==='1') return d;
+  return (d.length>=8 && d.length<=15) ? d : '';
+}
+
+let CT=null;
+function ctFenetre(){
+  let ov=document.getElementById('ctov');
+  if(ov) return ov;
+  ov=document.createElement('div'); ov.className='ov'; ov.id='ctov';
+  ov.innerHTML=`<div class="mod" style="max-width:600px;max-height:88vh;display:flex;flex-direction:column">
+    <div class="mh"><h2 id="ct-titre">Écrire</h2><button class="x" id="ct-x">&times;</button></div>
+    <div class="mb" style="overflow:auto;flex:1;min-height:0">
+      <div class="ctco">
+        <div class="ctf"><label for="ct-mail">Email</label>
+          <input id="ct-mail" autocomplete="off" placeholder="pas encore renseigné"></div>
+        <div class="ctf"><label for="ct-tel">Téléphone / WhatsApp</label>
+          <input id="ct-tel" autocomplete="off" placeholder="+1 305 555 0100"></div>
+      </div>
+      <p class="ctaide" id="ct-corrige">Une adresse ou un numéro corrigé ici est enregistré sur la fiche.</p>
+      <div class="ctch" id="ct-choix"></div>
+      <div class="ctf" style="margin-top:14px"><label for="ct-obj">Objet (pour l'email)</label>
+        <input id="ct-obj" autocomplete="off"></div>
+      <div class="ctf" style="margin-top:12px"><label for="ct-txt">Message</label>
+        <textarea id="ct-txt" rows="9"></textarea></div>
+      <p class="ctaide" id="ct-note"></p>
+    </div>
+    <div class="mf" style="flex:none"><span class="msg" id="ct-msg"></span>
+      <button class="btn" id="ct-non">Fermer</button>
+      <button class="btn" id="ct-wa">Ouvrir WhatsApp</button>
+      <button class="btn pri" id="ct-em">Ouvrir l'email</button></div>
+  </div>`;
+  document.body.appendChild(ov);
+  document.getElementById('ct-x').onclick=()=>ov.classList.remove('on');
+  document.getElementById('ct-non').onclick=()=>ov.classList.remove('on');
+  ov.addEventListener('click',e=>{ if(e.target===ov) ov.classList.remove('on'); });
+
+  document.getElementById('ct-choix').addEventListener('click',e=>{
+    const b=e.target.closest('button[data-m]'); if(!b) return;
+    ctModele(b.dataset.m);
+  });
+  document.getElementById('ct-em').onclick=()=>ctOuvre('email');
+  document.getElementById('ct-wa').onclick=()=>ctOuvre('whatsapp');
+  return ov;
+}
+
+function ctModele(m){
+  CT.modele=m;
+  [...document.querySelectorAll('#ct-choix button[data-m]')]
+    .forEach(b=>b.classList.toggle('on', b.dataset.m===m));
+  const L=(typeof LANG!=='undefined' && CT_MODELES[LANG]) ? LANG : 'fr';
+  const t=CT_MODELES[L][m];
+  document.getElementById('ct-obj').value=t.o;
+  document.getElementById('ct-txt').value=ctSigne(t.t.replace(/NOM/g, CT.nom||''));
+}
+
+function ctDitMsg(t,c){
+  const e=document.getElementById('ct-msg');
+  e.textContent=t; e.className='msg '+(c||'err');
+  if(t) setTimeout(()=>{ if(e.textContent===t){ e.textContent=''; } },4000);
+}
+
+function ctOuvre(par){
+  const mail=document.getElementById('ct-mail').value.trim();
+  const tel =document.getElementById('ct-tel').value.trim();
+  const obj =document.getElementById('ct-obj').value;
+  const txt =document.getElementById('ct-txt').value;
+  if(!String(txt).trim()) return ctDitMsg('Le message est vide.');
+  if(CT.onSave) { try{ CT.onSave(mail,tel); }catch(e){} }
+  let url;
+  if(par==='email'){
+    if(!ctMail(mail)) return ctDitMsg("L'adresse email n'est pas valable — corrige-la ci-dessus.");
+    url=ctLienMail(mail,obj,txt);
+  } else {
+    const n=ctNum(tel);
+    if(!n) return ctDitMsg("Le numéro n'est pas lisible. Écris-le avec l'indicatif, par exemple +1 305 555 0100.");
+    url='https://wa.me/'+n+'?text='+encodeURIComponent(txt);
+  }
+  const a=document.createElement('a');
+  a.href=url; a.target='_blank'; a.rel='noopener';
+  document.body.appendChild(a); a.click(); a.remove();
+  if(typeof jlogContact==='function')
+    jlogContact(CT.nom, par, CT_LIB[CT.modele]||CT.modele);
+  ctDitMsg(par==='email' ? 'Mail ouvert — à toi d\'appuyer sur Envoyer.'
+                         : 'WhatsApp ouvert — à toi d\'appuyer sur Envoyer.', 'ok');
+}
+
+/* Le point d'entrée. `onSave(email,tel)` sert à recoller les coordonnées
+   corrigées sur la fiche d'origine — chaque rubrique sait où les ranger. */
+function contacte(o){
+  CT={nom:o.nom||'', modele:o.modele||'promo', onSave:o.onSave||null};
+  const ov=ctFenetre();
+  document.getElementById('ct-titre').textContent='Écrire à '+(o.nom||'');
+  document.getElementById('ct-mail').value=o.email||'';
+  document.getElementById('ct-tel').value=o.tel||'';
+  const mods=o.modeles||['promo','relance','merci','libre'];
+  document.getElementById('ct-choix').innerHTML=mods.map(m=>
+    `<button class="ctb" data-m="${m}">${CT_LIB[m]||m}</button>`).join('');
+  const OU={defaut:'ton logiciel de mail', gmail:'Gmail', outlook:'Outlook.com'};
+  document.getElementById('ct-note').textContent=
+    "Perfumes Trade prépare le message et ouvre "+(OU[ctReg().boite||'defaut']||'ton mail')
+   +" ou WhatsApp avec le texte dedans. C'est toi qui appuies sur Envoyer, une personne à la fois. "
+   +"Ta signature et le choix de la messagerie se règlent dans Réglages. "
+   +"L'envoi à toute une liste d'un coup demandera le serveur.";
+  document.getElementById('ct-msg').textContent='';
+  ctModele(CT.modele);
+  ov.classList.add('on');
+  setTimeout(()=>document.getElementById('ct-txt').focus(),80);
+}
+
+
+/* ============ LIRE UN FICHIER EXCEL ============ */
+const xlsxDispo = (typeof DecompressionStream!=='undefined');
+
+async function xlDegonfle(u8, methode){
+  if(methode===0) return u8;                     /* rangé tel quel dans le zip */
+  const flux=new Blob([u8]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+  return new Uint8Array(await new Response(flux).arrayBuffer());
+}
+
+/* Ouvre le ZIP : on lit son sommaire (à la fin du fichier), pas octet par octet. */
+async function xlOuvre(buf){
+  const v=new DataView(buf), u=new Uint8Array(buf);
+  let fin=-1;
+  for(let i=u.length-22; i>=Math.max(0,u.length-65557); i--){
+    if(v.getUint32(i,true)===0x06054b50){ fin=i; break; }
+  }
+  if(fin<0) throw new Error("Ce fichier n'est pas un .xlsx lisible.");
+  const nb=v.getUint16(fin+10,true);
+  let p=v.getUint32(fin+16,true);
+  const dec=new TextDecoder();
+  const fichiers={};
+  for(let k=0;k<nb;k++){
+    if(v.getUint32(p,true)!==0x02014b50) break;
+    const meth=v.getUint16(p+10,true);
+    const taille=v.getUint32(p+20,true);
+    const nl=v.getUint16(p+28,true), el=v.getUint16(p+30,true), cl=v.getUint16(p+32,true);
+    const loc=v.getUint32(p+42,true);
+    const nom=dec.decode(u.subarray(p+46,p+46+nl));
+    fichiers[nom]={meth, taille, loc};
+    p+=46+nl+el+cl;
+  }
+  return {
+    a:n=>!!fichiers[n],
+    lis: async n=>{
+      const f=fichiers[n]; if(!f) return null;
+      const nl=v.getUint16(f.loc+26,true), el=v.getUint16(f.loc+28,true);
+      const d=f.loc+30+nl+el;
+      return dec.decode(await xlDegonfle(u.subarray(d, d+f.taille), f.meth));
+    },
+    noms:Object.keys(fichiers)
+  };
+}
+
+const xlDom=t=>new DOMParser().parseFromString(t,'application/xml');
+
+/* Une lettre de colonne (A, B, … AA) vers un numéro. */
+function xlCol(ref){
+  let n=0;
+  for(const c of String(ref).replace(/[0-9]/g,'')) n=n*26+(c.charCodeAt(0)-64);
+  return n-1;
+}
+
+/* Excel range les dates en nombre de jours depuis le 30 décembre 1899. */
+function xlDate(n){
+  const d=new Date(Date.UTC(1899,11,30)+Math.round(n)*86400000);
+  if(isNaN(d)) return String(n);
+  const p=x=>String(x).padStart(2,'0');
+  return d.getUTCFullYear()+'-'+p(d.getUTCMonth()+1)+'-'+p(d.getUTCDate());
+}
+
+/* Quels styles de cellule veulent dire « date » : les formats intégrés d'Excel,
+   plus les formats sur mesure qui contiennent des jours ou des mois. */
+function xlStylesDate(xml){
+  if(!xml) return {};
+  const d=xlDom(xml), perso={};
+  [...d.getElementsByTagName('numFmt')].forEach(f=>{
+    const code=f.getAttribute('formatCode')||'';
+    if(/[dmy]/i.test(code) && !/[#0]/.test(code.replace(/\[[^\]]*\]/g,'')))
+      perso[f.getAttribute('numFmtId')]=1;
+  });
+  const INT={14:1,15:1,16:1,17:1,18:1,19:1,20:1,21:1,22:1,45:1,46:1,47:1};
+  const xfs=d.getElementsByTagName('cellXfs')[0];
+  const out={};
+  if(xfs) [...xfs.getElementsByTagName('xf')].forEach((x,i)=>{
+    const id=x.getAttribute('numFmtId');
+    if(INT[id]||perso[id]) out[i]=1;
+  });
+  return out;
+}
+
+/* Rend { onglets:[{nom, lignes:[[cellules…]]}] } */
+async function xlLis(buf){
+  const z=await xlOuvre(buf);
+
+  /* les textes sont mis en commun dans un fichier à part */
+  const partages=[];
+  const ss=await z.lis('xl/sharedStrings.xml');
+  if(ss) [...xlDom(ss).getElementsByTagName('si')].forEach(si=>{
+    partages.push([...si.getElementsByTagName('t')].map(t=>t.textContent).join(''));
+  });
+
+  const dates=xlStylesDate(await z.lis('xl/styles.xml'));
+
+  /* le nom des onglets et le fichier qui va avec */
+  const wb=await z.lis('xl/workbook.xml');
+  const rel=await z.lis('xl/_rels/workbook.xml.rels');
+  const cible={};
+  if(rel) [...xlDom(rel).getElementsByTagName('Relationship')].forEach(r=>{
+    cible[r.getAttribute('Id')]=r.getAttribute('Target');
+  });
+  let feuilles=[];
+  if(wb) [...xlDom(wb).getElementsByTagName('sheet')].forEach(s=>{
+    const id=s.getAttribute('r:id')||s.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','id');
+    let t=cible[id]||'';
+    if(t && !t.startsWith('xl/')) t='xl/'+t.replace(/^\/?xl\//,'').replace(/^\//,'');
+    feuilles.push({nom:s.getAttribute('name')||'Feuille', fichier:t});
+  });
+  if(!feuilles.length)
+    feuilles=z.noms.filter(n=>/^xl\/worksheets\/sheet\d+\.xml$/.test(n))
+                   .map((n,i)=>({nom:'Feuille '+(i+1), fichier:n}));
+
+  const onglets=[];
+  for(const f of feuilles){
+    const xml=await z.lis(f.fichier);
+    if(!xml) continue;
+    const d=xlDom(xml), lignes=[];
+    [...d.getElementsByTagName('row')].forEach(r=>{
+      const L=[];
+      [...r.getElementsByTagName('c')].forEach(c=>{
+        const i=xlCol(c.getAttribute('r')||'A1');
+        while(L.length<i) L.push('');
+        const t=c.getAttribute('t');
+        let val='';
+        if(t==='inlineStr'){
+          val=[...c.getElementsByTagName('t')].map(x=>x.textContent).join('');
+        } else {
+          const v=c.getElementsByTagName('v')[0];
+          const brut=v?v.textContent:'';
+          if(t==='s')      val=partages[+brut]!==undefined?partages[+brut]:'';
+          else if(t==='b') val=(brut==='1')?'TRUE':'FALSE';
+          else if(t==='e') val='';                       /* #N/A, #REF!… */
+          else if(brut!=='' && dates[+(c.getAttribute('s')||-1)] && !isNaN(+brut))
+                           val=xlDate(+brut);
+          else             val=brut;
+        }
+        L.push(val);
+      });
+      lignes.push(L);
+    });
+    /* on jette les lignes entièrement vides de la fin */
+    while(lignes.length && !lignes[lignes.length-1].join('').trim()) lignes.pop();
+    onglets.push({nom:f.nom, lignes});
+  }
+  return {onglets};
+}
+
+/* Le fichier déposé : Excel ou texte, on rend toujours la même chose. */
+const xlEstExcel=f=>/\.(xlsx|xlsm)$/i.test(f.name||'');
+
+/* ---------- ouvrir un ZIP (c'est ce qu'est un .xlsx) ---------- */
+async function _zipOuvre(buf){
+  const d=new DataView(buf.buffer||buf), u=new Uint8Array(buf.buffer||buf);
+  /* On part de la fin : le catalogue central est en queue de fichier, et c'est
+     lui qui fait autorité — les en-têtes locaux, eux, peuvent mentir sur les
+     tailles quand le fichier a été écrit en flux. */
+  let fin=-1;
+  for(let i=u.length-22;i>=0 && i>u.length-66000;i--){ if(d.getUint32(i,true)===0x06054b50){ fin=i; break; } }
+  if(fin<0) throw new Error('zip');
+  const n=d.getUint16(fin+10,true); let p=d.getUint32(fin+16,true);
+  const dec=new TextDecoder(), out={};
+  for(let k=0;k<n;k++){
+    if(d.getUint32(p,true)!==0x02014b50) break;
+    const meth=d.getUint16(p+10,true), taille=d.getUint32(p+20,true);
+    const ln=d.getUint16(p+28,true), lx=d.getUint16(p+30,true), lc=d.getUint16(p+32,true);
+    const debut=d.getUint32(p+42,true);
+    const nom=dec.decode(u.subarray(p+46,p+46+ln));
+    /* l'en-tête local n'a pas la même longueur d'extra que le catalogue */
+    const lnL=d.getUint16(debut+26,true), lxL=d.getUint16(debut+28,true);
+    const dep=debut+30+lnL+lxL;
+    out[nom]={meth, brut:u.subarray(dep,dep+taille)};
+    p+=46+ln+lx+lc;
+  }
+  return out;
+}
+async function _zipTexte(e){
+  if(!e) return '';
+  if(e.meth===0) return new TextDecoder().decode(e.brut);
+  if(e.meth!==8) throw new Error('compression '+e.meth);
+  if(typeof DecompressionStream==='undefined') throw new Error('vieux navigateur');
+  const fl=new Blob([e.brut]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+  return await new Response(fl).text();
+}
+
+/* ---------- un classeur Excel -> des colonnes ---------- */
+const _colNum=r=>{ const m=/^([A-Z]+)/.exec(r||''); if(!m) return 0;
+  let n=0; for(const c of m[1]) n=n*26+(c.charCodeAt(0)-64); return n-1; };
+
+async function lireClasseur(fichier){
+  const buf=new Uint8Array(await fichier.arrayBuffer());
+  if(!(buf[0]===0x50&&buf[1]===0x4b))
+    throw new Error("Ce fichier n'est pas un .xlsx. S'il vient d'un vieil Excel (.xls), ouvre-le et fais « Enregistrer sous » en .xlsx ou en .csv.");
+  let z; try{ z=await _zipOuvre(buf); }catch(e){ throw new Error("Ce classeur n'a pas pu être ouvert. Réenregistre-le en .xlsx ou en .csv."); }
+
+  /* les textes sont rangés à part, dans une table commune à tout le classeur */
+  let SS=[];
+  if(z['xl/sharedStrings.xml']){
+    const x=new DOMParser().parseFromString(await _zipTexte(z['xl/sharedStrings.xml']),'application/xml');
+    SS=[...x.getElementsByTagName('si')].map(si=>[...si.getElementsByTagName('t')].map(t=>t.textContent).join(''));
+  }
+
+  /* la première feuille au sens du classeur, pas au sens du nom de fichier :
+     sheet1.xml n'est pas toujours l'onglet de gauche */
+  let cible='xl/worksheets/sheet1.xml';
+  try{
+    const wb=new DOMParser().parseFromString(await _zipTexte(z['xl/workbook.xml']),'application/xml');
+    const f=wb.getElementsByTagName('sheet')[0];
+    const id=f&&(f.getAttribute('r:id')||f.getAttribute('id'));
+    if(id){
+      const rl=new DOMParser().parseFromString(await _zipTexte(z['xl/_rels/workbook.xml.rels']),'application/xml');
+      for(const r of rl.getElementsByTagName('Relationship')){
+        if(r.getAttribute('Id')===id){ let t=r.getAttribute('Target')||'';
+          t=t.replace(/^\/?xl\//,'').replace(/^\.\//,''); cible='xl/'+t; break; }
+      }
+    }
+  }catch(e){}
+  if(!z[cible]) cible=Object.keys(z).find(k=>/^xl\/worksheets\/.*\.xml$/.test(k))||cible;
+  if(!z[cible]) throw new Error("Ce classeur ne contient aucune feuille lisible.");
+
+  const sh=new DOMParser().parseFromString(await _zipTexte(z[cible]),'application/xml');
+  const lignes=[];
+  for(const row of sh.getElementsByTagName('row')){
+    const cells=[];
+    for(const c of row.getElementsByTagName('c')){
+      const i=_colNum(c.getAttribute('r')), t=c.getAttribute('t')||'';
+      let v='';
+      if(t==='inlineStr'){ v=[...c.getElementsByTagName('t')].map(x=>x.textContent).join(''); }
+      else { const n=c.getElementsByTagName('v')[0]; const b=n?n.textContent:'';
+             v = (t==='s') ? (SS[+b]||'') : b; }
+      /* une case vide au milieu ne doit pas decaler les colonnes suivantes */
+      while(cells.length<i) cells.push('');
+      cells[i]=String(v).replace(/[\t\r\n]+/g,' ').trim();
+    }
+    lignes.push(cells.join('\t'));
+  }
+  /* on coupe les lignes vides de fin : Excel en fabrique souvent des centaines */
+  while(lignes.length && !lignes[lignes.length-1].replace(/\t/g,'').trim()) lignes.pop();
+  if(!lignes.length) throw new Error("Cette feuille est vide.");
+  return lignes.join('\n');
+}
+
+/* ---------- PDF : le texte s'il y en a, sinon l'image de chaque page ---------- */
+/* pdf.js est soit deja dans la page (les rubriques qui l'embarquent), soit charge
+   a la demande depuis lib/pdfjs/. Depuis un fichier ouvert en local (file://) le
+   navigateur refuse de charger un module : on le dit, au lieu d'echouer en silence. */
+async function _pdfjs(){
+  if(window.pdfjsLib) return window.pdfjsLib;
+  if(location.protocol==='file:') throw new Error("Les PDF se lisent sur la version en ligne de l'outil, pas depuis un fichier ouvert en local.");
+  const m=await import('./lib/pdfjs/pdf.min.mjs');
+  m.GlobalWorkerOptions.workerSrc='lib/pdfjs/pdf.worker.min.mjs';
+  window.pdfjsLib=m; return m;
+}
+async function lirePDFTexte(buf){
+  const pdfjs=await _pdfjs();
+  const pdf=await pdfjs.getDocument({data:buf}).promise; const out=[];
+  for(let i=1;i<=pdf.numPages;i++){
+    const pg=await pdf.getPage(i), tc=await pg.getTextContent(), L={};
+    tc.items.forEach(it=>{ if(!it.str.trim()) return; const y=Math.round(it.transform[5]/2)*2;
+      (L[y]=L[y]||[]).push({x:it.transform[4],s:it.str}); });
+    Object.keys(L).map(Number).sort((a,b)=>b-a).forEach(y=>out.push(L[y].sort((a,b)=>a.x-b.x).map(o=>o.s).join('  ')));
+  }
+  return {texte:out.join('\n'), pages:pdf.numPages, pdf};
+}
+/* un PDF scanne n'a pas de texte : on dessine chaque page et on la lit comme une photo */
+async function _pdfPagesEnImages(pdf, max){
+  const out=[];
+  for(let i=1;i<=Math.min(pdf.numPages,max||6);i++){
+    const pg=await pdf.getPage(i), vp=pg.getViewport({scale:2});
+    const c=document.createElement('canvas'); c.width=vp.width; c.height=vp.height;
+    await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+    out.push(await new Promise(r=>c.toBlob(r,'image/png')));
+  }
+  return out;
+}
+
+/* ---------- photo : reconnaissance de caracteres, dans le navigateur ---------- */
+/* tesseract.js, servi par l'outil lui-meme (lib/tesseract/) : l'image ne part
+   nulle part. Le premier usage telecharge environ 15 Mo (moteur + anglais), que
+   le navigateur garde ensuite. L'anglais lit tres bien un devis ou une liste de
+   parfums : ce sont des noms propres et des chiffres, pas des phrases. */
+let _ocrWorker=null;
+async function _ocr(){
+  if(_ocrWorker) return _ocrWorker;
+  if(location.protocol==='file:') throw new Error("Les photos se lisent sur la version en ligne de l'outil, pas depuis un fichier ouvert en local.");
+  if(!window.Tesseract){
+    await new Promise((res,rej)=>{ const sc=document.createElement('script'); sc.src='lib/tesseract/tesseract.min.js';
+      sc.onload=res; sc.onerror=()=>rej(new Error("Le moteur de lecture des photos n'a pas pu être chargé (lib/tesseract manquant)."));
+      document.head.appendChild(sc); });
+  }
+  _ocrWorker=await window.Tesseract.createWorker('eng',1,{
+    workerPath:'lib/tesseract/worker.min.js', corePath:'lib/tesseract/', langPath:'lib/tesseract/lang',
+    logger:m=>{ try{ if(window.__lireAvance) window.__lireAvance(m); }catch(e){} } });
+  return _ocrWorker;
+}
+async function lireImage(img){
+  const w=await _ocr();
+  const r=await w.recognize(img);
+  /* on garde les lignes telles que lues : une ligne = un article, la plupart du temps */
+  return (r.data&&r.data.text||'').replace(/[ \t]+\n/g,'\n').trim();
+}
+
+/* ---------- la porte d'entree unique ---------- */
+/* Rend TOUJOURS du texte a lignes, ou une erreur en francais clair.
+   `avance(msg)` est appele pendant les lectures longues (photo, PDF scanne).
+   Tout passe : tableur, CSV, texte, PDF avec texte, PDF scanne, photo. */
+async function lireFichier(fichier, avance){
+  const n=(fichier.name||'').toLowerCase(), type=fichier.type||'';
+  window.__lireAvance = avance ? (m=>{ if(m&&m.status==='recognizing text') avance('Lecture de la photo… '+Math.round((m.progress||0)*100)+' %');
+    else if(m&&/loading|initializ/.test(m.status||'')) avance('Chargement du moteur de lecture (première fois : ~15 Mo)…'); }) : null;
+  if(/\.xlsx$/.test(n) || type==='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    return await lireClasseur(fichier);
+  if(/\.xls$/.test(n))
+    throw new Error("Le format .xls (vieil Excel) ne se lit pas ici. Ouvre-le et fais « Enregistrer sous » en .xlsx ou en .csv.");
+  if(/\.(numbers|ods)$/.test(n))
+    throw new Error("Ce format de tableur ne se lit pas ici. Exporte-le en .xlsx ou en .csv.");
+  if(/\.pdf$/.test(n) || type==='application/pdf'){
+    const buf=new Uint8Array(await fichier.arrayBuffer());
+    const r=await lirePDFTexte(buf);
+    if(r.texte.replace(/\s/g,'').length>=40) return r.texte;
+    /* pas de texte : un scan ou une photo mise en PDF — on lit l'image */
+    if(avance) avance('PDF sans texte : lecture comme une photo…');
+    const imgs=await _pdfPagesEnImages(r.pdf, 6); const parts=[];
+    for(const b of imgs) parts.push(await lireImage(b));
+    const t=parts.join('\n').trim();
+    if(t.replace(/\s/g,'').length<10) throw new Error("Ce PDF n'a rien de lisible, même en le regardant comme une image.");
+    return t;
+  }
+  if(/\.heic$/.test(n)||type==='image/heic') throw new Error("Les photos HEIC (iPhone) ne se lisent pas dans le navigateur : envoie-la par WhatsApp ou par email, elle deviendra un JPEG.");
+  if(/\.(png|jpe?g|webp|gif|bmp|tiff?)$/.test(n) || /^image\//.test(type)){
+    const t=await lireImage(fichier);
+    if(t.replace(/\s/g,'').length<6) throw new Error("Rien de lisible sur cette photo. Prends-la de plus près, bien droite, sans reflet.");
+    return t;
+  }
+  if(/\.(docx?|pages|zip|rar|7z)$/.test(n))
+    throw new Error("Ce type de fichier ne se lit pas ici. Dépose un PDF, un Excel (.xlsx), un CSV ou une photo.");
+  const t=await fichier.text();
+  /* un binaire lu comme du texte donne des caracteres de controle : mieux vaut
+     le dire que de faire semblant d'avoir compris */
+  if(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(t.slice(0,2000)))
+    throw new Error("Ce fichier n'est pas lisible comme du texte. Dépose un PDF, un Excel (.xlsx), un CSV ou une photo.");
+  return t;
+}
+
+
+/* ============ SORTIR UN TABLEAU : Excel, PDF, CSV ============
+   La page appelle poseSortie(id, () => ({...})) et fournit, au moment du clic :
+     titre    : « Journal des ventes »
+     filtre   : le filtre en toutes lettres — « 30 derniers jours · canal Boutique »
+     fichier  : le début du nom de fichier
+     colonnes : [{t:'Montant', y:'m'}] — y : 't' texte (défaut), 'n' nombre,
+                'm' montant, 'd' date (aaaa-mm-jj), 'p' pourcentage
+     lignes   : [[...], [...]] dans l'ordre des colonnes
+   Les trois sorties partent de là : elles ne peuvent pas diverger. */
+
+const _CRC=(()=>{ const t=new Uint32Array(256);
+  for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); t[n]=c>>>0; }
+  return t; })();
+function _crc32(u8){ let c=0xFFFFFFFF;
+  for(let i=0;i<u8.length;i++) c=_CRC[(c^u8[i])&0xFF]^(c>>>8);
+  return (c^0xFFFFFFFF)>>>0; }
+const _octets=s=>new TextEncoder().encode(s);
+
+/* Un ZIP sans compression : le format l'autorise (méthode 0) et Excel l'accepte.
+   C'est ce qui permet d'écrire un vrai .xlsx sans charger la moindre bibliothèque. */
+function _zip(fichiers){
+  const morceaux=[], centre=[]; let pos=0;
+  const heure=0, jour=((2026-1980)<<9)|(1<<5)|1;
+  const u16=v=>[v&255,(v>>8)&255];
+  const u32=v=>[v&255,(v>>8)&255,(v>>16)&255,(v>>>24)&255];
+  fichiers.forEach(f=>{
+    const nom=_octets(f.nom), d=f.data, crc=_crc32(d);
+    const tete=[].concat(u32(0x04034b50),u16(20),u16(0),u16(0),u16(heure),u16(jour),
+      u32(crc),u32(d.length),u32(d.length),u16(nom.length),u16(0));
+    morceaux.push(new Uint8Array(tete), nom, d);
+    centre.push([].concat(u32(0x02014b50),u16(20),u16(20),u16(0),u16(0),u16(heure),u16(jour),
+      u32(crc),u32(d.length),u32(d.length),u16(nom.length),u16(0),u16(0),u16(0),u16(0),
+      u32(0),u32(pos)), nom);
+    pos+=tete.length+nom.length+d.length;
+  });
+  const cd=[]; let taille=0;
+  for(let i=0;i<centre.length;i+=2){
+    const a=new Uint8Array(centre[i]); cd.push(a,centre[i+1]); taille+=a.length+centre[i+1].length;
+  }
+  cd.push(new Uint8Array([].concat(u32(0x06054b50),u16(0),u16(0),
+    u16(fichiers.length),u16(fichiers.length),u32(taille),u32(pos),u16(0))));
+  return new Blob([...morceaux,...cd],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+
+const _xe=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]))
+  .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g,'');
+function _colL(n){ let s=''; n++; while(n>0){ const r=(n-1)%26; s=String.fromCharCode(65+r)+s; n=(n-r-1)/26; } return s; }
+/* Excel compte les jours depuis le 30 décembre 1899. */
+function _xdate(v){ const m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})/); if(!m) return null;
+  const d=Date.UTC(+m[1],+m[2]-1,+m[3]); return Math.round(d/86400000)+25569; }
+
+function sortieXlsx(S){
+  const C=S.colonnes||[], L=S.lignes||[];
+  const style={t:0,n:0,m:2,d:3,p:4};
+  let lignes='';
+  lignes+='<row r="1">'+C.map((c,j)=>
+    `<c r="${_colL(j)}1" s="1" t="inlineStr"><is><t>${_xe(c.t)}</t></is></c>`).join('')+'</row>';
+  L.forEach((li,i)=>{
+    const r=i+2;
+    lignes+=`<row r="${r}">`+C.map((c,j)=>{
+      const v=li[j], ref=_colL(j)+r, y=c.y||'t';
+      if(v==null||v==='') return `<c r="${ref}" s="${style[y]||0}"/>`;
+      if(y==='n'||y==='m'||y==='p'){ const n=Number(v);
+        return isFinite(n)?`<c r="${ref}" s="${style[y]}"><v>${n}</v></c>`
+                          :`<c r="${ref}" t="inlineStr"><is><t>${_xe(v)}</t></is></c>`; }
+      if(y==='d'){ const n=_xdate(v);
+        return n!=null?`<c r="${ref}" s="3"><v>${n}</v></c>`
+                     :`<c r="${ref}" t="inlineStr"><is><t>${_xe(v)}</t></is></c>`; }
+      return `<c r="${ref}" t="inlineStr"><is><t>${_xe(v)}</t></is></c>`;
+    }).join('')+'</row>';
+  });
+  /* largeur des colonnes : sinon tout est à 8 caractères et Sam redimensionne à la main */
+  const larg=C.map((c,j)=>{
+    let m=String(c.t||'').length;
+    for(let i=0;i<Math.min(L.length,400);i++) m=Math.max(m,String(L[i][j]==null?'':L[i][j]).length);
+    return `<col min="${j+1}" max="${j+1}" width="${Math.min(46,Math.max(9,m+2))}" customWidth="1"/>`;
+  }).join('');
+
+  const feuille=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>
+<cols>${larg}</cols><sheetData>${lignes}</sheetData>
+<autoFilter ref="A1:${_colL(Math.max(0,C.length-1))}${L.length+1}"/></worksheet>`;
+
+  const styles=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<numFmts count="2"><numFmt numFmtId="164" formatCode="#,##0.00\\ &quot;$&quot;"/><numFmt numFmtId="165" formatCode="0.0\\ &quot;%&quot;"/></numFmts>
+<fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts>
+<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFEDEDF2"/><bgColor indexed="64"/></patternFill></fill></fills>
+<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>
+<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+<cellXfs count="5">
+<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+<xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/>
+<xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>
+<xf numFmtId="14" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>
+<xf numFmtId="165" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>
+</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+
+  const nomF=(S.titre||'Données').slice(0,28).replace(/[\\\/\?\*\[\]:]/g,' ');
+  const F=[
+   {nom:'[Content_Types].xml', data:_octets(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+</Types>`)},
+   {nom:'_rels/.rels', data:_octets(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`)},
+   {nom:'xl/workbook.xml', data:_octets(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<sheets><sheet name="${_xe(nomF)}" sheetId="1" r:id="rId1"/></sheets></workbook>`)},
+   {nom:'xl/_rels/workbook.xml.rels', data:_octets(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`)},
+   {nom:'xl/styles.xml', data:_octets(styles)},
+   {nom:'xl/worksheets/sheet1.xml', data:_octets(feuille)}
+  ];
+  _telecharge(_zip(F), (S.fichier||'donnees')+'-'+ajd()+'.xlsx');
+}
+
+function sortieCsv(S){
+  const C=S.colonnes||[], L=S.lignes||[];
+  const g=x=>'"'+String(x==null?'':x).replace(/"/g,'""')+'"';
+  /* virgule décimale et point-virgule : c'est ce qu'attend un Excel réglé en français */
+  const nb=(v,y)=>(y==='n'||y==='m'||y==='p')&&v!=null&&v!==''&&isFinite(Number(v))
+    ? String(Number(v)).replace('.',',') : g(v);
+  const li=[C.map(c=>g(c.t)).join(';')];
+  L.forEach(x=>li.push(C.map((c,j)=>nb(x[j],c.y)).join(';')));
+  _telecharge(new Blob(['﻿'+li.join('\r\n')],{type:'text/csv;charset=utf-8'}),
+    (S.fichier||'donnees')+'-'+ajd()+'.csv');
+}
+
+function _telecharge(blob,nom){
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nom;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+
+/* --------- le PDF : on prépare la page, le navigateur fabrique le fichier --------- */
+function sortieImprime(S){
+  const C=S.colonnes||[], L=S.lignes||[];
+  const fr=v=>Number(v||0).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const cel=(v,y)=>{
+    if(v==null||v==='') return '—';
+    if(y==='m') return fr(v)+' $';
+    if(y==='p') return Number(v).toFixed(1).replace('.',',')+' %';
+    if(y==='n') return Number(v).toLocaleString('fr-FR');
+    if(y==='d'){ const m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})/);
+                 return m?`${m[3]}/${m[2]}/${m[1].slice(2)}`:String(v); }
+    return String(v);
+  };
+  const dr=y=>(y==='n'||y==='m'||y==='p')?' class="r"':'';
+  /* un total par colonne chiffrée : c'est la première chose qu'on cherche sur un papier */
+  const tot=C.map(c=>(c.y==='m'||c.y==='n')?L.reduce((a,x,i)=>{
+      const n=Number(x[C.indexOf(c)]); return a+(isFinite(n)?n:0); },0):null);
+  const aTot=tot.some(t=>t!=null);
+
+  let z=document.getElementById('imprzone');
+  if(!z){ z=document.createElement('div'); z.id='imprzone'; document.body.appendChild(z); }
+  const d=new Date();
+  z.innerHTML=`<div class="imprtete">
+      <h2>${esc(S.titre||'')}</h2>
+      <p>${esc(S.filtre||'tout')}</p>
+      <p>Perfumes Trade · ${nf(L.length)} ligne${L.length>1?'s':''} · édité le ${
+        String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} à ${
+        String(d.getHours()).padStart(2,'0')}h${String(d.getMinutes()).padStart(2,'0')}</p>
+    </div>
+    <table><thead><tr>${C.map(c=>`<th${dr(c.y)}>${esc(c.t)}</th>`).join('')}</tr></thead>
+    <tbody>${L.map(x=>`<tr>${C.map((c,j)=>`<td${dr(c.y)}>${esc(cel(x[j],c.y))}</td>`).join('')}</tr>`).join('')}</tbody>
+    ${aTot?`<tfoot><tr>${C.map((c,j)=>`<td${dr(c.y)}>${tot[j]==null?(j===0?'Total':''):esc(cel(tot[j],c.y))}</td>`).join('')}</tr></tfoot>`:''}
+    </table>`;
+  document.body.classList.add('impr-tab');
+  const fin=()=>document.body.classList.remove('impr-tab');
+  window.addEventListener('afterprint',fin,{once:true});
+  setTimeout(()=>{ window.print(); setTimeout(fin,1500); },60);
+}
+
+/* --------- le bouton --------- */
+function poseSortie(id, obtenir){
+  const el=document.getElementById(id); if(!el) return;
+  el.outerHTML=`<details class="sbar" id="${id}">
+    <summary>Exporter</summary>
+    <div class="smenu">
+      <button data-s="x"><b>Excel (.xlsx)</b><span>vrai fichier Excel : colonnes séparées, montants calculables</span></button>
+      <button data-s="p"><b>PDF (impression)</b><span>ouvre la fenêtre d'impression — choisis « Enregistrer en PDF »</span></button>
+      <button data-s="c"><b>CSV</b><span>pour un autre logiciel ; Excel l'ouvre moins bien</span></button>
+      <div class="squoi" data-quoi></div>
+    </div></details>`;
+  const d=document.getElementById(id);
+  d.addEventListener('toggle',()=>{ if(!d.open) return;
+    let S=null; try{ S=obtenir(); }catch(e){}
+    d.querySelector('[data-quoi]').textContent = S
+      ? `Ce qui sortira : ${nf((S.lignes||[]).length)} ligne${(S.lignes||[]).length>1?'s':''} — ${S.filtre||'tout'}.`
+      : '';
+  });
+  d.querySelector('.smenu').addEventListener('click',e=>{
+    const b=e.target.closest('[data-s]'); if(!b) return;
+    d.open=false;
+    const S=obtenir(); if(!S) return;
+    if(!(S.lignes||[]).length){ alert("Il n'y a rien à exporter : le filtre affiché ne laisse aucune ligne."); return; }
+    if(b.dataset.s==='x') sortieXlsx(S);
+    else if(b.dataset.s==='p') sortieImprime(S);
+    else sortieCsv(S);
+  });
+  /* un clic ailleurs referme le menu */
+  document.addEventListener('click',e=>{ if(d.open && !d.contains(e.target)) d.open=false; });
+}
+
+
+const K_MSG='messages-v1';
+
+function msgs(){ const L=lit(K_MSG,[]); return Array.isArray(L)?L:[]; }
+function sauveMsgs(L){ ecrit(K_MSG,L); }
+
+const MOI=session();
+const autres=()=>comptes().filter(u=>u.ident!==(MOI&&MOI.id));
+let CIBLE=null;
+
+const ini=n=>String(n||'?').trim().split(/\s+/).slice(0,2).map(m=>m[0]||'').join('').toUpperCase()||'?';
+const hm=iso=>{ const d=new Date(iso); return d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); };
+const jourDe=iso=>new Date(iso).toDateString();
+function libJour(iso){
+  const d=new Date(iso), a=new Date(), h=new Date(a.getTime()-86400000);
+  if(d.toDateString()===a.toDateString()) return "Aujourd'hui";
+  if(d.toDateString()===h.toDateString()) return 'Hier';
+  return d.toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'long'});
+}
+
+/* Le fil entre moi et une personne : les deux sens, dans l'ordre. */
+const filAvec=id=>msgs().filter(m=>
+  (m.de===MOI.id && m.a===id) || (m.de===id && m.a===MOI.id));
+const nonLus=id=>msgs().filter(m=>m.de===id && m.a===MOI.id && !m.lu).length;
+
+function peintGens(){
+  $('liste').innerHTML=autres().map(u=>{
+    const n=nonLus(u.ident);
+    return `<button data-u="${esc(u.ident)}" class="${u.ident===CIBLE?'on':''}">
+      <span class="pa">${esc(ini(u.nom))}</span>
+      <span class="nn"><b>${esc(u.nom)}</b><span>${esc((ROLES[u.role]||{}).lib||u.role)}${u.actif?'':' · accès fermé'}</span></span>
+      <span class="pt ${n?'':'z'}">${n}</span></button>`;
+  }).join('') || '<div style="padding:20px 15px;font-size:13px;color:var(--ink-3);line-height:1.6">'
+    +'Il n\'y a que toi pour l\'instant. Ouvre un accès dans <b>Accès</b> et tu pourras lui écrire.</div>';
+  const t=msgs().filter(m=>m.a===MOI.id && !m.lu).length;
+  $('src').innerHTML = t ? t+' message'+(t>1?'s':'')+' non lu'+(t>1?'s':'') : 'aucun message non lu';
+}
+
+function peintFil(){
+  const co=$('co');
+  if(!CIBLE){
+    $('qui').textContent='—'; $('role').textContent='';
+    co.innerHTML='<div class="vide">Choisis quelqu\'un dans la liste de gauche pour lui écrire.</div>';
+    return;
+  }
+  const u=comptes().find(x=>x.ident===CIBLE)||{nom:CIBLE};
+  $('qui').textContent=u.nom;
+  $('role').textContent=(ROLES[u.role]||{}).lib||'';
+  const F=filAvec(CIBLE);
+  if(!F.length){
+    co.innerHTML=`<div class="vide">Rien d'échangé avec ${esc(u.nom)} pour l'instant.<br>
+      Écris le premier message en bas.</div>`;
+    return;
+  }
+  let j=null, out=[];
+  F.forEach(m=>{
+    const dj=jourDe(m.t);
+    if(dj!==j){ j=dj; out.push(`<div class="jourlab">${esc(libJour(m.t))}</div>`); }
+    const moi=m.de===MOI.id;
+    out.push(`<div class="bulle ${moi?'moi':'lui'}">${esc(m.txt)}
+      <span class="q">${hm(m.t)}${moi?(m.lu?' · lu':' · envoyé'):''}</span></div>`);
+  });
+  co.innerHTML=out.join('');
+  co.scrollTop=co.scrollHeight;
+}
+
+/* Ouvrir un fil marque comme lus les messages de cette personne. */
+function ouvre(id){
+  CIBLE=id;
+  const L=msgs(); let bouge=false;
+  L.forEach(m=>{ if(m.de===id && m.a===MOI.id && !m.lu){ m.lu=new Date().toISOString(); bouge=true; } });
+  if(bouge) sauveMsgs(L);
+  peintGens(); peintFil();
+  if(typeof mnPastilleMessages==='function') mnPastilleMessages();
+}
+
+function envoie(){
+  const t=$('txt').value.trim();
+  if(!CIBLE) return alert('Choisis d\'abord à qui tu écris.');
+  if(!t) return;
+  const L=msgs();
+  L.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),
+          t:new Date().toISOString(), de:MOI.id, deNom:MOI.nom, a:CIBLE, txt:t.slice(0,2000), lu:null});
+  sauveMsgs(L);
+  const J=lit('crm-journal-v1',[]);
+  const u=comptes().find(x=>x.ident===CIBLE)||{nom:CIBLE};
+  J.push({t:new Date().toISOString(),u:MOI.nom,act:'message',
+          lib:'message envoyé à '+u.nom,ref:CIBLE,av:null,ap:null});
+  ecrit('crm-journal-v1',J);
+  $('txt').value=''; peintFil(); peintGens();
+}
+
+$('liste').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-u]'); if(!b) return; ouvre(b.dataset.u);
+});
+$('env').onclick=envoie;
+$('txt').addEventListener('keydown',e=>{
+  if(e.key==='Enter' && (e.metaKey||e.ctrlKey)){ e.preventDefault(); envoie(); }
+});
+
+/* Deux onglets ouverts sur le même poste : ce qui est écrit dans l'un
+   apparaît dans l'autre. C'est le seul « direct » qu'on sache faire sans serveur. */
+window.addEventListener('storage',e=>{
+  if(e.key===K_MSG){ peintGens(); if(CIBLE) peintFil(); }
+});
+
+(function(){
+  if(!MOI) return;
+  $('ban').innerHTML=`<b>Ce que c'est, et ce que ce n'est pas encore.</b>
+    Ici on écrit aux gens de l'équipe — pas aux clients : pour eux, c'est le bouton
+    <b>Écrire</b> sur leur fiche. Tant que Perfumes Trade tourne sur cet ordinateur et pas
+    sur un serveur, <b>les messages restent sur cet ordinateur</b> : c'est un cahier de
+    consignes pour ceux qui se relaient sur le même poste, pas une messagerie qui arrive
+    sur le téléphone de Javier. Le jour où il y a un serveur, cet écran ne change pas et
+    devient une vraie messagerie — ce qui est écrit maintenant n'est pas perdu.`;
+  $('tout').hidden=false;
+  peintGens();
+  /* On ouvre d'abord le fil de celui qui attend une réponse : sinon la page
+     ouvre le premier venu et consomme silencieusement ses non-lus. */
+  const A=autres();
+  const attend=A.find(u=>nonLus(u.ident));
+  ouvre(attend ? attend.ident : (A.length?A[0].ident:null));
+  $('sfoot').innerHTML='Messages internes';
+})();
+
+
+/* ---------------------------------------------------------------
+   Ouvert depuis une copie (Téléchargements, Bureau) : les autres
+   rubriques ne sont pas à côté du fichier, les liens tombent dans le
+   vide. On répare les liens avec le dossier de l'outil mémorisé, et on
+   le dit clairement.
+   --------------------------------------------------------------- */
+(function(){
+  if(location.protocol!=='file:') return;
+  try{
+    var p=decodeURIComponent(location.pathname);
+    var i=p.lastIndexOf('/'), fichier=p.slice(i+1);
+    var dossier=p.slice(0,i).split('/').filter(Boolean).pop()||'';
+    var K='dossier-outil-v1';
+    var copie=/_\d+\.html$/i.test(fichier)
+      || /^(downloads|t[ée]l[ée]chargements|desktop|bureau|documents)$/i.test(dossier);
+    var base=location.href.slice(0,location.href.lastIndexOf('/')+1);
+    if(!copie){ try{ localStorage.setItem(K,base); }catch(e){} return; }
+    var vrai=''; try{ vrai=localStorage.getItem(K)||''; }catch(e){}
+    var n=0;
+    if(vrai && vrai!==base){
+      document.querySelectorAll('a[href$=".html"]').forEach(function(a){
+        var h=a.getAttribute('href');
+        if(!h || /^([a-z]+:|\/|#)/i.test(h)) return;
+        a.setAttribute('href',vrai+h); n++;
+      });
+    }
+    var d=document.createElement('div');
+    d.setAttribute('style','margin:0 0 18px;padding:13px 16px;border-radius:0 8px 8px 0;'
+      +'background:var(--warn-soft,#FBF3E2);border-left:3px solid var(--warn,#8A5A00);'
+      +'color:var(--ink-2,#4A4A56);font-size:13.5px;line-height:1.6;max-width:88ch');
+    d.innerHTML='<b style="color:var(--ink,#17171D)">Tu as ouvert une copie de la page, pas l\'outil.</b> '
+      +'Ce fichier est dans « '+dossier+' » : les autres rubriques ne sont pas à côté de lui. '
+      +(n? 'J\'ai réparé les '+n+' liens de la barre de gauche pour cette fois. ' : '')
+      +'Pour de bon : ouvre le dossier <b>perfumestrade</b> sur ton Bureau et double-clique le fichier qui s\'y trouve '
+      +'(pas la copie des Téléchargements). Tes saisies ne sont pas dans le fichier : elles restent dans le navigateur.';
+    var cible=document.querySelector('.wrap')||document.body;
+    cible.insertBefore(d,cible.firstChild);
+  }catch(e){}
+})();
+
+</script>
+<script>
+(function(){
+  const url=(typeof COCKPIT_URL!=='undefined'&&COCKPIT_URL)||'https://cockpit.igalbotbol.com';
+  const org=(typeof COCKPIT_ORG!=='undefined'&&COCKPIT_ORG)||'dasy';
+  const enLigne=location.protocol!=='file:' && !/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+  let tok=''; try{ tok=localStorage.getItem('ck-token')||''; }catch(e){}
+  const K_V='ck-versions';
+  window.__CK={url,org,enLigne,hors:false,charge:null};
+  function lance(){
+    /* dossier « donnees » absent : le garde-fou a déjà écrit l'explication, on ne démarre pas */
+    if(window.__DONNEES_MANQUENT) return;
+    /* la page s'attendait à démarrer avec le document : on rejoue ces événements pour elle */
+    const ael=document.addEventListener.bind(document), wael=window.addEventListener.bind(window);
+    document.addEventListener=function(t,f,o){ if(t==='DOMContentLoaded'&&document.readyState!=='loading'){ setTimeout(()=>f.call(document,new Event('DOMContentLoaded')),0); } else ael(t,f,o); };
+    window.addEventListener=function(t,f,o){ if((t==='load'&&document.readyState==='complete')||(t==='DOMContentLoaded'&&document.readyState!=='loading')){ setTimeout(()=>f.call(window,new Event(t)),0); } else wael(t,f,o); };
+    const src=document.getElementById('page-js'); const s=document.createElement('script');
+    s.textContent=src.textContent; if(src.dataset.module) s.type='module'; src.remove(); document.body.appendChild(s);
+  }
+  if(!enLigne||!tok){ lance(); return; }
+  let V={}; try{ V=JSON.parse(localStorage.getItem(K_V)||'{}')||{}; }catch(e){ V={}; }
+  const ctrl=new AbortController(); const tm=setTimeout(()=>ctrl.abort(),12000);
+  fetch(url+'/api/o/'+org+'/donnees/lire',{method:'POST',signal:ctrl.signal,
+    headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify({versions:V})})
+  .then(async r=>{
+    clearTimeout(tm);
+    if(r.status===401){
+      try{ localStorage.removeItem('ck-token'); localStorage.removeItem('sam-session-v1'); }catch(e){}
+      if(!/accueil\.html$/.test(location.pathname)){ location.replace('accueil.html'); return; }
+      lance(); return;
+    }
+    if(!r.ok) throw new Error('serveur '+r.status);
+    const j=await r.json();
+    for(const k in j.magasins){ try{ localStorage.setItem(k,JSON.stringify(j.magasins[k].val)); }catch(e){} }
+    (j.disparus||[]).forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
+    try{ localStorage.setItem(K_V,JSON.stringify(j.versions||{})); }catch(e){}
+    window.__CK.charge=j.versions||{};
+    lance();
+  })
+  .catch(e=>{ clearTimeout(tm); window.__CK.hors=true; lance(); });
+})();
+</script></body></html>

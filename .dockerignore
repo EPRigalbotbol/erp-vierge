@@ -1,0 +1,13 @@
+*
+!*.html
+!*.css
+!accueil.jpg
+!donnees/
+!logos/
+!photos/
+!lib/
+!nginx.conf
+_ancienne_demo.html
+_prev.html
+_test_pdf.html
+outils/_pdfjs/package/web

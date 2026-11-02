@@ -4,9 +4,12 @@ from _comptes import COMPTES
 import _aide
 from _serveur import enligne
 from _identite import IDENT
+import _identite
+import _file_auto
 from _sauvegarde import SAUVE
 from _menu import MENU
 from _langue import LANGUE
+import _langue
 import _xlsx, _sortie
 import _lire
 data=open('stock.json').read()
@@ -18,28 +21,43 @@ n=lambda v: f"{v:,}".replace(',',' ')
 
 TPL = r'''<!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8">
+<!-- l'icône d'onglet : Sam a toujours beaucoup d'onglets ouverts ; le flacon du logo, blanc sur rose vif (choisi par Igal), se repère d'un coup d'œil (27 sept. 2026) -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23FF1F7A'/%3E%3Cg fill='none' stroke='%23fff' stroke-width='4' stroke-linejoin='round'%3E%3Crect x='25' y='7' width='14' height='8' rx='2' fill='%23fff'/%3E%3Crect x='28' y='15' width='8' height='6'/%3E%3Cpath d='M19 21 H45 L51 27 V51 L45 57 H19 L13 51 V27 Z'/%3E%3C/g%3E%3Cpath d='M36 28 Q44 29 45 36' stroke='%23fff' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
+<script>/* en anglais ou en espagnol, l'écran reste caché le temps que la traduction passe (quelques ms) : on ne voit jamais le français d'origine */try{var _l=localStorage.getItem('langue-v1');if(_l&&_l!=='fr'){document.documentElement.style.visibility='hidden';setTimeout(function(){document.documentElement.style.visibility='';},1500);}
+/* un menu réglé (ordre, rubriques cachées) : la barre reste cachée le temps qu'il s'applique, pour que les rubriques ne sautent pas */
+var _m=JSON.parse(localStorage.getItem('menu-perso-v1')||'null');if(_m&&((_m.ordre&&_m.ordre.length)||(_m.caches&&_m.caches.length))){document.documentElement.classList.add('mn-attente');setTimeout(function(){document.documentElement.classList.remove('mn-attente');},1500);}}catch(e){}</script>
+<script>/* le contenu de la page reste caché jusqu'à ce que son code l'ait dessiné (voir _serveur.py) */try{document.documentElement.classList.add('pg-attente');setTimeout(function(){document.documentElement.classList.remove('pg-attente');},4000);}catch(e){}</script>
+<style>.mn-attente .side nav{visibility:hidden} .pg-attente .main{visibility:hidden}</style>
 
 <title>Inventaire — Perfumes Trade</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
 <style>
-:root{--ground:#F4F4F1;--surface:#FFF;--surface-2:#FAFAF8;--ink:#17171D;--ink-2:#4A4A56;--ink-3:#7C7C88;
+:root{--ground:#F4F4F1;--surface:#FFF;--surface-2:#FAFAF8;--ink:#17171D;--ink-2:#33333D;--ink-3:#5C5C68;
 --line:#E0E0DC;--line-2:#EDEDE9;--iris:#5B4B8A;--iris-soft:#EDE9F6;
 --good:#2C6E4E;--good-soft:#E9F3ED;--warn:#8A5A00;--warn-soft:#FBF3E2;--crit:#A4262C;--crit-soft:#FBECEC;}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
---ground:#121217;--surface:#1A1A21;--surface-2:#202028;--ink:#ECECF1;--ink-2:#B0B0BC;--ink-3:#80808E;
+--ground:#121217;--surface:#1A1A21;--surface-2:#202028;--ink:#ECECF1;--ink-2:#C9C9D3;--ink-3:#A4A4B2;
 --line:#2C2C36;--line-2:#26262F;--iris:#A99AE0;--iris-soft:#272036;
 --good:#77C79C;--good-soft:#152A20;--warn:#D9A94A;--warn-soft:#2E2411;--crit:#E8898D;--crit-soft:#33191B;}}
-:root[data-theme="dark"]{--ground:#121217;--surface:#1A1A21;--surface-2:#202028;--ink:#ECECF1;--ink-2:#B0B0BC;
---ink-3:#80808E;--line:#2C2C36;--line-2:#26262F;--iris:#A99AE0;--iris-soft:#272036;
+:root[data-theme="dark"]{--ground:#121217;--surface:#1A1A21;--surface-2:#202028;--ink:#ECECF1;--ink-2:#C9C9D3;
+--ink-3:#A4A4B2;--line:#2C2C36;--line-2:#26262F;--iris:#A99AE0;--iris-soft:#272036;
 --good:#77C79C;--good-soft:#152A20;--warn:#D9A94A;--warn-soft:#2E2411;--crit:#E8898D;--crit-soft:#33191B;}
 *{box-sizing:border-box}
 body{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1,"cv05" 1}
+/* ---- lisible (Igal, 25 sept. 2026 : « beaucoup d'écritures en gris clair, ça me dérange ;
+   agrandis la police des écritures, pas des titres ») : gris plus foncés (ci-dessus, dans
+   les couleurs), et tout le contenu de la page 8 % plus grand — le grand titre garde sa
+   taille. Les tableaux restent dans leur cadre (colonnes secondaires rangées, voir « af »). */
+.wrap{zoom:1.08}
+.wrap h1{zoom:.926}
+@media (max-width:1300px){.wrap{zoom:1}.wrap h1{zoom:1}}   /* portable : taille normale, sinon les tableaux débordent */
+
 body{margin:0;background:var(--ground);color:var(--ink);
 font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;font-size:15px;-webkit-font-smoothing:antialiased}
 .mono{font-family:Inter,sans-serif;font-variant-numeric:tabular-nums}
@@ -56,16 +74,16 @@ text-transform:uppercase;color:var(--ink-3);font-weight:500}
 
 .app{display:flex;align-items:flex-start;min-height:100vh}
 .side{width:234px;flex:0 0 234px;position:sticky;top:0;height:100vh;overflow-y:auto;
-background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:20px 0 16px}
-.logo{padding:0 18px 18px;border-bottom:1px solid var(--line-2);margin-bottom:14px}
+background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:14px 0 10px}
+.logo{padding:0 18px 12px;border-bottom:1px solid var(--line-2);margin-bottom:8px}
 .logo .n{font-size:16px;font-weight:700;letter-spacing:-.02em;line-height:1.2}
 .logo .s{font-family:Inter,sans-serif;font-size:9.5px;letter-spacing:.15em;
 text-transform:uppercase;color:var(--ink-3);margin-top:3px}
 nav{display:flex;flex-direction:column;gap:1px;padding:0 10px}
 .navlab{font-family:Inter,sans-serif;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;
-color:var(--iris);font-weight:800;padding:16px 8px 6px}
-.nv{display:flex;align-items:center;gap:9px;padding:8px 10px;white-space:nowrap;border-radius:4px;
-font-size:14px;color:var(--ink);font-weight:600;text-decoration:none;line-height:1.3;border-left:2px solid transparent}
+color:var(--iris);font-weight:800;padding:10px 8px 4px}
+.nv{display:flex;align-items:center;gap:9px;padding:5px 10px;white-space:nowrap;border-radius:4px;
+font-size:13.5px;color:var(--ink);font-weight:600;text-decoration:none;line-height:1.3;border-left:2px solid transparent}
 .nv .ic{width:15px;text-align:center;flex:0 0 15px;opacity:.75}
 .nv .ct{margin-left:auto;font-family:Inter,sans-serif;font-size:10.5px;font-weight:500;color:var(--ink-3);
 font-variant-numeric:tabular-nums}
@@ -73,6 +91,9 @@ font-variant-numeric:tabular-nums}
 .nv:hover{background:var(--surface-2);color:var(--ink)}
 .nv.on{background:var(--iris-soft);color:var(--iris);font-weight:700;border-left-color:var(--iris)}
 .nv.on .ic{opacity:1}
+.nv.sub{padding:3px 10px 3px 36px;font-size:12.5px;font-weight:500}
+@media(max-height:860px) and (min-width:901px){.nv{padding-top:3px;padding-bottom:3px}.navlab{padding-top:7px}}  /* portable : voir _base.css */
+@media(max-width:900px){.nv.sub{padding:5px 10px}}
 .nv.soon{color:var(--ink-3);font-weight:500;cursor:default;pointer-events:none}
 .nv.soon .ct{font-size:9px;letter-spacing:.08em;text-transform:uppercase;opacity:.8}
 .sfu{margin-bottom:9px;padding-bottom:9px;border-bottom:1px solid var(--line-2);
@@ -81,10 +102,25 @@ font-family:Inter,sans-serif;font-size:11.5px;color:var(--ink-3);line-height:1.5
 .lnk{background:none;border:0;padding:0;font-family:inherit;font-size:11.5px;color:var(--ink-3);
 text-decoration:underline;cursor:pointer}
 .lnk:hover{color:var(--iris)}
-.sfoot{margin-top:auto;padding:14px 18px 14px;border-top:1px solid var(--line-2);
-font-family:Inter,sans-serif;font-size:10px;color:var(--ink-3);line-height:1.7}
+.sfoot{margin-top:auto;padding:10px 18px 8px;border-top:1px solid var(--line-2);
+font-family:Inter,sans-serif;font-size:10px;color:var(--ink-3);line-height:1.6}
+/* Le TYPE du parfum (EDT, EDP, OIL, SET…) et son GENRE — même pastille que
+   partout ailleurs (voir _base.css ; ces deux pages ont leur propre charte). */
+.ty{display:inline-block;font-style:normal;font-family:Inter,sans-serif;font-size:10.5px;font-weight:800;
+ letter-spacing:.05em;padding:1px 6px;margin-left:6px;border-radius:5px;vertical-align:middle;
+ background:var(--iris-soft);color:var(--iris);white-space:nowrap}
+.gn{display:inline-block;font-style:normal;font-family:Inter,sans-serif;font-size:10.5px;font-weight:600;
+ letter-spacing:.03em;padding:1px 6px;margin-left:4px;border-radius:5px;vertical-align:middle;
+ background:var(--line-2);color:var(--ink-3);white-space:nowrap}
+/* le pied garde sa place dès le départ (voir _base.css) */
+.sfoot #sfu{min-height:64px}
+.sfoot .sfline{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.sfoot .sfline #lgsel{margin-top:0!important}
+.sfoot .sfline #mn-btn{display:inline!important;margin-top:0!important}
+.sfoot #aid-slot{min-height:20px}
+
 .main{flex:1;min-width:0}
-.wrap{max-width:1180px;margin:0 auto;padding:26px 26px 80px;display:flex;flex-direction:column;gap:30px}
+.wrap{max-width:1600px;margin:0 auto;padding:26px 26px 80px;display:flex;flex-direction:column;gap:30px}
 @media(max-width:900px){.app{flex-direction:column}
 .side{width:100%;flex:none;height:auto;position:static;border-right:0;border-bottom:1px solid var(--line);padding:14px 0 10px}
 .logo{padding:0 16px 12px} nav{flex-direction:row;overflow-x:auto;gap:4px;padding:0 12px;scrollbar-width:none}
@@ -117,6 +153,8 @@ section{display:flex;flex-direction:column;gap:15px}
 .xlb.on{background:var(--iris);border-color:var(--iris);color:#fff;font-weight:600}
 
 .ver{margin-top:9px;font-family:Inter,sans-serif;font-size:10px;color:var(--ink-3);opacity:.75;letter-spacing:.02em}
+.vhint{margin:10px 0 12px;padding:10px 14px;background:var(--iris-soft);border-left:3px solid var(--iris);border-radius:0 8px 8px 0;font-size:13.5px;color:var(--ink-2);line-height:1.55}
+.vhint b{color:var(--ink)}
 .shead{border-bottom:1px solid var(--line);padding-bottom:10px;display:flex;
 justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
 .sdesc{font-size:13.5px;color:var(--ink-2);max-width:70ch;margin:0}
@@ -204,10 +242,14 @@ input.cnt.filled{background:var(--iris-soft);border-color:var(--iris)}
 color:var(--iris);letter-spacing:.02em;margin-top:1px}
 .gap{font-family:Inter,sans-serif;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
 .gap.pos{color:var(--good)} .gap.neg{color:var(--crit)} .gap.zero{color:var(--ink-3);font-weight:400}
-tr.done{background:var(--good-soft)}
-tr.done:hover{background:var(--good-soft)}
-tr.ecart{background:var(--crit-soft)}
-tr.ecart:hover{background:var(--crit-soft)}
+/* Igal, 30 sept. 2026 : une ligne comptée devient VIOLET PÂLE — c'est la preuve que le
+   stock a été compté ; l'écart et sa valeur ne s'affichent plus (colonnes 6 et 7 masquées),
+   le capital reste. */
+tr.done,tr.ecart{background:var(--iris-soft)}
+tr.done:hover,tr.ecart:hover{background:var(--iris-soft)}
+#tb td:nth-child(6),#tb td:nth-child(7),.tscroll thead th:nth-child(6),.tscroll thead th:nth-child(7){display:none}
+/* sans le prix d'achat (rôle Commercial, Entrepôt) : pas de capital — il est au prix d'achat (3 oct. 2026) */
+body.sansPA #tb td:nth-child(8),body.sansPA .tscroll thead th:nth-child(8),body.sansPA .stat.c,body.sansPA #bilan>div:nth-child(2){display:none}
 
 .bilan{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;
 background:var(--line);border:1px solid var(--line);border-radius:3px;overflow:hidden}
@@ -264,8 +306,9 @@ __AIDECSS__
     <span class="navlab">Produits</span>
 __BARRE__
   </nav>
-  <div class="sfoot"><div id="sfu" class="sfu"></div><span id="sfoot">__TOTAL__ références<br>__ENSTOCK__ en stock<br>__UNITES__ unités</span>
-  <div class="ver" title="Si cette date n'est pas la derni&egrave;re, recharge avec Cmd+Option+R">version du __VERSION__</div></div>
+  <div class="sfoot"><div id="sfu" class="sfu"></div><span id="sfoot">__TOTAL__ références · __ENSTOCK__ en stock · __UNITES__ unités</span>
+  <div class="ver" title="Si cette date n'est pas la derni&egrave;re, recharge avec Cmd+Option+R">version du __VERSION__</div>
+    <div class="sfline" id="sfline"></div></div>
 </aside>
 
 <div class="main"><div class="wrap">
@@ -273,7 +316,7 @@ __BARRE__
 <header class="pg">
   <div><div class="eyebrow">__EYEBROW__</div><h1>Comptage et écarts</h1>__SOUS__</div>
   <div class="mono" style="font-size:11.5px;color:var(--ink-2);text-align:right;line-height:1.7">
-    Saisie conservée sur cet ordinateur<br>Export CSV pour la transmettre
+    Partagé en direct avec l'équipe<br>Chaque comptage est signé à ton nom
   </div>
 </header>
 
@@ -308,12 +351,13 @@ __BARRE__
     <h2>Feuille de comptage</h2>
     <span class="count" id="cnt"></span>
   </div>
+  <p class="vhint" id="vhint" data-nolang></p>
   <div class="tools">
     <input type="search" id="q" autocomplete="off" placeholder="Rechercher une marque, un nom, un code-barres… ou scanner" aria-label="Rechercher">
   <div id="scan" class="scan" hidden></div>
-    <select id="fs"><option value="in" id="o-in">En stock</option>
-      <option value="out" id="o-out">Historique, annoncées à zéro</option>
-      <option value="" id="o-all">Tout</option></select>
+    <select id="fs"><option value="" id="o-all" selected>Tout</option>
+      <option value="in" id="o-in">En stock</option>
+      <option value="out" id="o-out">Historique, annoncées à zéro</option></select>
     <select id="fv"><option value="">Tous les statuts</option>
       <option value="non">Jamais vérifiées</option><option value="doute">À vérifier</option>
       <option value="ok">Déjà vérifiées</option></select>
@@ -382,12 +426,12 @@ __BARRE__
    </div>
   </div>
 
-  <div class="tw"><div class="tscroll"><table>
+  <div class="tw"><div class="tscroll af"><table>
     <thead><tr>
-      <th class="no">N°</th><th data-tri="nom">Produit</th><th data-tri="statut">Statut</th><th class="num" data-tri="th">Théorique</th>
-      <th class="num" data-tri="compte">Compté</th><th class="num" data-tri="ecart">Écart</th><th class="num" data-tri="val">Valeur écart</th>
-      <th class="num" data-tri="cap">Capital</th>
-      <th class="num pv" hidden data-tri="pvr">PV détail</th><th class="num pv" hidden data-tri="pvw">PV gros</th>
+      <th class="no o3">N°</th><th data-tri="nom">Produit</th><th data-tri="statut" class="o4">Statut</th><th class="num" data-tri="th">Théorique</th>
+      <th class="num" data-tri="compte">Compté</th><th class="num" data-tri="ecart">Écart</th><th class="num o2" data-tri="val">Valeur écart</th>
+      <th class="num o1" data-tri="cap">Capital</th>
+      <th class="num pv o5" hidden data-tri="pvr">PV détail</th><th class="num pv o5" hidden data-tri="pvw">PV gros</th>
     </tr></thead>
     <tbody id="tb"></tbody>
   </table></div></div>
@@ -403,10 +447,9 @@ __BARRE__
   </div>
 
   <div class="note">
-    <b>Ce que fait cette page et ce qu'elle ne fait pas.</b> La saisie est conservée dans le navigateur
-    de cet ordinateur uniquement — elle ne part nulle part et ne se synchronise pas avec un téléphone.
-    Exporte le CSV dès qu'un lot est terminé, c'est lui qui fait foi. Le vrai comptage à plusieurs,
-    depuis l'entrepôt, demandera la base partagée du CRM.
+    <b>Ce que fait cette page.</b> Chaque quantité comptée est enregistrée sur le serveur de l'ERP :
+    les autres postes la voient, et le journal la signe avec ton nom et l'heure.
+    « Exporter » donne en plus un fichier du lot, pour garder une trace.
   </div>
 </section>
 
@@ -415,25 +458,45 @@ __BARRE__
 
 </div></div></div>
 
-<script src="donnees/langue.js"></script>
-<script src="donnees/inventaire.js"></script>__GARDE__
+<script>__VOCAB__</script>
+<script src="donnees/langue.js?v=__VER__"></script>
+<script>
+/* le menu réglé et la langue de l'écran, AVANT le code de la page : rien ne saute, rien n'est vu dans une autre langue */
+__IDENT_TOT__
+__MENU__
+__LANGUE__
+</script>
+<script src="donnees/inventaire.js?v=__VER__"></script>__GARDE__
 <script>
 __FUSION__
 __COMPTES__
 __IDENT__
+__FILE_AUTO__
 __SAUVE__
-__MENU__
-__LANGUE__
 __XLSX__
 __SORTIE__
 let P=__DATA__.map(r=>({bc:r[0],nom:r[1],marque:r[2],ml:r[3],type:r[4],
  qte:r[5],pa:r[6],cap:r[7],v:r[8],cle:r[9],pvr:r[10],pvw:r[11]}));
 /* Si un inventaire a été importé sur ce poste, c'est lui qui fait foi. */
-(function(){ try{ const t=localStorage.getItem('inventaire-local-__CIBLE__-v1');
-  if(!t) return; const L=JSON.parse(t);
+(function(){ try{
+  /* Perfume City : son stock est un magasin PARTAGÉ (pc-stock-v1), le même pour Kim et pour Sam */
+  let L=null;
+  if('__CIBLE__'==='pc') L=pcsRows();
+  else { const t=localStorage.getItem('inventaire-local-__CIBLE__-v1'); if(t) L=JSON.parse(t); }
   if(Array.isArray(L)) P=L.map(r=>({bc:r[0],nom:r[1],marque:r[2],ml:r[3],type:r[4],
     qte:r[5],pa:r[6],cap:r[7],v:r[8],cle:r[9],pvr:r[10],pvw:r[11]}));
 }catch(e){} })();
+/* Les parfums ajoutés dans l'ERP (fiche créée à la main, ou par la mise à jour du Sheet
+   du 30 sept. 2026) n'étaient pas dans l'inventaire de l'entrepôt : on ne pouvait ni les
+   voir ni les compter. Ils y entrent, avec leur quantité. */
+if('__CIBLE__'==='pt'){ try{
+  const A=(typeof lit==='function'?lit('articles-ajoutes-v1',[]):JSON.parse(localStorage.getItem('articles-ajoutes-v1')||'[]'))||[];
+  const deja=new Set(P.map(p=>p.cle));
+  (Array.isArray(A)?A:[]).forEach(o=>{ if(!o||!o.id||deja.has(o.id)) return;
+    const q=+o.qte||0, pa=o.pa==null||o.pa===''?null:+o.pa;
+    P.push({bc:String(o.bc||''),nom:o.nom||'',marque:o.marque||'',ml:String(o.ml||''),type:String(o.type||'').toUpperCase(),
+      qte:q,pa,cap:pa!=null?q*pa:0,v:'non',cle:o.id,pvr:o.pvr==null||o.pvr===''?null:+o.pvr,pvw:o.pvw==null||o.pvw===''?null:+o.pvw,aj:true}); });
+}catch(e){} }
 const PAL=__PAL__;
 const KEY='comptage-parfums-v1';
 const VER_URL='__VER__';
@@ -447,19 +510,30 @@ saisie=lit(KEY,{}); if(!saisie||typeof saisie!=='object') saisie=base(KEY,{});
 const sauve=()=>ecrit(KEY,saisie);
 
 const nf=n=>n.toLocaleString('fr-FR');
-const money=n=>n==null?'—':n.toLocaleString('fr-FR',{maximumFractionDigits:0})+' $';
-const money2=n=>n==null?'—':n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' $';
+/* Le dollar (Igal, 30 sept. 2026 : « le dollar est décalé ») : une espace INSÉCABLE entre le
+   montant et le $, pour que le $ ne parte jamais seul à la ligne suivante. Le format reste
+   « 3 837,50 $ » : le dictionnaire de traduction reconnaît les phrases sur ce modèle. */
+const _usd=(v,d)=>{ if(v==null) return '—'; const n=Number(v); 
+  return n.toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d})+' $'; };
+const money=n=>_usd(n,0);
+const money2=n=>_usd(n,2);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 /* Les chiffres du haut se comptent sur la liste réellement affichée : après un
    import, une vente ou un comptage, ils restent vrais. */
 function chiffres(){
-  const enstock=P.filter(x=>x.qte>0).length, zero=P.length-enstock;
+  /* le stock d'aujourd'hui (ventes, comptages, import du Sheet), pas celui du fichier de
+     départ : le haut de page disait 1 892 en stock quand la liste en montrait 1 863 */
+  const qn=x=>{ try{ return qteTh(x); }catch(e){ return x.qte; } };
+  const enstock=P.filter(x=>qn(x)>0).length, zero=P.length-enstock;
   const ok=P.filter(x=>x.v==='ok').length;
-  const capnon=P.filter(x=>x.v!=='ok'&&x.qte>0).reduce((s,x)=>s+(x.cap||0),0);
-  const znon=P.filter(x=>x.qte===0&&x.v!=='ok').length;
+  const capnon=P.filter(x=>x.v!=='ok'&&qn(x)>0).reduce((s,x)=>s+(x.cap||0),0);
+  const znon=P.filter(x=>qn(x)===0&&x.v!=='ok').length;
   const set=(id,v)=>{ const e=$(id); if(e) e.textContent=v; };
   set('s-enstock',nf(enstock)); set('s-zero',nf(zero));
+  /* le menu : les parfums EN STOCK pas encore vérifiés (Igal, 1er oct. 2026) — il descend à
+     chaque comptage et tombe à 0 quand tout le stock a été recompté */
+  if('__CIBLE__'==='pt'){ window.__CT_INV_PAGE=true; set('ct-inventaire',nf(P.filter(x=>x.v!=='ok'&&qn(x)>0).length)); }
   set('s-ok',nf(ok)); set('s-capnon',money(Math.round(capnon)));
   set('f-total',nf(P.length)); set('c-nb',nf(P.length));
   set('z-nb',nf(zero)); set('z-non',nf(znon));
@@ -474,8 +548,8 @@ function chiffres(){
      bouton était donc là et mort. Le tampon de version et le bouton d'aide
      étaient emportés au passage. */
   const sfo=document.getElementById('sfoot');
-  if(sfo){ const u=P.reduce((s,x)=>s+(x.qte||0),0);
-    sfo.innerHTML=nf(P.length)+' références<br>'+nf(enstock)+' en stock<br>'+nf(u)+' unités'; }
+  if(sfo){ const u=P.reduce((s,x)=>s+(qn(x)||0),0);
+    sfo.innerHTML=nf(P.length)+' références · '+nf(enstock)+' en stock · '+nf(u)+' unités'; }
 }
 chiffres();
 
@@ -491,13 +565,15 @@ $('pal').innerHTML=Object.entries(PAL).map(([n,p])=>
 
 function filtre(){
   const q=$('q').value.trim().toLowerCase(), fv=$('fv').value, fe=$('fe').value, st=$('fs').value;
-  let l=P.filter(p=>(!st||(st==='in'?qteTh(p)>0:qteTh(p)===0))&&(!fv||p.v===fv)&&
-    (!q||(p.nom+' '+p.marque+' '+p.bc).toLowerCase().includes(q)));
+  /* 28 sept. : avec un texte tapé, « en stock » ne cache plus un parfum à 0 — au comptage,
+     c'est justement le flacon trouvé sur l'étagère que l'outil croit épuisé */
+  let l=P.filter(p=>(!st||(st==='in'?(q||qteTh(p)>0):qteTh(p)===0))&&(!fv||p.v===fv)&&
+    (!q||q.split(/\s+/).filter(Boolean).every(m=>(p.nom+' '+p.marque+' '+p.bc).toLowerCase().includes(m))));
   if(lot>0 && !q && !fv && st==='in') l=l.slice(0,lot);
   l=trie(l);
   if(fe){
     l=l.filter(p=>{
-      const c=saisie[p.bc];
+      const c=cpt(p);
       if(fe==='todo') return c==null||c==='';
       if(fe==='done') return c!=null&&c!=='';
       if(fe==='gap')  return c!=null&&c!==''&&(+c)!==qteTh(p);
@@ -515,9 +591,9 @@ const valTri={
   nom:   p=>(p.marque||'')+' '+(p.nom||''),
   statut:p=>vl(p.v)[0],
   th:    p=>qteAtt(p),
-  compte:p=>{ const c=saisie[p.bc]; return (c==null||c==='')?null:+c; },
-  ecart: p=>{ const c=saisie[p.bc]; return (c==null||c==='')?null:(+c)-qtePhys(p); },
-  val:   p=>{ const c=saisie[p.bc]; return (c==null||c===''||paEff(p)==null)?null:((+c)-qtePhys(p))*paEff(p); },
+  compte:p=>{ const c=cpt(p); return (c==null||c==='')?null:+c; },
+  ecart: p=>{ const c=cpt(p); return (c==null||c==='')?null:(+c)-qtePhys(p); },
+  val:   p=>{ const c=cpt(p); return (c==null||c===''||paEff(p)==null)?null:((+c)-qtePhys(p))*paEff(p); },
   cap:   p=>capEff(p),
   pvr:   p=>p.pvr==null?null:+p.pvr,
   pvw:   p=>p.pvw==null?null:+p.pvw };
@@ -549,7 +625,7 @@ document.querySelectorAll('thead th[data-tri]').forEach(th=>th.onclick=()=>{
 peintTri();
 
 function ligne(p,i){
-  const c=saisie[p.bc];
+  const c=cpt(p);
   const rempli=c!=null&&c!=='';
   const ec=rempli?(+c)-qtePhys(p):null;
   const val=rempli&&paEff(p)!=null?ec*paEff(p):null;
@@ -557,32 +633,31 @@ function ligne(p,i){
   const cls=!rempli?'':(ec===0?'done':'ecart');
   const gcls=ec==null?'zero':ec>0?'pos':ec<0?'neg':'zero';
   return `<tr class="${cls}" data-bc="${p.bc}">
-   <td class="no">${nf((i||0)+1)}</td>
+   <td class="no o3">${nf((i||0)+1)}</td>
    <td><div class="pd"><span class="b">${esc(p.marque)}</span>
      <span class="n">${esc(p.nom)}</span>
      <span class="m">${[p.ml?p.ml+' oz':'',p.type].filter(Boolean).join(' · ')} &nbsp;<span class="code">${p.bc}</span></span></div></td>
-   <td><span class="tag ${vl(p.v)[1]}">${vl(p.v)[0]}</span></td>
+   <td class="o4"><span class="tag ${vl(p.v)[1]}">${vl(p.v)[0]}</span></td>
    <td class="num">${qteAtt(p)===0?'<span style="color:var(--ink-3)">0</span>':nf(qteAtt(p))}${
-       vit?`<span class="vit" title="${nf(vit)} flacon${vit>1?'s':''} en vitrine, non vendable${vit>1?'s':''} — à compter quand même">+${nf(vit)} vitrine</span>`:''}</td>
+       vit?`<span class="vit" title="${nf(vit)} tester${vit>1?'s':''}, non vendable${vit>1?'s':''} — à compter quand même">+${nf(vit)} tester${vit>1?'s':''}</span>`:''}</td>
    <td class="num"><input class="cnt${rempli?' filled':''}" type="number" min="0" inputmode="numeric"
        value="${rempli?c:''}" data-bc="${p.bc}" aria-label="Quantité comptée"></td>
    <td class="num"><span class="gap ${gcls}">${ec==null?'—':(ec>0?'+':'')+nf(ec)}</span></td>
-   <td class="num"><span class="gap ${gcls}">${val==null?'—':(val>0?'+':'')+money(val)}</span></td>
-   <td class="num" style="color:var(--ink-3)">${money(capEff(p))}</td>
-   ${AVEC_PV?`<td class="num pv">${p.pvr==null?'—':money2(p.pvr)}</td><td class="num pv">${p.pvw==null?'—':money2(p.pvw)}</td>`:''}
+   <td class="num o2"><span class="gap ${gcls}">${val==null?'—':(val>0?'+':'')+money(val)}</span></td>
+   <td class="num o1" style="color:var(--ink-3)">${money(capEff(p))}</td>
+   ${AVEC_PV?`<td class="num pv o5">${p.pvr==null?'—':money2(p.pvr)}</td><td class="num pv o5">${p.pvw==null?'—':money2(p.pvw)}</td>`:''}
   </tr>`;
 }
 
 function bilan(l){
-  const f=l.filter(p=>saisie[p.bc]!=null&&saisie[p.bc]!=='');
-  const g=f.filter(p=>(+saisie[p.bc])!==qtePhys(p));
-  const vg=g.reduce((a,p)=>a+((+saisie[p.bc])-qtePhys(p))*(paEff(p)||0),0);
+  const f=l.filter(p=>cpt(p)!=null&&cpt(p)!=='');
+  const g=f.filter(p=>(+cpt(p))!==qtePhys(p));
+  const vg=g.reduce((a,p)=>a+((+cpt(p))-qtePhys(p))*(paEff(p)||0),0);
   const capf=f.reduce((a,p)=>a+capEff(p),0);
   $('bilan').innerHTML=`
    <div><span class="v">${nf(f.length)} / ${nf(l.length)}</span><span class="k">références comptées</span></div>
    <div><span class="v" style="color:var(--iris)">${money(capf)}</span><span class="k">capital vérifié</span></div>
-   <div><span class="v" style="color:${g.length?'var(--crit)':'var(--ink-3)'}">${nf(g.length)}</span><span class="k">écarts trouvés</span></div>
-   <div><span class="v" style="color:${vg<0?'var(--crit)':vg>0?'var(--good)':'var(--ink-3)'}">${vg?(vg>0?'+':'')+money(vg):'—'}</span><span class="k">valeur des écarts</span></div>`;
+`;
 }
 
 /* Les prix de vente n'apparaissent que si les lignes en portent : l'entrepôt
@@ -608,8 +683,22 @@ function rend(reset){
 /* ---- Compter une référence, c'est la confirmer ----
    La saisie d'un comptage passe le statut de la fiche à « comptage vérifié »
    et écrit la ligne dans le journal des actions, avec le nom et l'heure. */
-const KMOD='fiches-modifiees-v1', KUSR='crm-utilisateur-v1', KJOU='crm-journal-v1';
+/* Perfume City a SON stock : ses fiches corrigées vivent à part (27 sept. 2026). Elles
+   partageaient la même boîte que l'entrepôt, avec les mêmes clés (« b » + code-barres) :
+   compter 3 flacons chez Perfume City aurait mis l'entrepôt à 3 — et, depuis que le stock
+   part tout seul sur les sites, les sites avec. */
+const KMOD='__KMOD__', KUSR='crm-utilisateur-v1', KJOU='crm-journal-v1';
 let MOD=lit(KMOD,{}); if(!MOD||typeof MOD!=='object'||Array.isArray(MOD)) MOD=base(KMOD,{});
+/* L'état « vérifiée / à compter » corrigé dans l'ERP (comptage, « nouvel inventaire », démarrage
+   du 1er oct. 2026 où tout est repassé « à compter ») l'emporte sur celui du fichier de départ.
+   La liste et le chiffre « vérifiées » lisaient le fichier : 1 263 « vérifiées » restaient affichées. */
+P.forEach(p=>{ const m=MOD[p.cle]; if(m&&m.verif!==undefined) p.v=m.verif; });
+/* 30 oct. 2026 : le nom, la marque, la contenance et le type changés dans la fiche du Catalogue se voient ici aussi
+   (avant, l'Inventaire gardait « Nom (Clone de…) » quand le Catalogue disait « Nom ») */
+P.forEach(p=>{ const m=MOD[p.cle]; if(!m) return; ['nom','marque','ml','type'].forEach(k=>{ if(m[k]!=null&&m[k]!=='') p[k]=(k==='type')?String(m[k]).toUpperCase():String(m[k]); }); });
+/* une fiche retirée du catalogue (« Retirer du catalogue », Patron/admin) disparaît aussi de l'Inventaire : Sam,
+   30 oct. 2026, « supprime-les définitivement du stock ». Elle reste dans l'historique (ventes, achats, journal). */
+if('__CIBLE__'==='pt') P=P.filter(p=>!(MOD[p.cle]&&MOD[p.cle].masque));
 
 /* Le stock théorique n'est pas celui du fichier : c'est celui d'aujourd'hui, une fois
    comptées les ventes, les réceptions et l'import du tableur. Sans ça, la feuille de
@@ -618,14 +707,38 @@ let EXT={q:{}}; try{ EXT=Object.assign({q:{}},JSON.parse(localStorage.getItem('s
 function qteTh(p){
   const m=MOD[p.cle];
   if(m&&m.qte!=null) return +m.qte;
-  const e=EXT.q&&EXT.q[p.bc];
+  /* 31 oct. 2026 (Sam : « l'inventaire de Perfume City est faux ») : stock-externe-v1 est le stock de L'ENTREPÔT (import du
+     Google Sheet de Sam). La page Perfume City le lisait aussi : un parfum affichait 15 (l'entrepôt) au lieu de 1 (la boutique).
+     Perfume City n'a que son propre stock (pc-stock-v1). */
+  const e='__CIBLE__'==='pt'&&EXT.q?EXT.q[p.bc]:null;
   if(e!=null) return +e;
   return p.qte;
 }
 /* Le théorique affiché face à un comptage, c'est celui d'AVANT le comptage : sinon
    l'écart tombe à zéro dès qu'on l'a saisi, et la colonne ne sert plus à rien. */
+setTimeout(()=>{ try{ chiffres(); }catch(e){} },0);
+/* LE FIL EN DIRECT (1er oct. 2026) : un comptage, une vente ou un achat fait sur un autre poste
+   arrive dans la seconde ; la liste se relit et se redessine sur place (jamais pendant une
+   saisie : le champ qu'on est en train de remplir garde la main, un bandeau propose de recharger) */
+window.__rafraichir=()=>{ const y=window.scrollY;
+  { const m=lit(KMOD,{}); if(m&&typeof m==='object'&&!Array.isArray(m)) MOD=m; }
+  try{ EXT=Object.assign({q:{}},JSON.parse(localStorage.getItem('stock-externe-v1')||'{}')); }catch(e){}
+  P.forEach(p=>{ const m=MOD[p.cle]; if(m&&m.verif!==undefined) p.v=m.verif; });
+  P.forEach(p=>{ const m=MOD[p.cle]; if(!m) return; ['nom','marque','ml','type'].forEach(k=>{ if(m[k]!=null&&m[k]!=='') p[k]=(k==='type')?String(m[k]).toUpperCase():String(m[k]); }); });
+  if('__CIBLE__'==='pt') P=P.filter(p=>!(MOD[p.cle]&&MOD[p.cle].masque));
+  { const s=lit(KEY,{}); if(s&&typeof s==='object') saisie=s; }
+  { const j=lit(KJOU,[]); if(Array.isArray(j)) JOU=j; }
+  try{ rend(false); }catch(e){} try{ chiffres(); }catch(e){} window.scrollTo(0,y); };
+/* UN COMPTAGE PÉRIMÉ (Sam, 30 oct. 2026 : « ce parfum, j'en ai acheté plusieurs, l'Inventaire dit 0 et
+   vérifié ») : le comptage du 2 oct. disait 0, puis une réception en a mis 87. L'Inventaire montrait encore le
+   théorique d'AVANT ce comptage (1) et la case comptée (0). Dès que le stock a bougé depuis le comptage (vente,
+   réception, correction), ce comptage ne dit plus rien du rayon : la ligne montre le stock d'aujourd'hui, la case
+   est vide, et le prochain comptage repart de ce stock-là. */
+/* ce que la case « compté » contient pour cette ligne — rien si le comptage est périmé */
+function cpt(p){ return comptagePerime(p)?undefined:saisie[p.bc]; }
+function comptagePerime(p){ const m=MOD[p.cle]; return !!(m&&m.qteC!=null&&(m.qte==null||+m.qte!==+m.qteC)); }
 function qteAtt(p){ const m=MOD[p.cle];
-  return (m&&m.qteC!=null&&m.qteTh0!=null)?+m.qteTh0:qteTh(p); }
+  return (m&&m.qteC!=null&&m.qteTh0!=null&&!comptagePerime(p))?+m.qteTh0:qteTh(p); }
 /* ---- Les flacons de vitrine (Perfume City) ----
    Quand Perfumes Trade sort 5 flacons pour la boutique, un part en vitrine comme
    testeur : 4 sont vendables, mais 5 sont physiquement là. Le stock compte le
@@ -680,7 +793,9 @@ const IMP_COLS={
   /* les prix de vente : pas affichés dans cet inventaire (qui compte des flacons),
      mais gardés — pour Perfume City, ce fichier est le seul endroit où ils existent */
   pvr:['pvr','prixretail','retailprice','prixdetail','prixvente','sellingprice','retail','prixdevente'],
-  pvw:['pvw','prixwholesale','wholesaleprice','prixgros','prixdegros','wholesale']};
+  pvw:['pvw','prixwholesale','wholesaleprice','prixgros','prixdegros','wholesale'],
+  /* Perfume City : les testeurs (flacons de vitrine) ont leur propre colonne dans le Sheet */
+  tst:['testerqty','testeurs','testeur','tester','vitrine']};
 
 function impDecoupe(t){
   const l=t.split(/\r?\n/).filter(x=>x.trim());
@@ -731,7 +846,8 @@ function impAnalyse(t){
       qte: Math.round(q),
       pa: idx.pa>=0?nb(r[idx.pa]):null,
       pvr: idx.pvr>=0?nb(r[idx.pvr]):null,
-      pvw: idx.pvw>=0?nb(r[idx.pvw]):null});
+      pvw: idx.pvw>=0?nb(r[idx.pvw]):null,
+      tst: idx.tst>=0?Math.max(0,Math.round(nb(r[idx.tst])||0)):null});
   }
   if(!lignes.length) return {err:'Aucune ligne exploitable : chaque ligne doit avoir un code-barres ou un nom, et une quantité.'};
   return {lignes, vides, cols:idx, tetes:L[0]};
@@ -782,8 +898,21 @@ function impApplique(){
   const rows=base0.map(x=>[x.bc,x.nom,x.marque,x.ml,x.type,x.qte,x.pa,
                            (x.pa!=null?x.qte*x.pa:null),'non',x.cle,
                            x.pvr==null?null:x.pvr, x.pvw==null?null:x.pvw]);
+  if(CIBLE==='pc'){
+    /* Perfume City : magasin partagé (le même pour Kim et Sam) ; « remplacer » vide d'abord */
+    if(!pcsSauve(rows,remp)){ $('impmsg').textContent='enregistrement impossible'; return; }
+    /* les flacons de vitrine (colonne TESTER QTY du Sheet) */
+    if(IMP.cols.tst>=0){ const T=remp?{}:Object.assign({},lit('testeurs-pc-v1',{}));
+      if(remp) lit('testeurs-pc-v1',{});
+      IMP.lignes.forEach(l=>{ if(l.tst==null) return;
+        const k=l.bc?String(l.bc).replace(/^0+/,''):'n-'+impNorm(l.marque+l.nom+l.ml);
+        if(l.tst>0) T[k]=Object.assign({},T[k]||{},{n:l.tst,bc:l.bc||'',ref:((l.marque||'')+' '+(l.nom||'')).trim(),t:new Date().toISOString(),u:(typeof NOM_UTIL!=='undefined'?NOM_UTIL:USR)||''});
+        else delete T[k]; });
+      ecrit('testeurs-pc-v1',T); }
+  } else {
   try{ localStorage.setItem(K_LOCAL,JSON.stringify(rows)); }catch(e){
     $('impmsg').textContent='fichier trop gros pour le navigateur'; return; }
+  }
   try{ const J=lit(KJOU,[]);
     J.push({t:new Date().toISOString(),u:(typeof NOM_UTIL!=='undefined'?NOM_UTIL:USR),
             act:'stock',lib:'inventaire importé — __CIBLE_LIB__',ref:'',av:null,
@@ -883,16 +1012,53 @@ function impApplique(){
     $('impremp').checked=__REMP0__; ov.classList.add('on'); setTimeout(()=>$('imptxt').focus(),80); };
 })();
 
+/* ---- Valider un comptage ----
+   Igal, 27 sept. 2026 : « dans la partie inventaire je ne vois pas où on peut valider
+   l'inventaire ». Il n'y a pas de bouton : chaque quantité tapée est validée quand on
+   quitte sa case. Mais la fonction qui validait avait disparu du fichier (le journal
+   aussi) : la case gardait le chiffre, l'écart s'affichait, et RIEN n'était validé —
+   ni le stock, ni le statut « comptage vérifié », ni le journal. La revoilà.
+   Le comptage physique voit aussi les flacons de vitrine (Perfume City) : le stock
+   vendable retenu est le compté moins la vitrine. */
+/* dit comment on valide, dans la langue de l'écran (le paragraphe porte du gras) */
+try{ document.getElementById('vhint').innerHTML=L3(
+  "<b>Pas de bouton « Valider » : chaque quantité est validée dès que tu quittes sa case</b> (Entrée, Tab ou clic ailleurs). Le stock prend le chiffre compté, la ligne passe en « comptage vérifié » et c'est écrit au journal avec ton nom. Pour annuler, vide la case.",
+  "<b>There is no “Confirm” button: each quantity is confirmed as soon as you leave its box</b> (Enter, Tab or a click elsewhere). Stock takes the counted figure, the line turns to “count checked” and it is written in the log with your name. To undo, empty the box.",
+  "<b>No hay botón «Validar»: cada cantidad se valida en cuanto sales de su casilla</b> (Intro, Tab o clic fuera). El stock toma la cifra contada, la línea pasa a «conteo verificado» y queda anotado en el registro con tu nombre. Para anular, vacía la casilla."); }catch(e){}
+function jlog(e){
+  try{ const J=lit(KJOU,[]); J.push(Object.assign({t:new Date().toISOString(),u:USR||(typeof NOM_UTIL==='string'&&NOM_UTIL)||'(non renseigné)'},e)); ecrit(KJOU,J); }catch(x){}
+}
+function confirmeComptage(p,valeur){
+  const id=p.cle, m0=MOD[id]||{};
+  const avant=(m0.verif)||p.v||'';
+  const m=Object.assign({},m0);
+  if(m.qteC==null||comptagePerime(p)){       /* premier comptage (ou l'ancien est périmé) : on garde de quoi revenir en arrière */
+    if(m0.qte!=null) m.qteAv=m0.qte; else delete m.qteAv;
+    m.qteTh0=qteTh(p);
+  }
+  const th=m.qteTh0!=null?+m.qteTh0:qteTh(p);
+  const vend=Math.max(0,valeur-tst(p));
+  m.qte=vend; m.qteC=vend;
+  m.verif='ok'; m.verifPar=USR||(typeof NOM_UTIL==='string'&&NOM_UTIL)||'(non renseigné)'; m.verifLe=new Date().toISOString();
+  MOD[id]=m; ecrit(KMOD,MOD); p.v='ok';
+  const ref=(p.marque||'')+' '+(p.nom||'');
+  jlog({act:'verif',lib:'comptage physique',bc:p.bc,ref,av:vl(avant)[0],ap:'comptage vérifié'});
+  if(vend!==th){ const pa=paEff(p);
+    jlog({act:'stock',lib:'quantité corrigée par comptage',bc:p.bc,ref,av:th,ap:vend,n:1,
+          impact:pa!=null?Math.round((vend-th)*pa):undefined,det:[{bc:p.bc,ref,av:th,ap:vend}]}); }
+}
 function annuleComptage(p){
   const id=p.cle, m=MOD[id]; if(!m) return;
-  delete m.verif; delete m.verifPar; delete m.verifLe;
+  /* annuler un comptage remet la ligne « à recompter » (1er oct. 2026). Avant, l'état était
+     effacé : la ligne reprenait celui du fichier de septembre — « vérifiée » pour 632 parfums,
+     alors que tout le stock était repassé à compter au démarrage. */
+  m.verif='non'; p.v='non'; delete m.verifPar; delete m.verifLe;
   /* on ne retire que la quantité posée par CE comptage : celles qui viennent des ventes,
      des réceptions ou de l'import tableur ne doivent pas disparaître avec lui. */
   if(m.qteC!=null && +m.qte===+m.qteC){
     if(m.qteAv!=null) m.qte=m.qteAv; else delete m.qte;   /* on rend la quantité d'avant le comptage */
   }
   delete m.qteC; delete m.qteAv; delete m.qteTh0;
-  if(!Object.keys(m).length) delete MOD[id];
   ecrit(KMOD,MOD);
   jlog({act:'verif',lib:'comptage annulé',bc:p.bc,ref:(p.marque||'')+' '+(p.nom||''),
         av:'comptage vérifié',ap:'à recompter'});
@@ -913,16 +1079,26 @@ function trouveBC(code){
   const nu=c.replace(/^0+/,'');
   for(const cle in MOD){ const m=MOD[cle]; if(!m||!m.bcs) continue;
     if(String(m.bcs).split(/[^0-9]+/).map(x=>x.replace(/^0+/,'')).includes(nu)){ const p=P.find(x=>x.cle===cle||x.id===cle); if(p) return p; } }
+  /* une case collée du fichier (deux codes dans la même cellule) */
+  const cx=(typeof cleParBCX==='function')?cleParBCX(nu):null;
+  if(cx){ const p=P.find(x=>x.cle===cx||x.id===cx); if(p) return p; }
   return null;
 }
 function bandeau(cls,html){ const b=$('scan'); b.className='scan '+cls; b.innerHTML=html; b.hidden=false; }
 function scanne(code){
   const p=trouveBC(code);
-  if(!p){ bandeau('ko',`<b>Code ${esc(normScan(code))} inconnu</b> dans l'inventaire — produit sans code-barres, code faux, ou référence absente du fichier. Cherche-le au nom.`);
+  const T3=(typeof L3==='function')?L3:(f)=>f;
+  if(!p){ const k=esc(normScan(code));
+    bandeau('ko',T3(`<b>Code ${k} inconnu</b> dans l'inventaire — produit sans code-barres, code faux, ou référence absente du fichier. Cherche-le au nom.`,
+      `<b>Code ${k} unknown</b> in the inventory — product without a barcode, wrong code, or reference missing from the file. Search it by name.`,
+      `<b>Código ${k} desconocido</b> en el inventario — producto sin código de barras, código erróneo o referencia que no está en el archivo. Búscalo por el nombre.`));
     $('q').value=''; rend(true); $('q').focus(); return; }
   $('q').value=p.bc; rend(true);
   const inp=document.querySelector(`.cnt[data-bc="${p.bc}"]`);
-  bandeau('ok',`<b>${esc(p.marque||'')} ${esc(p.nom||'')}</b> · ${nf(qteTh(p))} attendus${inp&&inp.value!==''?` · déjà compté : ${esc(inp.value)}`:''} — tape la quantité comptée puis Entrée.`);
+  const nomP=`<b>${esc(p.marque||'')} ${esc(p.nom||'')}${p.type?' <i class="ty" data-nolang>'+esc(p.type)+'</i>':''}</b>`, dj=inp&&inp.value!==''?esc(inp.value):null;
+  bandeau('ok',T3(`${nomP} · ${nf(qteTh(p))} attendus${dj!=null?` · déjà compté : ${dj}`:''} — tape la quantité comptée puis Entrée.`,
+    `${nomP} · ${nf(qteTh(p))} expected${dj!=null?` · already counted: ${dj}`:''} — type the counted quantity, then Enter.`,
+    `${nomP} · ${nf(qteTh(p))} esperados${dj!=null?` · ya contado: ${dj}`:''} — escribe la cantidad contada y pulsa Intro.`));
   if(inp){ inp.focus(); inp.select(); }
 }
 document.addEventListener('keydown',e=>{
@@ -940,7 +1116,10 @@ document.addEventListener('keydown',e=>{
     }
     SCAN.buf='';
     /* Entree apres une quantite : on prepare le scan suivant */
-    if(t&&t.classList.contains('cnt')){ e.preventDefault(); $('q').value=''; rend(true); $('scan').hidden=true; $('q').focus(); }
+    /* on quitte la case AVANT de redessiner : le comptage est validé (événement change), et la ligne
+       redessinée dit tout de suite « Vérifiée ». Avant (19 oct. 2026), la liste se redessinait d'abord :
+       le comptage était bien enregistré, mais la ligne restait « Jamais vérifiée » jusqu'au rechargement. */
+    if(t&&t.classList.contains('cnt')){ e.preventDefault(); t.blur(); $('q').value=''; rend(true); $('scan').hidden=true; $('q').focus(); }
     return;
   }
   if(e.key.length===1){
@@ -960,22 +1139,28 @@ document.addEventListener('change',e=>{
   /* la ligne affichait encore l'ancien théorique après une annulation : on la repeint,
      sans toucher au champ qu'on vient de quitter */
   majLigne(p0);
+  /* les chiffres du haut et du menu suivent chaque comptage */
+  try{ chiffres(); }catch(_){}
 },true);
 /* réécrit les cellules calculées d'une ligne (théorique, écart, capital) sans recréer le champ */
 function majLigne(p){
   const inp=document.querySelector(`.cnt[data-bc="${p.bc}"]`);
   const tr=inp?inp.closest('tr'):null; if(!tr) return;
-  const c=saisie[p.bc], rempli=c!=null&&c!=='';
+  const c=cpt(p), rempli=c!=null&&c!=='';
   const th=qtePhys(p), ec=rempli?(+c)-th:null;
-  const val=ec==null?null:ec*(paEff(p)||0);
+  const val=ec==null||paEff(p)==null?null:ec*paEff(p);
   const gcls=ec==null?'zero':ec>0?'pos':ec<0?'neg':'zero';
   const td=tr.querySelectorAll('td');
-  const n=td.length;
-  if(n>=8){
-    td[n-5].innerHTML = th===0?'<span style="color:var(--ink-3)">0</span>':nf(th);
-    td[n-3].innerHTML = `<span class="gap ${gcls}">${ec==null?'—':(ec>0?'+':'')+nf(ec)}</span>`;
-    td[n-2].innerHTML = `<span class="gap ${gcls}">${val==null?'—':(val>0?'+':'')+money(val)}</span>`;
-    td[n-1].innerHTML = money(capEff(p));
+  /* colonnes fixes (N°, Produit, Statut, Théorique, Compté, Écart, Valeur, Capital[, PV…]).
+     On comptait depuis la fin : quand les colonnes PV existent, le théorique
+     s'écrivait dans « Écart » et le capital dans « PV gros ». */
+  if(td.length>=8){
+    const ta=qteAtt(p), vit=tst(p);
+    td[3].innerHTML = (ta===0?'<span style="color:var(--ink-3)">0</span>':nf(ta))
+      +(vit?`<span class="vit">+${nf(vit)} tester${vit>1?'s':''}</span>`:'');   /* « tester » et non « vitrine » (Igal, 31 oct. 2026) */
+    td[5].innerHTML = `<span class="gap ${gcls}">${ec==null?'—':(ec>0?'+':'')+nf(ec)}</span>`;
+    td[6].innerHTML = `<span class="gap ${gcls}">${val==null?'—':(val>0?'+':'')+money(val)}</span>`;
+    td[7].innerHTML = money(capEff(p));
     const st=td[2].querySelector('.tag'); const v=(MOD[p.cle]&&MOD[p.cle].verif)||p.v||'';
     if(st){ st.className='tag '+vl(v)[1]; st.textContent=vl(v)[0]; }
   }
@@ -1090,7 +1275,7 @@ $('raz').addEventListener('click',()=>{
    lesquelles quelqu'un a posé un chiffre. Sortir les 3 830 lignes dont 3 700 vides
    ne servirait à rien et ferait croire que tout a été compté. */
 poseSortie('exp', ()=>{
-  const l=P.filter(p=>saisie[p.bc]!=null&&saisie[p.bc]!=='');
+  const l=P.filter(p=>cpt(p)!=null&&cpt(p)!=='');
   return {
     titre:'Comptage d\'inventaire — __CIBLE_LIB__',
     fichier:'comptage',
@@ -1099,7 +1284,7 @@ poseSortie('exp', ()=>{
     colonnes:[{t:'Code-barres'},{t:'Marque'},{t:'Nom'},{t:'Contenance'},{t:'Type'},{t:'Statut'},
       {t:'Théorique',y:'n'},{t:'Compté',y:'n'},{t:'Écart',y:'n'},
       {t:'Prix d\'achat',y:'m'},{t:'Valeur de l\'écart',y:'m'},{t:'PV détail',y:'m'},{t:'PV gros',y:'m'}],
-    lignes:l.map(p=>{ const c=+saisie[p.bc], th=qteTh(p), ec=c-th;
+    lignes:l.map(p=>{ const c=+cpt(p), th=qteTh(p), ec=c-th;
       return [p.bc,p.marque,p.nom,p.ml,p.type,vl(p.v)[0],th,c,ec,
         p.pa==null?null:+p.pa, p.pa!=null?ec*p.pa:null, p.pvr==null?null:+p.pvr, p.pvw==null?null:+p.pvw]; })
   };
@@ -1182,18 +1367,19 @@ for C in CIBLES:
                .replace('__COMPTES__', COMPTES).replace('__AIDECSS__', _aide.CSS)
                .replace('__SAUVE__', SAUVE)
                .replace('__MENU__', MENU)
-               .replace('__LANGUE__', LANGUE)
+               .replace('__LANGUE__', LANGUE).replace('__VOCAB__', _langue.VOCAB)
                .replace('__XLSX__', _xlsx.XLSX + _lire.bloc()).replace('__ACCEPT_TAB__', _lire.ACCEPT_TAB)
                .replace('__SORTIE__', _sortie.JS)
                .replace('__CSSSORTIE__', _sortie.CSS)
                .replace('__VER__', __import__('datetime').datetime.now().strftime('%Y%m%d%H%M'))
-               .replace('__VERSION__', __import__('datetime').datetime.now().strftime('%d/%m/%Y \u00e0 %Hh%M'))
-               .replace('__IDENT__', IDENT)
+               .replace('__VERSION__', __import__('datetime').datetime.now().strftime('%m/%d/%Y \u00e0 %Hh%M'))
+               .replace('__IDENT__', IDENT).replace('__IDENT_TOT__', _identite.TOT).replace('__FILE_AUTO__', _file_auto.FILE_AUTO)
                .replace('__GARDE__', _donnees.garde([C['donnees']]))
                .replace('donnees/inventaire.js', 'donnees/' + C['donnees'] + '.js')
                .replace('__DATA__', C['variable'])
                .replace("const KEY='comptage-parfums-v1';", "const KEY='%s';" % C['cle'])
                .replace('__CIBLE__', C['cible'])
+               .replace('__KMOD__', 'fiches-modifiees-pc-v1' if C['cible'] == 'pc' else 'fiches-modifiees-v1')
                .replace('__CIBLE_LIB__', C['lib'])
                .replace('__REMP0__', C['remp0'])
                .replace('__PAL__', json.dumps(T['paliers']))

@@ -10,6 +10,33 @@ de son rôle (voir _comptes.py). Ce n'est toujours pas une serrure tant qu'il n'
 pas de serveur — c'est un badge, et c'est déjà ce qui manquait.
 """
 
+TOT = r"""
+/* ===== LE BAS DE LA BARRE, AVANT LA PREMIÈRE PEINTURE (voir piedSession) ===== */
+const CSS_SORTIR = `
+.sfu{margin-bottom:9px}
+.sfu b{font-size:12px;color:var(--ink);letter-spacing:-.01em}
+#sortir{display:block;width:100%;margin-top:7px;padding:6px 10px;border:1px solid var(--line);
+ border-radius:7px;background:var(--surface);color:var(--ink-2);font-family:Inter,sans-serif;
+ font-size:11.5px;font-weight:600;cursor:pointer;text-align:center;letter-spacing:.01em}
+#sortir:hover{border-color:var(--crit);color:var(--crit);background:var(--crit-soft)}
+@media(max-width:900px){ #sortir{display:inline-block;width:auto;margin-top:0} }
+`;
+(function(){ try{ const st=document.createElement('style'); st.textContent=CSS_SORTIR;
+  document.head.appendChild(st); }catch(e){} })();
+/* Tout de suite, avant le code de la page : le bloc du bas est dessiné avec ce que
+   la session en mémoire dit (nom, rôle). Le vrai contrôle de session le redessine
+   ensuite, à la même taille : rien ne glisse. Sans ça, « Igal / Admin / Se
+   déconnecter » arrivait après la réponse du serveur et poussait le bas de la barre. */
+(function(){ try{
+  const el=document.getElementById('sfu'); if(!el||el.innerHTML.trim()) return;
+  const s=JSON.parse(localStorage.getItem('sam-session-v1')||'null'); if(!s||!s.nom) return;
+  const R={admin:'Admin',patron:'Patron',commercial:'Commercial',entrepot:'Entrepôt',comptable:'Comptable'};
+  el.innerHTML='<b>'+String(s.nom).replace(/[&<>"]/g,'')+'</b>'
+    +'<span style="display:block;color:var(--ink-3)">'+(R[s.role]||String(s.role||'').replace(/[&<>"]/g,''))+'</span>'
+    +'<button type="button" id="sortir">Se déconnecter</button>';
+}catch(e){} })();
+"""
+
 IDENT = r"""
 /* ============ SESSION OUVERTE ============ */
 let NOM_UTIL='';
@@ -40,17 +67,7 @@ function fenetreNom(){ location.href='acces.html'; }
    ordinateur partagé c'est le bouton le plus important de la page : celui qui
    empêche la personne suivante de travailler sous le nom de la précédente. Il est
    donc dessiné comme un bouton, et il se voit. */
-const CSS_SORTIR = `
-.sfu{margin-bottom:9px}
-.sfu b{font-size:12px;color:var(--ink);letter-spacing:-.01em}
-#sortir{display:block;width:100%;margin-top:7px;padding:6px 10px;border:1px solid var(--line);
- border-radius:7px;background:var(--surface);color:var(--ink-2);font-family:Inter,sans-serif;
- font-size:11.5px;font-weight:600;cursor:pointer;text-align:center;letter-spacing:.01em}
-#sortir:hover{border-color:var(--crit);color:var(--crit);background:var(--crit-soft)}
-@media(max-width:900px){ #sortir{display:inline-block;width:auto;margin-top:0} }
-`;
-(function(){ try{ const st=document.createElement('style'); st.textContent=CSS_SORTIR;
-  document.head.appendChild(st); }catch(e){} })();
+
 
 function piedSession(){
   const el=document.getElementById('sfu'); if(!el) return;
@@ -166,10 +183,14 @@ function barreCompte(){
           <span class="pa">${_ini(u.nom)}</span>
           <span class="nn"><b>${String(u.nom).replace(/[&<>"]/g,'')}</b><i>${String(rl.lib||'').replace(/[&<>"]/g,'')}</i></span>
           <span class="pt ${n?'':'z'}">${n}</span></${demo?'button':'a'}>`; }).join('')
-       :'<div class="qnote">Il n\'y a que toi pour l\'instant. Ouvre un accès dans <b>Accès</b>.</div>'}
-      <div class="qnote">${demo
-        ? "Démonstration en cours : un clic suffit pour changer de compte. Le chiffre rouge est le nombre de messages non lus — c'est lui qui montre qu'un message est bien arrivé.<br><b>Ce raccourci disparaît</b> dès que les comptes d'essai sont fermés dans Accès."
-        : "Changer de compte demande le mot de passe : sans ça, n'importe qui au comptoir deviendrait le patron et verrait les prix d'achat."}</div>
+       :'<div class="qnote" data-nolang>'+((typeof L3==='function')?L3("Il n'y a que toi pour l'instant. Ouvre un accès dans <b>Accès</b>.","It's only you for now. Open an access in <b>Access</b>.","Por ahora solo estás tú. Abre un acceso en <b>Accesos</b>."):"Il n'y a que toi pour l'instant. Ouvre un accès dans <b>Accès</b>.")+'</div>'}
+      <div class="qnote" data-nolang>${(()=>{ const T=(typeof L3==='function')?L3:(f)=>f; return demo
+        ? T("Démonstration en cours : un clic suffit pour changer de compte. Le chiffre rouge est le nombre de messages non lus — c'est lui qui montre qu'un message est bien arrivé.<br><b>Ce raccourci disparaît</b> dès que les comptes d'essai sont fermés dans Accès.",
+            "Demo in progress: one click switches account. The red number is the count of unread messages — it shows that a message really arrived.<br><b>This shortcut disappears</b> as soon as the trial accounts are closed in Access.",
+            "Demostración en curso: un clic basta para cambiar de cuenta. El número rojo es la cantidad de mensajes sin leer — muestra que un mensaje sí llegó.<br><b>Este atajo desaparece</b> en cuanto se cierran las cuentas de prueba en Accesos.")
+        : T("Changer de compte demande le mot de passe : sans ça, n'importe qui au comptoir deviendrait le patron et verrait les prix d'achat.",
+            "Switching account asks for the password: otherwise anyone at the counter could become the owner and see purchase prices.",
+            "Cambiar de cuenta pide la contraseña: si no, cualquiera en el mostrador se volvería el dueño y vería los precios de compra."); })()}</div>
       <a href="accueil.html" id="qsortir">Se déconnecter</a>
     </div>`;
 
@@ -211,6 +232,21 @@ else setTimeout(barreCompte,60);
     if(!document.body) return;
     const r=role(); if(!r) return;
     document.body.classList.toggle('sansPA', !r.voirPA);
+    /* Sam, 3 oct. 2026 : les employés ne voient pas les bénéfices */
+    document.body.classList.toggle('sansMarge', !r.voirPA||!r.voirMarge);
+    /* les pages qui ne parlent QUE de prix d'achat (ou de réglages) : un mur, comme le tableau de bord */
+    const MURS={'etude.html':['voirPA',"L'étude de cote compare les prix des fournisseurs à nos prix d'achat"],
+      'fournisseurs.html':['voirPA',"Cette page tient l'historique de nos prix d'achat"],
+      'factures.html':['voirPA',"Les factures fournisseurs donnent nos prix d'achat"],
+      'journal.html':['voirMarge',"Le journal garde les prix, les marges et ce que chacun a modifié"],
+      'connecteurs.html':[['voirMarge','acces','reglages'],"Les connecteurs branchent les sites, la caisse et les clés de l'outil"],
+      'reglages.html':['reglages',"Les réglages ne se changent qu'avec le droit « Change les réglages »"]};
+    const pg=(location.pathname.split('/').pop()||'').toLowerCase(), m=MURS[pg];
+    if(m&&![].concat(m[0]).some(k=>r[k])&&!document.getElementById('pmur')){
+      document.body.classList.add('pmur');
+      const w=document.querySelector('main .wrap')||document.querySelector('main');
+      if(w) w.insertAdjacentHTML('afterbegin',`<div class="mur" id="pmur"><h2>Cette page n'est pas pour ce rôle</h2><p><span>${m[1]}.</span> <span>Ce rôle n'y a pas accès : si quelqu'un doit l'ouvrir, le Patron le règle dans Accès.</span></p></div>`);
+    }
     if(!r.voirPA) document.body.classList.add('client');   /* réutilise le mode qui masque déjà les prix d'achat */
   };
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',pose);

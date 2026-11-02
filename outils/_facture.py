@@ -46,8 +46,8 @@ CSS = r"""
 .doctb{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
 .doctb .sp{flex:1}
 .doctb .doc-etat{font-size:12px;color:#d9d4e6;max-width:340px;line-height:1.3}
-#mailov{position:fixed;inset:0;background:rgba(20,18,26,.55);z-index:9100;display:none;align-items:flex-start;justify-content:center;padding:60px 12px;overflow:auto}
-#mailov.on{display:flex}
+#waov,#mailov{position:fixed;inset:0;background:rgba(20,18,26,.55);z-index:9100;display:none;align-items:flex-start;justify-content:center;padding:60px 12px;overflow:auto}
+#waov.on,#mailov.on{display:flex}
 .mailw{background:var(--surface,#fff);border-radius:12px;width:100%;max-width:560px;padding:22px 24px;box-shadow:0 24px 60px rgba(0,0,0,.3);font-family:Inter,system-ui,sans-serif}
 .mailw h3{margin:0 0 14px;font-size:18px}
 .mailw .mf{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
@@ -93,11 +93,12 @@ font-weight:300;letter-spacing:.16em;text-transform:uppercase;line-height:1;colo
 letter-spacing:.08em;color:#16151a}
 .doc .titre span{display:block;color:#8a8590;font-size:12px;letter-spacing:.02em}
 
-.doc .parties{display:grid;grid-template-columns:1fr 1fr;gap:38px;margin:30px 0 26px}
+.doc .parties{display:grid;grid-template-columns:1fr 1fr;gap:38px;margin:14px 0 12px}
 .doc .parties h4{margin:0 0 7px;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;
 color:#8a8590;font-weight:700}
 .doc .parties div{font-size:13px;color:#55525c;line-height:1.65}
 .doc .parties div b{display:block;color:#16151a;font-size:14.5px;font-weight:600;margin-bottom:2px}
+.doc .parties div b.inl{display:inline;font-size:13.5px;margin:0}
 
 .doc table{width:100%;border-collapse:collapse;margin-top:6px}
 .doc th{text-align:left;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:#8a8590;
@@ -113,9 +114,13 @@ font-weight:700;border-bottom:1px solid #16151a;padding:0 8px 9px}
 .doc .totaux div b{color:#16151a;font-weight:600}
 .doc .totaux .rem b,.doc .totaux .rem span{color:#7a6a3f}
 .doc .totaux .tt{border-top:1px solid #16151a;margin-top:7px;padding-top:13px}
-.doc .totaux .tt span{font-family:"Cormorant Garamond",Garamond,serif;font-size:22px;
-font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#16151a}
-.doc .totaux .tt b{font-family:"Cormorant Garamond",Garamond,serif;font-size:26px;font-weight:600}
+/* 9 oct. 2026 (Igal : « la police du total de la facture est moche ») : le total était en Cormorant,
+   dont les chiffres « elzéviriens » montent et descendent ($302.81 : le 3 et le 0 tombent sous la ligne).
+   Pour un montant : Inter, chiffres de même hauteur et de même largeur, gras. */
+.doc .totaux .tt span{font-family:Inter,sans-serif;font-size:13px;
+font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#16151a;align-self:center}
+.doc .totaux .tt b{font-family:Inter,sans-serif;font-size:26px;font-weight:800;letter-spacing:-.01em;
+font-variant-numeric:lining-nums tabular-nums;font-feature-settings:"lnum" 1,"tnum" 1}
 .doc .totaux .du span,.doc .totaux .du b{color:#8f2f36;font-weight:700}
 
 .doc .pay{margin-top:28px;padding:15px 18px;border:1px solid #ebe9ee;border-left:2px solid #16151a;
@@ -132,18 +137,19 @@ letter-spacing:.22em;text-transform:uppercase}
   .doc .tete{flex-direction:column;gap:18px} .doc .titre{text-align:left}
   .doc .parties{grid-template-columns:1fr;gap:20px} .doc .totaux{width:100%} }
 /* ---- encaisser : un paiement a la fois, avec ce qui a deja ete recu ---- */
-#encov{position:fixed;inset:0;background:rgba(20,18,26,.55);z-index:9200;display:none;
+#encov,#edov{position:fixed;inset:0;background:rgba(20,18,26,.55);z-index:9200;display:none;
 align-items:flex-start;justify-content:center;padding:32px 12px;overflow:auto}
-#encov.on{display:flex}
-#encov .mod{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+#encov.on,#edov.on{display:flex}
+#encov .mod,#edov .mod{background:var(--surface);border:1px solid var(--line);border-radius:14px;
 max-width:560px;width:100%;box-shadow:0 24px 70px rgba(0,0,0,.3)}
-#encov .mh{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;
+#encov .mh,#edov .mh{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;
 border-bottom:1px solid var(--line)}
-#encov .mh h3{margin:0;font-size:16px}
-#encov .mh .x{background:none;border:0;font-size:20px;color:var(--ink-3);cursor:pointer;line-height:1}
-#encov .mb{padding:16px 18px}
-#encov .mf{display:flex;align-items:center;gap:8px;padding:13px 18px;border-top:1px solid var(--line)}
-#encov .mf .msg{flex:1;font-size:12.5px;color:var(--ink-3)}
+#encov .mh h3,#edov .mh h3{margin:0;font-size:16px}
+#encov .mh .x,#edov .mh .x{background:none;border:0;font-size:20px;color:var(--ink-3);cursor:pointer;line-height:1}
+#encov .mb,#edov .mb{padding:16px 18px}
+#encov .mf,#edov .mf{display:flex;align-items:center;gap:8px;padding:13px 18px;border-top:1px solid var(--line)}
+#encov .mf .msg,#edov .mf .msg{flex:1;font-size:12.5px;color:var(--ink-3)}
+#edov .fld input,#edov .fld select{width:100%;font-family:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--surface-2);color:var(--ink)}
 .encres{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);
 border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:0 0 14px}
 .encres>div{background:var(--surface);padding:10px 12px}
@@ -166,11 +172,16 @@ padding:4px 11px;font:600 12px Inter,sans-serif;color:var(--ink-2);cursor:pointe
 .encv button:hover{border-color:var(--iris);color:var(--iris)}
 @media print{
   body.impr-doc > *{display:none !important}
-  body.impr-doc #docov{display:block !important;position:static;background:#fff;padding:0;overflow:visible}
+  body.impr-doc #docov{display:block !important;position:static;background:#fff;padding:0;overflow:visible;zoom:1}
   body.impr-doc .doctb{display:none !important}
-  body.impr-doc .docw{max-width:none}
-  body.impr-doc .doc{box-shadow:none;border-radius:0;padding:0}
-  @page{margin:16mm}
+  /* une page Letter : le document fait la largeur du papier moins les marges, jamais plus */
+  body.impr-doc .docw{max-width:none;width:100%}
+  body.impr-doc .doc{box-shadow:none;border-radius:0;padding:0;width:100%;max-width:184mm;margin:0 auto;font-size:12.5px}
+  body.impr-doc .doc .tete{gap:20px}
+  body.impr-doc .doc table{width:100%;table-layout:auto}
+  body.impr-doc .doc .totaux{page-break-inside:avoid}
+  html,body{width:auto !important;min-width:0 !important;zoom:1 !important}
+  @page{size:letter;margin:14mm 12mm}
 }
 """
 
@@ -181,7 +192,7 @@ BLOC_VENTE = r"""
     <div class="fld"><label>Document pour le client</label>
       <select id="v-doc"><option value="">Aucun — simple vente</option><option value="facture">Facture</option><option value="devis">Devis (n'engage pas le stock)</option></select></div>
     <div class="fld"><label>Paiement</label>
-      <select id="v-pmode"><option value="zelle">Zelle</option><option value="carte">Carte bancaire (frais en plus)</option><option value="especes">Espèces</option><option value="virement">Virement</option><option value="credit">Crédit chez nous (avoir)</option></select></div>
+      <select id="v-pmode"><option value="zelle">Zelle</option><option value="carte">Carte bancaire (frais en plus)</option><option value="especes">Espèces</option><option value="cheque">Chèque</option><option value="virement">Virement</option><option value="credit">Crédit chez nous (avoir)</option></select></div>
     <div class="fld"><label>Réglé</label>
       <select id="v-pstat"><option value="paye">Payé en totalité</option><option value="partiel">Acompte reçu</option><option value="apayer">À payer</option></select>
       <input id="v-pregle" type="number" step="0.01" min="0" placeholder="montant reçu" style="display:none;margin-top:6px"></div>
@@ -192,6 +203,9 @@ BLOC_VENTE = r"""
       </div>
       <input id="v-remlib" placeholder="motif : fidélité, fin de série…" style="margin-top:6px">
       <span class="aide">Appliquée avant la sales tax, et répartie sur les lignes : la marge du journal des ventes reste juste.</span></div>
+    <div class="fld"><label>Frais d'envoi facturés ($)</label>
+      <input id="v-port" type="number" step="0.01" min="0" placeholder="0">
+      <span class="aide">Ce que le client paie pour l'envoi. Ajouté au total, après la sales tax (frais indiqués à part). Vide = rien.</span></div>
     <div class="fld"><label>Langue du document</label>
       <select id="v-langue"><option value="">Comme l'écran</option><option value="fr">Français</option><option value="en">English</option><option value="es">Español</option></select>
       <span class="aide">La facture part chez le client, pas chez toi : c'est SA langue qui compte. Retenue sur sa fiche, et figée sur le document une fois émis.</span></div>
@@ -225,10 +239,33 @@ OVERLAY = r"""
     <span class="doc-etat" id="doc-etat"></span>
     <span class="sp"></span>
     <button class="btn" id="doc-paye" style="display:none">Marquer payée</button>
+    <button class="btn" id="doc-edit" title="Corriger le client, la date, le paiement, la taxe, la langue ou la note">Modifier</button>
+    <button class="btn" id="doc-lignes" style="display:none" title="Rouvrir la cote dans le formulaire : parfums, quantités, prix">Modifier les parfums et les prix</button>
     <button class="btn" id="doc-conv" style="display:none">Transformer en facture</button>
     <button class="btn" id="doc-x">Fermer</button>
   </div>
   <div class="doc" id="doc-corps"></div>
+</div></div>
+<div id="edov" class="ov"><div class="mod" style="max-width:560px">
+  <div class="mh"><h3>Modifier le document</h3><button class="x" id="ed-x" title="Fermer">&times;</button></div>
+  <div class="mb" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div class="fld"><label>Client</label><input id="ed-tiers" autocomplete="off"></div>
+    <div class="fld"><label>Date</label><input id="ed-date" type="date"></div>
+    <div class="fld"><label>Paiement</label><select id="ed-pmode"><option value="zelle">Zelle</option><option value="carte">Carte bancaire (frais en plus)</option><option value="especes">Espèces</option><option value="cheque">Chèque</option><option value="virement">Virement</option><option value="credit">Crédit chez nous (avoir)</option><option value="enligne">Payé en ligne</option><option value="caisse">Payé à la caisse</option></select></div>
+    <div class="fld"><label>Langue du document</label><select id="ed-langue"><option value="fr">Français</option><option value="en">English</option><option value="es">Español</option></select></div>
+    <div class="fld"><label>Sales tax</label><select id="ed-fiscal"><option value="taxable">Taxable (Floride)</option><option value="resale">Exonéré — resale certificate</option><option value="etranger">Exonéré — client étranger (passeport)</option></select></div>
+    <div class="fld"><label>N° du certificat ou du passeport</label><input id="ed-fref" autocomplete="off"></div>
+    <div class="fld" style="grid-column:1/-1"><label>Note sur le document</label><input id="ed-note" autocomplete="off"></div>
+    <p class="ecr" style="grid-column:1/-1;margin:0;font-size:12.5px;color:var(--ink-2)">Les lignes (parfums, quantités, prix) ne se corrigent pas ici : elles ont bougé le stock. Pour les changer, annule la facture dans Factures et enregistre la bonne.</p>
+  </div>
+  <div class="mf"><span class="msg" id="ed-msg"></span><span class="sp"></span><button class="btn" id="ed-ann">Annuler</button><button class="btn pri" id="ed-ok">Enregistrer</button></div>
+</div></div>
+<div id="waov"><div class="mailw">
+  <h3>Numéro WhatsApp du client</h3>
+  <div class="mf"><label>Téléphone</label><input id="wa-a" type="tel" placeholder="305 555 0100" autocomplete="off"></div>
+  <p class="mail-note">Pas de numéro sur la fiche de ce client : tape-le, il sera gardé pour la prochaine fois.</p>
+  <div class="mail-btns"><span class="doc-etat" id="wa-etat"></span><span class="sp"></span>
+    <button class="btn" id="wa-ann">Annuler</button><button class="btn pri" id="wa-ok">Ouvrir WhatsApp</button></div>
 </div></div>
 <div id="mailov"><div class="mailw">
   <h3>Envoyer par email</h3>
@@ -251,7 +288,7 @@ OVERLAY = r"""
         <input id="enc-mt" type="number" step="0.01" min="0" inputmode="decimal" placeholder="0.00">
         <div class="encv" id="enc-v"></div></div>
       <div class="fld"><label>Réglé comment</label>
-        <select id="enc-mode"><option value="zelle">Zelle</option><option value="carte">Carte bancaire</option><option value="especes">Espèces</option><option value="virement">Virement</option><option value="credit">Crédit chez nous (avoir)</option></select></div>
+        <select id="enc-mode"><option value="zelle">Zelle</option><option value="carte">Carte bancaire</option><option value="especes">Espèces</option><option value="cheque">Chèque</option><option value="virement">Virement</option><option value="credit">Crédit chez nous (avoir)</option></select></div>
       <div class="fld"><label>Quand</label><input id="enc-d" type="date"></div>
       <div class="fld"><label>Référence (facultatif)</label><input id="enc-ref" placeholder="n° de transaction, nom sur le Zelle…"></div>
     </div>
@@ -273,16 +310,38 @@ LISTE = r"""
 
 JS = r"""
 /* ============ FACTURES ET DEVIS ============ */
-const FMODES={zelle:'Zelle',carte:'Carte bancaire',especes:'Espèces',virement:'Virement',credit:'Crédit chez nous'};
+/* Sam, 3 oct. 2026 : « il faut rajouter l'option Check dans les paiements » */
+const FMODES={zelle:'Zelle',carte:'Carte bancaire',especes:'Espèces',cheque:'Chèque',virement:'Virement',credit:'Crédit chez nous',enligne:'Payé en ligne',caisse:'Payé à la caisse'};
 const FSTAT={paye:'Payée',partiel:'Acompte',apayer:'À payer',devis:'Devis',converti:'Devis transformé'};
+/* L'en-tête figé dans chaque document (raison sociale, adresse, mentions…) SANS le logo :
+   le logo est une image de ~24 Ko, recopiée dans chacune des factures, et 120 factures
+   remplissaient à elles seules la moitié de la mémoire du navigateur (5 Mo) — au point
+   que plus rien ne s'enregistrait (30 sept. 2026). Le logo affiché est celui des Réglages. */
+function enteteDoc(pc){ const e=Object.assign({},pc?factRegPC():factReg()); delete e.logo; if(pc) e.pc=true; return e; }
+function logoDoc(E){ return (E&&E.pc)?(factRegPC().logo||''):((E&&E.logo)||factReg().logo||''); }
+/* Perfume City : la boutique de Sam (tenue par Kim) a son propre papier à en-tête.
+   Une vente faite sur ce canal, payée par exemple en Zelle, peut donner lieu à une facture
+   que le client réclame : elle part au nom de PERFUME CITY, jamais de DASY (Igal, 13 oct. 2026).
+   Ce n'est pas une facture de Sam à la boutique — c'est la facture de la boutique à SON client.
+   Ses coordonnées vivent dans Réglages (REG.factPC) ; le taux de sales tax, les frais de carte
+   et les conditions restent ceux de l'entreprise. */
+const canalPC=n=>/perfume\s*(in\s*the\s*)?city/i.test(String(n||''));
+function factRegPC(){
+  const R=lit(KREG,{}), P=Object.assign({raison:'',enseigne:'Perfume City',adresse:'',tel:'',email:'',insta:'',taxid:'',zelle:'',prefixe:'PC',logo:''},R.factPC||{});
+  if(!P.raison) P.raison=P.enseigne||'Perfume City';
+  if(!P.prefixe) P.prefixe='PC';
+  return Object.assign({},factReg(),P,{pc:true});
+}
+/* l'en-tête à lire pour un document : celui de Perfume City reste figé tel qu'émis ; les autres suivent les Réglages */
+function enteteVue(D){ return (D&&D.entete&&D.entete.pc)?D.entete:factReg(); }
 function factReg(){
-  const R=lit(KREG,{}); const F=Object.assign({raison:'',enseigne:'Perfumes Trade',adresse:'',tel:'',email:'',taxid:'',taux:7,carte:2.6,zelle:'',prefixe:'PT',conditions:'',exo:'Sale for resale — Florida Annual Resale Certificate on file.'},R.fact||{});
+  const R=lit(KREG,{}); const F=Object.assign({raison:'',enseigne:'Perfumes Trade',adresse:'',tel:'',email:'',taxid:'',taux:7,carte:2.6,zelle:'',prefixe:'PT',conditions:'',exo:''},R.fact||{});
   if(!F.raison) F.raison=R.societe||'DASY LLC';
   return F;
 }
 /* numéro suivant : PT-2026-0001 pour les factures, DV-2026-0001 pour les devis */
-function docNum(type,d){
-  const F=factReg(), an=(d||new Date().toISOString()).slice(0,4);
+function docNum(type,d,pc){
+  const F=pc?factRegPC():factReg(), an=(d||new Date().toISOString()).slice(0,4);
   const pre=(type==='devis'?'DV':(F.prefixe||'PT').toUpperCase())+'-'+an+'-';
   let n=0; FACT.forEach(f=>{ const m=f.doc&&f.doc.num&&String(f.doc.num).startsWith(pre)?+String(f.doc.num).slice(pre.length):0; if(m>n) n=m; });
   return pre+String(n+1).padStart(4,'0');
@@ -307,10 +366,16 @@ function docNum(type,d){
    (On convertit avec Number et non parseFloat, qui lit « 12,50 » comme 12 en
    s'arrêtant à la virgule : encore un chiffre faux et silencieux.) */
 const nbSur=v=>{ const n=Number(v); return Number.isFinite(n)?n:0; };
+/* Le prix AFFICHÉ d'une ligne. Une remise est répartie sur les lignes à l'enregistrement :
+   la ligne garde le prix encaissé (p, pour la marge et le stock) et le prix affiché (pAv).
+   Le document se calcule toujours sur le prix affiché, la remise s'applique une fois en bas.
+   (3 oct. 2026 : modifier une facture remisée, ou transformer un devis remisé en facture,
+   recalculait sur les prix déjà remisés — la remise était comptée deux fois.) */
+const puDoc=l=>(l&&l.remise&&l.pAv!=null)?l.pAv:(l?l.p:null);
 
 function calcDoc(lignes,o){
   const F=factReg();
-  const sousTotal=Math.round(lignes.reduce((a,l)=>a+nbSur(l.q)*nbSur(l.p),0)*100)/100;
+  const sousTotal=Math.round(lignes.reduce((a,l)=>a+nbSur(l.q)*nbSur(puDoc(l)),0)*100)/100;
 
   /* La remise s'applique AVANT la taxe et avant les frais de carte : on ne paie
      pas de taxe sur ce qu'on ne facture pas, et la commission de carte porte sur
@@ -334,10 +399,13 @@ function calcDoc(lignes,o){
      si le réglage change l'an prochain. */
   const tauxRef = (o.taux===''||o.taux==null||isNaN(+o.taux)) ? (+F.taux||0) : +o.taux;
   const taux=o.fiscal==='taxable'?tauxRef:0, taxe=Math.round((base+frais)*taux)/100;
-  const total=Math.round((base+frais+taxe)*100)/100;
+  /* Les frais d'envoi (Sam, 6 oct. 2026) : indiqués à part, après la taxe, ajoutés au total.
+     Ils n'entrent ni dans la remise ni dans les frais de carte. */
+  let port=+o.port||0; if(port<0||isNaN(port)) port=0; port=Math.round(port*100)/100;
+  const total=Math.round((base+frais+taxe+port)*100)/100;
   const regle=o.pstat==='paye'?total:(o.pstat==='partiel'?Math.min(total,+o.regle||0):0);
   return {sousTotal,remType,remVal,remise,remPct,remLib:(o.remLib||'').slice(0,60),base,
-          fraisPct,frais,taux,taxe,total,regle,reste:Math.max(0,Math.round((total-regle)*100)/100)};
+          fraisPct,frais,taux,taxe,port,total,regle,reste:Math.max(0,Math.round((total-regle)*100)/100)};
 }
 
 /* La remise répartie sur les lignes, au prorata de leur montant.
@@ -361,7 +429,7 @@ function docStatut(f){
 /* ---- dans la fenêtre de vente ---- */
 function docChampsMaj(){
   const on=!!$('v-doc').value;
-  ['v-pmode','v-pstat','v-pregle','v-fiscal','v-fref','v-remval','v-remtype','v-remlib','v-taux','v-langue','v-frais']
+  ['v-pmode','v-pstat','v-pregle','v-fiscal','v-fref','v-remval','v-remtype','v-remlib','v-taux','v-langue','v-frais','v-port']
     .forEach(i=>{ const e=$(i); if(e) e.disabled=!on; });
   $('v-pregle').style.display=(on&&$('v-pstat').value==='partiel')?'':'none';
   /* les frais de carte ne se montrent que quand ils peuvent servir : un champ qui
@@ -370,10 +438,12 @@ function docChampsMaj(){
   $('v-fref').style.display=(on&&$('v-fiscal').value!=='taxable')?'':'none';
   if($('v-doc').value==='devis'){ $('v-stock').checked=false; $('v-stock').disabled=true; }
   else { $('v-stock').disabled=false; if(!$('v-stock').dataset.touche) $('v-stock').checked=true; }
-  const F=factReg();
+  const pcC=!!($('v-canal')&&canalPC($('v-canal').value));
+  const F=pcC?factRegPC():factReg();
   $('v-docaide').textContent = !on ? '' :
     $('v-doc').value==='devis' ? 'Un devis ne sort rien du stock. Il pourra être transformé en facture en un clic, quand le client confirme.'
-    : (F.raison&&F.adresse?'':'L\'en-tête de la facture est incomplet (raison sociale, adresse…) : Réglages › Factures et devis. ')
+    : (pcC?'En-tête PERFUME CITY sur cette facture. ':'')
+      + (F.raison&&F.adresse?'':'L\'en-tête de la facture est incomplet (raison sociale, adresse…) : Réglages › Factures et devis'+(pcC?' › Perfume City':'')+'. ')
       + (!$('v-client').value.trim()?'Indique le client : une facture sans client n\'a pas de sens.':'');
   docTotaux();
 }
@@ -385,6 +455,7 @@ function docTotaux(){
     ${c.remise?`<span>Remise${c.remType==='pct'?' '+c.remVal+' %':''}${c.remLib?' · '+esc(c.remLib):''}</span><b style="color:var(--crit)">−${money2(c.remise)}</b>`:''}
     ${c.frais?`<span>Frais carte ${c.fraisPct} %</span><b>${money2(c.frais)}</b>`:''}
     <span>${c.taux?'Sales tax '+c.taux+' %':'Sales tax — exonéré'}</span><b>${money2(c.taxe)}</b>
+    ${c.port?`<span>Frais d'envoi</span><b>${money2(c.port)}</b>`:''}
     <span class="tt">Total</span><b class="tt">${money2(c.total)}</b>
     ${c.reste>0&&$('v-doc').value!=='devis'?`<span>Reste dû</span><b style="color:var(--crit)">${money2(c.reste)}</b>`:''}`;
 }
@@ -397,15 +468,20 @@ function docClientChange(){
   docChampsMaj();
 }
 ['v-doc','v-pmode','v-pstat','v-fiscal','v-remtype','v-langue'].forEach(i=>$(i).addEventListener('change',docChampsMaj));
-['v-pregle','v-remval','v-taux','v-remlib','v-frais'].forEach(i=>{ const e=$(i); if(e) e.addEventListener('input',docTotaux); });
+['v-pregle','v-remval','v-taux','v-remlib','v-frais','v-port'].forEach(i=>{ const e=$(i); if(e) e.addEventListener('input',docTotaux); });
 $('v-client').addEventListener('change',docClientChange);
+/* changer de canal change l'en-tête : Perfume City signe ses propres factures */
+if($('v-canal')) $('v-canal').addEventListener('change',docChampsMaj);
 $('v-stock').addEventListener('change',()=>{ $('v-stock').dataset.touche='1'; });
 /* ce que la fenêtre propose à l'ouverture : facture pour le gros, rien pour les autres canaux */
 function docReset(){
-  const c=canalCour(); $('v-doc').value=c.id==='gros'?'facture':'';
+  /* une vente saisie ici est une facture, sur tous les canaux — personne ne crée les
+     factures, elles vont avec la vente (Igal, 12 sept. 2026) */
+  $('v-doc').value='facture';
   $('v-pmode').value='zelle'; $('v-pstat').value='paye'; $('v-pregle').value=''; $('v-fiscal').value='taxable'; $('v-fref').value='';
   $('v-remval').value=''; $('v-remtype').value='pct'; $('v-remlib').value=''; $('v-taux').value='';
   if($('v-frais')) $('v-frais').value='';
+  if($('v-port')) $('v-port').value='';
   $('v-langue').value='';
   delete $('v-stock').dataset.touche; $('v-stock').disabled=false;
   docChampsMaj();
@@ -418,9 +494,9 @@ function docOpts(){
   return {pmode:$('v-pmode').value, pstat:$('v-pstat').value, regle:$('v-pregle').value,
     fiscal:$('v-fiscal').value, fref:($('v-fref').value||'').trim(),
     remType:$('v-remtype').value, remVal:$('v-remval').value, remLib:($('v-remlib').value||'').trim(),
-    taux:$('v-taux').value, frais:($('v-frais')?$('v-frais').value:''), langue:$('v-langue').value};
+    taux:$('v-taux').value, frais:($('v-frais')?$('v-frais').value:''), port:($('v-port')?$('v-port').value:''), langue:$('v-langue').value};
 }
-function docPourVente(lignes,client,d,CLI){
+function docPourVente(lignes,client,d,CLI,pc){
   const type=$('v-doc').value; if(!type) return null;
   const o=Object.assign(docOpts(),{pstat:type==='devis'?'apayer':$('v-pstat').value});
   const c=calcDoc(lignes,o);
@@ -431,12 +507,19 @@ function docPourVente(lignes,client,d,CLI){
      doit se relire exactement comme le client l'a reçue, même si l'écran a changé
      de langue entre-temps. Vide = celle de l'écran au moment de l'émission. */
   const note=($('v-note')&&$('v-note').value.trim())||'';
-  return Object.assign({type,num:docNum(type,d),pmode:o.pmode,pstat:o.pstat,fiscal:o.fiscal,fref:o.fref,
+  return Object.assign({type,num:docNum(type,d,pc),pmode:o.pmode,pstat:o.pstat,fiscal:o.fiscal,fref:o.fref,
     langue:o.langue||(typeof LANG!=='undefined'?LANG:'fr'),note:note||undefined,
-    emis:new Date().toISOString(),entete:factReg()},c);
+    emis:new Date().toISOString(),entete:enteteDoc(pc)},c);
 }
 /* ---- le document ---- */
 let DOC=null;
+/* 7 oct. 2026 (Igal : « Sam n'a pas du tout la même optimisation que moi, à l'impression la page
+   est coupée sur les côtés, et le PDF bug ») : sur un grand écran (> 1300 px), l'ERP est
+   grossi de 8 % (.wrap{zoom:1.08}). Le document vivait DANS ce cadre grossi : le PDF
+   (fabriqué à partir de l'écran) et l'impression héritaient du zoom et débordaient de la
+   page. Igal, sur un portable, n'avait pas le zoom — d'où « pas la même chose ». Les
+   fenêtres du document sortent du cadre : elles se dessinent à l'échelle 1, partout. */
+try{ ['docov','mailov','waov','edov','encov'].forEach(id=>{ const e=document.getElementById(id); if(e&&e.parentNode!==document.body) document.body.appendChild(e); }); }catch(e){}
 /* Après chaque écriture, la fusion (voir _fusion) peut REMPLACER les objets de
    FACT par leurs copies fusionnées : le document ouvert (DOC) pointerait alors sur
    un objet mort, et tout ce qu'on lui écrirait ensuite — un lien, un paiement,
@@ -454,6 +537,20 @@ function docMaj(f,fn){
   return FACT.find(x=>x.id===f.id)||n;
 }
 const dus=v=>nbSur(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+/* Le libellé d'une ligne sur le document que reçoit le client, TYPE compris.
+   Le libellé est figé à l'enregistrement ; pour une vente d'avant, on va
+   rechercher le type dans la fiche du parfum, sans rien inventer quand la
+   référence n'existe plus. Le genre, lui, reste à l'écran : « Femme » sur une
+   facture n'apprend rien au client et allonge la ligne. */
+function docRef(l){
+  const r=String((l&&l.ref)||'');
+  try{
+    if(!l||!l.cle||typeof TY!=='function') return r;
+    const t=TY(l.cle); if(!t) return r;
+    if(new RegExp('(^|[^A-Za-z])'+t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'([^A-Za-z]|$)','i').test(r)) return r;
+    return (r+' '+t).trim();
+  }catch(e){ return r; }
+}
 function dessineDoc(f){
   DOC=f; const D=f.doc, E=D.entete||factReg(), CLI=lit(KCLI,{}), cl=CLI[f.tiers]||{nom:f.tiers||''};
   const st=docStatut(f), devis=D.type==='devis';
@@ -470,9 +567,9 @@ function dessineDoc(f){
   $('doc-corps').innerHTML=`
    <div class="tete">
      <div class="ident">
-       ${E.logo?`<img class="logo" src="${esc(E.logo)}" alt="">`:''}
+       ${logoDoc(E)?`<img class="logo" src="${esc(logoDoc(E))}" alt="">`:''}
        <div class="soc" data-nolang><b>${esc(E.raison||'')}</b>${E.enseigne&&E.enseigne!==E.raison?`<span class="ens">${esc(E.enseigne)}</span>`:''}
-         ${E.adresse?`<span>${esc(E.adresse)}</span>`:''}${E.tel?`<span>${esc(E.tel)}</span>`:''}${E.email?`<span>${esc(E.email)}</span>`:''}
+         ${E.adresse?`<span>${esc(E.adresse)}</span>`:''}${E.tel?`<span>${esc(E.tel)}</span>`:''}${E.email?`<span>${esc(E.email)}</span>`:''}${E.insta?`<span>Instagram @${esc(String(E.insta).replace(/^@/,''))}</span>`:''}
          ${E.taxid?`<span><span class="lbl">Sales tax n°</span> ${esc(E.taxid)}</span>`:''}</div>
      </div>
      <div class="titre"><h2>${devis?'Devis':'Facture'}</h2>
@@ -483,15 +580,20 @@ function dessineDoc(f){
    <div class="parties">
      <div><h4>${devis?'Adressé à':'Facturé à'}</h4>
        <div data-nolang><b>${esc(cl.raison||cl.nom||'')}</b>${cl.raison&&cl.nom!==cl.raison?`<br>${esc(cl.nom)}`:''}${cl.adresse?`<br>${esc(cl.adresse)}`:''}${cl.tel?`<br>${esc(cl.tel)}`:''}${cl.email?`<br>${esc(cl.email)}`:''}</div></div>
-     <div><h4>Conditions</h4><div><span class="lbl">Paiement</span> : <b>${esc(FMODES[D.pmode]||D.pmode)}</b>${D.fiscal!=='taxable'?`<br><span data-nolang>${esc(E.exo||'Exempt')}${D.fref?` — n° ${esc(D.fref)}`:''}</span>`:''}${E.conditions?`<br><span data-nolang>${esc(E.conditions)}</span>`:''}${D.note?`<br><span class="lbl">Note</span> : <span data-nolang>${esc(D.note)}</span>`:''}</div></div>
+     <div><h4>Conditions</h4><div><span class="lbl">Paiement</span> : <b class="inl">${esc(FMODES[D.pmode]||D.pmode)}</b>${D.fiscal!=='taxable'&&D.fref?`<br><span class="lbl">${D.fiscal==='etranger'?'Passeport':'Resale certificate'}</span> : <span data-nolang>${esc(D.fref)}</span>`:''}${D.note?`<br><span class="lbl">Note</span> : <span data-nolang>${esc(D.note)}</span>`:''}</div></div>
    </div>
    <table><thead><tr><th>#</th><th>Article</th><th class="r">Qté</th><th class="r">Prix unit.</th><th class="r">Montant</th></tr></thead>
-   <tbody>${lignes.map((l,i)=>`<tr><td class="n">${i+1}</td><td data-nolang><b>${esc(l.ref)}</b><small>${esc(l.bc||'')}</small></td><td class="r">${nf(l.q)}</td><td class="r">$${dus(l.p)}</td><td class="r"><b>$${dus(nbSur(l.q)*nbSur(l.p))}</b></td></tr>`).join('')}</tbody></table>
+   <tbody>${lignes.map((l,i)=>{ /* remise répartie à l'enregistrement : la ligne garde le prix
+       encaissé (p) et le prix affiché (pAv). La facture montre le prix affiché ; la remise est
+       en bas, une seule fois (3 oct. 2026 — sinon 153 $ en ligne ET « Remise −39,20 » dessous). */
+     const pu=puDoc(l);
+     return `<tr><td class="n">${i+1}</td><td data-nolang><b>${esc(docRef(l))}</b><small>${esc(l.bc||'')}</small></td><td class="r">${nf(l.q)}</td><td class="r">$${dus(pu)}</td><td class="r"><b>$${dus(nbSur(l.q)*nbSur(pu))}</b></td></tr>`; }).join('')}</tbody></table>
    <div class="totaux">
      <div><span>Sous-total</span><b>$${dus(D.sousTotal)}</b></div>
      ${D.remise?`<div class="rem"><span><span class="lbl">Remise</span>${D.remType==='pct'?' '+D.remVal+' %':''}${D.remLib?` — <span data-nolang>${esc(D.remLib)}</span>`:''}</span><b>−$${dus(D.remise)}</b></div>`:''}
      ${D.frais?`<div><span><span class="lbl">Frais carte</span> ${D.fraisPct} %</span><b>$${dus(D.frais)}</b></div>`:''}
      <div><span>${D.taux?`<span class="lbl">Sales tax</span> ${D.taux} %`:'Sales tax — exonéré'}</span><b>$${dus(D.taxe)}</b></div>
+     ${D.port?`<div><span><span class="lbl">Frais d'envoi</span></span><b>$${dus(D.port)}</b></div>`:''}
      <div class="tt"><span>Total</span><b>$${dus(D.total)}</b></div>
      ${!devis&&D.regle>0&&D.reste>0?`<div><span>Reçu</span><b>$${dus(D.regle)}</b></div>`:''}
      ${!devis&&(D.regs||[]).length>1?(D.regs||[]).map(r=>`<div style="font-size:11.5px"><span>&nbsp;&nbsp;<span data-nolang>${dfr(r.d)}</span> · ${esc(FMODES[r.m]||r.m||'')}</span><b style="font-weight:500">$${dus(r.mt)}</b></div>`).join(''):''}
@@ -527,6 +629,7 @@ function dessineDoc(f){
   $('doc-paye').style.display=devis?'none':'';
   $('doc-paye').textContent = D.reste>0 ? (D.regle>0?'Encaisser le reste':'Encaisser') : 'Voir les paiements';
   $('doc-conv').style.display=(devis&&!D.converti)?'':'none';
+  { const bl=$('doc-lignes'); if(bl) bl.style.display=(devis&&typeof peutModifierDevis==='function'&&peutModifierDevis(f))?'':'none'; }
   $('docov').classList.add('on');
   /* la feuille se photographie tout de suite, en arrière-plan : quand on clique
      WhatsApp, Email ou Partager, le PDF est déjà prêt — et « Partager » DOIT
@@ -558,7 +661,7 @@ function docTexte0(f, lien){
   const D=f.doc, E=D.entete||factReg(), devis=D.type==='devis';
   const lg=D.langue||(typeof LANG!=='undefined'?LANG:'fr');
   const T=(fr)=>{ try{ const v=(typeof lgMot==='function')?lgMot(fr,lg):null; return v||fr; }catch(e){ return fr; } };
-  const L=(f.lignes||[]).filter(l=>l.q).map(l=>`• ${l.ref} × ${l.q} — $${dus(nbSur(l.q)*nbSur(l.p))}`).join('\n');
+  const L=(f.lignes||[]).filter(l=>l.q).map(l=>`• ${docRef(l)} × ${l.q} — $${dus(nbSur(l.q)*nbSur(puDoc(l)))}`).join('\n');
   const salut=lg==='fr'?'Bonjour'+(f.tiers?' '+f.tiers:'')+',':lg==='es'?'Hola'+(f.tiers?' '+f.tiers:'')+',':'Hello'+(f.tiers?' '+f.tiers:'')+',';
   const intro=devis
     ?(lg==='fr'?'Merci pour votre demande de cotation. Voici votre devis':lg==='es'?'Gracias por su solicitud de cotización. Aquí tiene su cotización':'Thank you for your quote request. Here is your quote')
@@ -569,6 +672,7 @@ function docTexte0(f, lien){
     + `${D.remise?'\n'+T('Remise')+' : −$'+dus(D.remise):''}`
     + `${D.frais?'\n'+T('Frais carte')+' '+D.fraisPct+' % : $'+dus(D.frais):''}\n`
     + `${D.taux?T('Sales tax')+' '+D.taux+' % : $'+dus(D.taxe):T('Sales tax — exonéré')}\n`
+    + `${D.port?T("Frais d'envoi")+' : $'+dus(D.port)+'\n':''}`
     + `*${total}*`
     + `${!devis&&D.reste>0?'\n'+T('Reste dû')+' : $'+dus(D.reste):''}`
     + `${((devis||D.reste>0)&&(D.pmode==='zelle'||D.pmode==='virement')&&E.zelle)?'\n'+T('Pour régler')+' : '+E.zelle:''}`
@@ -580,8 +684,22 @@ function docTexte0(f, lien){
 }
 $('doc-x').onclick=()=>{ $('docov').classList.remove('on'); DOC=null; };
 $('docov').addEventListener('click',e=>{ if(e.target===$('docov')) $('doc-x').click(); });
-$('doc-print').onclick=()=>{ document.body.classList.add('impr-doc'); const fin=()=>document.body.classList.remove('impr-doc');
-  window.addEventListener('afterprint',fin,{once:true}); setTimeout(()=>{ window.print(); setTimeout(fin,1500); },50); };
+/* La feuille sortait BLANCHE à l'impression, et le défaut n'était pas dans la
+   feuille : la règle d'impression cache tous les enfants directs du body puis
+   rallume la feuille. Or depuis que la page a une charpente (body > .app >
+   .main > .wrap), la feuille n'est plus un enfant du body — c'est .app qui
+   était caché, et rallumer un élément dont l'ancêtre est caché ne le rallume
+   pas. On sort donc la feuille au niveau du body le temps de l'impression, et
+   on la remet exactement où elle était. Ça vaut aussi pour la charpente de
+   demain : plus rien ne dépend de la profondeur où vit la feuille. */
+$('doc-print').onclick=()=>{
+  const ov=$('docov'), pere=ov.parentNode, apres=ov.nextSibling;
+  if(pere!==document.body) document.body.appendChild(ov);
+  document.body.classList.add('impr-doc');
+  const fin=()=>{ document.body.classList.remove('impr-doc');
+    if(pere && ov.parentNode!==pere) pere.insertBefore(ov,apres); };
+  window.addEventListener('afterprint',fin,{once:true});
+  setTimeout(()=>{ window.print(); setTimeout(fin,1500); },50); };
 $('doc-copie').onclick=async()=>{ try{ await navigator.clipboard.writeText(docTexte(DOC)); $('doc-copie').textContent='Copié ✓'; setTimeout(()=>$('doc-copie').textContent='Copier le texte',1800); }catch(e){ prompt('Copie ce texte :',docTexte(DOC)); } };
 /* ---------- LE PDF QUI PART CHEZ LE CLIENT ----------
    Un lien WhatsApp ou un mailto ne transporte que du texte : impossible d'y
@@ -633,7 +751,7 @@ const docNomPDF=f=>((f.doc.type==='devis'?((typeof vf==='function')?vf('Devis',f
 /* le lien public du document : déposé une fois, réutilisé ensuite */
 async function docLien(f){
   if(typeof CK_URL==='undefined' || typeof ckTok!=='function' || !ckTok()) throw new Error("Pas de session serveur : le texte part sans le PDF.");
-  const pr=await docPret(f); const c=pr.canvas, blob=pr.pdf; const D=f.doc, E=factReg();
+  const pr=await docPret(f); const c=pr.canvas, blob=pr.pdf; const D=f.doc, E=enteteVue(f.doc);
   const q='?type='+(D.type||'devis')+'&enseigne='+encodeURIComponent(E.enseigne||E.raison||'')+'&date='+encodeURIComponent(dfr(f.d))
     +'&total='+encodeURIComponent('$'+dus(D.total))+'&lignes='+((f.lignes||[]).filter(l=>l.q).length)+'&langue='+(D.langue||(typeof LANG!=='undefined'?LANG:'fr'));
   let r;
@@ -657,9 +775,48 @@ async function docEnvoiTexte(f){
   catch(e){ docEtat(e.message,true); }
   return docTexte(f, lien);
 }
-$('doc-wa').onclick=async()=>{ const f=DOC; const tel=String(coordTiers(f.tiers).tel||'').replace(/[^0-9]/g,'');
-  $('doc-wa').disabled=true; const txt=await docEnvoiTexte(f); $('doc-wa').disabled=false; if(!DOC||DOC.id!==f.id) return;
-  window.open('https://wa.me/'+(tel||'')+'?text='+encodeURIComponent(txt),'_blank'); };
+/* WhatsApp. Deux pièges, corrigés le 9 oct. 2026 (Igal : « whatsapp ne fonctionne pas quand
+   je veux envoyer une quote ») :
+   1. le navigateur ne laisse ouvrir un onglet qu'au moment du clic ; ici l'onglet s'ouvrait
+      APRÈS la fabrication du PDF (plusieurs secondes) et Chrome le bloquait en silence.
+      On ouvre donc l'onglet tout de suite, vide, et on lui donne l'adresse ensuite ; s'il est
+      quand même bloqué, un bouton « Ouvrir WhatsApp » apparaît (nouveau clic = permis).
+   2. un client sans téléphone sur sa fiche partait vers « wa.me/ » sans destinataire, et un
+      numéro à 10 chiffres sans le 1 ne menait nulle part. Maintenant : le numéro est
+      normalisé, et s'il manque, on le demande et on le garde sur la fiche. */
+function waNum(v){
+  let d=String(v||'').replace(/\D/g,''); if(!d) return '';
+  if(d.length===10) d='1'+d;
+  return (d.length>=8&&d.length<=15)?d:'';
+}
+function retientTel(nom,tel){
+  if(!nom||!tel) return;
+  try{ const CLI=lit(KCLI,{}); const c=CLI[nom]||{nom}; if(c.tel===tel) return; c.tel=tel; c.maj=new Date().toISOString(); CLI[nom]=c; ecrit(KCLI,CLI); }catch(e){}
+}
+async function waEnvoi(f,num){
+  const w=window.open('','_blank');
+  try{ if(w&&w.document) w.document.write('<title>WhatsApp</title><body style="font:16px system-ui;padding:40px;color:#444">Préparation du message…</body>'); }catch(e){}
+  $('doc-wa').disabled=true; const txt=await docEnvoiTexte(f); $('doc-wa').disabled=false;
+  const url='https://wa.me/'+num+'?text='+encodeURIComponent(txt);
+  window.__wa=url;                          /* point d'observation pour les tests */
+  let ok=false;
+  try{ if(w&&!w.closed){ w.location.href=url; ok=true; } }catch(e){}
+  if(!ok){
+    let b=$('doc-wa2'); if(!b){ b=document.createElement('button'); b.id='doc-wa2'; b.className='btn pri'; $('doc-wa').after(b); }
+    b.textContent='Ouvrir WhatsApp'; b.style.display='';
+    b.onclick=()=>{ window.open(url,'_blank'); b.style.display='none'; docEtat(''); };
+    docEtat('Le navigateur a bloqué la fenêtre : clique sur « Ouvrir WhatsApp ».',true);
+  }
+}
+$('doc-wa').onclick=()=>{ const f=DOC; if(!f) return; const num=waNum(coordTiers(f.tiers).tel);
+  if(num) return waEnvoi(f,num);
+  $('wa-a').value=''; $('wa-etat').textContent=''; $('waov').classList.add('on'); setTimeout(()=>$('wa-a').focus(),50); };
+$('wa-ann').onclick=()=>$('waov').classList.remove('on');
+$('waov').addEventListener('click',e=>{ if(e.target===$('waov')) $('wa-ann').click(); });
+$('wa-ok').onclick=()=>{ const f=DOC; if(!f) return; const num=waNum($('wa-a').value);
+  if(!num){ $('wa-etat').textContent="Numéro illisible. Exemple : 305 555 0100 ou +33 6 12 34 56 78."; $('wa-a').focus(); return; }
+  retientTel(f.tiers,$('wa-a').value.trim()); $('waov').classList.remove('on'); waEnvoi(f,num); };
+$('wa-a').addEventListener('keydown',e=>{ if(e.key==='Enter') $('wa-ok').click(); });
 /* l'email et le téléphone du client : la fiche Clients d'abord, puis Retail,
    puis la liste du site — un nom peut n'avoir ses coordonnées qu'à un seul endroit */
 function coordTiers(nom){
@@ -691,10 +848,10 @@ async function boiteEnvoi(){
   catch(e){ _boite={pret:false}; }
   return _boite;
 }
-function docSujet(f){ const D=f.doc; const t=(D.type==='devis'?'Devis ':'Facture ')+D.num+' — '+(factReg().enseigne||factReg().raison); return (typeof vf==='function')?vf(t,D.langue||LANG):t; }
+function docSujet(f){ const D=f.doc, E0=enteteVue(D); const t=(D.type==='devis'?'Devis ':'Facture ')+D.num+' — '+(E0.enseigne||E0.raison); return (typeof vf==='function')?vf(t,D.langue||LANG):t; }
 function docMotCourrier(f){ const t=docMotCourrier0(f); return (typeof vf==='function')?vf(t,f.doc.langue||LANG):t; }
 function docMotCourrier0(f){
-  const D=f.doc, E=factReg(), devis=D.type==='devis';
+  const D=f.doc, E=enteteVue(D), devis=D.type==='devis';
   const lg=D.langue||(typeof LANG!=='undefined'?LANG:'fr');
   const corps=lg==='fr'?(devis?'Bonjour,\n\nMerci pour votre demande de cotation. Veuillez trouver ci-joint le devis.':'Bonjour,\n\nVeuillez trouver ci-joint votre facture.')
     :lg==='es'?(devis?'Hola,\n\nGracias por su solicitud de cotización. Adjunto encontrará la cotización.':'Hola,\n\nAdjunto encontrará su factura.')
@@ -705,8 +862,22 @@ function docMotCourrier0(f){
 $('doc-mail').onclick=async()=>{ const f=DOC; const co=coordTiers(f.tiers);
   $('doc-mail').disabled=true; const b=await boiteEnvoi(); $('doc-mail').disabled=false; if(!DOC||DOC.id!==f.id) return;
   if(!b.pret){
-    const txt=await docEnvoiTexte(f); if(!DOC||DOC.id!==f.id) return;
-    location.href='mailto:'+encodeURIComponent(co.email||'')+'?subject='+encodeURIComponent(docSujet(f))+'&body='+encodeURIComponent(txt); return; }
+    /* Pas de boîte réglée : le logiciel de courrier de la personne s'ouvre avec le
+       texte, SANS le lien du cockpit — une adresse en cockpit.igalbotbol.com n'a
+       rien à faire dans un e-mail au nom de l'enseigne. Le PDF se télécharge à la
+       place : il ne reste qu'à le glisser dans le message avant d'envoyer.
+       Igal, 12 sept. 2026, en collant l'adresse d'un document : « enlever ça des
+       emails ». WhatsApp, lui, garde le lien : sans lui, pas de carte ni de PDF du tout. */
+    docEtat('Fabrication du PDF…');
+    try{ const pdf=await docPDF(); if(!DOC||DOC.id!==f.id) return;
+      const a=document.createElement('a'); a.href=URL.createObjectURL(pdf); a.download=docNomPDF(f); a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+      docEtat('');
+    }catch(e){ docEtat(e.message,true); }
+    const txt=docTexte(f); if(!DOC||DOC.id!==f.id) return;
+    const lien='mailto:'+encodeURIComponent(co.email||'')+'?subject='+encodeURIComponent(docSujet(f))+'&body='+encodeURIComponent(txt);
+    window.__mailto=lien;                 /* point d'observation pour les tests */
+    location.href=lien; return; }
   $('mail-a').value=co.email||''; $('mail-sujet').value=docSujet(f); $('mail-txt').value=docMotCourrier(f); $('mail-de').textContent=b.de||'';
   $('mail-etat').textContent=co.email?'':'Pas d\'adresse sur la fiche de ce client : tape-la, elle sera gardée.';
   $('mailov').classList.add('on'); setTimeout(()=>$(co.email?'mail-txt':'mail-a').focus(),50); };
@@ -857,6 +1028,26 @@ $('enc-ok').onclick=()=>{
   else $('enc-msg').textContent='paiement enregistré';
 };
 $('doc-paye').onclick=()=>{ if(DOC) encOuvre(DOC); };
+/* ---- modifier un document émis : l'en-tête, pas les lignes ---- */
+$('doc-edit').onclick=()=>{ const f=DOC; if(!f||!f.doc) return; const D=f.doc;
+  $('ed-tiers').value=f.tiers||''; $('ed-date').value=(f.d||'').slice(0,10); $('ed-pmode').value=D.pmode||'zelle';
+  $('ed-langue').value=D.langue||'fr'; $('ed-fiscal').value=D.fiscal||'taxable'; $('ed-fref').value=D.fref||''; $('ed-note').value=D.note||'';
+  $('ed-msg').textContent=''; $('edov').classList.add('on'); };
+$('ed-x').onclick=$('ed-ann').onclick=()=>$('edov').classList.remove('on');
+$('ed-ok').onclick=()=>{ const f=DOC; if(!f||!f.doc) return;
+  const tiers=$('ed-tiers').value.trim(); if(!tiers){ $('ed-msg').textContent='il faut un nom de client'; return; }
+  const avant={tiers:f.tiers,d:f.d,pmode:f.doc.pmode,fiscal:f.doc.fiscal,total:f.doc.total};
+  const g=docMaj(f,x=>{ const D=x.doc; x.tiers=tiers; if($('ed-date').value) x.d=$('ed-date').value;
+    D.pmode=$('ed-pmode').value; D.langue=$('ed-langue').value; D.fiscal=$('ed-fiscal').value; D.fref=$('ed-fref').value.trim(); D.note=$('ed-note').value.trim()||undefined;
+    /* la taxe et les frais suivent le nouveau statut ; ce qui a été réglé ne change pas */
+    const o={pmode:D.pmode,fiscal:D.fiscal,remType:D.remType,remVal:D.remVal,remLib:D.remLib,frais:D.fraisPct,taux:D.auto?0:D.taux,port:D.port,
+      pstat:(D.reste||0)<=0?'paye':((+D.regle||0)>0?'partiel':'apayer'),regle:D.regle};
+    if(D.type!=='devis'){ const c=calcDoc(x.lignes||[],o); const regle=+D.regle||0; Object.assign(D,c,{regle,reste:Math.max(0,Math.round((c.total-regle)*100)/100)}); D.pstat=D.reste<=0?'paye':(regle>0?'partiel':'apayer'); }
+    else Object.assign(D,calcDoc(x.lignes||[],Object.assign(o,{pstat:'apayer'})));
+    x.montant=D.type==='devis'?x.montant:D.total; });
+  try{ if(typeof CLI!=='undefined'&&CLI&&tiers){ CLI[tiers]=Object.assign({nom:tiers},CLI[tiers]||{},{fiscal:g.doc.fiscal,fiscalRef:g.doc.fref,pmode:g.doc.pmode,langue:g.doc.langue}); ecrit(KCLI,CLI); } }catch(e){}
+  try{ const J=lit(KJOU,[]); J.push({t:new Date().toISOString(),u:USR||'(non renseigné)',act:'vente',lib:(g.doc.type==='devis'?'devis ':'facture ')+g.doc.num+' modifié'+(g.doc.type==='devis'?'':'e')+' — '+tiers,ref:g.id,av:avant.tiers+' · '+(FMODES[avant.pmode]||avant.pmode)+' · '+money2(avant.total),ap:tiers+' · '+(FMODES[g.doc.pmode]||g.doc.pmode)+' · '+money2(g.doc.total)}); ecrit(KJOU,J); }catch(e){}
+  $('edov').classList.remove('on'); dessineDoc(g); try{ if(typeof peintDocs==='function') peintDocs(); }catch(e){} };
 /* un devis accepté devient une facture : nouveau numéro, et cette fois le stock sort */
 $('doc-conv').onclick=()=>{
   const f=DOC; if(!f||!f.doc||f.doc.type!=='devis'||f.doc.converti) return;
@@ -864,13 +1055,14 @@ $('doc-conv').onclick=()=>{
   const d=ajd(), JOU=lit(KJOU,[]), VENT=lit(KVENT,{});
   const lignes=[], det=[]; let sortis=0;
   (f.lignes||[]).forEach(l=>{ const qAv=qteEff(l.cle), qAp=Math.max(0,qAv-(l.q||0));
-    lignes.push({cle:l.cle,bc:l.bc,ref:l.ref,q:l.q,p:l.p,qAv,qAp,manque:Math.max(0,(l.q||0)-qAv),paAv:paEff(l.cle)});
+    lignes.push(Object.assign({cle:l.cle,bc:l.bc,ref:l.ref,q:l.q,p:l.p,qAv,qAp,manque:Math.max(0,(l.q||0)-qAv),paAv:paEff(l.cle)},
+      l.remise&&l.pAv!=null?{pAv:l.pAv,remise:true}:{}));
     if(qAp!==qAv){ MOD[l.cle]=Object.assign({},MOD[l.cle]||{},{qte:qAp}); det.push({bc:l.bc,ref:l.ref,av:qAv,ap:qAp}); sortis+=qAv-qAp; }
     (VENT[l.cle]=VENT[l.cle]||[]).push({d,h:heureMiami(),p:l.p,c:f.tiers||'',q:l.q,num:'',k:f.canal}); });
   const num=numAuto(d);
   const doc=Object.assign({},f.doc,{type:'facture',num:docNum('facture',d),pstat:'apayer',emis:new Date().toISOString(),deDevis:f.doc.num});
   Object.assign(doc,calcDoc(lignes,doc));
-  const f2={id:'v'+Date.now().toString(36),num,sens:'vente',canal:f.canal,tiers:f.tiers,d,h:heureMiami(),lignes,montant:doc.sousTotal,stock:true,manuel:true,par:USR||'(non renseigné)',t:new Date().toISOString(),doc};
+  const f2={id:'v'+Date.now().toString(36),num,sens:'vente',canal:f.canal,tiers:f.tiers,d,h:heureMiami(),lignes,montant:Math.round(lignes.reduce((a,l)=>a+(+l.q||0)*(+l.p||0),0)*100)/100,stock:true,manuel:true,par:USR||'(non renseigné)',t:new Date().toISOString(),doc};
   docMaj(f,x=>{ x.doc.converti=f2.id; x.doc.convertiNum=doc.num; });
   FACT.push(f2); noteRang(num,d);
   ecrit(KFACT,FACT); ecrit(KMOD,MOD); ecrit(KVENT,VENT);
@@ -889,8 +1081,8 @@ function peintDocs(){
   $('docs-chips').innerHTML=L.length?chips.map(([v,l])=>`<button class="${DOCS_F===v?'on':''}" data-f="${v}">${l}</button>`).join(''):'';
   $('docs-chips').querySelectorAll('button').forEach(b=>b.onclick=()=>{ DOCS_F=b.dataset.f; peintDocs(); });
   const V=L.filter(f=>{ const s=docStatut(f); return !DOCS_F || (DOCS_F==='apayer'?(s==='apayer'||s==='partiel'):DOCS_F==='devis'?(s==='devis'||s==='converti'):s===DOCS_F); });
-  $('docs-table').innerHTML=!L.length?'':!V.length?'<p class="ecr">Rien dans cette catégorie.</p>':`<table><thead><tr><th>N°</th><th>Date</th><th>Client</th><th>Paiement</th><th class="r">Total</th><th class="r">Reste dû</th><th>État</th><th></th></tr></thead><tbody>
-    ${V.slice(0,60).map(f=>{ const s=docStatut(f); return `<tr><td><b>${esc(f.doc.num)}</b></td><td>${dfr(f.d)}</td><td>${esc(f.tiers||'—')}</td><td>${esc(FMODES[f.doc.pmode]||'')}</td><td class="r">${money2(f.doc.total)}</td><td class="r">${f.doc.type==='devis'?'—':money2(f.doc.reste||0)}</td><td><span class="st ${s}">${FSTAT[s]||s}</span></td><td class="r"><button class="btn sm" data-doc="${esc(f.id)}">Voir</button></td></tr>`; }).join('')}</tbody></table>`;
+  $('docs-table').innerHTML=!L.length?'':!V.length?'<p class="ecr">Rien dans cette catégorie.</p>':`<table><thead><tr><th>N°</th><th>Date</th><th>Client</th><th>Paiement</th><th class="r">Total</th><th class="r">Reste dû</th><th>Par</th><th>État</th><th></th></tr></thead><tbody>
+    ${V.slice(0,60).map(f=>{ const s=docStatut(f); return `<tr><td><b>${esc(f.doc.num)}</b></td><td>${dfr(f.d)}</td><td>${esc(f.tiers||'—')}</td><td>${esc(FMODES[f.doc.pmode]||'')}</td><td class="r">${money2(f.doc.total)}</td><td class="r">${f.doc.type==='devis'?'—':money2(f.doc.reste||0)}</td><td style="color:var(--ink-3);font-size:12px" data-nolang>${esc(f.par||'')}</td><td><span class="st ${s}">${FSTAT[s]||s}</span></td><td class="r"><button class="btn sm" data-doc="${esc(f.id)}">Voir</button></td></tr>`; }).join('')}</tbody></table>`;
   $('docs-table').querySelectorAll('[data-doc]').forEach(b=>b.onclick=()=>{ const f=FACT.find(x=>x.id===b.dataset.doc); if(f) dessineDoc(f); });
 }
 peintDocs();

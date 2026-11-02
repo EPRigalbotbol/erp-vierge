@@ -53,10 +53,37 @@ async function _zipTexte(e){
 const _colNum=r=>{ const m=/^([A-Z]+)/.exec(r||''); if(!m) return 0;
   let n=0; for(const c of m[1]) n=n*26+(c.charCodeAt(0)-64); return n-1; };
 
+/* 28 sept. 2026 (Igal : « les fichiers xls ne marchent pas, ça reste gris quand je veux le
+   choisir ») : le vieil Excel (.xls), l'OpenDocument (.ods) et les « .xls » qui sont en
+   fait une page HTML ou un CSV (exports de sites de fournisseurs) passent par SheetJS,
+   servi par l'outil (lib/sheetjs/, Apache-2.0) et chargé seulement quand on en a besoin.
+   Même sortie que lireClasseur : la première feuille, une ligne par rangée, cases
+   séparées par des tabulations. */
+async function _sheetjs(){
+  if(window.XLSX) return window.XLSX;
+  await new Promise((res,rej)=>{ const sc=document.createElement('script'); sc.src='lib/sheetjs/xlsx.full.min.js';
+    sc.onload=res; sc.onerror=()=>rej(new Error("Le lecteur des vieux fichiers Excel n'a pas pu être chargé (lib/sheetjs manquant)."));
+    document.head.appendChild(sc); });
+  return window.XLSX;
+}
+async function lireVieuxClasseur(buf){
+  const X=await _sheetjs(); let wb;
+  const NON="Ce fichier n'a pas pu être ouvert comme un classeur Excel. Ouvre-le dans Excel et fais « Enregistrer sous » en .xlsx ou en .csv.";
+  try{ wb=X.read(buf,{type:'array',cellDates:false}); }
+  catch(e){ throw new Error(NON); }
+  const nom=(wb.SheetNames||[])[0]; if(!nom) throw new Error("Ce classeur ne contient aucune feuille lisible.");
+  const rows=X.utils.sheet_to_json(wb.Sheets[nom],{header:1,raw:false,defval:'',blankrows:true});
+  const lignes=rows.map(r=>r.map(v=>String(v==null?'':v).replace(/[\t\r\n]+/g,' ').trim()).join('\t'));
+  while(lignes.length && !lignes[lignes.length-1].replace(/\t/g,'').trim()) lignes.pop();
+  if(!lignes.length) throw new Error("Cette feuille est vide.");
+  /* un binaire quelconque, SheetJS le prend pour du texte : on ne fait pas semblant */
+  const t=lignes.join('\n');
+  if(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\ufffd]/.test(t.slice(0,4000))) throw new Error(NON);
+  return t;
+}
 async function lireClasseur(fichier){
   const buf=new Uint8Array(await fichier.arrayBuffer());
-  if(!(buf[0]===0x50&&buf[1]===0x4b))
-    throw new Error("Ce fichier n'est pas un .xlsx. S'il vient d'un vieil Excel (.xls), ouvre-le et fais « Enregistrer sous » en .xlsx ou en .csv.");
+  if(!(buf[0]===0x50&&buf[1]===0x4b)) return await lireVieuxClasseur(buf);
   let z; try{ z=await _zipOuvre(buf); }catch(e){ throw new Error("Ce classeur n'a pas pu être ouvert. Réenregistre-le en .xlsx ou en .csv."); }
 
   /* les textes sont rangés à part, dans une table commune à tout le classeur */
@@ -176,9 +203,12 @@ async function lireFichier(fichier, avance){
     else if(m&&/loading|initializ/.test(m.status||'')) avance('Chargement du moteur de lecture (première fois : ~15 Mo)…'); }) : null;
   if(/\.xlsx$/.test(n) || type==='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     return await lireClasseur(fichier);
-  if(/\.xls$/.test(n))
-    throw new Error("Le format .xls (vieil Excel) ne se lit pas ici. Ouvre-le et fais « Enregistrer sous » en .xlsx ou en .csv.");
-  if(/\.(numbers|ods)$/.test(n))
+  if(/\.(xls|xlsm|xlsb|ods)$/.test(n) || type==='application/vnd.ms-excel' || type==='application/vnd.oasis.opendocument.spreadsheet'){
+    const buf=new Uint8Array(await fichier.arrayBuffer());
+    if(buf[0]===0x50&&buf[1]===0x4b&&/\.(xls|xlsm)$/.test(n)) return await lireClasseur(fichier);
+    return await lireVieuxClasseur(buf);
+  }
+  if(/\.numbers$/.test(n))
     throw new Error("Ce format de tableur ne se lit pas ici. Exporte-le en .xlsx ou en .csv.");
   if(/\.pdf$/.test(n) || type==='application/pdf'){
     const buf=new Uint8Array(await fichier.arrayBuffer());
@@ -199,19 +229,40 @@ async function lireFichier(fichier, avance){
     return t;
   }
   if(/\.(docx?|pages|zip|rar|7z)$/.test(n))
-    throw new Error("Ce type de fichier ne se lit pas ici. Dépose un PDF, un Excel (.xlsx), un CSV ou une photo.");
+    throw new Error("Ce type de fichier ne se lit pas ici. Dépose un PDF, un Excel (.xlsx ou .xls), un CSV ou une photo.");
   const t=await fichier.text();
   /* un binaire lu comme du texte donne des caracteres de controle : mieux vaut
      le dire que de faire semblant d'avoir compris */
   if(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(t.slice(0,2000)))
-    throw new Error("Ce fichier n'est pas lisible comme du texte. Dépose un PDF, un Excel (.xlsx), un CSV ou une photo.");
+    throw new Error("Ce fichier n'est pas lisible comme du texte. Dépose un PDF, un Excel (.xlsx ou .xls), un CSV ou une photo.");
   return t;
 }
+
+/* ---------- un document qui passe d'une page a l'autre ----------
+   Depose dans Fournisseurs, lu dans Factures ou dans l'Etude : le fichier voyage par
+   IndexedDB (localStorage ne porte pas un PDF). Il n'est valable que dix minutes, et
+   il est repris une seule fois. (Igal, 12 sept. 2026 : « ajouter un supplier simplement
+   en rentrant n'importe quel type de document ».) */
+const _DA_DB='pt-attente';
+function _daOuvre(){ return new Promise((res,rej)=>{ const r=indexedDB.open(_DA_DB,1);
+  r.onupgradeneeded=()=>{ r.result.createObjectStore('docs'); }; r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+async function docAttentePose(file){ const db=await _daOuvre();
+  await new Promise((res,rej)=>{ const t=db.transaction('docs','readwrite');
+    t.objectStore('docs').put({nom:file.name,type:file.type,blob:file,t:Date.now()},'doc'); t.oncomplete=res; t.onerror=()=>rej(t.error); }); }
+async function docAttentePrend(){
+  try{ const db=await _daOuvre();
+    const o=await new Promise((res,rej)=>{ const t=db.transaction('docs','readwrite'); const st=t.objectStore('docs');
+      const r=st.get('doc'); st.delete('doc'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); });
+    if(!o||!o.blob||Date.now()-o.t>10*60*1000) return null;
+    return new File([o.blob],o.nom||'document',{type:o.type||''});
+  }catch(e){ return null; }
+}
+window.docAttentePose=docAttentePose; window.docAttentePrend=docAttentePrend;
 """
 
 # Ce que les zones de dépôt doivent annoncer et accepter.
-ACCEPT = "application/pdf,.pdf,.txt,.csv,.tsv,.xlsx,image/*,.png,.jpg,.jpeg,.webp"
-ACCEPT_TAB = ".csv,.tsv,.txt,.xlsx,application/pdf,.pdf,image/*,.png,.jpg,.jpeg,.webp"
+ACCEPT = "application/pdf,.pdf,.txt,.csv,.tsv,.xlsx,.xls,.xlsm,.ods,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,image/*,.png,.jpg,.jpeg,.webp"
+ACCEPT_TAB = ".csv,.tsv,.txt,.xlsx,.xls,.xlsm,.ods,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/pdf,.pdf,image/*,.png,.jpg,.jpeg,.webp"
 
 
 def bloc():

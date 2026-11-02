@@ -98,12 +98,10 @@ async function aidApi(methode,corps){
    qu'une case à cocher de plus est une case qu'on oublie de cocher. */
 function aidVu(){ try{ return +(localStorage.getItem(AID_VU)||0)||0; }catch(e){ return 0; } }
 function aidPastille(n){
-  const b=document.getElementById('aid-btn'); if(!b) return;
-  let p=b.querySelector('.pt');
-  if(!n){ if(p) p.remove(); return; }
-  if(!p){ p=document.createElement('span'); p.className='pt'; b.appendChild(p); }
-  p.textContent=String(n);
-  b.title=n+(n>1?' réponses du support':' réponse du support');
+  /* la pastille se pose sur la ligne « Support technique » du menu */
+  const c=document.getElementById('ct-support'), b=document.getElementById('aid-btn'); if(!c||!b) return;
+  c.textContent=n?String(n):''; c.className=n?'ct pt':'ct';
+  b.title=n?(n+(n>1?' réponses du support':' réponse du support')):'';
 }
 async function aidRegarde(){
   if(!aidPeut()) return;
@@ -119,15 +117,15 @@ function aidOuvre(){
   if(!ov){
     ov=document.createElement('div'); ov.id='aid-ov'; ov.className='aid-ov';
     ov.innerHTML='<div class="aid-m">'
-      +'<div class="aid-h"><h2>Une question au support</h2><button class="x" id="aid-x">&times;</button></div>'
+      +'<div class="aid-h"><h2>Support technique</h2><button class="x" id="aid-x">&times;</button></div>'
       +'<div class="aid-b2">'
       +'<div><div class="aid-lab">C\'est à quel point gênant ?</div>'
       +'<div class="aid-u" id="aid-u">'
       +'<button data-u="question" class="on">Juste une question</button>'
       +'<button data-u="gene">Ça me gêne</button>'
       +'<button data-u="bloque">Je suis bloqué</button></div></div>'
-      +'<div><div class="aid-lab">Ta question</div>'
-      +'<textarea id="aid-t" placeholder="Dis simplement ce que tu essayais de faire, et ce qui s\'est passé."></textarea></div>'
+      +'<div><div class="aid-lab">Ton message ou ta réclamation</div>'
+      +'<textarea id="aid-t" placeholder="Décris le problème : ce que tu essayais de faire, et ce qui s\'est passé."></textarea></div>'
       +'<div class="aid-ou" id="aid-ou"></div>'
       +'<button class="aid-go" id="aid-go">Envoyer</button>'
       +'<p class="aid-msg" id="aid-msg"></p></div>'
@@ -170,14 +168,14 @@ async function aidEnvoie(){
   const t=document.getElementById('aid-t'), msg=document.getElementById('aid-msg'),
         go=document.getElementById('aid-go');
   const texte=(t.value||'').trim();
-  if(texte.length<3){ msg.textContent='Écris ta question, même en deux mots.'; msg.className='aid-msg err'; t.focus(); return; }
+  if(texte.length<3){ msg.textContent='Écris ton message, même en deux mots.'; msg.className='aid-msg err'; t.focus(); return; }
   go.disabled=true; msg.textContent='Envoi…'; msg.className='aid-msg';
   try{
     await aidApi('POST',{texte,urgence:AID_URG,page:aidPage()});
     t.value='';
     msg.textContent=AID_URG==='bloque'
       ? 'C\'est parti, et le téléphone d\'Igal sonne. Laisse cet onglet ouvert.'
-      : 'C\'est parti. La réponse reviendra ici même, sur le bouton « Une question ».';
+      : 'C\'est parti. La réponse reviendra ici même, dans « Support technique ».';
     msg.className='aid-msg ok';
     await aidRegarde(); aidHistorique();
   }catch(e){
@@ -190,7 +188,7 @@ async function aidEnvoie(){
 function aidHistorique(){
   const h=document.getElementById('aid-hist'); if(!h) return;
   if(!AID_LISTE.length){ h.innerHTML=''; return; }
-  const dfr=s=>{ try{ return new Date(s).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } };
+  const dfr=s=>{ try{ return new Date(s).toLocaleString('en-US',{timeZone:'America/New_York',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } };
   const nom={question:'question',gene:'gêne',bloque:'bloqué'};
   h.innerHTML='<div class="aid-lab" style="margin-bottom:9px">Tes questions précédentes</div>'
     +AID_LISTE.slice(0,12).map(q=>'<div class="aid-q"><div class="m">'+dfr(q.cree)+' · '
@@ -208,24 +206,15 @@ function aidHistorique(){
    sur quinze, et il aurait suffi qu'une autre page fasse pareil demain pour
    qu'il revienne ailleurs. Plutôt que de courir après l'ordre d'exécution, on
    surveille : si le bas de la barre est refait, le bouton revient. */
+/* Depuis le 9 oct. 2026 le bouton n'est plus au pied de la barre : c'est la rubrique
+   « Support technique » du menu (id aid-btn), qui ouvre cette fenêtre. */
 let AID_PREMIER=true;
 function aidBouton(){
-  const p=document.querySelector('.side .sfoot'); if(!p) return;
-  if(!document.getElementById('aid-btn')){
-    const b=document.createElement('button');
-    b.id='aid-btn'; b.className='lnk aid-b'; b.textContent='Une question ?';
-    b.onclick=aidOuvre;
-    p.appendChild(b);
-  }
+  const b=document.getElementById('aid-btn'); if(!b) return;
   if(AID_PREMIER){ AID_PREMIER=false; aidRegarde(); }
-  if(!p.__aidVu){ p.__aidVu=true;
-    try{ new MutationObserver(()=>aidBouton()).observe(p,{childList:true}); }catch(e){}
-  }
 }
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',aidBouton);
 else aidBouton();
-/* et une fois le chargement complet : certaines pages ne dessinent leur barre
-   qu'après avoir lu leurs données */
 window.addEventListener('load',()=>setTimeout(aidBouton,0));
 /* on regarde de temps en temps : une réponse arrivée pendant la journée doit
    se voir sans recharger la page */

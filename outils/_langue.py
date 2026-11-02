@@ -21,7 +21,8 @@ s'applique qu'aux textes reconnus mot pour mot, ils passent au travers.
 MOTS = {
     # ---- barre de gauche ----
     "Produits": ["Products", "Productos"],
-    "Commerce": ["Sales", "Comercial"],
+    "Commerce": ["Trade", "Comercial"],
+    "Paie": ["Payroll", "Nómina"],
     "Pilotage": ["Management", "Dirección"],
     "Catalogue": ["Catalog", "Catálogo"],
     "Inventaire": ["Inventory", "Inventario"],
@@ -296,41 +297,13 @@ MOTS = {
     "Saisie conservée sur cet ordinateur": ["Entries kept on this computer", "Datos guardados en este ordenador"],
 }
 
-LANGUE = r"""
-/* ============ TROIS LANGUES ============ */
-const K_LANG='langue-v1';
-/* Le dictionnaire vit dans donnees/langue.js, chargé par chaque page avant son
-   propre code — comme les produits. Avant, il était recopié dans chaque page :
-   700 phrases en deux langues, seize fois. S'il manque, MOTS est vide et la
-   page reste simplement en français. */
-const MOTS=(typeof window!=='undefined'&&window.D_LANGUE)||{};
-const LANGUES={fr:'Français', en:'English', es:'Español'};
-const lgLit=()=>{ try{ const v=localStorage.getItem(K_LANG); return LANGUES[v]?v:'fr'; }catch(e){ return 'fr'; } };
-let LANG=lgLit();
-
-/* i = 0 pour l'anglais, 1 pour l'espagnol */
-/* Les nombres varient, la phrase autour non : « 1 892 références en stock » est
-   la même phrase que « 40 références en stock ». On remplace chaque nombre par
-   {n}, on cherche la phrase à trous dans le dictionnaire, puis on remet les
-   nombres dans l'ordre. Un « [s] » dans la traduction devient « s » si le premier
-   nombre n'est pas 1 : « {n} reference[s] ». Les montants gardent leur forme
-   d'origine (l'espace fine, la virgule) : ce sont des données, pas du texte. */
-const LG_NUM=/\bB0[A-Z0-9]{8}\b|\d(?:[\d\s  .,:/h]*\d)?/g;   /* nombres, et codes ASIN */
-function lgTrous(k,lg){
-  if(!/\d|«/.test(k)) return null;
-  /* les « mots entre guillemets » sont des trous eux aussi : « Facture » ou
-     « Devis » se traduisent à part, et la phrase autour reste une seule entrée */
-  const cit=[]; let gab=k.replace(/«\s*([^»]*?)\s*»/g,(m,q)=>{ cit.push(q); return '{q}'; });
-  const nums=[]; gab=gab.replace(LG_NUM,m=>{ nums.push(m); return '{n}'; });
-  const e=MOTS[gab]; if(!e) return null;
-  let v=e[lg==='en'?0:1]; if(!v||v===gab) return null;
-  const un=String(nums[0]||'').replace(/[\s  ]/g,'')==='1';
-  v=v.replace(/\[s\]/g,un?'':'s').replace(/\[es\]/g,un?'':'es');
-  let i=0; v=v.replace(/\{n\}/g,()=>nums[i++]!==undefined?nums[i-1]:'');
-  let j=0; v=v.replace(/\{q\}/g,()=>{ const q=cit[j++]; if(q===undefined) return '';
-    const t=lgMot(q,lg)||q; return lg==='en'?('“'+t+'”'):('«\u00a0'+t+'\u00a0»'); });
-  return v;
-}
+VOCAB = r"""
+/* ===== LE VOCABULAIRE DE LA MAISON, AVANT LA PREMIÈRE PEINTURE =====
+   Ce script n'est PAS différé : il tourne pendant que la page se construit, avant
+   que l'écran ne s'affiche. Sinon on voyait « Devis » une demi-seconde, puis
+   « Cote » — le temps que le cockpit réponde et que le code de la page démarre.
+   Igal l'a vu le 12 septembre : « code apparaît, après code disparaît ». */
+(function(){
 /* ---- le vocabulaire de la maison, en français ----
    Sam et son équipe ne disent pas « devis » : ils disent « cote » (la quote de
    la caisse). Plutôt que de réécrire des centaines de phrases à la main — avec
@@ -355,7 +328,10 @@ const LG_VOCAB_EXACT=[
   ["Factures et devis","Factures et cotes"]];
 const LG_PART='(enregistré|converti|archivé|désarchivé|gardé|chargé|supprimé|envoyé|ouvert|jeté|corrigé|refermé|émis|payé|transformé|créé|accepté|refusé|mémorisé|déposé|lu|reçu|proposé|effacé|retrouvé|rangé)';
 /* \b ne connaît pas les lettres accentuées en JavaScript : on borne à la main */
-const L_='(?<![A-Za-zÀ-ÿ])', _L='(?![A-Za-zÀ-ÿ])';
+/* 15 oct. 2026 : une instruction « lookbehind » dans une page la fait mourir tout entière sur les Safari d'avant la 16.4
+   (la page se recharge sans rien faire, sans message). On ne l'utilise que si le navigateur la connaît. */
+const LG_LB=(function(){ try{ new RegExp('(?<!a)b'); return true; }catch(e){ return false; } })();
+const L_=LG_LB?'(?<![A-Za-zÀ-ÿ])':'\\b', _L='(?![A-Za-zÀ-ÿ])';
 function lgVocab(t){
   let s=String(t); if(!/devis/i.test(s)) return s;
   LG_VOCAB_EXACT.forEach(([a,b])=>{ if(s.includes(a)) s=s.split(a).join(b); });
@@ -378,16 +354,164 @@ function lgVocab(t){
   s=s.replace(new RegExp(L_+'1 cotes'+_L,'g'),'1 cote').replace(new RegExp(L_+'1 cote ([a-zé]+)es'+_L,'g'),'1 cote $1e');
   return s;
 }
+
+window.__lgVocab=lgVocab;
+/* le premier passage, sur ce que la page contient déjà (menu, titre, filtres) */
+try{
+  let l='fr'; try{ l=localStorage.getItem('langue-v1')||'fr'; }catch(e){}
+  if(l!=='fr' || /catalogue|stock|inventaire/.test(location.pathname) || !document.body) return;
+  const DATA='.lnm,.lmq,.nom,.nm,.mq,.marque,.produit,.bc,.lbc,.lid,.pd,td.ref,[data-nolang]';
+  const saute=n=>{ let e=n.parentNode; while(e&&e.nodeType===1){ if(/^(SCRIPT|STYLE|TEXTAREA|CODE|PRE|INPUT)$/.test(e.nodeName)||(e.matches&&e.matches(DATA))) return true; e=e.parentNode; } return false; };
+  const it=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,{acceptNode:n=>saute(n)?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
+  const L=[]; let n; while((n=it.nextNode())) L.push(n);
+  L.forEach(n=>{ const o=n.nodeValue; if(!/devis/i.test(o)) return; const v=lgVocab(o); if(v!==o){ n.__fr=o; n.nodeValue=v; } });
+  document.body.querySelectorAll('[placeholder],[title],[aria-label]').forEach(el=>['placeholder','title','aria-label'].forEach(a=>{
+    const s0=el.getAttribute(a); if(!s0||!/devis/i.test(s0)) return; const v=lgVocab(s0); if(v!==s0){ el['__fr_'+a]=s0; el.setAttribute(a,v); } }));
+}catch(e){}
+})();
+"""
+
+LANGUE = r"""
+/* ============ TROIS LANGUES ============ */
+const K_LANG='langue-v1';
+/* Le dictionnaire vit dans donnees/langue.js, chargé par chaque page avant son
+   propre code — comme les produits. Avant, il était recopié dans chaque page :
+   700 phrases en deux langues, seize fois. S'il manque, MOTS est vide et la
+   page reste simplement en français. */
+const MOTS=(typeof window!=='undefined'&&window.D_LANGUE)||{};
+const LANGUES={fr:'Français', en:'English', es:'Español'};
+const lgLit=()=>{ try{ const v=localStorage.getItem(K_LANG); return LANGUES[v]?v:'fr'; }catch(e){ return 'fr'; } };
+let LANG=lgLit();
+
+/* i = 0 pour l'anglais, 1 pour l'espagnol */
+/* Les nombres varient, la phrase autour non : « 1 892 références en stock » est
+   la même phrase que « 40 références en stock ». On remplace chaque nombre par
+   {n}, on cherche la phrase à trous dans le dictionnaire, puis on remet les
+   nombres dans l'ordre. Un « [s] » dans la traduction devient « s » si le premier
+   nombre n'est pas 1 : « {n} reference[s] ». Les montants gardent leur forme
+   d'origine (l'espace fine, la virgule) : ce sont des données, pas du texte. */
+const LG_NUM=(function(){ try{ return new RegExp(String.raw`\bB0[A-Z0-9]{8}\b|(?:(?<![\w-])[-−])?\d(?:[\d\s  .,:/h]*\d)?`,'g'); }catch(e){ return /\bB0[A-Z0-9]{8}\b|\d(?:[\d\s  .,:/h]*\d)?/g; } })();   /* nombres, et codes ASIN */
+const LG_NUM0=/\bB0[A-Z0-9]{8}\b|\d(?:[\d\s  .,:/h]*\d)?/g;   /* nombres, et codes ASIN */
+function lgTrous(k,lg){
+  if(!/\d|«/.test(k)) return null;
+  /* les « mots entre guillemets » sont des trous eux aussi : « Facture » ou
+     « Devis » se traduisent à part, et la phrase autour reste une seule entrée */
+  const cit=[]; let gab=k.replace(/«\s*([^»]*?)\s*»/g,(m,q)=>{ cit.push(q); return '{q}'; });
+  /* deux lectures : le signe moins collé au nombre (« -1 flacon »), puis sans (les
+     entrées plus anciennes écrivent « −{n} $ » avec le signe en dur) */
+  let nums=[], g1=gab.replace(LG_NUM,m=>{ nums.push(m); return '{n}'; });
+  let e=MOTS[g1];
+  if(!e){ const n2=[]; const g2=gab.replace(LG_NUM0,m=>{ n2.push(m); return '{n}'; }); if(MOTS[g2]){ e=MOTS[g2]; nums=n2; g1=g2; } }
+  gab=g1; if(!e) return null;
+  let v=e[lg==='en'?0:1]; if(!v||v===gab) return null;
+  const un=String(nums[0]||'').replace(/[\s  ]/g,'')==='1';
+  v=v.replace(/\[s\]/g,un?'':'s').replace(/\[es\]/g,un?'':'es');
+  let i=0; v=v.replace(/\{n\}/g,()=>nums[i++]!==undefined?nums[i-1]:'');
+  let j=0; v=v.replace(/\{q\}/g,()=>{ const q=cit[j++]; if(q===undefined) return '';
+    const t=lgMot(q,lg)||q; return lg==='en'?('“'+t+'”'):('«\u00a0'+t+'\u00a0»'); });
+  return v;
+}
+/* le vocabulaire de la maison (« cote ») vit dans VOCAB, un script non différé
+   qui passe avant la première peinture ; ici on s'en sert seulement */
+function lgVocab(t){ return (window.__lgVocab)?window.__lgVocab(t):String(t); }
 /* pour les textes fabriqués en JavaScript (WhatsApp, courrier, fenêtres de confirmation) */
 function vf(t,l){ return ((l||LANG)==='fr')?lgVocab(t):t; }
-function lgMot(t,l){
+function lgMot(t,l,entier){
   const lg=l||LANG;
   if(lg==='fr'){ const k=String(t).replace(/\s+/g,' ').trim(); const v=lgVocab(k); return v!==k?v:null; }
   const k=String(t).replace(/\s+/g,' ').trim();
   const e=MOTS[k];
   if(e){ const v=e[lg==='en'?0:1]; return (v&&v!==k)?v:null; }
-  return lgTrous(k,lg);
+  const tr=lgTrous(k,lg); if(tr!==null||entier) return tr;
+  return lgMorceaux(k,lg);
 }
+/* ---- une phrase faite de morceaux ----
+   Le journal, les notes, les motifs sont écrits une fois, en français, avec des
+   données au milieu : « commande 20701 expédiée le 24/09/2026 (Site perfumestrade.com)
+   — facture faite, stock sorti ». La phrase entière n'est jamais au dictionnaire (les
+   noms et les numéros changent), mais chacun de ses morceaux l'est. On coupe aux
+   séparateurs (tiret long, point médian, virgule, deux-points, parenthèses), on
+   traduit chaque morceau, et on recolle. Un morceau qui n'est qu'une donnée (un nom,
+   un numéro) reste tel quel. On ne rend rien si aucun morceau n'a bougé. */
+const LG_COUPE=/( — | – | · |, |; | : |: | \()/;
+/* des phrases avec un NOM au milieu (un client, un fournisseur, un canal) : le nom
+   n'est ni un nombre ni entre « » — on le reconnaît par la forme de la phrase */
+const LG_MODELES=[
+  [/^message envoyé à (.+)$/,'message sent to $1','mensaje enviado a $1'],
+  [/^Fiche de (.+)$/,'Record of $1','Ficha de $1'],
+  [/^Écrire à (.+)$/,'Write to $1','Escribir a $1'],
+  [/^devis (.+) du (\S+)$/,'quote $1 of $2','cotización $1 del $2'],
+  [/^cote (.+) du (\S+)$/,'quote $1 of $2','cotización $1 del $2'],
+  [/^canal (.+)$/,(m,a)=>'channel '+(lgMot(a,'en')||a),(m,a)=>'canal '+(lgMot(a,'es')||a)],
+  [/^saisi par (.+)$/,'entered by $1','registrado por $1'],
+  [/^enregistrée par (.+?)\.?$/,'recorded by $1.','registrada por $1.'],
+  [/^Vente (\S+) du (\S+) sur (.+)$/,'Sale $1 of $2 on $3','Venta $1 del $2 en $3'],
+  [/^Vente (\S+)$/,'Sale $1','Venta $1'],
+  [/^commande (\S+)$/,'order $1','pedido $1'],
+  [/^Ventes importées (\S+)$/,'Imported sales $1','Ventas importadas $1'],
+  [/^commande (\S+) annulée par (.+)$/,'order $1 cancelled by $2','pedido $1 anulado por $2'],
+  [/^canal coupé pour ce parfum : (.+)$/,'channel turned off for this perfume: $1','canal desactivado para este perfume: $1'],
+  [/^canal remis pour ce parfum : (.+)$/,'channel turned back on for this perfume: $1','canal reactivado para este perfume: $1'],
+  [/^facture enregistrée n° (\S+)$/,'invoice recorded no. $1','factura registrada n.º $1'],
+  [/^facture enregistrée$/,'invoice recorded','factura registrada'],
+  [/^facture installée n° (\S+)$/,'invoice installed no. $1','factura instalada n.º $1'],
+  [/^article créé depuis la facture (\S*)$/,'item created from invoice $1','artículo creado desde la factura $1'],
+  [/^prix d'achat, facture (\S+)$/,"purchase price, invoice $1",'precio de compra, factura $1'],
+  [/^prix d'achat, depuis (.+)$/,"purchase price, from $1",'precio de compra, desde $1'],
+  [/^prix d'achat rétabli \(facture (\S+) annulée\)$/,'purchase price restored (invoice $1 cancelled)','precio de compra restablecido (factura $1 anulada)'],
+  [/^réception — achat (.+)$/,'receipt — purchase $1','recepción — compra $1'],
+  [/^ventes (.+) — export (\S+)$/,'sales $1 — export $2','ventas $1 — exportación $2'],
+  [/^nom reconnu : « (.+) » = (.+)$/,'name recognized: “$1” = $2','nombre reconocido: «$1» = $2'],
+  [/^le code (\S+) est ajouté à la fiche \(autres codes-barres\)$/,'code $1 is added to the record (other barcodes)','el código $1 se añade a la ficha (otros códigos de barras)'],
+  [/^Retirer le canal « (.+) » \?/,'Remove the channel “$1”?','¿Quitar el canal «$1»?'],
+];
+LG_MODELES.push(
+  [/^(.+) ↑ croissant$/,(m,a)=>(lgMot(a)||a)+' ↑ ascending',(m,a)=>(lgMot(a)||a)+' ↑ ascendente'],
+  [/^(.+) ↓ décroissant$/,(m,a)=>(lgMot(a)||a)+' ↓ descending',(m,a)=>(lgMot(a)||a)+' ↓ descendente'],
+  [/^Annuler la facture (\S+) \((.*)\) \?$/,'Cancel invoice $1 ($2)?','¿Anular la factura $1 ($2)?'],
+  [/^Supprimer (.+) \?$/,'Delete $1?','¿Eliminar $1?'],
+  [/^Marge nette : prix de vente moins le prix d'achat et la commission (.+) \((\d+) %\)$/,'Net margin: selling price minus the purchase price and the $1 fee ($2%)','Margen neto: precio de venta menos el precio de compra y la comisión de $1 ($2 %)'],
+  [/^Envoyer ses accès à (.+) \?$/,'Send their access to $1?','¿Enviar sus accesos a $1?'],
+  [/^Impossible : (.+) (?:a|ont) ce rôle\. Change-leur d'abord le rôle, puis supprime celui-ci\.$/,'Not possible: $1 has this role. Change their role first, then delete this one.','Imposible: $1 tiene este rol. Cámbiales primero el rol y luego elimina este.']);
+function lgModele(k,lg){
+  for(const [re,en,es] of LG_MODELES){ if(re.test(k)) return k.replace(re,lg==='en'?en:es); }
+  return null;
+}
+function lgMorceaux(k,lg){
+  const m0=lgModele(k,lg); if(m0!==null) return m0;
+  /* un séparateur en tête (« · 1 parfum », « — reste dû ») : on le garde tel quel */
+  const tete=(k.match(/^[·—–,:;]\s*/)||[''])[0]; if(tete){ const v=lgMot(k.slice(tete.length),lg); return v!==null?tete+v:null; }
+  if(!LG_COUPE.test(k)||k.length>600) return null;
+  /* on coupe aux séparateurs ; une parenthèse fermante coupe aussi, sauf dans « (s) » */
+  const P0=k.split(LG_COUPE), P=[];
+  P0.forEach((m,i)=>{ if(i%2===1){ P.push(m); return; }
+    const x=m.match(/^(.*?[^(\s][^(]*?)(\)(?!\w))(.*)$/);
+    if(x&&!/\((s|es|x)$/.test(x[1])&&x[1].indexOf('(')<0){ P.push(x[1]); P.push(x[2]); P.push(x[3]); } else P.push(m); });
+  let chg=false;
+  const R=P.map((m,i)=>{ if(i%2===1||!m.trim()) return m;
+    const t=m.trim(); const e=MOTS[t]; let v=e?e[lg==='en'?0:1]:null;
+    if(!v||v===t) v=lgTrous(t,lg);
+    if(!v||v===t) v=lgModele(t,lg);
+    if(v!==null&&v!==undefined&&v!==t){ chg=true; return m.replace(t,v); }
+    return m; });
+  return chg?R.join(''):null;
+}
+/* la langue des dates et des mois fabriqués par Intl (« déc. », « vendredi ») */
+function lgLocale(l){ const lg=l||LANG; return lg==='en'?'en-US':lg==='es'?'es-ES':'fr-FR'; }
+/* une phrase écrite d'un bloc dans les trois langues, quand elle porte des données
+   (un nom, un canal) au milieu et ne peut donc pas passer par le dictionnaire */
+function L3(fr,en,es){ return LANG==='en'?en:LANG==='es'?es:fr; }
+/* les fenêtres du navigateur (alert, confirm, prompt) ne passent pas par la page : on
+   traduit leur texte au vol, ligne par ligne. Igal, 26 sept. 2026 : « j'ai des gens
+   qui ne comprennent pas un mot de français ». */
+(function(){
+  if(typeof window==='undefined') return;
+  const tr=m=>{ try{ if(LANG==='fr') return m; return String(m==null?'':m).split('\n').map(l=>{ const t=l.trim(); if(!t) return l; const v=lgMot(t); return v!==null?l.replace(t,v):l; }).join('\n'); }catch(e){ return m; } };
+  const a=window.alert, c=window.confirm, p=window.prompt;
+  if(a&&!a.__lg){ window.alert=function(m){ return a.call(window,tr(m)); }; window.alert.__lg=1; }
+  if(c&&!c.__lg){ window.confirm=function(m){ return c.call(window,tr(m)); }; window.confirm.__lg=1; }
+  if(p&&!p.__lg){ window.prompt=function(m,d){ return p.call(window,tr(m),d); }; window.prompt.__lg=1; }
+})();
 /* ---- une zone peut imposer SA langue, quelle que soit celle de l'écran ----
    Une facture ne part pas chez celui qui la regarde : elle part chez le client.
    Elle porte donc data-lang="en" et reste en anglais même si Sam travaille en
@@ -410,18 +534,22 @@ function lgTexte(n){
   const orig=(n.__fr!==undefined)?n.__fr:n.nodeValue;
   if(!orig||!/[A-Za-zÀ-ÿ]/.test(orig)) return;
   const v=lgMot(orig,lgLangDe(n));
-  if(v!==null){ if(n.__fr===undefined) n.__fr=orig; n.nodeValue=orig.replace(orig.trim(),v); }
+  /* on n'écrit que si ça change : réécrire la même valeur relance l'observateur, sans fin */
+  if(v!==null){ if(n.__fr===undefined) n.__fr=orig; const nv=orig.replace(orig.trim(),v); if(n.nodeValue!==nv) n.nodeValue=nv; }
   else if(n.__fr!==undefined && n.nodeValue!==n.__fr) n.nodeValue=n.__fr;
 }
 const LG_ATTR=['placeholder','title','aria-label'];
 function lgAttrs(el){
   LG_ATTR.forEach(a=>{
     if(!el.hasAttribute(a)) return;
-    const cle='__fr_'+a;
-    const src=el[cle]!==undefined?el[cle]:el.getAttribute(a);
+    const cle='__fr_'+a, mis='__lg_'+a, cur=el.getAttribute(a);
+    /* la page a posé un NOUVEAU texte (placeholder changé par le code) : c'est le
+       nouveau français d'origine. Ce que j'ai moi-même posé ne compte pas. */
+    if(el[cle]!==undefined && cur!==el[mis] && cur!==el[cle]) el[cle]=cur;
+    const src=el[cle]!==undefined?el[cle]:cur;
     const v=lgMot(src,lgLangDe(el));
-    if(v!==null){ if(el[cle]===undefined) el[cle]=src; el.setAttribute(a,v); }
-    else if(el[cle]!==undefined) el.setAttribute(a,el[cle]);
+    if(v!==null){ if(el[cle]===undefined) el[cle]=src; el[mis]=v; if(cur!==v) el.setAttribute(a,v); }
+    else if(el[cle]!==undefined){ el[mis]=el[cle]; if(cur!==el[cle]) el.setAttribute(a,el[cle]); }
   });
 }
 /* Les zones de saisie ne sont jamais touchées : ce que l'utilisateur a tapé
@@ -476,7 +604,9 @@ function lgHtmlFr(el){
 }
 function lgBlocs(r){
   if(!r.querySelectorAll) return;
-  r.querySelectorAll(LG_BLOC).forEach(el=>{
+  /* le bloc ajouté lui-même compte aussi : un avertissement posé d'un coup dans la page
+     (« 1 ligne pas encore reconnue… ») est l'élément ajouté, pas un de ses enfants */
+  [...((r.matches&&r.matches(LG_BLOC))?[r]:[]), ...r.querySelectorAll(LG_BLOC)].forEach(el=>{
     if(LG_SAUT[el.nodeName]||el.children.length===0||el.children.length>12) return;
     if(el.querySelector('input,textarea,select,table,ul,ol,img,svg,canvas')) return;
     if(el.textContent.length>1200) return;      /* un conteneur, pas une phrase */
@@ -489,15 +619,19 @@ function lgBlocs(r){
     if(lg==='fr') return;
     const orig=rendu?el.__frTxt:lgTexteFr(el);
     if(!orig||orig.length>900||!/[A-Za-zÀ-ÿ]/.test(orig)) return;
-    const v=lgMot(orig,lg); if(v===null) return;
+    const v=lgMot(orig,lg,true); if(v===null) return;   /* un bloc : phrase entière seulement, jamais recollée par morceaux (elle perdrait ses balises) */
+    /* une traduction sans repères <1>…</1> remplacerait tout le HTML du bloc, boutons
+       et identifiants compris (la page ne les retrouverait plus) : on la laisse aux
+       mots un par un, sauf si le bloc n'a que des sauts de ligne */
+    if(!/<\d+\/?>/.test(v) && [...el.children].some(c=>!/^(BR|WBR)$/.test(c.nodeName))) return;
     if(rendu && lg===el.__lgLang) return;
     if(!rendu){ el.__frHTML=lgHtmlFr(el); el.__frTxt=orig; }
     lgRendBloc(el,v); el.__lgLang=lg; el.__lgRendu=el.innerHTML;
   });
 }
-function lgApplique(racine){
+function lgApplique(racine,sansBlocs){
   const r=racine||document.body; if(!r) return;
-  lgBlocs(r);
+  if(!sansBlocs) lgBlocs(r);
   const it=document.createTreeWalker(r,NodeFilter.SHOW_TEXT,{acceptNode:n=>
     ((n.parentNode&&LG_SAUT[n.parentNode.nodeName])||lgDonnee(n))
       ?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
@@ -506,20 +640,30 @@ function lgApplique(racine){
   if(r.querySelectorAll) r.querySelectorAll('[placeholder],[title],[aria-label]').forEach(lgAttrs);
   if(r.nodeType===1) lgAttrs(r);
 }
+/* le français d'origine d'un élément déjà traduit à l'écran : pour le code qui relit un
+   libellé dans la page (une option choisie) et le réutilise dans une autre phrase */
+function lgFr(el){ if(!el) return ''; let t=''; const it=document.createTreeWalker(el,NodeFilter.SHOW_TEXT); let n; while((n=it.nextNode())) t+=(n.__fr!==undefined?n.__fr:n.nodeValue); return t; }
 function lgChange(l){
   if(!LANGUES[l]) return;
   LANG=l; try{ localStorage.setItem(K_LANG,l); }catch(e){}
   lgApplique(document.body);
   document.querySelectorAll('#lgsel button').forEach(b=>b.classList.toggle('on',b.dataset.l===l));
-  document.documentElement.lang=l;
+  document.documentElement.lang=l; lgTitre();
   try{ const J=lit('crm-journal-v1',[]);
     J.push({t:new Date().toISOString(),u:(typeof NOM_UTIL!=='undefined'?NOM_UTIL:''),
             act:'reglage',lib:'langue de l\'écran',ref:'langue',av:null,ap:LANGUES[l]});
     ecrit('crm-journal-v1',J); }catch(e){}
 }
+/* le titre de l'onglet du navigateur (« Étude de cote — Perfumes Trade ») */
+function lgTitre(){
+  try{ if(document.__titreFr===undefined) document.__titreFr=document.title;
+    const m=String(document.__titreFr).split(' — ');
+    const v=LANG==='fr'?lgVocab(m[0]):lgMot(m[0]);
+    document.title=((v&&v!==m[0])?v:m[0])+(m.length>1?' — '+m.slice(1).join(' — '):''); }catch(e){}
+}
 /* le choix, au bas de la barre de gauche */
 function lgBouton(){
-  const p=document.querySelector('.side .sfoot'); if(!p||document.getElementById('lgsel')) return;
+  const p=(document.getElementById('sfline')||document.querySelector('.side .sfoot')); if(!p||document.getElementById('lgsel')) return;
   const d=document.createElement('div'); d.id='lgsel';
   d.style.cssText='display:flex;gap:4px;margin-top:8px';
   d.innerHTML=Object.keys(LANGUES).map(l=>
@@ -538,30 +682,59 @@ function lgBouton(){
    où le mot n'apparaît pas et où le parcours coûterait cher à chaque redessin. */
 const LG_FR_PARCOURS=!/catalogue|stock|inventaire/.test(location.pathname);
 (function(){
+  /* Deux temps. 1) Tout de suite, avant que le code de la page ne tourne : les mots,
+     un par un — pour que l'écran ne montre jamais un texte dans la mauvaise langue
+     (Igal, 12 sept. 2026 : « code apparaît, après code disparaît »). 2) Au tour
+     suivant, comme avant : les phrases en bloc (lgBlocs), qui réécrivent un
+     paragraphe entier ; elles doivent passer APRÈS que la page a pris ses repères
+     dans le HTML, sinon elle ne retrouve plus ses éléments. */
+  const tot=()=>{
+    try{ lgBouton(); }catch(e){}
+    try{ lgTitre(); }catch(e){}
+    try{
+      if(LANG!=='fr'){ document.documentElement.lang=LANG; lgApplique(document.body,true); }
+      else if(LG_FR_PARCOURS) lgApplique(document.body,true);
+    }catch(e){}
+    /* l'en-tête de la page avait caché l'écran en attendant : on le montre */
+    try{ document.documentElement.style.visibility=''; }catch(e){}
+  };
   const go=()=>{
+    try{ lgTitre(); }catch(e){}
     try{ lgBouton();
       if(LANG!=='fr'){ document.documentElement.lang=LANG; lgApplique(document.body); }
       else if(LG_FR_PARCOURS) lgApplique(document.body);
       else document.querySelectorAll('[data-lang]').forEach(z=>{ try{ lgApplique(z); }catch(e){} });
     }catch(e){}
-    /* le JavaScript des pages redessine des morceaux en permanence :
-       on repasse dessus, mais groupé, pour ne pas ralentir l'écran */
+  };
+  /* Le JavaScript des pages redessine des morceaux en permanence. On traite ce qui
+     vient d'être ajouté TOUT DE SUITE : le rappel de l'observateur tourne avant que
+     l'écran ne soit repeint, donc le mot n'est jamais vu dans la mauvaise langue.
+     Avant, on attendait 120 ms puis on repassait sur toute la page : on voyait
+     « Devis » clignoter en « Cote » à chaque redessin. En français sur le catalogue
+     et le stock (des milliers de lignes), on ne visite que les zones qui imposent
+     leur propre langue — un document. */
+  const veille=()=>{
     try{
-      let t=null;
-      /* En français, on ne repasse PAS sur toute la page : sur le catalogue, ce
-         serait parcourir des milliers de lignes à chaque redessin. On ne visite
-         alors que les zones qui imposent leur propre langue — un document. */
-      new MutationObserver(()=>{ if(t) return;
-        if(LANG==='fr' && !LG_FR_PARCOURS && !document.querySelector('[data-lang]')) return;
-        t=setTimeout(()=>{ t=null; try{
-          if(LANG==='fr' && !LG_FR_PARCOURS) document.querySelectorAll('[data-lang]').forEach(z=>lgApplique(z));
-          else lgApplique(document.body);
-        }catch(e){} },120); })
-        .observe(document.body,{childList:true,subtree:true});
+      /* les phrases en bloc, elles, passent un peu après (comme avant) : elles
+         réécrivent le HTML du bloc, et la page doit d'abord y avoir pris ses repères */
+      let t=null; const attente=new Set();
+      const blocsPlusTard=()=>{ if(t) return; t=setTimeout(()=>{ t=null; const L=[...attente]; attente.clear();
+        try{ L.forEach(n=>{ if(n.isConnected) lgBlocs(n); }); }catch(e){} },120); };
+      new MutationObserver(recs=>{ try{
+        if(LANG==='fr' && !LG_FR_PARCOURS){ if(document.querySelector('[data-lang]')) document.querySelectorAll('[data-lang]').forEach(z=>lgApplique(z)); return; }
+        const vus=new Set();
+        recs.forEach(r=>{
+          if(r.type==='attributes'){ const el=r.target; if(el&&el.nodeType===1&&el.getAttribute(r.attributeName)!==el['__lg_'+r.attributeName]) lgAttrs(el); return; }
+          if(r.type==='characterData'){ const n=r.target; if(n.nodeType===3&&!vus.has(n)&&!(n.parentNode&&LG_SAUT[n.parentNode.nodeName])&&!lgDonnee(n)){ vus.add(n); lgTexte(n); } return; }
+          r.addedNodes.forEach(n=>{ if(vus.has(n)) return; vus.add(n);
+            if(n.nodeType===3){ if(!(n.parentNode&&LG_SAUT[n.parentNode.nodeName])&&!lgDonnee(n)) lgTexte(n); }
+            else if(n.nodeType===1&&n.isConnected){ lgApplique(n,true); if(LANG!=='fr'){ attente.add(n); blocsPlusTard(); } } }); });
+      }catch(e){} })
+        .observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['placeholder','title','aria-label']});
     }catch(e){}
   };
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',go);
-  else setTimeout(go,0);
+  if(document.body){ tot(); veille(); } else { try{ document.documentElement.style.visibility=''; }catch(e){} }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',go); else setTimeout(go,0);
 })();
 """
 
@@ -582,6 +755,56 @@ try:
     MOTS.update(_M2)
 except ImportError:
     pass
+try:
+    from _langue_mots3 import MOTS3 as _M3
+    MOTS.update(_M3)
+except ImportError:
+    pass
+# ---- le vocabulaire de la maison, appliqué AU MONTAGE ----
+# Le remplacement « devis » → « cote » se faisait à l'affichage : on voyait « Devis »
+# un instant, puis « Cote » (Igal, 12 sept. 2026 : « code apparaît, après code
+# disparaît »). Le texte fixe des pages (menu, titres, filtres) est donc converti
+# ici, au montage, avec EXACTEMENT les mêmes règles : on fait tourner le bloc VOCAB
+# dans Node plutôt que de le recopier en Python, pour que les deux ne divergent jamais.
+import subprocess as _sp, re as _re, functools as _ft
+_VOCAB_CACHE = {}
+def vocab_fr(textes):
+    """Applique lgVocab (le JS) à une liste de textes, via Node. Renvoie la liste convertie."""
+    todo = [t for t in dict.fromkeys(textes) if t not in _VOCAB_CACHE and _re.search('devis', t, _re.I)]
+    if todo:
+        js = ("var window={};" + VOCAB + "\nconst L=JSON.parse(require('fs').readFileSync(0,'utf8'));"
+              "process.stdout.write(JSON.stringify(L.map(t=>window.__lgVocab(t))));")
+        r = _sp.run(['node', '-e', js], input=_json.dumps(todo), capture_output=True, text=True)
+        if r.returncode != 0:
+            raise SystemExit('vocab_fr : node a échoué — ' + r.stderr[:300])
+        for a, b in zip(todo, _json.loads(r.stdout)): _VOCAB_CACHE[a] = b
+    return [_VOCAB_CACHE.get(t, t) for t in textes]
+
+def vocab_html(html):
+    """Convertit le texte FIXE d'une page (nœuds texte, placeholder/title/aria-label, <title>),
+    sans toucher aux scripts, aux styles ni aux attributs de logique (value, data-…)."""
+    if not _re.search('devis', html, _re.I): return html
+    morceaux = _re.split(r'(<script\b.*?</script>|<style\b.*?</style>)', html, flags=_re.S | _re.I)
+    textes = []
+    for i, m in enumerate(morceaux):
+        if i % 2: continue
+        textes += [t for t in _re.findall(r'>([^<]*)<', m) if _re.search('devis', t, _re.I)]
+        textes += [t for t in _re.findall(r'\b(?:placeholder|title|aria-label)="([^"]*)"', m) if _re.search('devis', t, _re.I)]
+    conv = dict(zip(textes, vocab_fr(textes)))
+    out = []
+    for i, m in enumerate(morceaux):
+        if i % 2: out.append(m); continue
+        m = _re.sub(r'>([^<]*)<', lambda x: '>' + conv.get(x.group(1), x.group(1)) + '<', m)
+        m = _re.sub(r'\b(placeholder|title|aria-label)="([^"]*)"', lambda x: x.group(1) + '="' + conv.get(x.group(2), x.group(2)) + '"', m)
+        out.append(m)
+    return ''.join(out)
+
+# Le dictionnaire EN/ES est écrit à partir du français d'ORIGINE (« devis »). Comme le
+# texte fixe des pages porte maintenant « cote », chaque phrase du dictionnaire qui
+# contient « devis » existe aussi sous sa forme « cote », avec la même traduction.
+_cles = [k for k in MOTS if _re.search('devis', k, _re.I)]
+for k, k2 in zip(_cles, vocab_fr(_cles)):
+    if k2 != k and k2 not in MOTS: MOTS[k2] = MOTS[k]
 import _donnees
 _donnees.pose('langue', MOTS, 'D_LANGUE')
 # La balise que chaque page doit poser AVANT son script : le dictionnaire commun.

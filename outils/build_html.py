@@ -5,10 +5,14 @@ from _comptes import COMPTES
 import _aide
 from _serveur import enligne
 from _identite import IDENT
+import _identite
+import _file_auto
 from _sauvegarde import SAUVE
 from _menu import MENU
 from _langue import LANGUE
+import _langue
 import _lire
+import _sortie
 data=open('cat.json').read()
 import _donnees
 _donnees.produits()
@@ -16,28 +20,44 @@ S=json.load(open('cat_stats.json'))
 n=lambda v: f"{v:,}".replace(',',' ')
 TPL = r'''<!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8">
+<!-- l'icône d'onglet : Sam a toujours beaucoup d'onglets ouverts ; le flacon du logo, blanc sur rose vif (choisi par Igal), se repère d'un coup d'œil (27 sept. 2026) -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23FF1F7A'/%3E%3Cg fill='none' stroke='%23fff' stroke-width='4' stroke-linejoin='round'%3E%3Crect x='25' y='7' width='14' height='8' rx='2' fill='%23fff'/%3E%3Crect x='28' y='15' width='8' height='6'/%3E%3Cpath d='M19 21 H45 L51 27 V51 L45 57 H19 L13 51 V27 Z'/%3E%3C/g%3E%3Cpath d='M36 28 Q44 29 45 36' stroke='%23fff' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
+<script>/* en anglais ou en espagnol, l'écran reste caché le temps que la traduction passe (quelques ms) : on ne voit jamais le français d'origine */try{var _l=localStorage.getItem('langue-v1');if(_l&&_l!=='fr'){document.documentElement.style.visibility='hidden';setTimeout(function(){document.documentElement.style.visibility='';},1500);}
+/* un menu réglé (ordre, rubriques cachées) : la barre reste cachée le temps qu'il s'applique, pour que les rubriques ne sautent pas */
+var _m=JSON.parse(localStorage.getItem('menu-perso-v1')||'null');if(_m&&((_m.ordre&&_m.ordre.length)||(_m.caches&&_m.caches.length))){document.documentElement.classList.add('mn-attente');setTimeout(function(){document.documentElement.classList.remove('mn-attente');},1500);}}catch(e){}</script>
+<script>/* Fiche ouverte dans une fenêtre (mode « cadre ») : on le sait dès l'entête, avant le premier dessin. Sinon on voyait un instant le menu et la liste du Catalogue à côté de la fiche (Igal, 17 oct. 2026 : « c'est pas joli »). Le corps reste caché jusqu'à ce que la fiche soit ouverte (classe « cp »), avec une sécurité de 4 s. */try{if(/[#&]cadre=1/.test(location.hash)&&window.parent!==window){document.documentElement.classList.add('cadre');setTimeout(function(){document.documentElement.classList.add('cp');},4000);}}catch(e){}</script>
+<script>/* le contenu de la page reste caché jusqu'à ce que son code l'ait dessiné (voir _serveur.py) */try{document.documentElement.classList.add('pg-attente');setTimeout(function(){document.documentElement.classList.remove('pg-attente');},4000);}catch(e){}</script>
+<style>.mn-attente .side nav{visibility:hidden} .pg-attente .main{visibility:hidden}</style>
 
 <title>Catalogue — Perfumes Trade</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
 <style>
-:root{--ground:#F4F4F1;--surface:#FFF;--surface-2:#FAFAF8;--ink:#17171D;--ink-2:#4A4A56;--ink-3:#7C7C88;
+:root{--ground:#F4F4F1;--surface:#FFF;--surface-2:#FAFAF8;--ink:#17171D;--ink-2:#33333D;--ink-3:#5C5C68;
 --line:#E0E0DC;--line-2:#EDEDE9;--line-3:#CFCFC8;--iris:#5B4B8A;--iris-soft:#EDE9F6;
 --good:#2C6E4E;--good-soft:#E9F3ED;--warn:#8A5A00;--warn-soft:#FBF3E2;--crit:#A4262C;--crit-soft:#FBECEC;}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
---ground:#121217;--surface:#1A1A21;--surface-2:#202028;--ink:#ECECF1;--ink-2:#B0B0BC;--ink-3:#80808E;
+--ground:#121217;--surface:#1A1A21;--surface-2:#202028;--ink:#ECECF1;--ink-2:#C9C9D3;--ink-3:#A4A4B2;
 --line:#2C2C36;--line-2:#26262F;--line-3:#3D3D4B;--iris:#A99AE0;--iris-soft:#272036;
 --good:#77C79C;--good-soft:#152A20;--warn:#D9A94A;--warn-soft:#2E2411;--crit:#E8898D;--crit-soft:#33191B;}}
-:root[data-theme="dark"]{--ground:#121217;--surface:#1A1A21;--surface-2:#202028;--ink:#ECECF1;--ink-2:#B0B0BC;
---ink-3:#80808E;--line:#2C2C36;--line-2:#26262F;--line-3:#3D3D4B;--iris:#A99AE0;--iris-soft:#272036;
+:root[data-theme="dark"]{--ground:#121217;--surface:#1A1A21;--surface-2:#202028;--ink:#ECECF1;--ink-2:#C9C9D3;
+--ink-3:#A4A4B2;--line:#2C2C36;--line-2:#26262F;--line-3:#3D3D4B;--iris:#A99AE0;--iris-soft:#272036;
 --good:#77C79C;--good-soft:#152A20;--warn:#D9A94A;--warn-soft:#2E2411;--crit:#E8898D;--crit-soft:#33191B;}
 *{box-sizing:border-box}
 body{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1,"cv05" 1}
+/* ---- lisible (Igal, 25 sept. 2026 : « beaucoup d'écritures en gris clair, ça me dérange ;
+   agrandis la police des écritures, pas des titres ») : gris plus foncés (ci-dessus, dans
+   les couleurs), et tout le contenu de la page 8 % plus grand — le grand titre garde sa
+   taille. Les tableaux restent dans leur cadre (colonnes secondaires rangées, voir « af »). */
+.wrap{zoom:1.08}
+.wrap h1{zoom:.926}
+@media (max-width:1300px){.wrap{zoom:1}.wrap h1{zoom:1}}   /* portable : taille normale, sinon les tableaux débordent */
+
 body{margin:0;background:var(--ground);color:var(--ink);
 font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;font-size:15px;
 -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
@@ -48,15 +68,15 @@ text-transform:uppercase;color:var(--ink-3);font-weight:500}
 .app{display:flex;align-items:flex-start;min-height:100vh}
 .side{width:234px;flex:0 0 234px;position:sticky;top:0;height:100vh;overflow-y:auto;
 background:var(--surface);border-right:1px solid var(--line);
-display:flex;flex-direction:column;padding:20px 0 16px}
-.logo{padding:0 18px 18px;border-bottom:1px solid var(--line-2);margin-bottom:14px}
+display:flex;flex-direction:column;padding:14px 0 10px}
+.logo{padding:0 18px 12px;border-bottom:1px solid var(--line-2);margin-bottom:8px}
 .logo .n{font-size:16px;font-weight:700;letter-spacing:-.02em;line-height:1.2}
 .logo .s{font-family:Inter,sans-serif;font-size:9.5px;letter-spacing:.15em;
 text-transform:uppercase;color:var(--ink-3);margin-top:3px}
 nav{display:flex;flex-direction:column;gap:1px;padding:0 10px}
 .navlab{font-family:Inter,sans-serif;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;
-color:var(--iris);font-weight:800;padding:16px 8px 6px}
-.nv{display:flex;align-items:center;gap:9px;padding:8px 10px;white-space:nowrap;border-radius:4px;font-size:14px;
+color:var(--iris);font-weight:800;padding:10px 8px 4px}
+.nv{display:flex;align-items:center;gap:9px;padding:5px 10px;white-space:nowrap;border-radius:4px;font-size:13.5px;
 color:var(--ink);font-weight:600;text-decoration:none;line-height:1.3;border-left:2px solid transparent}
 .nv .ic{width:15px;text-align:center;flex:0 0 15px;opacity:.75}
 .nv .ct{margin-left:auto;font-family:Inter,sans-serif;font-size:10.5px;font-weight:500;color:var(--ink-3);
@@ -65,6 +85,9 @@ font-variant-numeric:tabular-nums}
 .nv:hover{background:var(--surface-2);color:var(--ink)}
 .nv.on{background:var(--iris-soft);color:var(--iris);font-weight:700;border-left-color:var(--iris)}
 .nv.on .ic{opacity:1}
+.nv.sub{padding:3px 10px 3px 36px;font-size:12.5px;font-weight:500}
+@media(max-height:860px) and (min-width:901px){.nv{padding-top:3px;padding-bottom:3px}.navlab{padding-top:7px}}  /* portable : voir _base.css */
+@media(max-width:900px){.nv.sub{padding:5px 10px}}
 .nv.soon{color:var(--ink-3);font-weight:500;cursor:default;pointer-events:none}
 .nv.soon .ct{font-size:9px;letter-spacing:.08em;text-transform:uppercase;opacity:.8}
 .ver{margin-top:9px;font-family:Inter,sans-serif;font-size:10px;color:var(--ink-3);opacity:.75;letter-spacing:.02em}
@@ -74,10 +97,27 @@ font-family:Inter,sans-serif;font-size:11.5px;color:var(--ink-3);line-height:1.5
 .lnk{background:none;border:0;padding:0;font-family:inherit;font-size:11.5px;color:var(--ink-3);
 text-decoration:underline;cursor:pointer}
 .lnk:hover{color:var(--iris)}
-.sfoot{margin-top:auto;padding:14px 18px 14px;border-top:1px solid var(--line-2);
-font-family:Inter,sans-serif;font-size:10px;color:var(--ink-3);line-height:1.7}
+.sfoot{margin-top:auto;padding:10px 18px 8px;border-top:1px solid var(--line-2);
+font-family:Inter,sans-serif;font-size:10px;color:var(--ink-3);line-height:1.6}
+/* Le TYPE du parfum (EDT, EDP, OIL, SET…) et son GENRE — même pastille que
+   partout ailleurs (voir _base.css ; ces deux pages ont leur propre charte). */
+.ty{display:inline-block;font-style:normal;font-family:Inter,sans-serif;font-size:10.5px;font-weight:800;
+ letter-spacing:.05em;padding:1px 6px;margin-left:6px;border-radius:5px;vertical-align:middle;
+ background:var(--iris-soft);color:var(--iris);white-space:nowrap}
+.gn{display:inline-block;font-style:normal;font-family:Inter,sans-serif;font-size:10.5px;font-weight:600;
+ letter-spacing:.03em;padding:1px 6px;margin-left:4px;border-radius:5px;vertical-align:middle;
+ background:var(--line-2);color:var(--ink-3);white-space:nowrap}
+/* le pied garde sa place dès le départ (voir _base.css) */
+.sfoot #sfu{min-height:64px}
+.sfoot .sfline{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.sfoot .sfline #lgsel{margin-top:0!important}
+.sfoot .sfline #mn-btn{display:inline!important;margin-top:0!important}
+.sfoot #aid-slot{min-height:20px}
+
 .main{flex:1;min-width:0}
-.wrap{max-width:1400px;margin:0 auto;padding:26px 26px 70px}
+/* une seule largeur de page pour tout l'outil (Igal, 25 sept. 2026 : « certaines pages n'ont pas
+   le même encadrement », les Ventes trop étroites avec de la place sur les côtés) */
+.wrap{max-width:1600px;margin:0 auto;padding:26px 26px 70px}
 @media(max-width:900px){
  .app{flex-direction:column}
  .side{width:100%;flex:none;height:auto;position:static;border-right:0;
@@ -211,11 +251,9 @@ font-variant-numeric:tabular-nums;letter-spacing:.02em}
 
 .body{padding:13px 14px 14px;display:flex;flex-direction:column;gap:0;flex:1}
 .brand{font-family:Inter,sans-serif;font-size:12px;font-weight:700;letter-spacing:.08em;
-text-transform:uppercase;color:var(--iris);line-height:1.35;margin-bottom:4px;
-white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.nm{font-size:18px;font-weight:700;line-height:1.24;letter-spacing:-.02em;color:var(--ink);
-display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
-min-height:2.48em;margin-bottom:6px;text-wrap:balance}
+text-transform:uppercase;color:var(--iris);line-height:1.35;margin-bottom:4px;overflow-wrap:anywhere}
+.nm{font-size:17px;font-weight:700;line-height:1.24;letter-spacing:-.02em;color:var(--ink);
+overflow-wrap:anywhere;min-height:2.48em;margin-bottom:6px;text-wrap:balance}
 .meta{font-size:13px;color:var(--ink-2);line-height:1.4;letter-spacing:.005em;
 white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .meta b{font-weight:600;color:var(--ink-2);font-variant-numeric:tabular-nums}
@@ -245,7 +283,44 @@ font-family:Inter,sans-serif;font-size:9.5px;letter-spacing:.06em;color:var(--in
 white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 
+/* DIFFUSION : trois pastilles par parfum */
+.dif{display:inline-flex;flex-direction:column;align-items:flex-start;gap:3px;vertical-align:middle}
+.dfrow .dif{display:flex}
+.card .dfrow .dif{flex-direction:row;flex-wrap:wrap;gap:4px 6px}
+.dfi{position:relative;display:inline-block;padding:1px 8px;border-radius:9px;font-family:Inter,sans-serif;font-size:10.5px;font-weight:600;letter-spacing:.01em;line-height:1.35;text-align:left;color:#fff;text-transform:none;white-space:nowrap}
+.dfi.d-site{background:#d6155f}.dfi.d-sitegros{background:#4b3a86}.dfi.d-perfumecity{background:#4f8a2b}
+.dfi.non{background:var(--surface-2,#eee);color:var(--ink-3,#999);box-shadow:inset 0 0 0 1px var(--line,#ddd)}
+.dfi.non{text-decoration:line-through;text-decoration-color:var(--crit,#c0392b);text-decoration-thickness:1.5px}
+.fl.dfx{white-space:normal;overflow:visible;text-overflow:clip;max-width:100%}
+.dfi.na{opacity:.25}
+.dfrow{margin:4px 0 1px}
+#fd{min-width:220px}
+/* METTRE EN LIGNE : la barre sous le compteur et sa fenêtre (Igal, 17 oct. 2026 : « fais tout ») */
+.mel{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:8px 0 2px;padding:9px 14px;border-radius:10px;background:var(--iris-soft,#efeaf9);color:var(--ink-2,#444);font-size:13.5px;line-height:1.45}
+.mel b{font-weight:700;color:var(--ink,#111)}
+.mel[hidden],body.client .mel{display:none}
+.mel .btn{margin-left:auto}
+.mvoile{position:fixed;inset:0;z-index:2000;background:rgba(20,16,30,.45);display:flex;align-items:center;justify-content:center;padding:16px}
+.mfen{background:var(--surface,#fff);color:var(--ink,#111);border-radius:14px;max-width:560px;width:100%;max-height:90vh;overflow:auto;padding:22px 24px;box-shadow:0 20px 60px rgba(0,0,0,.3);font-size:14px;line-height:1.5}
+.mfen h3{margin:0 0 4px;font-size:18px}
+.mfen .ml{display:flex;align-items:flex-start;gap:9px;margin:10px 0;padding:10px 12px;border-radius:9px;background:var(--surface-2,#f4f2f8)}
+.mfen .ml small{display:block;color:var(--ink-3,#777)}
+.mfen .mrep{margin-top:12px;padding:10px 12px;border-radius:9px;background:var(--surface-2,#f4f2f8);font-size:13px}
+.mfen .mrep.bad{background:var(--crit-soft,#fdecea)}
+.mfen .mbtn{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
+.mfen select{padding:5px 8px;border-radius:7px}
 /* ================= FICHE PRODUIT ================= */
+html.cadre .side,html.cadre .legend,html.cadre #more{display:none!important}
+html.cadre:not(.cp) body{visibility:hidden}   /* rien ne se montre avant que la fiche soit ouverte */
+html.cadre .main{visibility:hidden}
+html.cadre .dr,html.cadre .dov{visibility:visible}
+/* 31 oct. 2026 (Igal : « Remettre en vente, ça bug, il ne se passe rien ») : les fenêtres de la fiche (confirmer les prix, identité…)
+   vivent dans .main, cachée en mode cadre — elles s'ouvraient INVISIBLES dans la fiche ouverte depuis le tableau de bord */
+html.cadre .ov{visibility:visible}
+html.cadre,html.cadre body{background:transparent}
+html.cadre .dov{background:transparent;backdrop-filter:none}
+html.cadre .dr{width:100%;box-shadow:none}
+html.cadre .dnav #dprev,html.cadre .dnav #dnext{display:none}
 .dov{position:fixed;inset:0;background:rgba(23,23,29,.42);backdrop-filter:blur(2px);z-index:40;
 opacity:0;pointer-events:none;transition:opacity .18s}
 .dov.on{opacity:1;pointer-events:auto}
@@ -271,12 +346,34 @@ display:flex;align-items:center;justify-content:center;padding:0}
 /* --- bandeau haut : photo + stock --- */
 .dhero{display:grid;grid-template-columns:152px 1fr;gap:18px;align-items:start}
 .dph{aspect-ratio:1/1;background:var(--surface-2);border:1px solid var(--line-2);border-radius:8px;
-display:flex;align-items:center;justify-content:center;overflow:hidden;padding:13px;position:relative}
+display:flex;align-items:center;justify-content:center;overflow:hidden;padding:6px;position:relative}
+.dcan .cvoir{display:inline-block;margin-top:6px;font-size:11.5px;color:var(--iris);text-decoration:none;border-bottom:1px solid transparent}
+.dcan .cvoir:hover{border-bottom-color:var(--iris)}
+.dphw{display:flex;flex-direction:column;gap:8px;min-width:0}
+.dphb{display:flex;flex-direction:column;gap:6px;align-items:stretch}
+.dphb .dphc{font-size:12px;padding:7px 6px;justify-content:center;text-align:center;line-height:1.2}
+.dphb .dphr{font-size:11.5px;text-align:center;background:none;border:0;color:var(--ink-3);cursor:pointer;text-decoration:underline;padding:0}
 .dstk{display:flex;flex-direction:column;gap:11px;min-width:0}
 .dstk .big{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
 .dstk .big b{font-family:Inter,sans-serif;font-size:36px;font-weight:600;line-height:.92;
 letter-spacing:-.03em;font-variant-numeric:tabular-nums}
 .dstk .big em{font-style:normal;font-size:13px;color:var(--ink-3)}
+.dqte{display:flex;flex-direction:column;gap:7px;align-self:flex-start;padding:10px 14px 12px;
+border:2px solid var(--iris);border-radius:10px;background:var(--iris-soft)}
+.dqte label{font-family:Inter,sans-serif;font-size:12px;font-weight:700;letter-spacing:.06em;
+text-transform:uppercase;color:var(--iris)}
+.dqte-l{display:flex;align-items:baseline;gap:10px}
+.dqte input{font-family:Inter,sans-serif;font-size:34px;font-weight:600;line-height:1.1;width:150px;
+padding:4px 10px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;
+font-variant-numeric:tabular-nums}
+.dqte input:hover{border-color:var(--iris)}
+.dqte input:focus{outline:0;border-color:var(--iris);box-shadow:0 0 0 3px var(--iris-soft)}
+.dqte em{font-style:normal;font-size:15px;font-weight:600;color:var(--ink-2)}
+.dqte.ch{border-color:var(--warn);background:var(--warn-soft)}
+.dcanw.flash{box-shadow:0 0 0 3px var(--iris);border-radius:10px;transition:box-shadow .3s}
+.dqte.dqpc.ro{border-color:#d4789a;background:#fbeef3}.dqte.dqpc.ro label{color:#b04a72}.dqte.dqpc.ro b{font-family:Inter,sans-serif;font-size:34px;font-weight:600;line-height:1.1;color:var(--ink)}
+.dqte.dqpc.ro small{font-size:11.5px;color:var(--ink-3)}
+.dqte.ch label{color:var(--warn)}
 .dstk .cap{font-family:Inter,sans-serif;font-size:17px;font-weight:600;color:var(--iris);
 font-variant-numeric:tabular-nums;line-height:1}
 .dstk .rk{font-size:12px;color:var(--ink-3);line-height:1.55}
@@ -293,12 +390,40 @@ padding:6px 11px;border-radius:20px;align-self:flex-start;line-height:1}
 .dvq{font-size:11.5px;color:var(--ink-3);line-height:1.45}
 .dvq b{color:var(--ink-2);font-weight:600}
 .btn.ptt{font-size:12px;padding:5px 11px}
+.dsst{font-size:13px;color:var(--ink-2);background:var(--surface-2);border-radius:6px;padding:9px 11px;display:flex;flex-direction:column;gap:6px}
+.dsst b{font-family:Inter,sans-serif;font-weight:700;color:var(--ink)}.dsst b.ecart{color:var(--crit)}
+.dsst.faux{border-left:3px solid var(--crit)}.dsst2{font-size:12px;color:var(--ink-3)}
+.dsst3{font-size:12px;color:var(--ink-2);font-weight:600}
 .dcompt{font-size:12px;color:var(--ink-3);background:var(--surface-2);border-radius:6px;
 padding:8px 11px;line-height:1.5;border-left:2px solid var(--line)}
 .dcompt.ec{border-left-color:var(--crit)}
 .dcompt b{color:var(--ink-2)}
 
 /* --- rail de prix --- */
+.dtop{display:flex;flex-wrap:wrap;align-items:stretch;gap:10px}
+.dqte.ro{border-color:var(--line);background:var(--surface-2)}
+.dqte.ro label{color:var(--ink-3)}
+.dqte.ro b{font-family:Inter,sans-serif;font-size:26px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.dqte.ro small{font-size:11px;color:var(--ink-3)}
+.dqte{padding:7px 12px 8px;gap:3px}
+.dqte label{font-size:10.5px}
+.dqte input{font-size:26px;width:104px;padding:2px 8px}
+.dqte em{font-size:13px}
+.dtop .cap{display:flex;flex-direction:column;justify-content:center;gap:2px;padding:7px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);font-size:20px;line-height:1.1}
+.dtop .cap small{font-size:10.5px;font-weight:600;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase}
+.damz{display:flex;flex-direction:column;justify-content:center;gap:3px;padding:7px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);text-decoration:none;color:var(--ink)}
+.damz span{font-family:Inter,sans-serif;font-size:12.5px;font-weight:700;color:var(--iris)}
+.damz small{font-family:Inter,sans-serif;font-size:10.5px;color:var(--ink-3);letter-spacing:.04em}
+.damz .lg img{height:16px}
+.damz:hover{border-color:var(--iris)}
+.drail.mini{gap:8px}
+.drail.mini .st{padding:7px 6px;gap:3px}
+.drail.mini .st span{font-size:10.5px;letter-spacing:.08em}
+.drail.mini .st input{font-size:22px}
+.drail.mini .st .in em{font-size:13px}
+.drail.mini .st .lsl{display:block;margin-top:3px;font-size:11px;color:var(--mut,#6b6b6b);line-height:1.25;text-align:center}
+.drail.mini .mg{font-size:12px;padding:2px 8px}
+.dhero{grid-template-columns:120px 1fr;gap:14px}
 .drail{display:grid;grid-template-columns:1fr 1fr 1fr;align-items:stretch;gap:10px}
 .drail .st{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0;
 background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:11px 8px}
@@ -485,6 +610,16 @@ mix-blend-mode:multiply;display:block}
 text-transform:uppercase;color:var(--ink);font-weight:800;
 padding-bottom:7px;border-bottom:1px solid var(--line-2)}
 .dgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px}
+.dcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.dgrid.dg3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:760px){.dgrid.dg3{grid-template-columns:1fr 1fr}}
+.dident .dfld input,.dident .dfld select,.dfrns .dfld input{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px}
+.dident .dfld input:focus,.dident .dfld select:focus{background:var(--surface)}
+.dident .dfld label{font-size:10px;color:var(--ink-3);letter-spacing:.1em}
+.dhint{font-size:12px;color:var(--ink-3);line-height:1.5}
+.dline{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12.5px;color:var(--ink-2);padding-top:8px;border-top:1px dashed var(--line-2)}
+.dline b{font-weight:600;color:var(--ink)}
+
 .dfld{display:flex;flex-direction:column;gap:4px}
 .dfld label{font-family:Inter,sans-serif;font-size:9px;letter-spacing:.12em;
 text-transform:uppercase;color:var(--ink-3);font-weight:500;display:flex;gap:5px;align-items:center}
@@ -511,10 +646,15 @@ border-radius:5px;padding:10px 13px}
 display:flex;gap:9px;align-items:center}
 .df .st{font-size:12.5px;color:var(--ink-3);margin-right:auto}
 .df .st.ok{color:var(--good)}
+.df .dsup{color:var(--crit);border-color:var(--crit)}
+.df .dsup:hover{background:var(--crit-soft)}
+.df .dsup[hidden]{display:none}
+.df #dmod[hidden]{display:none}
+#idov .fg{display:grid;grid-template-columns:1fr 1fr;gap:12px}#idov .fld.l{grid-column:1/-1}#idov .msg{min-height:20px;margin-top:8px;color:var(--crit)}
 .card{cursor:pointer}
 .card:focus-visible{outline:2px solid var(--iris);outline-offset:2px}
 @media(max-width:640px){.dr{width:100%}.dhero{grid-template-columns:104px 1fr;gap:13px}
-.dstk .big b{font-size:29px}.drail{grid-template-columns:1fr 1fr}
+.dstk .big b{font-size:29px}.dqte input{font-size:28px;width:120px}.drail{grid-template-columns:1fr 1fr}
 .drail .st:first-child{grid-column:1/-1}}
 
 .svact{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:4px}
@@ -534,6 +674,60 @@ font-size:13px;font-weight:500;line-height:1.55;margin-top:12px}
 .mhist ul{margin:6px 0 0;padding-left:18px;font-family:Inter,sans-serif;font-size:12px;font-variant-numeric:tabular-nums}
 /* --- prix par canal --- */
 .dcan{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.dcanl{display:flex;flex-direction:column;gap:6px}
+.dcanl .cnh{display:grid;grid-template-columns:150px 150px 1fr 190px 110px;gap:12px;padding:0 10px}
+.dcanl .cnh span{font-family:Inter,sans-serif;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:700}
+.dcanl .cn{display:grid;grid-template-columns:150px 150px 1fr 190px 110px;gap:12px;align-items:center;padding:9px 10px;text-align:left}
+.dcanl .cn .c1{display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center}
+.dcanl .cn .nm{text-align:center;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:3px}
+.dcanl .cn .lg img{height:16px}.dcanl .cn .lg-site img{height:34px}
+.dcanl .cn .sous{font-size:10px;margin-top:0;text-align:center;font-weight:700}
+.dcanl .cn .etat{align-self:center;font-size:10px;padding:1px 7px;margin-top:2px}
+.dcanl .cn .c2{display:flex;flex-direction:column;gap:3px;align-items:flex-start}
+.dcanl .cn .in{justify-content:flex-start;padding:1px 4px}
+.dcanl .cn .in::before{display:none}
+.dcanl .cn input{font-size:24px;text-align:left;width:100px;flex:0 0 auto}
+.dcanl .cn .in em{font-size:14px;flex:0 0 auto}
+.dcanl .cn .rl{text-align:left;font-size:11.5px;font-weight:500}
+.dcanl .cn .c3{min-width:0}
+.dcanl .cn .sb{margin:0;padding:6px 8px;display:flex;flex-direction:column;gap:4px;align-items:stretch}
+.dcanl .cn .sb .sbt{text-align:left}
+.dcanl .cn .sb label{display:flex;align-items:center;gap:6px;justify-content:flex-start}
+.dcanl .cn .sb label span{font-size:11px;color:var(--ink-3);width:64px;flex:0 0 64px;text-align:left}
+.dcanl .cn .sb label input{width:84px;flex:0 0 84px}
+.spw[hidden]{display:none}
+.spw{display:inline-flex;align-items:center;gap:10px;margin:0 8px}
+.spw select{font:600 13px Inter,sans-serif;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.spw .spq{display:inline-flex;align-items:center;gap:6px;font:600 12.5px Inter,sans-serif;color:var(--ink-2)}
+.dcanl .cn .sb label.rc{align-items:flex-start}
+.dcanl .cn .sb label.rc span{width:auto;flex:1 1 auto;font-size:12px;color:var(--ink-2);font-weight:600}
+.dcanl .cn .sb label.rc input{width:16px;flex:0 0 16px;margin:1px 0 0}
+.dcanl .cn .sb .envs,.dcanl .cn .sb .lnk{align-self:flex-start}
+.dcanl .cn .c2 .in input{width:auto;field-sizing:content;min-width:52px;max-width:120px}
+.dcanl .cn .azp{display:flex;flex-direction:column;gap:2px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.dcanl .cn .azp .sbt{font-family:Inter,sans-serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:700}
+.dcanl .cn .azp b{font-family:Inter,sans-serif;font-size:20px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.dcanl .cn .azp small{font-size:11px;color:var(--ink-3)}
+.dcanl .cn .azp .sbw{margin:4px 0 0}
+.dcanl .cn .calc2{display:flex;flex-direction:column;gap:1px}
+.dcanl .cn .calc2 b{font-family:Inter,sans-serif;font-size:20px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.dcanl .cn .calc2 b.g{color:var(--good)}.dcanl .cn .calc2 b.w{color:var(--warn)}.dcanl .cn .calc2 b.c{color:var(--crit)}.dcanl .cn .calc2 b.na{color:var(--ink-3)}
+.dcanl .cn .calc2 small{font-size:11px;font-weight:600;color:var(--ink-2)}
+.dcanl .cn .calc2 span{font-size:10.5px;color:var(--ink-3);line-height:1.35}
+.dcanl .cn .calc.vide{font-size:11.5px;color:var(--ink-3)}
+.dcanl .cn .sbd .sbs{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:2px 0}
+.dcanl .cn .sbd .sbs b{font-family:Inter,sans-serif;font-size:20px;font-weight:800;letter-spacing:-.02em}
+.dcanl .cn .sbd .sbs small{font-size:11px;color:var(--ink-3)}
+.dcanl .cn .sbd .sb{margin-top:4px}
+.dcanl .cn{padding:6px 10px}
+.dcanl .cn .azp{padding:4px 8px}
+.dcanl .cn .azp b{font-size:18px}
+.dcanl .cn .calc2 b{font-size:18px}
+.dcanl .cn .c5{display:flex;justify-content:flex-end}
+.dcanl .cn.off{opacity:.75}
+.dcanl .cn .offtx{font-size:12px}
+@media(max-width:900px){.dcanl .cnh{display:none}.dcanl .cn{grid-template-columns:1fr 1fr}.dcanl .cn .c3{grid-column:1/-1}.dcanl .cn .c5{justify-content:flex-start}}
+
 .cn{display:flex;flex-direction:column;gap:5px;background:var(--surface-2);border:1px solid var(--line);
 border-radius:9px;padding:10px 9px 9px;min-width:0}
 .cn .nm{font-family:Inter,sans-serif;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);
@@ -565,6 +759,35 @@ border-radius:99px;padding:4px 10px;cursor:pointer;align-self:center;margin-top:
 .cn .expl{font-family:Inter,sans-serif;font-size:13px;color:var(--ink);font-weight:500;text-align:center;line-height:1.45;font-variant-numeric:tabular-nums}
 .cn .expl b{font-weight:800}.cn .expl b.g{color:var(--good)}.cn .expl b.w{color:var(--warn)}.cn .expl b.c{color:var(--crit)}.cn .expl b.na{color:var(--ink-3)}
 .cn .lg img{height:20px}.cn .lg-site img{height:48px}
+/* 24 sept. 2026 : la carte se lit de haut en bas — le canal, s'il est relié, le prix, d'où il
+   vient, puis le calcul posé comme une addition : vendu, frais, achat, ce qu'il te reste. */
+.dcanx{font-size:13px;color:var(--ink-2);line-height:1.55;margin:8px 0 0;max-width:80ch}
+.dcanx b{color:var(--ink)}
+.cn .sous{display:block;width:100%;font-size:10.5px;letter-spacing:.14em;color:var(--ink-2);margin-top:-2px}
+.cn .etat{align-self:center;font-family:Inter,sans-serif;font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;text-align:center;line-height:1.35}
+.cn .etat.ok{background:var(--good-soft);color:var(--good)} .cn .etat.no{background:var(--surface);color:var(--ink-3);border:1px dashed var(--line)}
+.cn .mp{align-self:center;font-family:Inter,sans-serif;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);display:flex;gap:4px;align-items:center}
+.cn table.calc{width:100%;border-collapse:collapse;font-family:Inter,sans-serif;font-size:12.5px;font-variant-numeric:tabular-nums;margin-top:2px}
+.cn table.calc td{padding:3px 2px;color:var(--ink-2);border-bottom:1px solid var(--line-2)}
+.cn table.calc td:last-child{text-align:right;white-space:nowrap;color:var(--ink)}
+.cn table.calc tr.tot td{border-bottom:0;border-top:1.5px solid var(--ink-3);padding-top:5px;color:var(--ink);font-weight:700}
+.cn table.calc tr.tot b{font-size:15px;font-weight:800}
+.cn table.calc tr.tot b.g{color:var(--good)} .cn table.calc tr.tot b.w{color:var(--warn)} .cn table.calc tr.tot b.c{color:var(--crit)}
+.cn table.calc small{display:block;font-size:11px;font-weight:600;color:var(--ink-3)}
+.cn .ss{font-family:Inter,sans-serif;font-size:12px;color:var(--ink-2);text-align:center;line-height:1.4}
+.cn .ss b{color:var(--ink);font-variant-numeric:tabular-nums} .cn .ss.no{color:var(--ink-3)}
+.cn .ss small{display:block;font-size:11px;color:var(--ink-3);text-decoration:line-through}
+.cn .sb{display:flex;flex-direction:column;gap:5px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 8px}
+.cn .sb .sbt{font-family:Inter,sans-serif;font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);text-align:center}
+.cn .sb label{display:flex;align-items:center;gap:6px;font-family:Inter,sans-serif;font-size:12px;color:var(--ink-2)}
+.cn .sb label span{flex:1}
+.cn .sb input{width:78px;font:600 13px Inter,sans-serif;text-align:right;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);font-variant-numeric:tabular-nums}
+.cn .sb input:focus{outline:0;border-color:var(--iris);box-shadow:0 0 0 2px var(--iris-soft)}
+.cn .sb em{font-style:normal;font-size:12px;color:var(--ink-3)}
+.cn .sb .lnk{background:none;border:0;padding:0;font:600 11.5px Inter,sans-serif;color:var(--iris);text-decoration:underline;cursor:pointer;text-align:center}
+.cn .envs{align-self:stretch;font-family:Inter,sans-serif;font-size:12.5px;font-weight:700;color:#fff;background:var(--iris);border:0;border-radius:8px;padding:7px 8px;cursor:pointer;line-height:1.3}
+.cn .envs:hover{filter:brightness(1.08)} .cn .envs:disabled{opacity:.6;cursor:wait}
+.cn .calc.vide{font-family:Inter,sans-serif;font-size:12.5px;color:var(--ink-3);text-align:center;line-height:1.45;padding:4px 2px}
 .cn .rl button{background:none;border:0;padding:0;font:inherit;color:var(--iris);text-decoration:underline;cursor:pointer}
 .dsec h3 .hh{font-weight:500;font-size:13px;color:var(--ink-2);letter-spacing:0;text-transform:none;margin-left:10px}
 .dsec h3 .hh a{color:var(--iris)}
@@ -612,6 +835,37 @@ border-radius:6px;padding:7px 10px;font-size:11.5px;line-height:1.45;white-space
 opacity:0;transition:opacity .1s;z-index:5;font-family:Inter,sans-serif}
 .cinf.on{opacity:1}
 .cinf b{color:var(--surface);font-weight:700}
+.vdet{margin-top:8px;border-top:1px solid var(--line);padding-top:6px}
+.vdet>summary{cursor:pointer;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:700;padding:4px 0}
+.vdet>summary:hover{color:var(--ink)}
+.dvt>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding:2px 0}
+.dvt>summary::-webkit-details-marker{display:none}
+.dvt .vs-t{font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700}
+.dvt .vs-n{font-size:12.5px;color:var(--ink-2)}
+.dvt .vs-c{margin-left:auto;color:var(--ink-3);transition:transform .15s}
+.dvt[open]>summary .vs-c{transform:rotate(180deg)}
+.dvt>summary:hover .vs-c{color:var(--ink)}
+.vryt{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:8px}
+.vryt div{background:var(--surface-2);padding:9px 12px;display:flex;flex-direction:column;gap:2px}
+.vryt .v{font-family:Inter,sans-serif;font-size:16px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.vryt .k{font-size:10.5px;color:var(--ink-3);line-height:1.3}
+.vmois{display:flex;gap:4px;align-items:flex-end;height:84px;padding:6px 4px 0;border:1px solid var(--line);border-radius:8px;background:var(--surface);margin-bottom:10px}
+.vmois .vm{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px;min-width:0}
+.vmois i{display:block;width:70%;background:var(--iris);border-radius:3px 3px 0 0;min-height:2px}
+.vmois i.z{background:var(--line)} .vmois i.neg{background:var(--crit)}
+.vmois b{font-family:Inter,sans-serif;font-size:10px;font-weight:700;line-height:1;height:10px}
+.vmois span{font-size:9.5px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em}
+.vlist li.vlk{cursor:pointer} .vlist li.vlk:hover{background:var(--surface-2)}
+.vlist .mg{font-family:Inter,sans-serif;font-size:11.5px;font-weight:600;color:var(--good);min-width:64px;text-align:right}
+.vlist .mg.neg,.vtab td.neg{color:var(--crit)}
+.vtab{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:4px}
+.vtab th{text-align:left;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);padding:4px 8px;border-bottom:1px solid var(--line)}
+.vtab td{padding:6px 8px;border-bottom:1px solid var(--line-2)}
+.vtab .r{text-align:right;font-variant-numeric:tabular-nums}
+.vdeux{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:10px 0}
+@media(max-width:760px){.vdeux{grid-template-columns:1fr}}
+.vdeux h4,.dsec h4{margin:8px 0 2px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.vlist .q.ret{color:var(--crit);font-weight:700}
 .hst{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:1px;
 background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .hst div{background:var(--surface-2);padding:10px 12px;display:flex;flex-direction:column;gap:2px}
@@ -686,8 +940,35 @@ font-size:12.5px;font-weight:600;color:var(--ink-3);cursor:pointer;line-height:1
 .vue button:hover{color:var(--ink)}
 .vue button.on{background:var(--surface);color:var(--iris);box-shadow:0 1px 2px rgba(0,0,0,.08)}
 .lstw{overflow:visible;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
-@media(max-width:1439px){.lstw{overflow-x:auto}}   /* ecran etroit : le tableau defile, l'en-tete ne peut plus rester fige */
-.lst{width:100%;border-collapse:collapse;font-size:13.5px;min-width:940px}
+/* (l'ancien « @media(max-width:1439px){.lstw{overflow-x:auto}} » est remplacé par .defile, posé par le script seulement quand le tableau dépasse) */
+.lstw.defile .lst thead th{position:static}   /* un en-tête figé dans une boîte qui défile se retrouve au milieu du tableau */
+/* Igal, 24 sept. 2026 : sur son grand écran, la colonne Alertes sortait du cadre
+   (le tableau était plus large que sa boîte, et la boîte laissait dépasser).
+   Deux choses : le cadre du catalogue est plus large (1600 px au lieu de 1400),
+   et si malgré tout le tableau ne tient pas, la boîte le fait défiler au lieu
+   de le laisser dépasser — c'est le script qui pose .defile quand ça arrive. */
+.lstw.defile{overflow-x:auto}
+body.cat .wrap{max-width:1600px}
+.lst{width:100%;border-collapse:collapse;font-size:13.5px;min-width:0}
+/* Plus de min-width : les colonnes se retirent d'après la largeur de la boîte
+   (container queries plus bas), le tableau n'a donc jamais besoin d'être plus
+   large que sa boîte. S'il l'est quand même, le script pose .defile. */
+.lst td.colsite{width:74px}
+/* la fenêtre « Mettre les sites à jour » */
+.sbw{font-size:12.5px;line-height:1.45;color:#b3261e;background:#fff3f0;border:1px solid #f3c9bf;border-radius:7px;padding:6px 9px;margin:4px 0 6px}
+.psq{display:flex;flex-direction:column;gap:7px;margin:14px 0 0;font-size:13.5px}
+.psq label{display:flex;align-items:center;gap:8px;cursor:pointer}
+.pstot{margin:12px 0 10px;font-size:14px}
+.pstot b{font-weight:800}
+.psz{color:var(--crit)}
+.pst{width:100%;border-collapse:collapse;font-size:13px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.pst th{text-align:left;font-family:Inter,sans-serif;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+ color:var(--ink-3);font-weight:700;padding:8px 10px;background:var(--surface-2);border-bottom:1px solid var(--line)}
+.pst th.r,.pst td.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pst td{padding:7px 10px;border-bottom:1px solid var(--line-2)}
+.pst td small{display:block;color:var(--ink-3);font-size:11px}
+.pst tbody tr:last-child td{border-bottom:0}
+.psvide{padding:22px;text-align:center;color:var(--ink-2);border:2px dashed var(--line);border-radius:10px}
 .lst td.lno,.lst th.lno{width:46px;text-align:right;padding-right:9px;color:var(--ink-3);
 font-family:Inter,sans-serif;font-size:11.5px;font-variant-numeric:tabular-nums}
 .lst th.lno{cursor:default;background:var(--surface-2)}
@@ -721,10 +1002,20 @@ display:flex;align-items:center;justify-content:center}
 .lid{display:flex;align-items:center;gap:14px;min-width:0}
 .lid .tx{min-width:0}
 .lmq{font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--iris);
-line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+line-height:1.3;overflow-wrap:anywhere}
+/* 11 oct. 2026 (Igal) : le nom coupé par « … » rendait deux parfums proches indiscernables
+   (« Le Male Elixir Absolu 4.2 » et « Le Male Elixir … »). Le nom s'écrit en entier, sur
+   deux lignes s'il le faut : la ligne est un peu plus haute, mais on sait ce qu'on regarde. */
 .lnm{font-size:15px;font-weight:700;color:var(--ink);letter-spacing:-.015em;line-height:1.3;
-white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:340px}
-.lmeta{font-size:12.5px;color:var(--ink-2);white-space:nowrap}
+white-space:normal;overflow-wrap:anywhere;max-width:420px}
+/* « 3.4 oz · EDC · Homme » tenait sur une seule ligne coûte que coûte, et cette
+   colonne à elle seule prenait 141 px de large. Elle se replie maintenant sur
+   deux lignes quand il le faut : la place gagnée sert au tableau à tenir dans
+   l'écran, ce qui vaut mieux qu'un débordement sur la droite. */
+.lmeta{font-size:12.5px;color:var(--ink-2)}
+.laz{display:inline-flex;align-items:center;margin-left:7px;vertical-align:middle;text-transform:none;letter-spacing:0;padding:1px 6px;border:1px solid var(--line);border-radius:99px;background:var(--surface);line-height:1}
+.laz .lg img{height:11px;display:block}
+.meta .laz{margin-left:6px}
 .lbc{font-family:Inter,sans-serif;font-size:11px;color:var(--ink-3);white-space:nowrap}
 .lq{font-family:Inter,sans-serif;font-weight:700;font-size:15px;font-variant-numeric:tabular-nums}
 .lq.out{color:var(--ink-3);font-weight:400;font-size:11.5px;font-family:Inter,sans-serif}
@@ -757,21 +1048,104 @@ white-space:nowrap;line-height:1.2}
 font-weight:500;margin-top:1px;white-space:nowrap}
 .lazd.perte{color:var(--crit);font-weight:700}
 .lazv{color:var(--ink-3);font-size:11.5px;font-style:italic;font-family:Inter,sans-serif}
+.lsq{display:block;font-family:Inter,sans-serif;font-size:13px;color:var(--ink-2);white-space:nowrap;font-variant-numeric:tabular-nums}
+.lsq b.ecart{color:var(--warn);font-weight:800}
+.lsn{font-style:normal;color:var(--ink-3);opacity:.7}
+.lsd{display:block;font-family:Inter,sans-serif;font-size:11px;color:var(--ink-3);line-height:1.25}
+.lsz{display:block;font-family:Inter,sans-serif;font-size:11px;color:var(--crit);white-space:nowrap}
+.lsv{color:var(--ink-3);font-size:11.5px;font-style:italic;font-family:Inter,sans-serif}
+.lst thead th.colsite span{white-space:normal;line-height:1.25;max-width:62px}
 .laz.vieux{color:var(--ink-2);font-weight:500}
 .lazage{display:block;font-family:Inter,sans-serif;font-size:10px;color:var(--ink-3);
 letter-spacing:.02em;margin-top:1px;white-space:nowrap}
 .lazage.perime{color:var(--warn)}
 .lmg.g{color:var(--good)} .lmg.w{color:var(--warn)} .lmg.c{color:var(--crit)}
-.lfl{display:flex;flex-direction:column;align-items:flex-start;gap:4px;white-space:nowrap}
+.lfl{display:flex;flex-direction:column;align-items:flex-start;gap:4px;white-space:nowrap;max-width:230px}
+.lfl>*{white-space:normal}
 .lfl .fl{font-size:11px;padding:4px 9px 4px 7px}
 .lst td.colfl{min-width:190px}
 .lst thead th.colmg span{white-space:normal;line-height:1.25;max-width:78px}
-.lfl .fl{max-width:none;overflow:visible}
+/* Les alertes restent écrites en toutes lettres (demande d'Igal : pas de « +1 »),
+   mais une alerte longue se replie au lieu d'élargir la colonne — et donc le
+   tableau entier — jusqu'à déborder de l'écran. */
+.lfl .fl{max-width:none;overflow:visible;white-space:normal}
+@media(max-width:1560px){.lfl{white-space:normal}}
+.lst thead th.r span{white-space:normal;line-height:1.2;max-width:72px}
 /* Sur un ecran de portable, le nom se resserre et le code-barres se cache pour que
    la colonne Alertes reste visible sans faire defiler le tableau. */
 .lnm{max-width:240px}.lst td,.lst thead th{padding-left:8px;padding-right:8px}
-@media(max-width:1560px){.lst .colbc{display:none}.lnm{max-width:190px}.lst td,.lst thead th{padding-left:7px;padding-right:7px}.lst td.colfl{min-width:170px}.lmeta{font-size:12px}}
+/* Le tableau doit TENIR dans l'écran. Il débordait sur la droite — 1 342 px de
+   colonnes pour 1 152 px de place sur un portable — et la page entière prenait
+   une barre de défilement horizontale. On resserre donc par paliers : le
+   code-barres disparaît le premier (il se lit dans la fiche), puis le nom se
+   raccourcit, puis les colonnes de chiffres se serrent. Rien n'est supprimé. */
+/* le code-barres ne revient que quand il y a vraiment la place : à 1 700 px
+   il repoussait encore le tableau de 41 px hors de l'écran. Et même au-delà,
+   il doit se serrer : la zone de contenu ne dépasse jamais 1 346 px. */
+@media(max-width:20000px){.lst .colbc{display:none}}
+.lst .colbc{padding-left:4px;padding-right:4px}
+.lst td.colbc .lbc{font-size:11px;letter-spacing:0}
+@media(max-width:1560px){.lnm{max-width:170px}.lst td,.lst thead th{padding-left:7px;padding-right:7px}
+  .lst td.r,.lst thead th.r{padding-left:6px;padding-right:6px}
+  .lst td.colfl{min-width:140px}.lmeta{font-size:12px}.lst td.colsite{width:64px}}
+/* En dessous, on ne peut plus se contenter de resserrer : Igal travaille dans une
+   fenêtre d'environ mille pixels, et douze colonnes n'y tiennent pas, quoi qu'on
+   fasse. On en RETIRE donc, de la moins utile à la plus utile, et on le dit à
+   l'écran pour que personne ne croie que l'outil a perdu une donnée :
+     — le Format, déjà écrit sous le nom du parfum (« 3.4 oz · EDP · Homme ») ;
+     — la Marge retail, qui se recalcule de tête depuis le prix d'achat ;
+     — le prix Amazon, qui n'a de sens que quand un relevé vient d'être fait ;
+     — le Prix retail en dernier, parce qu'on ne vend pas au détail en gros.
+   Tout reste dans la fiche du parfum, et revient dès qu'on élargit la fenêtre. */
+/* 24 sept. 2026 : ces seuils étaient mesurés sur la LARGEUR DE LA FENÊTRE, alors
+   que ce qui compte est la largeur de la boîte du tableau (fenêtre moins le menu
+   de gauche, moins les marges). Chez Igal, à 1 456 px de fenêtre, la boîte ne
+   faisait que 1 170 px : aucune colonne n'était retirée et les Alertes sortaient
+   du cadre. On mesure donc la boîte elle-même (container query). */
+.lstw{container-type:inline-size}
+/* Quand le tableau dépasse quand même (anglais, espagnol : des en-têtes plus longs),
+   ajusteDefile retire ces colonnes une par une, dans cet ordre, avant de se résoudre
+   à faire défiler : on garde toujours les Alertes dans le cadre. */
+/* 30 sept. 2026 (Igal) : la marge retail doit se voir — le prix Amazon part avant elle */
+.lstw.x1 .lst .colfmt,.lstw.x2 .lst .colaz,.lstw.x3 .lst .colmgr,.lstw.x4 .lst .colpvr{display:none}
+.lbn{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--ink-3);letter-spacing:.02em;margin-top:1px}
+@container (max-width:1270px){.lst .colfmt{display:none}}
+/* 11 oct. 2026 (Igal : « j'aimerais bien qu'il y ait la contenance ») : quand la colonne Format
+   n'a plus la place, la contenance, le type et le genre passent sous le nom, toujours lisibles */
+.lsub{display:none;font-size:12px;color:var(--ink-2);margin-top:1px}
+.lsub b{font-weight:600}
+.lstw.x1 .lst .lsub{display:block}
+@container (max-width:1270px){.lst .lsub{display:block}}
+@container (max-width:1080px){.lst .colaz{display:none}}
+/* 12 oct. 2026 (Igal : « enlève-moi Amazon sur la ligne ») : la colonne Amazon n'est plus affichée dans la liste (le prix Amazon n'est plus suivi) ; la cellule reste dans la page pour les contrôles */
+.lst .colaz,.lst th.colaz{display:none!important}
+@container (max-width:960px){.lst .colmgr{display:none}}
+@container (max-width:860px){.lst .colpvr{display:none}.lnm{max-width:130px}
+  .lst td.colfl{min-width:0}.lfl .fl{font-size:10.5px;padding:3px 7px 3px 6px}
+  .lst td,.lst thead th{padding-left:5px;padding-right:5px}
+  .lst td.r,.lst thead th.r{padding-left:4px;padding-right:4px}
+  .lst thead th.r span{max-width:56px;font-size:10px}
+  .lid .lph{display:none}          /* la vignette part : elle prend 40 px par ligne */
+  .lst td.colsite{width:56px}.lmeta{font-size:11.5px}}
+/* La barre d'outils : elle passait à la ligne trop tard et poussait la page
+   entière vers la droite. Elle se replie maintenant dès qu'elle est serrée. */
+@media(max-width:1180px){.bar .acts{flex-wrap:wrap;justify-content:flex-end}
+  .bar .btn{font-size:12.5px;padding:7px 10px}}
 body.client .lst .colpa,body.client .lst .colq,body.client .lst .colmg,body.client .lst .colfl{display:none}
+/* Igal, 12 oct. 2026 : « quand j'appuie sur décroissant / croissant, toute la ligne bouge ».
+   Tableau en largeurs automatiques : chaque tri change les textes visibles, donc la largeur
+   de CHAQUE colonne se recalculait et tout glissait (nom 331 → 369 → 306 px). Largeurs fixes :
+   les colonnes de chiffres ont leur largeur, le nom prend le reste, et rien ne bouge au tri. */
+body.cat .status{min-height:28px}   /* la pastille « TRI » apparaît et disparaît : sans hauteur réservée, l'en-tête montait et descendait de 9 px à chaque clic */
+body.cat .lst{table-layout:fixed}
+body.cat .lst thead th.lno{width:46px}
+body.cat .lst thead th.r{width:92px}
+body.cat .lst thead th.colq{width:84px}
+body.cat .lst thead th.colsite{width:78px}
+body.cat .lst thead th.colmg{width:100px}
+body.cat .lst thead th.colfl{width:200px}
+@media(max-width:1560px){body.cat .lst thead th.r{width:84px}body.cat .lst thead th.colq{width:76px}body.cat .lst thead th.colsite{width:68px}body.cat .lst thead th.colmg{width:90px}body.cat .lst thead th.colfl{width:150px}}
+@container (max-width:860px){body.cat .lst thead th.colfl{width:auto}}
 
 
 .lst thead th.so{cursor:pointer;user-select:none;transition:color .12s,background .12s}
@@ -860,6 +1234,12 @@ font-size:13.5px;font-weight:500;color:var(--ink-3);cursor:pointer}
 .fld label{font-family:Inter,sans-serif;font-size:9.5px;letter-spacing:.12em;
 text-transform:uppercase;color:var(--ink-3);font-weight:500}
 .fld label b{color:var(--crit)}
+.fhint{font-size:11.5px;color:var(--ink-3);line-height:1.4}
+.pxsit{margin-top:14px;padding:12px 14px;border:1px solid var(--iris);border-radius:8px;background:var(--iris-soft);font-size:13.5px}
+.pxenv{padding:12px 14px;border:1px solid var(--iris);border-radius:8px;background:var(--iris-soft);font-size:13.5px}.pxsit ul{margin:8px 0 0;padding-left:20px;line-height:1.7}.pxsit small{color:var(--ink-3)}
+.pxsc{display:flex;gap:8px;align-items:center;font-weight:700;cursor:pointer}
+.pxbas{margin:8px 0 0;color:var(--crit)}
+body.sansPA .legend,body.sansPA .flags,body.sansPA .selw:has(#fan){display:none!important}
 .fld input,.fld select,.mb textarea{font-family:inherit;font-size:13.5px;color:var(--ink);
 background:var(--surface-2);border:1px solid var(--line);border-radius:3px;padding:8px 10px;width:100%}
 .fld input:focus,.fld select:focus,.mb textarea:focus{outline:2px solid var(--iris);outline-offset:1px;background:var(--surface)}
@@ -906,7 +1286,15 @@ border-radius:0 3px 3px 0;font-size:13px;color:var(--ink-2);line-height:1.65;max
 footer{margin-top:40px;border-top:1px solid var(--line);padding-top:15px;font-size:12.5px;color:var(--ink-3);
 display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between}
 __AIDECSS__
-</style></head><body>
+/* nouvelles références pour Lightspeed */
+.lsnv-tete{margin:4px 0 2px;font-size:14px}
+.lsnv-av{margin-top:16px;color:var(--crit)}
+.lsnv-case{display:flex;gap:8px;align-items:center;margin:6px 0 10px;font-size:13.5px;cursor:pointer}
+.lsnv-tab{max-height:300px}
+.lsnv-tab td.num,.lsnv-tab th.num{text-align:right;white-space:nowrap}
+.lsnv-why{color:var(--crit);font-size:12px}
+.lsnv-tab small{color:var(--ink-3)}
+</style></head><body class="cat">
 <div class="app">
 
 <aside class="side">
@@ -918,8 +1306,9 @@ __AIDECSS__
     <span class="navlab">Produits</span>
 __BARRE__
   </nav>
-  <div class="sfoot"><div id="sfu" class="sfu"></div><span id="sfoot">__TOTAL__ références<br>__ENSTOCK__ en stock<br>__UNITES__ unités</span>
-  <div class="ver" title="Si cette date n'est pas la derni&egrave;re, recharge avec Cmd+Option+R">version du __VERSION__</div></div>
+  <div class="sfoot"><div id="sfu" class="sfu"></div><span id="sfoot">__TOTAL__ références · __ENSTOCK__ en stock · __UNITES__ unités</span>
+  <div class="ver" title="Si cette date n'est pas la derni&egrave;re, recharge avec Cmd+Option+R">version du __VERSION__</div>
+    <div class="sfline" id="sfline"></div></div>
 </aside>
 
 <div class="main"><div class="wrap">
@@ -941,13 +1330,21 @@ __BARRE__
     <button data-v="in" class="on">En stock</button>
     <button data-v="out">Historique</button>
     <button data-v="">Tout</button>
+    <button data-v="az">Vendus sur Amazon</button>
+    <button data-v="sp">Sans prix sur le site</button>
   </div>
-  <select id="fs" hidden><option value="in" selected></option><option value="out"></option><option value=""></option></select>
+  <span id="spwrap" class="spw" hidden><select id="fsp" aria-label="Site"><option value="">Wholesale et retail</option><option value="g">Wholesale seulement</option><option value="d">Retail seulement</option></select><label class="spq"><input type="checkbox" id="fspq" checked><span>En stock seulement</span></label></span>
+  <select id="fs" hidden><option value="in" selected></option><option value="out"></option><option value=""></option><option value="az"></option><option value="sp"></option></select>
 
   <div class="selw"><select id="fb" aria-label="Marque"><option value="">Toutes les marques</option></select></div>
   <div class="selw"><select id="fg" aria-label="Genre"><option value="">Tous genres</option>
     <option value="M">Homme</option><option value="W">Femme</option>
     <option value="U">Unisexe</option><option value="K">Enfant</option></select></div>
+  <!-- Igal, 17 oct. 2026 : « sur le catalogue et dans les filtres, cibler tout de suite ceux qui ne sont pas diffusés sur un des trois canaux » -->
+  <div class="selw"><select id="fd" aria-label="Diffusion"><option value="">Diffusion : toute</option>
+    <option value="any">Pas diffusé sur un des trois</option><option value="site">Pas sur perfumestrade.com</option>
+    <option value="sitegros">Pas sur le site de gros</option><option value="perfumecity">Pas sur Perfume City</option>
+    <option value="all">Diffusé sur les trois</option></select></div>
 
   <button class="more" id="advb" aria-expanded="false">Plus de filtres
     <span class="bdg" id="bdg">0</span><span class="cv"></span></button>
@@ -961,7 +1358,10 @@ __BARRE__
     <button class="btn" id="azimp">Relevé Amazon</button>
     <button class="btn" id="fac">Enregistrer une facture</button>
     <button class="btn" id="svg">Sauvegarder mon travail</button>
+    <button class="btn" id="lsnv">Nouvelles réf. pour Lightspeed</button>
+    <button class="btn" id="plb" title="La liste de tout ce qui est en stock, avec le prix de gros — en PDF ou en Excel, à envoyer à un client">Price list</button>
     <button class="btn" id="maj">Mettre à jour le stock</button>
+    <button class="btn" id="psite" style="display:none">Mettre les sites à jour</button>
     <button class="btn pri" id="add">+ Nouvel article</button>
   </div>
  </div>
@@ -980,7 +1380,7 @@ __BARRE__
     <option value="1">Avec photo</option><option value="0">Sans photo</option></select></div>
   <div class="selw"><select id="fx" aria-label="Fiche"><option value="">Fiches : toutes</option>
     <option value="neuf">Ajoutées à la main</option><option value="mod">Modifiées</option>
-    <option value="todo">À compléter</option></select></div>
+    <option value="todo">À compléter</option><option value="retire">Retirées du catalogue</option></select></div>
   <div class="selw"><select id="fo" aria-label="Tri"><option value="b">Tri : marque</option>
     <option value="q">Tri : stock ↓</option><option value="p">Tri : prix gros ↑</option></select></div>
   <span class="sep"></span>
@@ -995,6 +1395,7 @@ __BARRE__
 
  <div class="extb" id="extb" style="display:none"></div>
  <div class="status"><span class="count" id="cnt"></span><span class="chips" id="chips"></span></div>
+ <div class="mel" id="mel" hidden></div>
 </div>
 
 <div class="ov" id="fcov">
@@ -1042,6 +1443,40 @@ __BARRE__
   <div class="mf"><span class="msg" id="svmsg"></span><button class="btn" id="svc">Fermer</button></div>
  </div>
 </div>
+<div class="ov" id="plov">
+ <div class="mod" style="max-width:640px">
+  <div class="mh"><h2>Price list</h2><button class="x" id="pl-x">&times;</button></div>
+  <div class="mb">
+   <p class="hint" style="margin:0 0 12px">Tous les parfums <b>en stock</b>, triés par marque. Coche ce que le client doit voir, choisis le format, puis télécharge ou envoie.</p>
+   <div class="fg" style="display:grid;gap:10px">
+    <label><input type="checkbox" id="pl-prix" checked> <b>Prix de gros</b></label>
+    <label><input type="checkbox" id="pl-qte"> Quantité en stock</label>
+    <label><input type="checkbox" id="pl-sans"> Mettre aussi les parfums sans prix de gros (« prix sur demande »)</label>
+    <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center;margin-top:4px">
+     <span>Format :</span>
+     <label><input type="radio" name="plf" value="pdf" checked> PDF avec le logo</label>
+     <label><input type="radio" name="plf" value="xlsx"> Excel</label>
+    </div>
+    <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center">
+     <span>Langue du document :</span>
+     <select id="pl-lg" class="sel"><option value="en" selected>English</option><option value="es">Español</option><option value="fr">Français</option></select>
+    </div>
+    <div class="fld"><label for="pl-client">Pour le client (facultatif, écrit en tête du document)</label><input id="pl-client" placeholder="Nom du client" autocomplete="off"></div>
+   </div>
+   <p class="hint" id="pl-compte" style="margin:12px 0 0"></p>
+   <div id="pl-env" style="display:none;margin-top:12px;border-top:1px solid var(--line,#e4e2ea);padding-top:12px">
+    <div class="fld"><label for="pl-tel">WhatsApp — numéro du client</label><input id="pl-tel" placeholder="305 555 0100" autocomplete="off"></div>
+    <div class="fld" style="margin-top:8px"><label for="pl-mail">Email — adresse du client</label><input id="pl-mail" placeholder="client@exemple.com" autocomplete="off"></div>
+   </div>
+  </div>
+  <div class="mf"><span class="msg" id="pl-msg"></span>
+   <button class="btn" id="pl-ann">Fermer</button>
+   <button class="btn" id="pl-wa" title="Le PDF est déposé en ligne et le lien part dans WhatsApp">WhatsApp</button>
+   <button class="btn" id="pl-em" title="Le PDF est déposé en ligne et le lien part par email">Email</button>
+   <button class="btn pri" id="pl-dl">Télécharger</button></div>
+ </div>
+</div>
+
 <div class="ov" id="mjov">
  <div class="mod">
   <div class="mh"><h2>Mettre à jour le stock</h2><button class="x" id="mjx">&times;</button></div>
@@ -1058,6 +1493,27 @@ __BARRE__
   <div class="mf"><span class="msg" id="mjmsg"></span>
    <button class="btn" id="mjc">Annuler</button>
    <button class="btn pri" id="mjok" disabled>Appliquer</button></div>
+ </div>
+</div>
+<div class="ov" id="psov">
+ <div class="mod" style="max-width:820px">
+  <div class="mh"><h2>Mettre les sites à jour</h2><button class="x" id="psx">&times;</button></div>
+  <div class="mb" style="max-height:66vh;overflow-y:auto">
+   <p class="hint">Ce qui suit part sur <b>la vraie boutique</b>, visible par les clients. Seule la
+   quantité restante est modifiée par « Envoyer au site » (les prix ont leur propre bouton, plus bas, et rien ne part sans ton clic) : ni les textes, ni les photos, ni la mise en ligne.
+   Une fiche qui ne compte pas ses unités sur le site n'est pas touchée, et une référence absente du
+   site n'y est pas créée.</p>
+   <div class="psq">
+     <label><input type="radio" name="psq" value="" checked> Le site de détail — perfumestrade.com</label>
+     <label><input type="radio" name="psq" value="gros"> Le site de gros — wholesale.perfumestrade.com</label>
+   </div>
+   <div id="psres" style="margin-top:14px"></div>
+   <div id="psecarts"></div>
+   <div id="psprix"></div>
+  </div>
+  <div class="mf"><span class="msg" id="psmsg"></span>
+   <button class="btn" id="psc">Annuler</button>
+   <button class="btn pri" id="psok" disabled>Envoyer au site</button></div>
  </div>
 </div>
 <div class="ov" id="achov">
@@ -1172,6 +1628,19 @@ __BARRE__
     <button class="btn" id="azannul">Annuler</button>
     <button class="btn pri" id="azok" disabled>Enregistrer les relevés</button></div>
 </div></div>
+<!-- 3 oct. 2026 — point 8 de Sam : le fichier d'inventaire envoyé à Lightspeed ne crée pas
+     les parfums que la caisse ne connaît pas. Ce fichier-ci les crée, avec ce que Sam a mis dans l'ERP. -->
+<div class="ov" id="lsov"><div class="mod" role="dialog" aria-modal="true" aria-labelledby="lst" style="max-width:720px">
+  <div class="mh"><h2 id="lst">Nouvelles références pour Lightspeed</h2><button class="x" id="lsx" aria-label="Fermer">&times;</button></div>
+  <div class="mb">
+    <p class="hint">Les parfums de l'ERP que la caisse ne connaît pas encore, dans le format d'import des produits de Lightspeed : nom, code-barres, marque, prix d'achat, prix détail, quantité.</p>
+    <p class="hint">Dans Lightspeed : Catalog → Products → Import, puis choisir ce fichier. Le prix de gros n'y va pas : Lightspeed le range dans un barème de prix à part.</p>
+    <div id="lsres"></div>
+  </div>
+  <div class="mf"><span class="msg" id="lsmsg"></span>
+    <button class="btn" id="lsannul">Fermer</button>
+    <button class="btn pri" id="lsok" disabled>Télécharger le fichier</button></div>
+</div></div>
 <div class="ov" id="ov"><div class="mod" role="dialog" aria-modal="true" aria-labelledby="mt">
   <div class="mh"><h2 id="mt">Nouvel article</h2><button class="x" id="mx" aria-label="Fermer">&times;</button></div>
   <div class="tabs">
@@ -1185,7 +1654,8 @@ __BARRE__
       <p class="hint">Seuls <b>la marque</b> et <b>le nom</b> sont obligatoires. Tout le reste peut rester vide :
       l'article sera créé et marqué <b>à compléter</b>, visible dans le filtre correspondant.</p>
       <div class="fg">
-        <div class="fld"><label>Marque <b>*</b></label><input id="f-marque" list="l-marques" autocomplete="off"></div>
+        <div class="fld"><label>Marque <b>*</b></label><input id="f-marque" list="l-marques" autocomplete="off">
+          <span class="fhint">Nouvelle marque : tape son nom, elle est créée avec l'article.</span></div>
         <div class="fld"><label>Nom du parfum <b>*</b></label><input id="f-nom" autocomplete="off"></div>
         <div class="fld"><label>Code-barres</label><input id="f-bc" inputmode="numeric" autocomplete="off"></div>
         <div class="fld"><label>Contenance (oz)</label><input id="f-ml" inputmode="decimal" autocomplete="off"></div>
@@ -1244,6 +1714,9 @@ __BARRE__
   </div>
   <div class="db" id="ddb"></div>
   <div class="df">
+    <button class="btn" id="dmod" hidden>Modifier le parfum</button>
+    <button class="btn dsup" id="dret" hidden>Retirer du catalogue</button>
+    <button class="btn dsup" id="dsup" hidden>Supprimer ce produit</button>
     <span class="st" id="dst"></span>
     <button class="btn" id="dann">Annuler</button>
     <button class="btn pri" id="dok">Enregistrer</button>
@@ -1267,16 +1740,24 @@ Bordure orange : marge douteuse, à contrôler.
 <footer><span>__PHOTOS__ références illustrées sur __TOTAL__ · photos locales normalisées en 800 × 800</span>
 <span class="mono">RUBRIQUE CATALOGUE</span></footer></div></div></div>
 
-<script src="donnees/langue.js"></script>
-<script src="donnees/produits.js"></script>__GARDE__
+<script>__VOCAB__</script>
+<script src="donnees/langue.js?v=__VER__"></script>
+<script>
+/* le menu réglé et la langue de l'écran, AVANT le code de la page : rien ne saute, rien n'est vu dans une autre langue */
+__IDENT_TOT__
+__MENU__
+__LANGUE__
+</script>
+<script src="donnees/produits.js?v=__VER__"></script>__GARDE__
+<script src="donnees/histgros.js?v=__VER__"></script>
 <script>
 __FUSION__
 __COMPTES__
 __IDENT__
+__FILE_AUTO__
 __SAUVE__
-__MENU__
-__LANGUE__
 __LIRE__
+__SORTIE__
 const MARCHE_INIT=__MARCHE__;
 const FACTURE_INIT=__FACTURE__;
 const FRN_INIT=__FRNINIT__;
@@ -1301,6 +1782,10 @@ if(document.fonts&&document.fonts.ready) document.fonts.ready.then(mesureBarre);
 
 /* ============ ARTICLES AJOUTES A LA MAIN ============ */
 const KADD='articles-ajoutes-v1';
+/* Photos choisies à la main dans la fiche (Igal, 17 oct. 2026) : { identifiant du produit : image }.
+   Elles passent avant la photo du site et celle du fichier. Elles restent dans l'outil : rien n'est envoyé aux sites. */
+const KPHO='photos-perso-v1';
+let PHO=lit(KPHO,{}); if(!PHO||typeof PHO!=='object'||Array.isArray(PHO)) PHO=base(KPHO,{});
 let AJ=lit(KADD,[]); if(!Array.isArray(AJ)) AJ=base(KADD,[]);
 const sauveAJ=()=>ecrit(KADD,AJ);
 
@@ -1351,30 +1836,86 @@ function externe(p){
   if(q===undefined||q===null||q===p.qte) return p;
   const o=Object.assign({},p,{qte:q}); o.an=calcAn(o); o.ext=true; return o;
 }
+/* La photo : celle du site quand il en a une. Le cockpit relit chaque heure les
+   deux boutiques (site-stock-v1) et range la première photo de chaque fiche ; le
+   fichier de départ, lui, date de septembre — des parfums ajoutés ou re-photographiés
+   depuis sur le site restaient « sans photo » ici. Le détail d'abord, le gros ensuite,
+   avec ou sans les zéros du début du code-barres. */
+let _IMGS=null;
+function imgsSite(){
+  if(_IMGS) return _IMGS; _IMGS={};
+  let S={}; try{ S=lit('site-stock-v1',{})||{}; }catch(e){ S={}; }
+  if(!S||typeof S!=='object') return _IMGS;
+  /* le cockpit range l'adresse sans le site devant (« /wp-content/… ») : on la recolle */
+  const B=(S._base&&typeof S._base==='object')?S._base:{}, abs=(u,c)=>u&&u.charAt(0)==='/'?((B[c]||(c==='g'?'https://wholesale.perfumestrade.com':'https://perfumestrade.com'))+u):u;
+  Object.keys(S).forEach(k=>{ if(k.startsWith('_')) return; const e=S[k]||{};
+    const u=(e.d&&e.d.img?abs(e.d.img,'d'):'')||(e.g&&e.g.img?abs(e.g.img,'g'):''); if(u) _IMGS[k.replace(/^0+/,'')]=u; });
+  /* 22 oct. 2026 (Igal : « s'ils sont sur Perfume City, il n'y a aucune raison qu'on n'ait pas la photo ») : la photo de la
+     boutique Perfume City (relue chaque heure avec ses prix, shopify-pc-prix-v1) sert quand aucun des deux sites n'en a */
+  try{ const P=lit('shopify-pc-prix-v1',null); if(P&&typeof P==='object') Object.keys(P).forEach(k=>{ if(k.startsWith('_')) return; const r=P[k];
+    if(Array.isArray(r)&&r[6]&&/^https?:\/\//.test(r[6])){ const kk=k.replace(/^0+/,''); if(!_IMGS[kk]) _IMGS[kk]=r[6]; } }); }catch(e){}
+  return _IMGS;
+}
+try{ window.addEventListener('ck-maj',()=>{ _IMGS=null; }); }catch(e){}
+function avecPhotoSite(p){
+  if(!p||!p.bc) return p;
+  const I=imgsSite(), b=String(p.bc);
+  let u=I[b.replace(/^0+/,'')];
+  /* deux codes collés dans la même case du fichier :
+     on essaie chacun des deux */
+  if(!u&&/^\d{16,28}$/.test(b)) for(let i=8;i<=b.length-8&&!u;i++){
+    u=I[b.slice(0,i).replace(/^0+/,'')]&&/^\d{11,14}$/.test(b.slice(0,i))?I[b.slice(0,i).replace(/^0+/,'')]
+     :(/^\d{11,14}$/.test(b.slice(i))?I[b.slice(i).replace(/^0+/,'')]:undefined); }
+  if(!u||u===p.img) return p;
+  const o=Object.assign({},p,{img:u,imgSite:true}); o.an=calcAn(o); return o;
+}
+function avecPhotoPerso(p){
+  const u=p&&PHO[p.id]; if(!u) return p;
+  const o=Object.assign({},p,{img:u,imgPerso:true}); o.an=calcAn(o); return o;
+}
 function tousLesArticles(){
-  return AJ.map((o,i)=>{const x=normAJ(o); x.id=o.id||('a'+i); x.an=calcAn(x); return applique(x);})
-           .concat(P.map(p=>applique(externe(p))));
+  return AJ.map((o,i)=>{const x=normAJ(o); x.id=o.id||('a'+i); x.an=calcAn(x); return avecPhotoPerso(avecPhotoSite(applique(x)));})
+           .concat(P.map(p=>avecPhotoPerso(avecPhotoSite(applique(externe(p))))));
 }
 
-[...new Set(P.map(p=>p.marque))].sort((a,b)=>a.localeCompare(b,'fr')).forEach(b=>
- $('fb').insertAdjacentHTML('beforeend',`<option value="${b}">${b}</option>`));
+/* Sam, 3 oct. 2026 : « comment je crée une nouvelle marque dans le catalogue ? » — en tapant
+   son nom dans « Marque » d'un nouvel article. Mais la liste « Toutes les marques » ne lisait
+   que le fichier de départ : une marque créée dans l'ERP n'y apparaissait jamais, comme si
+   elle n'existait pas. Elle lit maintenant toutes les fiches, et se refait après un ajout. */
+function remplitMarques(){
+  const sel=$('fb'); if(!sel) return; const v=sel.value;
+  const ms=[...new Set(tousLesArticles().map(p=>String(p.marque||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr'));
+  sel.innerHTML='<option value="">Toutes les marques</option>'+ms.map(b=>`<option value="${esc(b)}">${esc(b)}</option>`).join('');
+  if(v&&ms.includes(v)) sel.value=v;
+}
 [...new Set(P.map(p=>p.type).filter(Boolean))].sort().forEach(t=>
  $('ft').insertAdjacentHTML('beforeend',`<option value="${t}">${t}</option>`));
 
 // 1) photo locale  2) photo du site  3) message
+/* Igal, 12 oct. : ça se fige au 5e clic de tri. Chaque tri redessine ~120 vignettes ; 119 sur 130 n'ont
+   PAS de photo locale : chaque redessin renvoyait ~120 requêtes qui échouent (404) puis ~120 vers le site.
+   Cinq clics = 1 200 requêtes en file. On retient donc les photos locales absentes : elles partent
+   directement vers l'adresse du site (déjà en cache du navigateur), sans repasser par le 404. */
+const PHOTO_KO=new Set();
+const phSrc=p=>p.imgPerso?p.img:(PHOTO_KO.has(p.bc)&&p.img?p.img:`photos/${p.bc}.webp`);
 function secours(img){
   const far=img.dataset.far;
-  if(far && img.src.indexOf('photos/')>-1){ img.src=far; return; }
+  if(far && img.src.indexOf('photos/')>-1){ try{ const m=img.src.match(/photos\/([^\/?#]+)\.webp/); if(m) PHOTO_KO.add(decodeURIComponent(m[1])); }catch(e){} img.src=far; return; }
   const d=document.createElement('div'); d.innerHTML=`<div class="miss"><svg viewBox="0 0 40 64" fill="none" aria-hidden="true"><rect x="14.5" y="2" width="11" height="9" rx="1.5" stroke="currentColor" stroke-width="2.4"/><path d="M11 20a6 6 0 016-6h6a6 6 0 016 6v34a6 6 0 01-6 6H17a6 6 0 01-6-6V20z" stroke="currentColor" stroke-width="2.4"/></svg><span>sans photo</span></div>`;
   img.replaceWith(d.firstElementChild);
 }
-const money=v=>v==null?null:v.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' $';
+/* Le dollar (Igal, 30 sept. 2026 : « le dollar est décalé ») : une espace INSÉCABLE entre le
+   montant et le $, pour que le $ ne parte jamais seul à la ligne suivante. Le format reste
+   « 3 837,50 $ » : le dictionnaire de traduction reconnaît les phrases sur ce modèle. */
+const _usd=(v,d)=>{ if(v==null) return '—'; const n=Number(v); 
+  return n.toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d})+' $'; };
+const money=v=>v==null?null:_usd(v,2);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 function card(p){
  const meta=[p.ml?`<b>${esc(p.ml)}</b> oz`:'',esc(p.type),G[p.genre]||''].filter(Boolean).join(' · ');
  const ph=p.img
-  ?`<img src="photos/${p.bc}.webp" data-far="${p.img}" alt="${esc(p.marque)} ${esc(p.nom)}"
+  ?`<img src="${phSrc(p)}" data-far="${p.imgPerso?'':p.img}" alt="${esc(p.marque)} ${esc(p.nom)}"
      loading="lazy" decoding="async" onerror="secours(this)">`
   :`<div class="miss"><svg viewBox="0 0 40 64" fill="none" aria-hidden="true"><rect x="14.5" y="2" width="11" height="9" rx="1.5" stroke="currentColor" stroke-width="2.4"/><path d="M11 20a6 6 0 016-6h6a6 6 0 016 6v34a6 6 0 01-6 6H17a6 6 0 01-6-6V20z" stroke="currentColor" stroke-width="2.4"/></svg><span>sans photo</span></div>`;
  const CLIENT=document.body.classList.contains('client');
@@ -1389,13 +1930,15 @@ function card(p){
    :`<dd class="${cls}${extra}">${money(v)}${cls==='vr'?star:''}</dd>`;
  const nf=(MOD[p.id]&&MOD[p.id].frn)?MOD[p.id].frn.filter(f=>f.n).length:0;
  const chipf=(!CLIENT&&nf>1)?`<span class="fl todo">${nf} fournisseurs</span>`:'';
+ const cd=CLIENT?null:pastilleDiff(p), chipd=cd?`<span class="fl ${cd.c}">${esc(cd.t)}</span>`:'';
  return `<article class="card${p.neuf?' neuf':''}${CLIENT?'':(p.an.some(a=>[1,2,3,8].includes(a))?' alert':p.an.length?' warn':'')}" data-id="${p.id}" tabindex="0" role="button" aria-label="Ouvrir la fiche">
   <div class="ph">${ph}${chipn}<span class="qty${p.qte===0?' out':(SEUIL>0&&p.qte<SEUIL)?' low':''}">${p.qte===0?'historique':p.qte}</span></div>
   <div class="body">
     <div class="brand">${esc(p.marque)}</div>
     <div class="nm">${esc(p.nom)}</div>
-    <div class="meta">${meta||'&nbsp;'}</div>
-    ${(chiptodo||chipf||flags)?`<div class="flags">${chiptodo}${chipf}${flags?flags.replace(/<\/?div[^>]*>/g,''):''}</div>`:''}
+    <div class="meta">${meta||'&nbsp;'}${badgeAmazon(p)}</div>
+    ${CLIENT?'':`<div class="dfrow">${logosDiff(p)}</div>`}
+    ${(chipd||chiptodo||chipf||flags)?`<div class="flags">${chipd}${chiptodo}${chipf}${flags?flags.replace(/<\/?div[^>]*>/g,''):''}</div>`:''}
     <dl class="led">
       ${CLIENT?'':`<dt>Achat</dt>${val(p.pa,'vp')}`}
       <dt>Retail</dt>${val(p.pvr,'vr',p.src===2?' bad':'')}
@@ -1460,13 +2003,464 @@ function azCell(p){
 /* L'adresse exacte de la fiche Amazon quand on a l'ASIN — sinon une recherche,
    qui tombe parfois à côté. C'est tout l'intérêt d'avoir remis l'ASIN dans les
    données : /dp/B08NSZ4GWG ouvre LA fiche, pas dix résultats approchants. */
+/* « Vendu sur Amazon » (Igal, 11 oct. 2026) : un ASIN sur la fiche = le parfum est en annonce chez Sam
+   (sa feuille porte l'ASIN de ce qu'il vend là-bas) ; une vente Amazon enregistrée le confirme. */
+let _AZV=null;
+/* « Sans prix sur le site » (12 oct. 2026, Igal : voir les produits où il manque le prix, wholesale ou retail) :
+   fiche retirée de la vente faute de prix, ou fiche en ligne dont le prix du site est vide. */
+/* DIFFUSION (Igal, 17 oct. 2026) : ce parfum est-il EN VENTE sur chacun des trois canaux ?
+   perfumestrade.com et le site de gros (WooCommerce) : la fiche existe sur le site ; une fiche retirée (brouillon) ne compte pas.
+   Perfume City (Shopify) : le produit existe ET il est actif ; un brouillon ne compte pas.
+   « na » = on ne peut pas le dire : pas de code-barres, relevé du canal jamais lu, ou canal coupé pour ce parfum
+   (« ne pas vendre ici » : ce n'est pas un manque, c'est un choix). Un « na » n'est jamais compté comme « pas diffusé ». */
+const CAN_DIFF=[['site','perfumestrade.com','perfumestrade.com'],['sitegros','le site de gros','wholesale.perfumestrade.com'],['perfumecity','Perfume City','Perfume City']];
+let DIFF_S=null, DIFF_OK={site:false,sitegros:false,perfumecity:false};
+function majDiff(){
+  let S=null; try{ S=lit('shopify-pc-prix-v1',null); }catch(e){ S=null; }
+  DIFF_S=(S&&typeof S==='object')?S:null;
+  const cles=o=>o&&typeof o==='object'?Object.keys(o).filter(k=>k[0]!=='_'):[];
+  const sw=cles(SITE);
+  DIFF_OK={site:sw.some(k=>SITE[k]&&SITE[k].d), sitegros:sw.some(k=>SITE[k]&&SITE[k].g), perfumecity:!!DIFF_S&&cles(DIFF_S).length>0};
+  /* les compteurs, sur ce qui est en stock : c'est ce qu'on veut diffuser */
+  const n={any:0,site:0,sitegros:0,perfumecity:0,all:0};
+  const ARTS=tousLesArticles();
+  pubVerifie(ARTS);
+  ARTS.forEach(p=>{ if(!(p.qte>0)) return;
+    const st=CAN_DIFF.map(c=>statutDiff(p,c[0]));
+    st.forEach((x,i)=>{ if(x==='non') n[CAN_DIFF[i][0]]++; });
+    if(st.includes('non')) n.any++; else if(st.includes('oui')) n.all++; });
+  const lib={'':'Diffusion : toute',any:'Pas diffusé sur un des trois',site:'Pas sur perfumestrade.com',sitegros:'Pas sur le site de gros',perfumecity:'Pas sur Perfume City',all:'Diffusé sur les trois'};
+  const sel=document.getElementById('fd'); if(!sel) return;
+  Array.from(sel.options).forEach(o=>{ const v=o.value; if(v==='') return;
+    const sans=(DIFF_OK[v]===false&&CAN_DIFF.some(c=>c[0]===v));
+    o.disabled=sans; o.textContent=lib[v]+(sans?' (relevé pas encore lu)':' ('+Number(n[v]).toLocaleString('fr-FR')+')'); });
+}
+function statutDiff(p,id){
+  if(horsCanal(p,id)||!p.bc||!DIFF_OK[id]) return 'na';
+  const cote=COTE_SITE[id];
+  if(cote){
+    const k=siteCle(p); if(!k) return 'non';          /* le relevé est lu et ce code-barres n'y figure pas : le parfum n'est pas sur ce site */
+    const e=SITE[k]; return e&&e[cote]?'oui':'non';
+  }
+  if(id==='perfumecity'){
+    const S=DIFF_S; if(!S) return 'na';
+    const s0=x=>String(x||'').replace(/[^0-9A-Za-z]/g,'').replace(/^0+/,'');
+    const ks=[p.bc].concat(String(p.bcs||'').split(/[\s,;]+/)).map(s0).filter(Boolean);
+    for(const k of ks){ const e=S[k]; if(Array.isArray(e)&&e[2]>0) return e[4]===1?'oui':'non'; }   /* trouvé mais brouillon : pas diffusé */
+    return ks.some(k=>(S._amb||[]).includes(k))?'oui':'non';
+  }
+  return 'na';
+}
+function diffOk(p,f){
+  const st=CAN_DIFF.map(c=>statutDiff(p,c[0]));
+  if(f==='any') return st.includes('non');
+  if(f==='all') return !st.includes('non')&&st.includes('oui');
+  const i=CAN_DIFF.findIndex(c=>c[0]===f); return i>=0&&st[i]==='non';
+}
+/* trois pastilles par parfum (Igal, 17 oct. 2026 : « un petit logo barré ou visible sur les lignes du catalogue, pour les voir visuellement et rapidement »).
+   En couleur = en vente ; grisée et BARRÉE = pas diffusé ; très pâle = on ne sait pas (pas de code-barres, relevé pas lu, canal coupé).
+   Des pastilles plutôt que les vrais logos : le logo du site est un titre long, illisible à cette taille, et la colonne du nom est déjà étroite. */
+function logosDiff(p){
+  const T={oui:'en vente',non:'PAS en vente',na:'inconnu'};
+  const un=(id,nom,court)=>{ const st=statutDiff(p,id);
+    const raison=st==='na'?(horsCanal(p,id)?' (canal coupé pour ce parfum)':!p.bc?' (pas de code-barres)':' (relevé pas encore lu)'):'';
+    return `<span class="dfi ${st} d-${id}" title="${esc(nom)} : ${T[st]}${raison}">${court}</span>`; };
+  /* Igal, 17 oct. 2026 : « les pastilles gros et PC, j'aime pas, mets le nom des sites directement » */
+  return `<span class="dif" data-nolang>${CAN_DIFF.map(c=>un(c[0],c[2],c[2])).join('')}</span>`;
+}
+/* la pastille « pas sur : … » sur chaque ligne, seulement quand on filtre sur la diffusion */
+function pastilleDiff(p){
+  /* 17 oct. 2026 : les pastilles portent maintenant le NOM des sites, barrées là où le parfum manque : la puce « pas sur : … » disait
+     la même chose en plus long, et débordait de la colonne des alertes. Elle n'existe plus. */
+  return null;
+}
+/* ---------------------------------------------------------------------------
+   METTRE EN LIGNE (Igal, 17 oct. 2026 : « quand je rentre une nouvelle référence, est-ce que j'ai moyen de la diffuser
+   automatiquement sur les canaux de vente » puis « fais tout »). L'ERP décide QUOI envoyer et à QUEL PRIX, le cockpit écrit.
+   Garde-fous côté ERP : seul le dirigeant ; seulement ce qui est EN STOCK ; jamais sans prix, ni en dessous du prix d'achat ;
+   rien de ce qui existe déjà (même en brouillon) ; 200 parfums au plus par passage, envoyés 20 par 20 ; tout en brouillon
+   par défaut (Perfume City : toujours). Le prix envoyé est celui que l'ERP montre pour ce canal, en un seul prix (pas de promo).
+--------------------------------------------------------------------------- */
+const MEL_MAX=200, MEL_LOT=20, GEN_EN={F:'Women',M:'Men',U:'Unisex',K:'Kids'};
+const MEL_CANAL={site:{nom:'perfumestrade.com'},sitegros:{nom:'wholesale.perfumestrade.com'},perfumecity:{nom:'Perfume City'}};
+function melNom(p){
+  const n=String(p.nom||''), t=[(p.marque||'')+' '+n];
+  if(p.ml&&!/oz/i.test(n)) t.push(p.ml+' oz');
+  if(p.type&&n.toUpperCase().indexOf(String(p.type).toUpperCase())<0) t.push(p.type);
+  if(p.genre&&GEN_EN[p.genre]&&!/women|men|unisex|kids/i.test(n)) t.push(GEN_EN[p.genre]);
+  return t.join(' ').replace(/\s+/g,' ').trim();
+}
+/* un produit existe déjà sur ce canal (en vente OU en brouillon) : on ne le recrée jamais */
+function existeCanal(p,id){
+  const cote=COTE_SITE[id];
+  if(cote) return !!retireCote(p,cote)||statutDiff(p,id)==='oui';
+  const S=DIFF_S; if(!S) return false;
+  const s0=x=>String(x||'').replace(/[^0-9A-Za-z]/g,'').replace(/^0+/,'');
+  const ks=[p.bc].concat(String(p.bcs||'').split(/[\s,;]+/)).map(s0).filter(Boolean);
+  return ks.some(k=>(Array.isArray(S[k])&&S[k][1])||(S._amb||[]).includes(k));
+}
+function candidatsMel(liste,ids){
+  const res={}, skip={};
+  ids.forEach(id=>{
+    const c=(REG.canaux||[]).find(x=>x.id===id)||{id,base:id==='sitegros'?'pvw':'pvr',maj:0};
+    res[id]=[]; skip[id]={sansPrix:0,perte:0,existe:0};
+    liste.forEach(p=>{
+      if(!(p.qte>0)||!p.bc||statutDiff(p,id)!=='non') return;
+      if(existeCanal(p,id)){ skip[id].existe++; return; }
+      const v=prixCanal(p,c).v;
+      if(!(v>0)){ skip[id].sansPrix++; return; }
+      if(p.pa!=null&&v<p.pa){ skip[id].perte++; return; }
+      res[id].push({p,v:r2(v)});
+    });
+  });
+  return {res,skip};
+}
+const melOk=()=>{ try{ return peutPrixSite()&&typeof ckTok==='function'&&!!ckTok(); }catch(e){ return false; } };
+function majMel(){
+  const el=document.getElementById('mel'); if(!el) return;
+  try{
+    const fd=$('fd').value;
+    if(!fd||fd==='all'||!melOk()){ el.hidden=true; return; }
+    const ids=fd==='any'?['site','sitegros','perfumecity']:[fd];
+    const {res,skip}=candidatsMel(cur,ids);
+    const uniq=new Set(); ids.forEach(i=>res[i].forEach(x=>uniq.add(String(x.p.bc)))); const n=uniq.size;
+    const sk=ids.reduce((a,i)=>({sansPrix:a.sansPrix+skip[i].sansPrix,perte:a.perte+skip[i].perte,existe:a.existe+skip[i].existe}),{sansPrix:0,perte:0,existe:0});
+    const note=[sk.sansPrix?sk.sansPrix+" sans prix dans l'ERP":'',sk.perte?sk.perte+" sous le prix d'achat":'',sk.existe?sk.existe+' déjà en brouillon sur le site':''].filter(Boolean).join(' · ');
+    el.hidden=false;
+    el.innerHTML=n
+      ?`<span><b>${nf(n)}</b> parfum${n>1?'s':''} en stock peu${n>1?'vent':'t'} être mis en ligne${ids.length>1?' — '+ids.map(i=>nf(res[i].length)+' sur '+MEL_CANAL[i].nom).join(' · '):' sur '+MEL_CANAL[ids[0]].nom}.${note?' <small>Écartés : '+note+'.</small>':''}</span><button class="btn" id="melb">Mettre en ligne…</button>`
+      :`<span>Rien à mettre en ligne automatiquement dans cette liste.${note?' <small>Écartés : '+note+'.</small>':''}</span>`;
+    const b=$('melb'); if(b) b.onclick=()=>ouvreMel(cur,ids);
+  }catch(e){ el.hidden=true; }
+}
+function ouvreMel(liste,ids){
+  if(!melOk()){ alert('Seul le dirigeant (rôle Patron), connecté au cockpit, peut mettre un parfum en ligne.'); return; }
+  const {res,skip}=candidatsMel(liste,ids);
+  const unique=liste.length===1?liste[0]:null;
+  const lignes=ids.map(id=>{ const n=res[id].length, k=skip[id], nom=MEL_CANAL[id].nom;
+    const ecart=[k.sansPrix?k.sansPrix+' sans prix':'',k.perte?k.perte+" sous le prix d'achat":'',k.existe?k.existe+' déjà là (brouillon)':''].filter(Boolean).join(' · ');
+    /* 17 oct. 2026 (Sam : « il n'arrive pas à cocher ») : un parfum sans prix dans l'ERP donnait une case grisée sans un mot d'explication.
+       Pour UN parfum on demande maintenant son prix, ici, et il est gardé dans la fiche ; pour une liste on explique pourquoi rien n'est proposé. */
+    /* UN parfum : on montre ses prix, modifiables, avec un prix barré facultatif sur le site de détail et Perfume City
+       (Igal, 17 oct. 2026 : « pas la possibilité de mettre un cross price »). Le prix de vente est gardé dans la fiche. */
+    if(unique&&(n||k.sansPrix)){
+      const st=x=>'style="margin-top:5px;width:110px;padding:5px 8px;border-radius:7px;border:1px solid var(--line,#ccc)"';
+      const pv=n?String(res[id][0].v).replace('.',','):'';
+      const barre=id!=='sitegros'?` &nbsp; <small style="display:inline">prix barré (facultatif)</small> <input type="text" inputmode="decimal" data-mb="${id}" placeholder="ex. 89,00" ${st()}> $`:'';
+      return `<label class="ml"><input type="checkbox" data-mc="${id}" checked><span><b>${nom}</b>${n?'':" — ce parfum n'a pas de prix dans l'ERP."}<small>${n?'Prix de vente envoyé :':'Écris son prix de vente pour ce site :'}</small><input type="text" inputmode="decimal" data-mp="${id}" value="${pv}" placeholder="ex. 64,00" ${st()}> $${barre}<small>${n?'Tu peux le changer ici : il sera aussi gardé dans la fiche.':'Il sera aussi gardé dans la fiche du parfum.'}${barre?' Avec un prix barré, le client voit l\'ancien prix rayé et paie le prix de vente.':''}</small></span></label>`; }
+    /* 31 oct. 2026 (Igal : « quand je mets Mettre en ligne, je peux pas cocher, ce n'est pas clair ») : 494 parfums EXISTENT sur le site de
+       gros, retirés de la vente (brouillon) le 8 oct. faute de prix. La fenêtre disait « rien à créer » sans rien proposer. Pour UN parfum,
+       elle propose maintenant de le REMETTRE EN VENTE, case cochée, avec son prix modifiable — même chemin que la case de la fiche. */
+    if(unique&&!n&&k.existe&&COTE_SITE[id]&&retireCote(unique,COTE_SITE[id])&&unique.qte>0){
+      const c=(REG.canaux||[]).find(x=>x.id===id)||{id,base:id==='sitegros'?'pvw':'pvr',maj:0};
+      const v0=prixCanal(unique,c).v, pv=v0>0?String(r2(v0)).replace('.',','):'';
+      const st='style="margin-top:5px;width:110px;padding:5px 8px;border-radius:7px;border:1px solid var(--line,#ccc)"';
+      const barre=id!=='sitegros'?` &nbsp; <small style="display:inline">prix barré (facultatif)</small> <input type="text" inputmode="decimal" data-mb="${id}" placeholder="ex. 89,00" ${st}> $`:'';
+      return `<label class="ml"><input type="checkbox" data-mc="${id}" data-remet="1" checked><span><b>${nom}</b> — ${L3('déjà sur ce site mais retiré de la vente : il sera REMIS EN VENTE','already on this site but withdrawn from sale: it will be PUT BACK ON SALE','ya está en este sitio pero retirado de la venta: se VOLVERÁ A PONER A LA VENTA')}<small>${L3('Prix de vente :','Selling price:','Precio de venta:')}</small><input type="text" inputmode="decimal" data-mp="${id}" value="${pv}" ${st}> $${barre}</span></label>`;
+    }
+    if(!n){ const pq=unique?(!(unique.qte>0)?"Ce parfum n'est pas en stock.":k.existe?'Il est déjà sur ce site (en brouillon) : utilise « Remettre en vente ».':k.perte?"Son prix est inférieur au prix d'achat : corrige-le dans la fiche.":''):''; 
+      return `<div class="ml"><span><b>${nom}</b> — rien à créer.<small>${pq||ecart||'Aucun parfum de cette liste ne peut y être créé.'}</small></span></div>`; }
+    return `<label class="ml"><input type="checkbox" data-mc="${id}" checked><span><b>${nom}</b> — ${nf(n)} à créer${n>MEL_MAX?' (200 maintenant, relance pour la suite)':''}${ecart?'<small>Écartés : '+ecart+'</small>':''}</span></label>`; }).join('');
+  const aWoo=ids.some(i=>COTE_SITE[i]);
+  const v=document.createElement('div'); v.className='mvoile';
+  v.innerHTML=`<div class="mfen" role="dialog" aria-modal="true" data-nolang><h3>Mettre en ligne</h3>
+    <div style="color:var(--ink-3,#777)">Seuls les parfums en stock, avec un prix dans l'ERP au-dessus du prix d'achat. Le prix envoyé est celui que l'ERP montre pour ce site.</div>
+    ${lignes}
+    <div class="ml"><span><span id="melou">Sur les sites perfumestrade.com</span> : <select id="melm"><option value="brouillon">créer en brouillon (je publie ensuite)</option><option value="publie">créer ET mettre en vente tout de suite</option></select><small id="melpc">Perfume City : toujours en brouillon, tu le publies dans Shopify.</small></span></div>
+    <div id="melr"></div>
+    <div class="mbtn"><button class="btn" id="mela">Annuler</button><button class="btn pri" id="melg">Mettre en ligne</button></div></div>`;
+  document.body.appendChild(v);
+  /* Perfume City : la mise en vente directe n'est possible que si Sam a donné le droit de poser le STOCK (write_inventory) —
+     sinon un produit actif s'afficherait « épuisé ». On demande au cockpit, et on adapte la phrase. */
+  window.__melPcStock=false;
+  if(ids.includes('perfumecity')){ fetch(CK_URL+'/api/o/'+CK_ORG+'/shopify/droits',{headers:{Authorization:'Bearer '+ckTok()}}).then(r=>r.json()).then(j=>{
+    window.__melPcStock=!!(j&&j.stock); const e=v.querySelector('#melpc'), o=v.querySelector('#melou'); if(!e) return;
+    if(j&&j.stock){ e.textContent='Perfume City aussi : le stock de l\'ERP part avec la fiche.'; if(o) o.textContent=ids.some(i=>COTE_SITE[i])?'Sur les sites et Perfume City':'Chez Perfume City'; }
+    else e.textContent='Perfume City : toujours en brouillon (Sam n\'a pas encore donné le droit write_inventory), tu le publies dans Shopify.'; }).catch(()=>{}); }
+  let enCours=false, stop=false;
+  const ferme=()=>{ if(enCours&&!confirm('Un envoi est en cours : arrêter après la fiche en cours ?')) return; stop=true; v.remove(); try{ render(); }catch(e){} };
+  v.querySelector('#mela').onclick=ferme;
+  v.querySelector('#melg').onclick=async()=>{
+    const sel=ids.filter(id=>{ const c=v.querySelector('[data-mc="'+id+'"]'); return c&&c.checked&&!c.disabled; });
+    if(!sel.length){ v.querySelector('#melr').innerHTML='<div class="mrep bad">Coche au moins un site.</div>'; return; }
+    const mode=(v.querySelector('#melm')||{}).value||'brouillon';
+    const msg=t=>{ v.querySelector('#melr').innerHTML='<div class="mrep bad">'+t+'</div>'; };
+    const num=x=>{ const t=String(x==null?'':x).trim(); if(!t) return null; const n=Math.round(parseFloat(t.replace(',','.'))*100)/100; return Number.isFinite(n)?n:NaN; };
+    for(const id of sel){ const inp=v.querySelector('[data-mp="'+id+'"]'); if(!inp) continue;
+      const val=num(inp.value), ib=v.querySelector('[data-mb="'+id+'"]'), bar=ib?num(ib.value):null;
+      if(!(val>0)){ msg('Écris un prix de vente pour '+MEL_CANAL[id].nom+'.'); return; }
+      if(unique.pa!=null&&val<unique.pa){ msg('Ce prix est inférieur au prix d\'achat : on ne met pas un parfum en ligne à perte.'); return; }
+      if(bar!=null&&!(bar>val)){ msg('Le prix barré doit être plus haut que le prix de vente ('+MEL_CANAL[id].nom+').'); return; }
+      const avant=res[id][0]; res[id]=[{p:unique,v:val,barre:bar||null,saisi:!avant||Math.abs(avant.v-val)>0.004}]; }
+    const remet=sel.filter(id=>{ const c=v.querySelector('[data-mc="'+id+'"]'); return c&&c.dataset.remet==='1'; });
+    if(remet.length){
+      for(const id of remet){ const x=res[id][0]; if(x.p.pa!=null&&x.v<x.p.pa&&!confirm('Ce prix est inférieur au prix d\'achat sur '+MEL_CANAL[id].nom+'. Le remettre en vente quand même ?')) return; }
+      if(!confirm('Remettre en vente : '+remet.map(i=>MEL_CANAL[i].nom).join(', ')+'.\n\nLe parfum sera EN VENTE tout de suite, au prix indiqué.\n\nContinuer ?')) return;
+      if(!demandeUser(false,'remettre un parfum en vente',()=>{})) return;
+      enCours=true; v.querySelector('#melg').disabled=true;
+      const lignes=[];
+      for(const id of remet){ const x=res[id][0];
+        v.querySelector('#melr').innerHTML='<div class="mrep">'+MEL_CANAL[id].nom+'…</div>';
+        const r=await remetEnVente(x.p,COTE_SITE[id],x.barre||x.v,x.barre?x.v:null);
+        lignes.push(r.ok?'<b>'+MEL_CANAL[id].nom+'</b> : en vente à '+money2(r.prix)+'.':'<b>'+MEL_CANAL[id].nom+'</b> : pas remis en vente — '+esc(r.err||'erreur')+'.'); }
+      sel.splice(0,sel.length,...sel.filter(id=>!remet.includes(id)));
+      if(!sel.length){ enCours=false; v.querySelector('#mela').textContent='Fermer'; v.querySelector('#melr').innerHTML='<div class="mrep">'+lignes.join('<br>')+'</div>'; return; }
+      v.querySelector('#melr').innerHTML='<div class="mrep">'+lignes.join('<br>')+'</div>';
+      v.querySelector('#melg').disabled=false; enCours=false;
+    }
+    const nTot=sel.reduce((a,id)=>a+Math.min(MEL_MAX,res[id].length),0);
+    if(!confirm('Créer '+nTot+' fiche(s) : '+sel.map(i=>MEL_CANAL[i].nom).join(', ')+(mode==='publie'&&sel.some(i=>COTE_SITE[i])?'\n\nSur les sites perfumestrade.com, elles seront EN VENTE tout de suite.':'\n\nElles seront créées en brouillon.')+'\n\nContinuer ?')) return;
+    if(!demandeUser(false,'mettre des parfums en ligne',()=>{})) return;
+    enCours=true; v.querySelector('#melg').disabled=true;
+    const R=await lanceMel(sel,res,mode,txt=>{ v.querySelector('#melr').innerHTML='<div class="mrep">'+txt+'</div>'; },()=>stop);
+    enCours=false; v.querySelector('#mela').textContent='Fermer';
+    v.querySelector('#melr').innerHTML=R;
+  };
+}
+/* ---- Mise en ligne AUTOMATIQUE à la création d'un produit (Igal, 20 oct. 2026) ----
+   « Quand on crée un produit et qu'on met ses prix, il doit être mis tout seul sur les canaux de vente, sans retourner sur la fiche :
+   j'ai vu qu'il était en brouillon sur Shopify et absent du site retail. » Même chemin que « Mettre en ligne » (mêmes garde-fous :
+   en stock, code-barres, prix au-dessus du prix d'achat, jamais recréé s'il existe), mais sans case à cocher : les deux sites
+   perfumestrade.com sont créés EN VENTE, Perfume City aussi si Sam a donné le droit de poser le stock (sinon brouillon, et on le dit).
+   Ce qui n'a pas pu partir est expliqué ligne par ligne, avec le geste pour le faire ensuite. */
+async function enLigneAuto(id){
+  const v=document.createElement('div'); v.className='mvoile';
+  const rep=(h,fin)=>{ v.innerHTML=`<div class="mfen" role="dialog" aria-modal="true" data-nolang><h3>Mise en ligne automatique</h3><div id="eaR">${h}</div><div class="mbtn">${fin?'<button class="btn pri" id="eaF">Fermer</button>':''}</div></div>`;
+    const b=v.querySelector('#eaF'); if(b) b.onclick=()=>{ v.remove(); try{ render(); }catch(e){} }; };
+  if(!melOk()){
+    /* un compte qui ne peut pas publier crée le produit : le Patron doit le savoir, le tableau de bord le lui dira */
+    try{ const p0=cur.find(z=>z.id===id)||tousLesArticles().find(z=>z.id===id);
+      if(p0) ['site','sitegros','perfumecity'].forEach(i=>{ if(!horsCanal(p0,i)) pubNote(p0,i,"créé par un compte qui ne peut pas le publier : le Patron doit cliquer « Mettre en ligne » sur la fiche"); }); }catch(e){}
+    document.body.appendChild(v); rep('<div class="mrep bad">Pas mis en ligne : seul le dirigeant (rôle Patron), relié au cockpit, peut créer le produit sur les sites. Il le fera depuis la fiche (bouton « Mettre en ligne »).</div>',1); return; }
+  if(!demandeUser(false,'mettre le produit en ligne',()=>{ enLigneAuto(id); })) return;
+  document.body.appendChild(v); rep('<div class="mrep">Préparation…</div>');
+  try{
+    let p=cur.find(z=>z.id===id)||tousLesArticles().find(z=>z.id===id);
+    if(!p){ rep('<div class="mrep bad">Produit introuvable.</div>',1); return; }
+    const ids=['site','sitegros','perfumecity'];
+    const {res,skip}=candidatsMel([p],ids);
+    const pq=[];
+    if(!(p.qte>0)) pq.push("il n'est pas en stock");
+    if(!p.bc) pq.push("il n'a pas de code-barres");
+    const sel=ids.filter(i=>res[i].length);
+    const raison=i=>{ const k=skip[i];
+      return pq.length?pq.join(' et '):k.sansPrix?"pas de prix pour ce canal":k.perte?"son prix est inférieur au prix d'achat":k.existe?"il existe déjà sur ce canal":"déjà présent ou statut du canal inconnu"; };
+    const manque=ids.filter(i=>!res[i].length).map(i=>`<li><b>${MEL_CANAL[i].nom}</b> : pas mis en ligne — ${raison(i)}.</li>`).join('');
+    /* ce qui n'est pas parti est NOTÉ pour le tableau de bord (sauf : déjà en vente, ou canal coupé exprès pour ce parfum) */
+    ids.filter(i=>!res[i].length).forEach(i=>{ const st=statutDiff(p,i);
+      if(st==='oui'){ pubClair(p,i); return; }
+      if(horsCanal(p,i)) return;
+      pubNote(p,i,(st==='na'&&!pq.length&&!skip[i].sansPrix&&!skip[i].perte&&!skip[i].existe)?"impossible de savoir s'il est en vente (relevé de ce canal pas encore lu)":raison(i)); });
+    window.__melPcStock=false;
+    if(sel.includes('perfumecity')){ try{ const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/shopify/droits',{headers:{Authorization:'Bearer '+ckTok()}}); const j=await r.json(); window.__melPcStock=!!(j&&j.stock); }catch(e){} }
+    let R='';
+    if(sel.length) R=await lanceMel(sel,res,'publie',t=>rep('<div class="mrep">'+t+'</div>'),()=>false);
+    const nb=sel.includes('perfumecity')&&!window.__melPcStock?`<li><b>Perfume City</b> : créé en BROUILLON — l'application Shopify n'a pas encore le droit de poser le stock (write_inventory). Une fois le droit donné : bouton « Mettre en vente » sur la fiche.</li>`:'';
+    const fin=(manque||nb)?`<ul style="margin:10px 0 0 18px;padding:0;font-size:13px;line-height:1.5">${nb}${manque}</ul>`:'';
+    rep((R||'<div class="mrep bad">Rien n\'a pu être mis en ligne.</div>')+fin+(pq.length?`<p style="font-size:12.5px;color:var(--ink-3,#777);margin-top:10px">Dès que ce sera réglé, ouvre la fiche : « Mettre en ligne » le fait en un clic.</p>`:''),1);
+  }catch(e){ rep('<div class="mrep bad">La mise en ligne a échoué : '+esc((e&&e.message)||'erreur')+'. Rien n\'est perdu : la fiche est dans le Catalogue, « Mettre en ligne » réessaie.</div>',1); }
+}
+async function photoPourSite(p){
+  if(p.imgPerso&&/^data:image\/(jpeg|png|webp);base64,/.test(p.img||'')) return {data:p.img};
+  if(/^https:\/\//.test(p.img||'')) return {url:p.img};
+  if(p.bc&&!PHOTO_KO.has(p.bc)&&/^https:/.test(location.protocol)){
+    const u=location.origin+location.pathname.replace(/[^/]*$/,'')+'photos/'+encodeURIComponent(p.bc)+'.webp';
+    try{ const r=await fetch(u,{method:'HEAD'}); if(r.ok&&/image/.test(r.headers.get('content-type')||'')) return {url:u}; }catch(e){}
+    PHOTO_KO.add(p.bc);
+  }
+  return {};
+}
+/* remet en vente une fiche RETIRÉE d'un site WooCommerce (cote 'd' ou 'g'), avec son prix : la route /site/prix « republier »,
+   la même que la case de la fiche ; le relevé local suit la réponse du site */
+async function remetEnVente(p,cote,barre,promo){
+  const rf=retireCote(p,cote); if(!rf) return {ok:false,err:"la fiche n'est plus retirée sur ce site"};
+  try{
+    const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/site/prix',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},
+      body:JSON.stringify({quel:cote==='g'?'gros':'',bc:rf.k,barre:barre,promo:promo==null?'':promo,republier:true})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok||!j.ok) return {ok:false,err:j.erreur||('erreur '+r.status)};
+    const R=Object.assign({},(SITE._retires&&SITE._retires[cote])||{});
+    const g=Object.assign({},rf.f,{pr:j.apres.barre,ps:j.apres.promo}); delete g.t; delete R[rf.k];
+    SITE._retires=Object.assign({},SITE._retires,{[cote]:R});
+    const kk=(SITE[rf.k]?rf.k:Object.keys(SITE).find(x=>!x.startsWith('_')&&x.replace(/^0+/,'')===rf.k.replace(/^0+/,'')))||rf.k;
+    SITE[kk]=Object.assign({},SITE[kk]||{},{[cote]:g});
+    ecrit(KSITE,SITE); _FMC=null; _SITE0=null; _RETS=null;
+    const nomSite=cote==='g'?'wholesale.perfumestrade.com':'perfumestrade.com';
+    log({act:'prix',lib:'fiche remise en vente avec son prix sur '+nomSite+' (fenêtre « Mettre en ligne »)',bc:p.bc,ref:(p.marque||'')+' '+(p.nom||''),av:'retirée de la vente',ap:money2(j.apres.promo!=null?j.apres.promo:j.apres.barre)});
+    return {ok:true,prix:j.apres.promo!=null?j.apres.promo:j.apres.barre};
+  }catch(e){ return {ok:false,err:(e&&e.message)||'le cockpit ne répond pas'}; }
+}
+async function lanceMel(sel,res,mode,prog,arret){
+  const T={cree:0,deja:0,refus:0,erreur:0}, pb=[];
+  for(const id of sel){
+    const items=res[id].slice(0,MEL_MAX), cote=COTE_SITE[id];
+    for(let i=0;i<items.length;i+=MEL_LOT){
+      if(arret()) break;
+      const lot=items.slice(i,i+MEL_LOT);
+      prog(MEL_CANAL[id].nom+' : '+i+' / '+items.length+'…');
+      const corps={items:await Promise.all(lot.map(async x=>{ const it={bc:x.p.bc,nom:melNom(x.p),marque:x.p.marque||'',barre:x.barre||x.v,qte:x.p.qte}; if(x.barre) it.promo=x.v;
+        /* la photo : celle choisie dans l'ERP (sans adresse : le cockpit la prête au site), sinon l'adresse https connue, sinon la photo de l'ERP si elle existe */
+        const ph=await photoPourSite(x.p); if(ph.data) it.imageData=ph.data; else if(ph.url) it.image=ph.url; return it; }))};
+      if(id==='sitegros') corps.quel='gros';
+      if(mode==='publie'&&(cote||window.__melPcStock)) corps.publie=true;
+      let j={};
+      try{
+        const r=await fetch(CK_URL+'/api/o/'+CK_ORG+(id==='perfumecity'?'/shopify/cree':'/site/cree'),{method:'POST',
+          headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},body:JSON.stringify(corps)});
+        j=await r.json().catch(()=>({}));
+        if(!r.ok||!j.lignes){ pb.push(MEL_CANAL[id].nom+' : '+(j.erreur||('erreur '+r.status))); T.erreur+=lot.length; if(mode==='publie') lot.forEach(x=>pubNote(x.p,id,j.erreur||('le cockpit a répondu erreur '+r.status))); break; }
+      }catch(e){ pb.push(MEL_CANAL[id].nom+' : '+((e&&e.message)||'le cockpit ne répond pas')); T.erreur+=lot.length; if(mode==='publie') lot.forEach(x=>pubNote(x.p,id,(e&&e.message)||'le cockpit ne répond pas')); break; }
+      const par=new Map(lot.map(x=>[String(x.p.bc),x]));
+      (j.lignes||[]).forEach(l=>{
+        if(l.etat==='brouillon'||l.etat==='en ligne'){ T.cree++; const X=par.get(String(l.bc)); melRange(id,cote,l,X&&X.p); if(l.visible) pb.push((l.nom||l.bc)+' (Perfume City) : en vente mais pas visible — '+l.visible);
+          if(mode==='publie'&&X&&X.p){ if(l.etat==='en ligne'&&!l.visible) pubClair(X.p,id);
+            else pubNote(X.p,id,l.visible?('en vente mais pas visible sur la boutique : '+l.visible):(id==='perfumecity'&&!window.__melPcStock?"créé en brouillon : le droit de poser le stock (write_inventory) manque":'créé en brouillon, pas en vente')); }
+          if(X&&X.saisi){ try{ MOD[X.p.id]=Object.assign({},MOD[X.p.id]||{}); MOD[X.p.id].pc=Object.assign({},MOD[X.p.id].pc,{[id]:X.v}); sauveMOD(); }catch(e){} } }
+        else if(l.etat==='deja') T.deja++;
+        else { if(l.etat==='refus') T.refus++; else T.erreur++; pb.push((l.bc||'?')+' ('+MEL_CANAL[id].nom+') : '+(l.pourquoi||l.etat));
+          if(mode==='publie'){ const X=par.get(String(l.bc)); if(X&&X.p) pubNote(X.p,id,(l.etat==='refus'?'refusé : ':'erreur : ')+(l.pourquoi||l.etat)); } }
+      });
+      try{ if(cote){ ecrit(KSITE,SITE); _FMC=null; _SITE0=null; _RETS=null; } else { ecrit('shopify-pc-prix-v1',DIFF_S||{}); } }catch(e){}
+    }
+  }
+  try{ const J=lit('crm-journal-v1',[]); J.push({t:new Date().toISOString(),u:(typeof NOM_UTIL!=='undefined'&&NOM_UTIL)||'(non renseigné)',act:'site',lib:T.cree+' fiche(s) créée(s) sur '+sel.map(i=>MEL_CANAL[i].nom).join(', ')+(mode==='publie'?' (en ligne)':' (brouillon)'),n:T.cree,impact:0,det:[]}); ecrit('crm-journal-v1',J); }catch(e){}
+  try{ majDiff(); }catch(e){}
+  return `<div class="mrep${T.erreur||T.refus?' bad':''}"><b>${nf(T.cree)}</b> fiche(s) créée(s) · ${nf(T.deja)} déjà là · ${nf(T.refus)} refusée(s) · ${nf(T.erreur)} en erreur.`
+    +(T.cree?`<br><small>${mode==='publie'?(window.__melPcStock?'Elles sont en vente.':'Celles des sites perfumestrade.com sont en vente ; chez Perfume City, en brouillon.'):"Elles sont en brouillon : pour les publier sur les sites perfumestrade.com, utilise « Remettre en vente » dans l'onglet « Sans prix sur le site » ; chez Perfume City, publie-les dans Shopify."}</small>`:'')
+    +(pb.length?'<br><small>'+pb.slice(0,8).map(esc).join('<br>')+(pb.length>8?'<br>… et '+(pb.length-8)+' autre(s)':'')+'</small>':'')+'</div>';
+}
+/* ---------------------------------------------------------------------------
+   ALERTES « PAS EN LIGNE » (Igal, 21 oct. 2026 : « l'ERP ne doit jamais mentir sans le dire » — Coach FLORAL était resté en brouillon
+   chez Perfume City et absent du site retail, et personne ne l'a su avant que Sam regarde la fiche).
+   Chaque fois qu'une mise en ligne EN VENTE n'aboutit pas sur un canal (refus, erreur, brouillon, pas de prix, pas de stock…), on le
+   note ici, par parfum et par canal, avec la raison. Le tableau de bord les affiche tant que le parfum n'est pas vraiment en vente.
+   Elles se retirent toutes seules dès que le relevé du canal montre le parfum en vente (majDiff), ou à la main depuis le tableau de bord.
+   Ce n'est PAS la liste des parfums « pas diffusés » : ceux-là, on a choisi de ne pas les publier (le filtre Diffusion les montre).
+--------------------------------------------------------------------------- */
+const KPUB='publications-v1';
+const pubCle=p=>{ const b=String((p&&p.bc)||'').replace(/[^0-9A-Za-z]/g,'').replace(/^0+/,''); return b||String((p&&p.id)||''); };
+function pubLit(){ let o=null; try{ o=lit(KPUB,{}); }catch(e){} return (o&&typeof o==='object'&&!Array.isArray(o))?o:{}; }
+function pubNote(p,canal,raison){
+  try{ const k=pubCle(p); if(!k||!MEL_CANAL[canal]) return; const O=pubLit(), t=new Date().toISOString();
+    const e=O[k]||{k,id:p.id||'',bc:p.bc||'',ko:{}};
+    e.nom=((p.marque||'')+' '+(p.nom||'')).replace(/\s+/g,' ').trim().slice(0,120); e.t=t; e.ko=e.ko||{};
+    e.ko[canal]={r:String(raison||'raison inconnue').slice(0,220),t}; O[k]=e;
+    const ks=Object.keys(O); if(ks.length>300) ks.sort((a,b)=>String(O[a].t).localeCompare(String(O[b].t))).slice(0,ks.length-300).forEach(x=>delete O[x]);
+    ecrit(KPUB,O); }catch(e){}
+}
+function pubClair(p,canal){
+  try{ const k=pubCle(p), O=pubLit(); if(!O[k]) return; if(O[k].ko) delete O[k].ko[canal];
+    if(!Object.keys(O[k].ko||{}).length) delete O[k]; ecrit(KPUB,O); }catch(e){}
+}
+/* au chargement et après chaque lecture de relevé : ce qui est maintenant en vente (ou coupé exprès pour ce parfum) sort de la liste */
+function pubVerifie(arts){
+  try{ const O=pubLit(), ks=Object.keys(O); if(!ks.length) return;
+    const par=new Map(arts.map(p=>[pubCle(p),p])); let ch=false;
+    ks.forEach(k=>{ const e=O[k], p=par.get(k); if(!p) return;
+      Object.keys(e.ko||{}).forEach(c=>{ if(statutDiff(p,c)==='oui'||horsCanal(p,c)){ delete e.ko[c]; ch=true; } });
+      if(!Object.keys(e.ko||{}).length){ delete O[k]; ch=true; } });
+    if(ch) ecrit(KPUB,O); }catch(e){}
+}
+/* on recolle tout de suite ce que le cockpit vient de ranger */
+function melRange(id,cote,l,p){
+  const cle0=String(l.bc||'').replace(/[^0-9A-Za-z]/g,'');
+  if(cote){
+    const f={id:l.id,pr:l.barre,ps:l.promo!=null?l.promo:null,q:l.qte,nom:String(l.nom||'').slice(0,90)};
+    if(l.etat==='brouillon'){ const R=Object.assign({},(SITE._retires&&SITE._retires[cote])||{}); R[cle0]=Object.assign({},f,{t:new Date().toISOString()}); SITE._retires=Object.assign({},SITE._retires,{[cote]:R}); }
+    else { const kk=(p&&siteCle(p))||cle0; SITE[kk]=Object.assign({},SITE[kk]||{},{[cote]:f}); }
+  }else{
+    if(!DIFF_S) DIFF_S={};
+    DIFF_S[cle0.replace(/^0+/,'')]=[String(l.id),String(l.vid||''),l.prix,l.barre!=null?l.barre:null,l.etat==='en ligne'?1:0,String(l.handle||'')];
+  }
+}
+/* Igal, 17 oct. 2026 : « il est encore en draft » — un produit créé en brouillon chez Perfume City se met en vente d'un clic :
+   le cockpit pose d'abord le stock de l'ERP, puis passe le produit en actif. */
+document.addEventListener('click',async e=>{ const b=e.target.closest&&e.target.closest('[data-pcpub]'); if(!b) return;
+  const p=(typeof FICHE!=='undefined'&&FICHE&&cur[FICHE.pos])||null; if(!p||!melOk()) return;
+  if(!confirm('Mettre « '+((p.marque||'')+' '+(p.nom||'')).trim()+' » en vente chez Perfume City, avec '+nf(p.qte)+' en stock ?')) return;
+  if(!demandeUser(false,'mettre un produit en vente chez Perfume City',()=>{})) return;
+  b.disabled=true; b.textContent='Envoi…';
+  const dit=(t,cls)=>{ const d=$('dst'); if(d){ d.textContent=t; d.className='st'+(cls?' '+cls:''); } };
+  try{
+    const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/shopify/publie',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},body:JSON.stringify({bc:p.bc,qte:p.qte})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok||!j.ok) throw new Error(j.erreur||('erreur '+r.status));
+    try{ const S=lit('shopify-pc-prix-v1',{}); const k=String(p.bc||'').replace(/[^0-9A-Za-z]/g,'').replace(/^0+/,''); if(Array.isArray(S[k])){ S[k][4]=1; ecrit('shopify-pc-prix-v1',S); DIFF_S=S; } }catch(e){}
+    log({act:'site',lib:'produit mis en vente chez Perfume City (stock '+j.stock+') — '+((p.marque||'')+' '+(p.nom||'')).trim(),bc:p.bc||'',ref:'',av:'brouillon',ap:'en vente'});
+    dessineFiche();   /* redessine la fiche (le bouton change), PUIS écrit l'état — sinon le redessin l'efface */
+    if(j.visible){ dit('En vente chez Perfume City (stock '+j.stock+'), mais PAS visible sur la boutique en ligne : '+j.visible,''); }
+    else dit('En vente et visible chez Perfume City, stock '+j.stock+(j.canaux?' ('+j.canaux+' canal/canaux)':'')+'.','ok');
+  }catch(err){ b.disabled=false; b.textContent='Mettre en vente'; dit('Pas mis en vente : '+((err&&err.message)||''),''); }
+});
+/* le bouton « Mettre en ligne » de la fiche, quand le parfum n'est pas sur ce site.
+   31 oct. 2026 (Igal : « cette fenêtre m'empêche de voir les autres prix, je ne peux pas la bouger, change de méthode ») : plus de
+   fenêtre par-dessus la fiche. Le parfum est créé EN VENTE sur ce site, au prix que la ligne du canal montre (celui qu'on règle dans
+   la fiche), avec UNE validation ; ce qui se passe s'écrit à côté du bouton. Mêmes garde-fous que « Mettre en ligne » : en stock,
+   code-barres, prix au-dessus du prix d'achat (Patron : avertissement), jamais recréé s'il existe. */
+document.addEventListener('click',async e=>{ const b=e.target.closest&&e.target.closest('[data-mel1]'); if(!b) return;
+  const p=(typeof FICHE!=='undefined'&&FICHE&&cur[FICHE.pos])||null; if(!p) return;
+  const id=b.dataset.mel1, c=(REG.canaux||[]).find(x=>x.id===id)||{id,base:id==='sitegros'?'pvw':'pvr',maj:0};
+  const out=(t,ok)=>{ let d=b.parentElement.querySelector('.mel1r'); if(!d){ d=document.createElement('small'); d.className='mel1r'; b.after(d); } d.textContent=t; d.style.color=ok?'var(--good)':'var(--crit)'; };
+  if(!melOk()){ out('Seul le dirigeant, relié au cockpit, peut mettre en ligne.'); return; }
+  const br=FICHE.brouillon&&FICHE.brouillon.pc&&FICHE.brouillon.pc[id];
+  const v=r2(br!=null&&br!==''?+br:prixCanal(p,c).v);
+  if(!(v>0)){ out('Pas de prix pour ce site : écris-le dans la case de la ligne, puis recommence.'); return; }
+  if(!(p.qte>0)){ out('Pas de stock : rien à mettre en vente.'); return; }
+  const perte=p.pa!=null&&v<p.pa;
+  if(!confirm((p.marque||'')+' '+(p.nom||'')+'\n\nMettre EN VENTE sur '+MEL_CANAL[id].nom+' à '+money2(v)+' ?'+(perte?'\n\nAttention : c\'est moins que le prix d\'achat.':''))) return;
+  if(!demandeUser(false,'mettre un parfum en ligne',()=>{})) return;
+  b.disabled=true; b.textContent='…';
+  if(id==='perfumecity'){ try{ const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/shopify/droits',{headers:{Authorization:'Bearer '+ckTok()}}); const j=await r.json(); window.__melPcStock=!!(j&&j.stock); }catch(x){} }
+  const R=await lanceMel([id],{[id]:[{p,v}]},'publie',t=>{ b.textContent=t; },()=>false);
+  const txt=String(R||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+  try{ render(); const l=cur.findIndex(x=>x.id===p.id); if(l>=0){ FICHE.pos=l; dessineFiche(); } }catch(x){}
+  const b2=document.querySelector('[data-cn="'+id+'"] [data-mel1]')||document.querySelector('[data-mel1="'+id+'"]');
+  const zone=document.querySelector('[data-cn="'+id+'"]');
+  if(zone){ const d=document.createElement('div'); d.className='mel1r'; d.style.cssText='font-size:12.5px;margin-top:6px;color:'+(/créée|en vente/i.test(txt)&&!/0 fiche/.test(txt)?'var(--good)':'var(--crit)'); d.textContent=txt; zone.appendChild(d); }
+  else if(b2) out(txt,/en vente/i.test(txt)); });
+function sansPrixSite(p,site){
+  const L=site==='g'?['g']:site==='d'?['d']:['d','g'];
+  const e=siteDe(p);
+  return L.some(c=>{
+    /* 12 oct. 2026 (Igal : « ça reste dans no price on website, et ça ne doit pas le faire ») : une fiche retirée À LAQUELLE ON A POSÉ un prix
+       (« Enregistrer le prix, reste hors ligne ») n'est plus « sans prix » : elle sort de l'onglet. Elle y reste tant qu'aucun prix n'est sur le site. */
+    const rr=retireCote(p,c); if(rr) return !(rr.f.pr>0);
+    const f=e&&e[c]; return !!(f&&f.pr!==undefined&&(f.pr==null||+f.pr===0)&&(f.ps==null||+f.ps===0));
+  });
+}
+/* 12 oct. 2026 (Sam : « le logo Amazon est sur des produits qui ne sont pas sur Amazon ») : l'ASIN de l'inventaire sert à
+   comparer les prix, il ne prouve PAS que Sam vend ce parfum (2 079 fiches en ont un). Seule une vente Amazon enregistrée
+   le prouve : le logo, l'onglet « Vendus sur Amazon » et la pastille ne se fondent plus que sur elle. */
+function venduAmazon(p){
+  if(_AZV===null){ _AZV=new Set(); try{ (lit('factures-v1',[])||[]).forEach(f=>{ if(f&&f.sens==='vente'&&/amazon/i.test(f.canal||'')) (f.lignes||[]).forEach(l=>{ if(l.cle) _AZV.add(l.cle); if(l.bc) _AZV.add(String(l.bc)); }); }); }catch(e){} }
+  return _AZV.has(p.cle||p.id)||_AZV.has(String(p.bc||''));
+}
+const badgeAmazon=p=>venduAmazon(p)?`<span class="laz" title="${p.asin?'Vendu sur Amazon · ASIN '+esc(p.asin):'Vendu sur Amazon'}">${logo('amazon','Amazon')}</span>`:'';
 function azLien(p, m){
   if(m && m.url) return m.url;
   if(p.asin) return 'https://www.amazon.com/dp/'+encodeURIComponent(p.asin);
-  if(p.bc)   return 'https://www.amazon.com/s?k='+encodeURIComponent(p.bc);
-  return 'https://www.amazon.com/s?k='+encodeURIComponent(((p.marque||'')+' '+(p.nom||'')+' '+(p.ml?p.ml+' oz':'')).trim());
+  /* 11 oct. 2026 (Igal : « les parfums ne sont pas trouvables ») : la recherche par code-barres
+     ne donne presque jamais rien sur Amazon ; par marque + nom + contenance, si */
+  return 'https://www.amazon.com/s?k='+encodeURIComponent(((p.marque||'')+' '+(p.nom||'')+' '+(p.type||'')+' '+(p.ml?p.ml+' oz':'')).replace(/\s+/g,' ').trim());
 }
 
+/* Igal, 17 oct. 2026 : « à chaque fois que je cliquais sur "ouvrir la fiche Amazon", je tombais sur des produits sans prix. Ce qui
+   m'intéresse, c'est de connaître les prix vendus sur Amazon. » L'ASIN de l'inventaire ne prouve pas qu'Amazon vend ce parfum
+   AUJOURD'HUI : la page tombait souvent sur « actuellement indisponible », sans prix. Le lien direct n'est donc donné que si l'on SAIT
+   que la page porte un prix — l'annonce de Sam (rapport des annonces, prix et quantité du jour) ou un relevé de marché avec son prix.
+   Sinon : une recherche Amazon par marque, nom et contenance, qui montre les offres réelles avec leur prix. Le prix connu est écrit
+   sur le bouton. */
+function azPourFiche(p){
+  const m=MAR[p.id], ann=prixAmazonDe(p);
+  const asin=(ann&&ann.asin)||p.asin||'';
+  if(ann&&ann.prix>0&&(asin||(m&&m.url))) return {exact:true,href:(m&&m.url)||('https://www.amazon.com/dp/'+encodeURIComponent(asin)),prix:ann.prix,asin,
+    titre:L3('Ton annonce Amazon, au prix du jour','Your Amazon listing, at today\'s price','Tu anuncio de Amazon, al precio de hoy')+(asin?' · ASIN '+asin:'')};
+  /* un relevé ancien : la page avait un prix ce jour-là. Le lien direct reste, mais son prix ne s'écrit pas (Igal, 27 sept. : plus de vieux prix Amazon) */
+  if(m&&m.url&&m.amz>0) return {exact:true,href:m.url,prix:null,asin,
+    titre:L3('Page relevée avec son prix','Page recorded with its price','Página registrada con su precio')+(asin?' · ASIN '+asin:'')};
+  return {exact:false,href:azLien({marque:p.marque,nom:p.nom,type:p.type,ml:p.ml},null),prix:null,asin:'',
+    titre:L3('Aucun prix Amazon connu pour ce parfum : recherche par nom, qui montre les offres en vente','No known Amazon price for this perfume: search by name, which shows the live offers','Ningún precio de Amazon conocido para este perfume: búsqueda por nombre, que muestra las ofertas')};
+}
 /* ---------- Déposer un relevé pour tout le catalogue d'un coup ----------
    La fiche produit sait déjà saisir UN relevé à la main. À 2 083 références
    avec un ASIN, ça ne tient pas : il faut une porte par laquelle un fichier
@@ -1516,8 +2510,8 @@ function azAnalyse(texte){
   const TOUS=tousLesArticles();
   const parAsin={}, parBc={};
   TOUS.forEach(p=>{
-    if(p.asin) (parAsin[String(p.asin).toUpperCase()] ||= []).push(p);
-    if(p.bc)   (parBc[String(p.bc).trim()] ||= []).push(p);
+    if(p.asin){ const ka=String(p.asin).toUpperCase(); (parAsin[ka]=parAsin[ka]||[]).push(p); }
+    if(p.bc){ const kb=String(p.bc).trim(); (parBc[kb]=parBc[kb]||[]).push(p); }
   });
 
   const val=(r,k)=>map[k]===undefined?'':String(r[map[k]]==null?'':r[map[k]]).trim();
@@ -1600,10 +2594,16 @@ function azEnregistre(){
 
 const COLS=[
   {k:'nom',   lib:'Marque et nom', t:'txt', v:p=>(p.marque||'')+' '+(p.nom||'')},
-  {k:'fmt',   lib:'Format',        t:'num', v:p=>parseFloat(String(p.ml).replace(',','.'))},
+  {k:'fmt',   lib:'Format',        t:'num', v:p=>parseFloat(String(p.ml).replace(',','.')), cls:'colfmt'},
   {k:'qte',   lib:'Stock',         t:'num', v:p=>p.qte, cls:'colq',  al:'r'},
+  /* Trier sur l'ÉCART, comme pour Amazon : la question est « où sommes-nous le
+     plus loin de ce que le site raconte au client », pas « qui a le plus de
+     stock en ligne ». Sans relevé du site, la valeur est nulle et la ligne
+     part en bas, avec les autres colonnes vides. */
+  {k:'site',  lib:'Sur les sites', t:'num', v:p=>{ const e=siteEcart(p); return e?Math.abs(e.d):null; },
+              cls:'colsite', al:'r'},
   {k:'pa',    lib:"Prix d'achat",  t:'num', v:p=>p.pa,  cls:'colpa', al:'r'},
-  {k:'pvr',   lib:'Prix retail',   t:'num', v:p=>p.pvr, al:'r'},
+  {k:'pvr',   lib:'Prix retail',   t:'num', v:p=>p.pvr, cls:'colpvr', al:'r'},
   /* Trier sur l'ECART, pas sur le prix Amazon : « qui est le plus loin du
      marche » est la question qu'on se pose ; « qui coute le plus cher chez
      Amazon » n'interesse personne. Sans releve, la valeur est nulle et la
@@ -1611,7 +2611,7 @@ const COLS=[
   {k:'az',    lib:'Amazon',        t:'num', v:p=>{ const e=azEcart(p); return e?e.d:null; },
               cls:'colaz', al:'r'},
   {k:'pvw',   lib:'Prix de gros',  t:'num', v:p=>p.pvw, al:'r'},
-  {k:'mgr',   lib:'Marge retail',  t:'num', v:p=>marge(p,p.pvr), cls:'colmg', al:'r'},
+  {k:'mgr',   lib:'Marge retail',  t:'num', v:p=>marge(p,p.pvr), cls:'colmg colmgr', al:'r'},
   {k:'mgw',   lib:'Marge wholesale',t:'num', v:p=>marge(p,p.pvw), cls:'colmg', al:'r'},
   {k:'an',    lib:'Alertes',       t:'num', v:p=>p.an.length, cls:'colfl'},
   {k:'bc',    lib:'Code-barres',   t:'txt', v:p=>p.bc||'', cls:'colbc'}
@@ -1637,11 +2637,16 @@ function bascule(col){
   const c=COLI[col]; if(!c) return;
   const depart = c.t==='txt' ? 'asc' : 'desc';   /* un prix ou un stock : le plus grand d'abord */
   if(!TRI||TRI.col!==col) TRI={col,dir:depart};
-  else if(TRI.dir===depart) TRI={col,dir:depart==='asc'?'desc':'asc'};
-  else TRI=null;                                  /* troisieme clic : on revient au tri par defaut */
+  else TRI={col,dir:TRI.dir==='asc'?'desc':'asc'};  /* Igal, 12 oct. : le 3e clic remettait l'ordre d'origine, « ni croissant ni décroissant, ça bloque » → on alterne seulement ; la croix de la pastille « TRI » remet l'ordre d'origine */
   sauveTRI();
   const sel=$('fo'); if(sel&&TRI) sel.value='b';
-  render();
+  /* Igal, 12 oct. : « au bout de 4-5 clics sur Stock c'est comme si c'était freeze ».
+     Un clic de tri refaisait TOUT (reconstruire les 3 800 articles, refiltrer) alors que seul
+     l'ordre change : sur un ordinateur plus lent, les clics s'empilaient. La liste déjà
+     filtrée (cur) est simplement retriée, puis redessinée. */
+  const tc=trieur();
+  if(tc && Array.isArray(cur) && cur.length){ cur.sort(tc); shown=PAGE; paint(); }
+  else render();
 }
 
 
@@ -1651,15 +2656,15 @@ function bascule(col){
    son choix declenche. */
 /* Reglages partages par toutes les rubriques. */
 const KREG='reglages-v1';
-const CANAUX_DEF=[{id:'boutique',nom:'Boutique',maj:0,com:0},{id:'site',nom:'Site perfumestrade.com',maj:0,com:3},
-  {id:'shopify',nom:'Shopify',maj:0,com:3},{id:'amazon',nom:'Amazon',maj:18,com:15},{id:'perfumecity',nom:'Perfume City',maj:0,com:0}];
+const CANAUX_DEF=[{id:'site',nom:'Site perfumestrade.com',maj:0,com:3},
+  {id:'sitegros',nom:'Site wholesale.perfumestrade.com',base:'pvw',maj:0,com:3},{id:'amazon',nom:'Amazon',maj:18,com:15},{id:'perfumecity',nom:'Perfume City',maj:0,com:3}];
 const REG_DEF={seuilQte:3,capMin:0,baissePct:30,baisseJours:30,margeMin:10,canaux:CANAUX_DEF};
 let REG=Object.assign({},REG_DEF);
 try{ const r=JSON.parse(localStorage.getItem(KREG)||'null'); if(r) REG=Object.assign({},REG_DEF,r); }catch(e){}
 /* 3 septembre : eBay quitte la liste des canaux, Perfume City arrive (une seule fois, sans toucher aux autres) */
 (function(){ try{ const K='canaux-ebay-perfumecity-v1'; if(localStorage.getItem(K)) return;
   if(Array.isArray(REG.canaux)){ REG.canaux=REG.canaux.filter(c=>c.id!=='ebay');
-    if(!REG.canaux.some(c=>c.id==='perfumecity')) REG.canaux.push({id:'perfumecity',nom:'Perfume City',maj:0,com:0});
+    if(!REG.canaux.some(c=>c.id==='perfumecity')) REG.canaux.push({id:'perfumecity',nom:'Perfume City',maj:0,com:3});
     localStorage.setItem(KREG,JSON.stringify(REG)); }
   localStorage.setItem(K,'1'); }catch(e){} })();
 /* reprise de l'ancien reglage isole */
@@ -1668,6 +2673,29 @@ try{ const v=localStorage.getItem('seuil-stock-faible-v1');
     localStorage.setItem(KREG,JSON.stringify(REG)); localStorage.removeItem('seuil-stock-faible-v1'); }
 }catch(e){}
 base(KREG,REG);
+/* 24 sept. 2026 (Igal) : Shopify quitte les canaux — c'est la caisse de Perfume City,
+   rien n'en remonte, et Perfume City a déjà sa case. Le site de GROS arrive, calculé
+   sur le prix de gros (pas sur le retail). Une seule fois : le repère est rangé DANS
+   les réglages, donc partagé par tous les ordinateurs, et un canal remis à la main
+   ensuite n'est plus jamais retiré. */
+/* 27 sept. 2026 (Igal) : « Boutique / Shop, supprime ça, ça ne sert à rien » — tout ce
+   qui se vend au magasin passe par la caisse Lightspeed, qui a son propre canal. Même
+   principe : une seule fois, repère dans les réglages. Les ventes déjà enregistrées
+   sous « Boutique » gardent leur nom (l'historique ne se réécrit pas). */
+(function(){ try{ const v0=REG.canauxV||0; if(v0>=3) return;
+  let L=(Array.isArray(REG.canaux)&&REG.canaux.length)?REG.canaux.slice():JSON.parse(JSON.stringify(CANAUX_DEF));
+  if(v0<2){
+    L=L.filter(c=>c&&c.id!=='shopify');
+    if(!L.some(c=>c.id==='sitegros')){ const i=L.findIndex(c=>c.id==='site'); L.splice(i>=0?i+1:L.length,0,{id:'sitegros',nom:'Site wholesale.perfumestrade.com',base:'pvw',maj:0,com:3}); }
+  }
+  L=L.filter(c=>c&&c.id!=='boutique');
+  if(!L.length) L=JSON.parse(JSON.stringify(CANAUX_DEF));
+  REG.canaux=L; REG.canauxV=3; ecrit(KREG,REG); }catch(e){} })();
+/* 17 oct. 2026 (Igal) : « sur WooCommerce on déduit 3 % de commission, il faut faire de même sur Shopify » → le canal
+   Perfume City passe à 3 % UNE fois (repère pcCom3 dans les réglages) ; si Sam le remet à 0 ensuite, c'est respecté. */
+(function(){ try{ if(REG.pcCom3) return;
+  if(Array.isArray(REG.canaux)) REG.canaux=REG.canaux.map(c=>(c&&c.id==='perfumecity'&&!(+c.com))?Object.assign({},c,{com:3}):c);
+  REG.pcCom3=1; ecrit(KREG,REG); }catch(e){} })();
 const sauveREG=()=>ecrit(KREG,REG);
 let SEUIL=REG.seuilQte;
 function majSeuil(){
@@ -1711,7 +2739,7 @@ function badgeComptage(p){
 function ligneListe(p,i){
   const CLIENT=document.body.classList.contains('client');
   const ph = p.img
-    ? `<span class="lph"><img src="photos/${p.bc}.webp" data-far="${p.img}" alt="" loading="lazy" onerror="secours(this)"></span>`
+    ? `<span class="lph"><img src="${phSrc(p)}" data-far="${p.imgPerso?'':p.img}" alt="" loading="lazy" onerror="secours(this)"></span>`
     : `<span class="lph"><svg viewBox="0 0 40 64" fill="none" aria-hidden="true"><rect x="14.5" y="2" width="11" height="9" rx="1.5" stroke="currentColor" stroke-width="3"/><path d="M11 20a6 6 0 016-6h6a6 6 0 016 6v34a6 6 0 01-6 6H17a6 6 0 01-6-6V20z" stroke="currentColor" stroke-width="3"/></svg></span>`;
   const meta=[p.ml?p.ml+' oz':'',p.type,GEN[p.genre]&&p.genre?GEN[p.genre]:''].filter(Boolean).join(' · ');
   const mg=(v)=>(v!=null&&p.pa!=null&&v>0)?((v-p.pa)/v*100):null;
@@ -1729,6 +2757,7 @@ function ligneListe(p,i){
     p.an.forEach(a=>l.push({t:AN[a][0],c:AN[a][1]}));
     if(mq.length) l.push({t:`${mq.length} champ${mq.length>1?'s':''} à compléter`,c:'w'});
     if(p.neuf) l.push({t:'ajouté à la main',c:'todo'});
+    { const d=pastilleDiff(p); if(d) l.unshift(d); }
     /* les alertes de prix restent dans l'ordre des colonnes ; les « à compléter » et « ajouté » en dernier */
     const rang=x=>(x.c==='todo'||/à compléter$/.test(x.t))?1:0;
     l.sort((a,b)=>rang(a)-rang(b));
@@ -1740,15 +2769,16 @@ function ligneListe(p,i){
   return `<tr class="${cls}" data-id="${p.id}" tabindex="0">
     <td class="lno">${nf((i||0)+1)}</td>
     <td><div class="lid">${ph}<div class="tx">
-      <div class="lmq">${esc(p.marque)}</div>
-      <div class="lnm">${esc(p.nom)}</div></div></div></td>
-    <td><span class="lmeta">${meta||'—'}</span></td>
+      <div class="lmq">${esc(p.marque)}${badgeAmazon(p)}</div>
+      <div class="lnm">${esc(p.nom)}</div>${meta?`<div class="lsub">${meta}</div>`:''}${p.bc?`<div class="lbn" data-nolang>${esc(p.bc)}</div>`:''}${CLIENT?'':`<div class="dfrow">${logosDiff(p)}</div>`}</div></div></td>
+    <td class="colfmt"><span class="lmeta">${meta||'—'}</span></td>
     <td class="r colq"><span class="lq${p.qte===0?' out':(SEUIL>0&&p.qte<SEUIL)?' low':''}">${p.qte===0?'historique':nf(p.qte)}</span>${p.qte===0?'':badgeComptage(p)}</td>
+    <td class="r colsite">${siteCell(p)}</td>
     <td class="r colpa">${prix(p.pa,'lpa')}</td>
-    <td class="r">${prix(p.pvr,'lpr',star)}</td>
+    <td class="r colpvr">${prix(p.pvr,'lpr',star)}</td>
     <td class="r colaz">${azCell(p)}</td>
     <td class="r">${prix(p.pvw,'lpw')}</td>
-    <td class="r colmg"><span class="lmg ${cm(mg(p.pvr))}">${pc(mg(p.pvr))}</span></td>
+    <td class="r colmg colmgr"><span class="lmg ${cm(mg(p.pvr))}">${pc(mg(p.pvr))}</span></td>
     <td class="r colmg"><span class="lmg ${cm(mg(p.pvw))}">${pc(mg(p.pvw))}</span></td>
     <td class="colfl">${alertes}</td>
     <td class="colbc"><span class="lbc">${p.bc||'—'}</span></td>
@@ -1775,6 +2805,7 @@ function majVue(){
   const liste = VUE==='liste';
   $('grid').style.display = liste?'none':'';
   $('lstw').style.display = liste?'':'none';
+  requestAnimationFrame(ajusteDefile);
   document.querySelectorAll('#vue button').forEach(b=>b.classList.toggle('on',b.dataset.vue===VUE));
 }
 document.getElementById('vue').addEventListener('click',e=>{
@@ -1782,6 +2813,24 @@ document.getElementById('vue').addEventListener('click',e=>{
   VUE=b.dataset.vue; try{ localStorage.setItem(KVUE,VUE); }catch(x){}
   majVue(); paint();
 });
+/* le tableau dépasse-t-il sa boîte ? alors elle défile (en-tête plus figé, mais rien ne sort du cadre) */
+function ajusteDefile(){ const w=$('lstw'), t=w&&w.querySelector('.lst'); if(!t||!w.clientWidth) return;
+  if(ajusteDefile.en) return; ajusteDefile.en=true;
+  try{
+    const trop=()=>t.scrollWidth>w.clientWidth+1;
+    w.classList.remove('defile','x1','x2','x3','x4');
+    for(let i=1;i<=4&&trop();i++) w.classList.add('x'+i);
+    w.classList.toggle('defile', trop());
+  } finally { setTimeout(()=>{ ajusteDefile.en=false; },0); }
+}
+window.addEventListener('resize',ajusteDefile);
+/* Le tableau change de largeur APRÈS le premier calcul : la traduction (anglais,
+   espagnol) allonge les en-têtes, les photos arrivent, les polices se chargent.
+   Un seul calcul au dessin laissait la colonne Alertes sortir du cadre en anglais
+   (Igal, 24 sept. 2026 : « tu me refais ça à chaque fois »). On surveille donc la
+   taille réelle du tableau, et on recalcule à chaque changement. */
+try{ const RO=new ResizeObserver(()=>ajusteDefile()); const ob=()=>{ const t=$('lstw')&&$('lstw').querySelector('.lst'); if(t&&t!==ob.t){ ob.t=t; RO.observe(t); } };
+  new MutationObserver(ob).observe($('lstw'),{childList:true}); RO.observe($('lstw')); ob(); }catch(e){}
 $('lstw').addEventListener('click',e=>{
   const th=e.target.closest('th[data-col]');
   if(th){ bascule(th.dataset.col); return; }
@@ -1802,7 +2851,7 @@ function paint(){
  majVide();
  const u=cur.reduce((a,p)=>a+p.qte,0);
  $('cnt').textContent=`${cur.length.toLocaleString('fr-FR')} réf. · ${u.toLocaleString('fr-FR')} unités`;
- majBarre(); majSeuil();
+ majBarre(); majSeuil(); majMel();
  const ex=$('exa'); if(ex){ const nm=Object.keys(MOD).length, n=AJ.length+nm;
    ex.style.display=n?'inline-block':'none';
    ex.textContent=`Exporter mes corrections (${n})`;
@@ -1818,6 +2867,18 @@ function majVide(){
   const st=$('fs').value;
   const ail=AILLEURS.length;
   const q=$('q').value.trim();
+  if(st==='az'){
+    el.innerHTML=`<b>${q?'Aucun parfum vendu sur Amazon ne correspond à « '+esc(q)+' ».':'Aucun parfum n\'est marqué comme vendu sur Amazon.'}</b>
+      <span>Un parfum compte comme vendu sur Amazon quand il a une vente Amazon enregistrée.</span>
+      ${ail?`<button class="btn pri" id="vvoir">Voir ${ail>1?'les '+ail+' références':'la référence'} hors Amazon</button>`:''}`;
+    if(ail) $('vvoir').onclick=()=>{ $('fs').value=''; SEG.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.v==='')); render(); };
+    return;
+  }
+  if(st==='sp'){
+    el.innerHTML=`<b>${q?'Aucun produit sans prix ne correspond à « '+esc(q)+' ».':'Aucun produit sans prix sur ce site.'}</b>
+      <span>Un produit compte comme sans prix quand sa fiche est retirée de la vente faute de prix, ou quand le site n'affiche aucun prix.</span>`;
+    return;
+  }
   if(ail && st){
     const ou = st==='in' ? "en historique (plus de stock)" : "en stock";
     const vers = st==='in' ? '' : 'in';
@@ -1827,13 +2888,13 @@ function majVide(){
     $('vvoir').onclick=()=>{ $('fs').value=vers; render(); };
     return;
   }
-  const nAutres=['fb','fg','ft','fp','fa','fan','fx'].filter(i=>{
+  const nAutres=['fb','fg','ft','fp','fa','fan','fx','fd'].filter(i=>{
     const e=$(i); return e.type==='checkbox'?e.checked:!!e.value; }).length;
   if(ail===0 && q && nAutres){
     el.innerHTML=`<b>Aucune référence ne correspond à « ${esc(q)} » avec les filtres actuels.</b>
       <span>${nAutres} filtre${nAutres>1?'s sont actifs':' est actif'} en plus de la recherche.</span>
       <button class="btn pri" id="vraz">Enlever les filtres, garder la recherche</button>`;
-    $('vraz').onclick=()=>{ ['fb','fg','ft','fp','fan','fx'].forEach(i=>$(i).value='');
+    $('vraz').onclick=()=>{ ['fb','fg','ft','fp','fan','fx','fd'].forEach(i=>$(i).value='');
       $('fa').checked=false; $('fs').value=''; render(); };
     return;
   }
@@ -1851,29 +2912,98 @@ function majVide(){
   el.innerHTML=`<b>Aucun produit ne correspond à ces filtres.</b>
     <span>Enlève-en un pour élargir.</span>`;
 }
+/* La recherche (réécrite le 9 oct. 2026 — Igal : « la barre de recherche du catalogue déconne »).
+   Trois défauts : « chloe » ne trouvait pas « Chloé » (accents) ; « jadore » ne trouvait pas
+   « J'adore » (apostrophe) ; et « le male » ramenait « Animale » avant le vrai Le Male, parce qu'un
+   mot était cherché n'importe où DANS un autre et que la liste restait rangée par marque.
+   Maintenant : sans accents ni ponctuation ; chaque mot tapé doit COMMENCER un mot de la fiche
+   (les suites de chiffres de 3 et plus se cherchent n'importe où : codes-barres, « 212 ») ; et
+   quand on cherche, les fiches qui contiennent la phrase tapée passent en premier. */
+/* 11 oct. 2026 (Igal : « j'ai tapé le nom en entier, il me dit qu'il n'y en a pas ») :
+   - « 3oz » et « 3 oz », « 100ml » et « 100 ml » doivent se trouver : un espace est glissé entre
+     chiffres et lettres des deux côtés ;
+   - le type (EDP, EDT…), la contenance et le genre font partie du texte cherché : un nom repris
+     d'une facture ou du site (« Lattafa Yara EDP 3.4 oz Women ») les contient toujours. */
+function rNorm(s){ return String(s==null?'':s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/œ/g,'oe').replace(/æ/g,'ae')
+  .replace(/(\d)([a-z])/g,'$1 $2').replace(/([a-z])(\d)/g,'$1 $2'); }
+function rVar(s){ const n=rNorm(s);
+  return [' '+n.replace(/['’`´]/g,'').replace(/[^a-z0-9.]+/g,' ').trim()+' ', ' '+n.replace(/[^a-z0-9.]+/g,' ').trim()+' ']; }
+function rTexte(p){
+  const GG={M:'homme men man for him',W:'femme women woman for her',U:'unisexe unisex mixte',K:'enfant kids'}[p.genre]||'';
+  const k=p.nom+'|'+p.nomSrc+'|'+p.marque+'|'+p.bc+'|'+(p.bcs||'')+'|'+(p.type||'')+'|'+(p.ml||'')+'|'+(p.genre||'');
+  /* la contenance est en oz dans l'outil ; les sites et les factures la disent souvent en ml */
+  const ml=p.ml?Math.round(+String(p.ml).replace(',','.')*29.5735/5)*5:0;
+  if(p.__rqk!==k){ p.__rqk=k; p.__rq=rVar(p.nom+' '+p.nomSrc+' '+p.marque+' '+p.bc+' '+(p.bcs||'')+' '+(p.type||'')+' '+(p.ml?p.ml+' oz '+p.ml+' fl oz '+(ml?ml+' ml':''):'')+' '+GG); }
+  return p.__rq;
+}
+function rMot(t,m){ return (/^\d{3,}$/.test(m)?t.includes(m):t.includes(' '+m)); }
+/* les sigles que tout le monde tape : « ysl » doit trouver Yves Saint Laurent */
+const R_SIGLES={ysl:'yves saint laurent',jpg:'jean paul gaultier',dg:'dolce gabbana',ch:'carolina herrera',ck:'calvin klein',
+  mfk:'maison francis kurkdjian',tf:'tom ford',bulgari:'bvlgari',paco:'paco rabanne',armani:'armani',vs:'victoria secret',
+  jlo:'jennifer lopez',ysl2:'yves saint laurent',edp:'edp',edt:'edt',edc:'edc',parfum:'parfum',oz:'oz',ml:'ml'};
+function rQuery(q){ const Q=rVar(q).map(v=>v.trim().split(' ').filter(Boolean).flatMap(m=>(R_SIGLES[m]&&R_SIGLES[m]!==m)?R_SIGLES[m].split(' '):[m]));
+  return Q; }
+/* « Bleu de Chanel » : la fiche s'appelle « Chanel Bleu » — les petits mots (de, du, of, the…)
+   ne servent pas à trouver, tant qu'il reste d'autres mots tapés */
+const R_PETITS=new Set(['de','du','des','la','les','of','the','by','pour','for','and','et']);
+function rUtiles(L){ const u=L.filter(m=>!R_PETITS.has(m)); return u.length?u:L; }
+function qMots(Q,p){ const T=rTexte(p), A=rUtiles(Q[0]), B=rUtiles(Q[1]);
+  return (A.length>0&&A.every(m=>rMot(T[0],m))) || (B.length>0&&B.every(m=>rMot(T[1],m))); }
+/* le rang d'une fiche pour la phrase tapée : plus haut = plus haut dans la liste */
+function rScore(Q,p){
+  const nom=rVar(p.nom), mq=rVar(p.marque), ph=Q[1].join(' '), m1=Q[1][0]||'';
+  const complet=rVar(p.marque+' '+p.nom)[1];
+  let sc=0;
+  if(String(p.bc)===Q[1].join('')||(p.bcs||'').split(/\s+/).includes(Q[1].join(''))) sc+=10;
+  if(complet.includes(' '+ph+' ')||complet.includes(' '+ph)) sc+=4;
+  if(nom[1].startsWith(' '+m1)) sc+=2;
+  if(mq[1].startsWith(' '+m1)) sc+=1;
+  /* la marque enlevée des mots tapés, le premier mot qui reste doit ouvrir le nom :
+     « dior sauvage » met Sauvage avant Eau Sauvage */
+  const mqMots=new Set(mq[1].trim().split(' ')), reste=Q[1].filter(m=>!mqMots.has(m));
+  if(reste.length&&nom[1].startsWith(' '+reste[0])) sc+=3;
+  return sc;
+}
 function render(){ mesureBarre();
  const TOUS=tousLesArticles();
- const q=$('q').value.trim().toLowerCase(),b=$('fb').value,g=$('fg').value,t=$('ft').value,st=$('fs').value,
-  fx=$('fx').value,
+ const q=$('q').value.trim().toLowerCase(),QQ=q?rQuery(q):null,b=$('fb').value,g=$('fg').value,t=$('ft').value,st=$('fs').value,
+  fx=$('fx').value, fd=$('fd').value,
   ph=$('fp').value,ast=$('fa').checked,an=$('fan').value,o=$('fo').value;
- const critere=p=>(!fx||(fx==='neuf'?!!p.neuf:fx==='mod'?!!p.mod:manque(p).length>0))&&
+ majDiff(); const critere=p=>(fx==='retire'?!!p.masque:(!p.masque&&(!fx||(fx==='neuf'?!!p.neuf:fx==='mod'?!!p.mod:manque(p).length>0))))&&
   (!b||p.marque===b)&&(!g||p.genre===g)&&(!t||p.type===t)&&(ph===''||(ph==='1'?!!p.img:!p.img))&&
   (!ast||p.src>0)&&(!an||(an==='all'?p.an.length>0:p.an.includes(+an)))&&
-  (!q||(p.nom+' '+p.nomSrc+' '+p.marque+' '+p.bc+' '+(p.bcs||'')).toLowerCase().includes(q));
+  (!QQ||qMots(QQ,p))&&(!fd||diffOk(p,fd));
  /* Ce que la recherche trouverait SANS le filtre de stock : sert à expliquer
     une liste vide au lieu de laisser croire que le produit n'existe pas. */
  AILLEURS=TOUS.filter(critere);
- cur=AILLEURS.filter(p=>(!st||(st==='in'?p.qte>0:p.qte===0)));
+ /* 12 oct. 2026 (Igal : « un onglet produits vendus sur Amazon ») : l'onglet « Vendus sur Amazon » montre les parfums
+    vendus là-bas, en stock ou non (le stock reste affiché sur chaque fiche) */
+ const spSite=$('fsp').value, spStock=$('fspq').checked;
+ $('spwrap').hidden=(st!=='sp');
+ cur=AILLEURS.filter(p=>st==='az'?venduAmazon(p):st==='sp'?(sansPrixSite(p,spSite)&&(!spStock||p.qte>0)):(!st||(st==='in'?p.qte>0:p.qte===0)));
+ /* Taper un code-barres, c'est demander CE parfum — pas « ce parfum s'il me
+    reste du stock ». Igal a cherché 8011003861224, l'écran est resté vide, et
+    il a fallu cliquer sur « La voir » pour comprendre que la référence existait
+    mais était à zéro. Quand la recherche est un code-barres et qu'elle ne trouve
+    rien à cause du seul filtre de stock, on montre quand même la référence. */
+ if(!cur.length && AILLEURS.length && st && st!=='az' && st!=='sp' && /^\s*\d{4,}\s*$/.test($('q').value)) cur=AILLEURS.slice();
+ /* 28 sept. (Igal) : une vente Amazon de Hanae Mori Blue Butterfly, et la recherche par le
+    NOM ne la trouvait pas — elle est à 0 en stock et le filtre « en stock » la cachait.
+    Chercher, c'est chercher partout : avec un texte tapé, le filtre « en stock » ne cache
+    plus rien (le filtre « hors stock », choisi exprès, reste respecté). */
+ if(q && st==='in' && AILLEURS.length>cur.length) cur=AILLEURS.slice();
  const tc=trieur();
  if(tc) cur.sort(tc);
  else if(o==='q')cur.sort((a,b)=>b.qte-a.qte);
  else if(o==='p')cur.sort((a,b)=>(a.pvw??1e9)-(b.pvw??1e9));
+ else if(QQ&&o==='b'){ cur.forEach(p=>{ p.__sc=rScore(QQ,p); });
+   cur.sort((a,b)=>(b.__sc-a.__sc)||a.marque.localeCompare(b.marque,'fr')||a.nom.localeCompare(b.nom,'fr')); }
  else cur.sort((a,b)=>a.marque.localeCompare(b.marque,'fr')||a.nom.localeCompare(b.nom,'fr'));
  shown=PAGE; paint();
 }
 $('more').addEventListener('click',()=>{shown+=PAGE;paint();});
 $('fc').addEventListener('input',()=>{document.body.classList.toggle('client',$('fc').checked);render();});
-['q','fs','fx','fb','fg','ft','fp','fa','fan'].forEach(i=>$(i).addEventListener('input',render));
+['q','fs','fx','fd','fb','fg','ft','fp','fa','fan','fsp','fspq'].forEach(i=>$(i).addEventListener('input',render));
 $('fo').addEventListener('input',()=>{ TRI=null; sauveTRI(); render(); });
 
 
@@ -1907,8 +3037,8 @@ function log(e){
   sauveJOU();
 }
 const LIBV={ok:'comptage vérifié',non:'jamais compté',av:'à vérifier','':'inconnu'};
-const dateFr=iso=>{ const d=new Date(iso); return d.toLocaleDateString('fr-FR',{day:'numeric',month:'long'})
-  +' à '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); };
+const dateFr=iso=>{ const d=new Date(iso); return d.toLocaleDateString((typeof lgLocale==='function'?lgLocale():'fr-FR'),{timeZone:'America/New_York',day:'numeric',month:'long'})
+  +(typeof L3==='function'?L3(' à ',' at ',' a las '):' à ')+d.toLocaleTimeString('fr-FR',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit'}); };
 const LIBCH={pa:"prix d'achat",pvw:'prix de gros',pvr:'prix retail',qte:'quantité en stock',
   bc:'code-barres',bcs:'autres codes-barres',nom:'nom',ml:'contenance',marque:'marque',type:'type',genre:'genre'};
 /* les autres codes-barres d'une fiche, sous forme de liste propre */
@@ -1971,6 +3101,7 @@ let AILLEURS=[];
 const NUM=new Set(['qte','pa','pvr','pvw']);
 /* --- prix par canal : regle (retail + majoration) ou valeur manuelle --- */
 const r2=v=>Math.round(v*100)/100;
+const money2=v=>_usd(v,2);
 /* Logo d'un canal : le fichier logos/<id>.png ou .svg s'il existe dans le dossier, sinon une pastille avec le nom.
    Les logos sont des marques deposees : ils ne sont pas fournis, c'est a lui de deposer les fichiers officiels. */
 /* Les logos déposés dans logos/ au moment de la génération sont incorporés dans la page :
@@ -1985,12 +3116,274 @@ const canaux=()=>(Array.isArray(REG.canaux)&&REG.canaux.length)?REG.canaux:CANAU
 const horsCanal=(p,id)=>Array.isArray(p.pcOff)&&p.pcOff.includes(id);
 function offCour(){ const b=FICHE&&FICHE.brouillon; if(b&&b.pcOff) return b.pcOff;
   const base=cur[FICHE.pos]; return Array.isArray(base.pcOff)?base.pcOff:[]; }
+/* Le prix de l'annonce Amazon de Sam (rapport des annonces importé dans le cockpit, 11 oct. 2026) :
+   rangé par code-barres et par ASIN dans amazon-prix-v1. */
+function prixAmazonDe(p){
+  let A=null; try{ A=lit('amazon-prix-v1',null); }catch(e){ A=null; }
+  if(!A||typeof A!=='object') return null;
+  const ks=[p.bc].concat(String(p.bcs||'').split(/[\s,;]+/)).concat([p.asin]).filter(Boolean);
+  for(const k of ks){ const e=A[k]; if(e&&e.prix>0) return Object.assign({le:A._le||''},e); }
+  return null;
+}
+/* Le prix de Perfume City sur Shopify (15 oct. 2026, Igal : « je veux modifier sur la fiche produit le site Perfume City
+   qui est sur Shopify »). Le cockpit relit toute la boutique chaque heure et range, par code-barres sans zéro de tête :
+   [id produit, id variante, prix, prix barré, actif]. Un code porté par deux produits sur Shopify (_amb) n'est jamais
+   proposé à la modification : on ne devine pas lequel changer. */
+const PCSHOP_OVR={};   /* ce que Shopify vient de répondre à un envoi, avant que la relève du serveur ne le rapporte */
+function prixShopifyDe(p){
+  let S=null; try{ S=lit('shopify-pc-prix-v1',null); }catch(e){ S=null; }
+  if(!S||typeof S!=='object') return null;
+  const s0=x=>String(x||'').replace(/[^0-9A-Za-z]/g,'').replace(/^0+/,'');
+  const ks=[p.bc].concat(String(p.bcs||'').split(/[\s,;]+/)).map(s0).filter(Boolean);
+  for(const k of ks){ const e=S[k]; if(Array.isArray(e)&&e[2]>0)
+    return {k,prix:PCSHOP_OVR[k]!=null?PCSHOP_OVR[k]:e[2],barre:e[3],actif:e[4]===1,le:S._t||'',pid:e[0],handle:e[5]||'',boutique:S._b||''}; }
+  for(const k of ks) if((S._amb||[]).includes(k)) return {amb:true,k};
+  return null;
+}
 function prixCanal(p,c){
   const o=(p.pc||{})[c.id];
-  if(o!=null&&o!=='') return {v:+o,man:true};
-  if(p.pvr!=null&&p.pvr>0) return {v:r2(p.pvr*(1+(c.maj||0)/100)),man:false};
-  return {v:null,man:false};
+  if(o!=null&&o!=='') return {v:+o,man:true,src:'man'};
+  /* Amazon : le prix de l'annonce de Sam, c'est LE prix (Igal, 11 oct. 2026) */
+  if(c.id==='amazon'){ const az=prixAmazonDe(p); if(az) return {v:az.prix,man:false,src:'amazon'}; }
+  /* Perfume City : le prix affiché sur Shopify, c'est LE prix (15 oct. 2026) */
+  if(c.id==='perfumecity'){ const sh=prixShopifyDe(p); if(sh&&sh.prix) return {v:sh.prix,man:false,src:'shopify'}; }
+  /* le site de gros vend au prix de gros, pas au retail */
+  const b=c.base==='pvw'?p.pvw:p.pvr;
+  if(b!=null&&b>0) return {v:r2(b*(1+(c.maj||0)/100)),man:false,src:'calc'};
+  return {v:null,man:false,src:'rien'};
 }
+/* Igal, 17 oct. 2026 : « dans la ligne des canaux de vente, un lien qui m'amène directement sur CE parfum, sur cette boutique »
+   — pour vérifier sur la boutique que le prix a bien bougé, sans aller le chercher à la main. Les deux sites WooCommerce :
+   la page publique du produit (WordPress renvoie « ?p=numéro » vers l'adresse définitive). Perfume City : la page publique sur
+   Shopify quand on connaît le « handle » du produit, sinon sa page d'administration. Pas de lien quand le parfum n'est pas sur la boutique. */
+function lienCanal(p,c,info){
+  const cote=COTE_SITE[c.id];
+  if(cote){
+    const e=siteDe(p); let f=e&&e[cote], brouillon=false;
+    /* 21 oct. 2026 (Igal : « il n'y a pas le lien "voir sur le site" » sur Coach Floral, retirée de la vente) : une fiche en brouillon/retirée
+       a elle aussi un numéro sur le site — le lien ouvre son APERÇU, que WordPress montre à une personne connectée à l'administration du site. */
+    if(!f||f.id==null||f.id===''){ const rr=retireCote(p,cote); f=rr&&rr.f; brouillon=true; }
+    if(!f||f.id==null||f.id==='') return null;
+    const B=(SITE&&SITE._base&&typeof SITE._base==='object')?SITE._base:{};
+    const b=String(B[cote]||(cote==='g'?'https://wholesale.perfumestrade.com':'https://perfumestrade.com')).replace(/\/+$/,'');
+    if(info&&brouillon) info.brouillon=true;
+    return b+'/?post_type=product&p='+encodeURIComponent(f.id)+(brouillon?'&preview=true':'');
+  }
+  if(c.id==='perfumecity'){
+    const sh=prixShopifyDe(p); if(!sh||sh.amb||!sh.boutique) return null;
+    /* un brouillon Shopify n'a pas de page publique : on ouvre sa page d'administration, qui le montre */
+    if(!sh.actif&&sh.pid){ if(info) info.brouillon=true; return 'https://admin.shopify.com/store/'+encodeURIComponent(sh.boutique.replace(/\.myshopify\.com$/,''))+'/products/'+encodeURIComponent(sh.pid); }
+    if(sh.handle) return 'https://'+sh.boutique+'/products/'+encodeURIComponent(sh.handle);
+    if(sh.pid) return 'https://admin.shopify.com/store/'+encodeURIComponent(sh.boutique.replace(/\.myshopify\.com$/,''))+'/products/'+encodeURIComponent(sh.pid);
+  }
+  return null;
+}
+/* Ce que la case dit d'elle-même, en une ligne : d'où vient ce prix. */
+function sourcePrix(p,c,man,src){
+  if(man) return 'saisi à la main';
+  if(src==='amazon') return 'le prix de ton annonce Amazon';
+  if(src==='shopify') return 'le prix de Perfume City sur Shopify';
+  const gros=c.base==='pvw', b=gros?p.pvw:p.pvr, nomB=gros?'prix de gros':'prix retail';
+  if(b==null) return (gros?'pas de prix de gros':'pas de prix retail')+' : saisis-le';
+  return c.maj?`${nomB} ${money(b)} + ${c.maj} %`:`= le ${nomB}`;
+}
+/* ---- Le prix affiché SUR LE SITE, et l'envoi (24 sept. 2026) ----
+   Igal : « au lieu de 64 je mets 63, et ça le modifie directement sur le site ;
+   seul Sam, en tant que dirigeant, peut le faire ». Pour les deux sites
+   WooCommerce seulement. Rien ne part tout seul : le bouton montre le prix
+   exact qui va partir, et le cockpit relit la fiche du site juste avant
+   d'écrire (si quelqu'un l'a changée entre-temps, il refuse). */
+const COTE_SITE={site:'d',sitegros:'g'};
+const peutPrixSite=()=>{ try{ const s=session(); return !!(s&&['patron','admin'].includes(s.role)); }catch(e){ return false; } };
+function surSite(p,c,v){
+  const cote=COTE_SITE[c.id]; if(!cote) return '';
+  const e=siteDe(p), f=e&&e[cote];
+  if(!f){
+    /* 12 oct. 2026 (Sam ne pouvait pas mettre de prix sur « Boss The Scent - Tester ») : une fiche retirée de la vente
+       (brouillon, faute de prix) n'avait AUCUNE case. Maintenant : un prix, et elle repasse en vente avec lui. */
+    const rf=retireCote(p,cote);
+    if(rf){
+      const ecritR=peutPrixSite()&&typeof CK_URL!=='undefined'&&typeof ckTok==='function'&&ckTok();
+      if(!ecritR) return `<span class="ss no">retirée de la vente (aucun prix sur le site)</span>`;
+      /* 12 oct. 2026 (Igal : « quand je reviens sur un produit modifié avec Sam, il ne tient pas compte des modifs ») : Sam règle le
+         prix de gros dans l'outil (v), mais le site n'en a aucun : la case restait VIDE. Elle propose maintenant le prix de l'outil. */
+      const pv=rf.f.pr!=null?Number(rf.f.pr).toFixed(2):(v>0?Number(v).toFixed(2):'');
+      return `<div class="sb" data-sbr="${c.id}"><span class="sbt">${vf(rf.f.pr>0?'retirée de la vente : prix enregistré, hors ligne':'retirée de la vente : aucun prix sur le site')}</span>
+    <label><span>${vf(cote==='g'?'prix de vente':'prix barré')}</span><input data-sr="${c.id}" type="number" step="0.01" min="0" inputmode="decimal" value="${pv}" placeholder="0.00"><em>$</em></label>
+    ${cote==='g'?'':`<label><span>${vf('promo')}</span><input data-srp="${c.id}" type="number" step="0.01" min="0" inputmode="decimal" value="${rf.f.ps!=null?Number(rf.f.ps).toFixed(2):''}" placeholder="—"><em>$</em></label>`}
+    <button class="btn pri" type="button" data-sbr-go="${c.id}" style="margin-top:8px">${vf('Remettre en vente')}</button>
+    <small class="sbh">${vf('Vérifie le prix, puis « Remettre en vente » : la fiche repasse en ligne tout de suite avec ce prix (une seule validation).')}</small>
+    </div>`;
+    }
+    return `<span class="ss no">pas sur ce site</span>`;
+  }
+  if(f.pr===undefined) return `<span class="ss">prix du site pas encore lu</span>`;
+  /* Sur perfumestrade.com presque tout est « en promo » : le client paie le prix
+     promo, le prix barré est affiché à côté. Les DEUX se règlent ici (Igal, 24 sept.
+     2026 : « qu'on puisse gérer les deux sans aller dans WooCommerce »). */
+  const promo=f.ps!=null, paye=promo?f.ps:f.pr;
+  const ecrit=peutPrixSite()&&typeof CK_URL!=='undefined'&&typeof ckTok==='function'&&ckTok();
+  const autre=v!=null&&paye!=null&&Math.abs(v-paye)>=0.005;
+  /* 9 oct. 2026 (Igal : « illogique ») : quand le client paie autre chose que le prix de l'outil, on le dit en clair */
+  const alerte=autre?`<div class="sbw">⚠ ${L3(`Le client paie <b>${money2(paye)}</b> sur le site, pas <b>${money2(v)}</b> (le prix de l'outil).`,`The customer pays <b>${money2(paye)}</b> on the website, not <b>${money2(v)}</b> (the tool's price).`,`El cliente paga <b>${money2(paye)}</b> en el sitio, no <b>${money2(v)}</b> (el precio de la herramienta).`)}</div>`:'';
+  if(!ecrit) return `<span class="ss">sur le site : <b>${paye!=null?money2(paye):'sans prix'}</b>${promo&&f.pr!=null&&cote!=='g'?`<small>prix barré ${money2(f.pr)}</small>`:''}</span>${alerte}`;
+  const n=x=>x==null?'':Number(x).toFixed(2);
+  return `<div class="sb" data-sbx="${c.id}"><span class="sbt">sur le site</span>${alerte}
+    ${cote==='g'
+      /* 12 oct. 2026 (Igal : « ça fait dix fois que je te dis que je ne veux pas de cross price pour le wholesale ») : le gros n'a qu'UN prix, celui que le client paie */
+      ?`<label><span>prix de vente</span><input data-sb="${c.id}" type="number" step="0.01" min="0" inputmode="decimal" value="${n(paye)}"><em>$</em></label>`
+      :`<label><span>prix barré</span><input data-sb="${c.id}" type="number" step="0.01" min="0" inputmode="decimal" value="${n(f.pr)}"><em>$</em></label>
+    <label><span>promo</span><input data-sp="${c.id}" type="number" step="0.01" min="0" inputmode="decimal" value="${n(f.ps)}" placeholder="—"><em>$</em></label>`}
+    ${autre?`<button class="lnk" data-prend="${c.id}" data-pv="${v}">mettre ${money2(v)} (le prix de l'outil)</button>`:''}
+    </div>`;   /* 12 oct. 2026 : pas de bouton d'envoi — l'Enregistrer du bas envoie ces deux prix */
+}
+/* la fiche retirée de la vente de ce côté (brouillon), ou null — le code peut avoir perdu son 0 du début */
+function retireCote(p,cote){
+  const R=SITE._retires&&SITE._retires[cote]; if(!R||!p||!p.bc) return null;
+  const b=String(p.bc).replace(/[^0-9]/g,'').replace(/^0+/,'');
+  const k=Object.keys(R).find(x=>x.replace(/^0+/,'')===b);
+  return k?{k,f:R[k]}:null;
+}
+/* le prix tapé sur une fiche retirée : le bouton s'allume dès qu'il y a un prix */
+/* 12 oct. 2026 (Igal : « pas besoin de ces boutons, on a déjà Enregistrer en bas ») : taper dans une case du site marque seulement
+   la fiche « non enregistrée » ; c'est l'Enregistrer du bas qui envoie (voir boitesEnAttente / envoieBoitesSite). */
+function marqueSite(){
+  const m=$('dst'); if(m && !/non enregistré/.test(m.textContent||'')){ m.textContent='modifié — non enregistré'; m.className='st'; }
+}
+const majEnvoiR=marqueSite, majEnvoi=marqueSite;
+async function remetsPrixSite(cid,mode){
+  const base=cur[FICHE.pos];
+  const p=Object.assign({},base,FICHE.brouillon);
+  const cote=COTE_SITE[cid]; const rf=retireCote(p,cote); if(!cote||!rf) return true;
+  const box=document.querySelector(`[data-sbr="${cid}"]`); if(!box) return true;
+  const n=Math.round(+box.querySelector('[data-sr]').value*100)/100;
+  const publie=true;   /* enregistrer le prix d'une fiche retirée = la remettre en ligne (Igal, 12 oct.) */
+  /* 12 oct. 2026 (Sam : « il change les prix mais ne met plus les prix barrés ») : comme sur une fiche en ligne, DEUX prix —
+     le prix barré et, s'il y a une promo, ce que le client paie. Avant, seul un prix partait et la promo était vidée. */
+  const spR=box.querySelector('[data-srp]'), prTxt=spR?spR.value:'', nP=prTxt===''?null:Math.round(+prTxt*100)/100;
+  if(nP!=null && !(nP>0 && nP<n)){ alert(vf('La promo doit être plus basse que le prix barré (ou vide).')); return false; }
+  const nomSite=cote==='g'?'wholesale.perfumestrade.com':'perfumestrade.com';
+  if(!(n>0)){ alert(vf('Il faut un prix de vente.')); return false; }
+  const sousPA=(p.pa!=null&&(nP!=null?nP:n)<p.pa);
+  const voitPA=typeof peut!=='function'||peut('voirPA');   /* qui ne voit pas les prix d'achat ne l'apprend pas par ce message (cette constante manquait ici : le message plantait quand on vendait à perte) */
+  const msg=`« ${(p.marque||'')+' '+(p.nom||'')} » sur ${nomSite} :\n\n${cote==='g'?`prix de vente : ${money2(n)}`:`prix barré : ${money2(n)}\npromo : ${nP!=null?money2(nP):'aucune'}`}\n\n`
+    +(publie?`La fiche est retirée de la vente aujourd'hui. Elle repasse EN VENTE avec ce prix.`:`Le prix est enregistré sur le site. La fiche reste HORS LIGNE (retirée de la vente) : personne ne peut l'acheter.`)
+    +(sousPA?`\n\nAttention : c'est moins que le prix d'achat${voitPA?' ('+money2(p.pa)+')':''}. Tu vends à perte.`:'')+`\n\nContinuer ?`;
+  if(mode==='resume') return msg;   /* la fenêtre unique de l'Enregistrer montre ce texte ; rien n'est envoyé */
+  if(mode!=='envoie'&&!confirm(vf(msg))) return false;
+  if(!demandeUser(false,'changer un prix sur le site',()=>{})) return false;
+  try{
+    const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/site/prix',{method:'POST',
+      headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},
+      body:JSON.stringify(Object.assign({quel:cote==='g'?'gros':'',bc:rf.k,barre:n,promo:nP==null?'':nP},publie?{republier:true}:{}))});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok||!j.ok) throw new Error(j.erreur||('erreur '+r.status));
+    const R=Object.assign({},(SITE._retires&&SITE._retires[cote])||{});
+    if(publie){
+      /* ce que le site a répondu : la fiche quitte les retirées et rejoint le site */
+      const g=Object.assign({},rf.f,{pr:j.apres.barre,ps:j.apres.promo}); delete g.t;
+      delete R[rf.k];
+      SITE._retires=Object.assign({},SITE._retires,{[cote]:R});
+      const kk=(SITE[rf.k]?rf.k:Object.keys(SITE).find(x=>!x.startsWith('_')&&x.replace(/^0+/,'')===rf.k.replace(/^0+/,'')))||rf.k;
+      SITE[kk]=Object.assign({},SITE[kk]||{},{[cote]:g});
+    }else{
+      /* le prix est écrit, la fiche reste retirée : elle le garde */
+      R[rf.k]=Object.assign({},rf.f,{pr:j.apres.barre,ps:j.apres.promo});
+      SITE._retires=Object.assign({},SITE._retires,{[cote]:R});
+    }
+    ecrit(KSITE,SITE); _FMC=null; _SITE0=null; _RETS=null; oubliBoite(cid);
+    const m=MOD[base.id]=MOD[base.id]||{}; m.pc=Object.assign({},m.pc||{},{[cid]:j.apres.promo!=null?j.apres.promo:j.apres.barre}); sauveMOD();
+    log({act:'prix',lib:(publie?'fiche remise en vente avec son prix sur ':'prix posé sur une fiche retirée (hors ligne) sur ')+nomSite,bc:base.bc,ref:(base.marque||'')+' '+(base.nom||''),av:'retirée de la vente',ap:cote==='g'?money2(j.apres.barre):'barré '+money2(j.apres.barre)+' · promo '+(j.apres.promo!=null?money2(j.apres.promo):'aucune')});
+    render(); const l=cur.findIndex(x=>x.id===base.id); if(l>=0) FICHE.pos=l; dessineFiche();
+    $('dst').textContent=vf(publie?`${money2(n)} en ligne sur ${nomSite}`:`${money2(n)} enregistré sur ${nomSite} (reste hors ligne)`); $('dst').className='st ok';
+    return true;
+  }catch(err){
+    dessineFiche();
+    alert(vf('Le prix n\'a pas été changé sur le site. La fiche reste retirée de la vente.\n\n')+(err&&err.message||''));
+    return false;
+  }
+}
+/* Les cases « sur le site » qui ne disent pas ce que le site dit : ce que l'Enregistrer du bas doit envoyer (Igal, 12 oct. 2026 :
+   « sam a mis 58 en promo et 65 en prix barré, ça devrait être noté »). Une case retirée de la vente compte dès qu'elle porte un prix. */
+function boitesEnAttente(){
+  const L=[], base=cur[FICHE.pos]; if(!base) return L;
+  const dif=(x,y)=>{ const a=x===''||x==null?null:+x; return (a==null)!==(y==null)||(a!=null&&Math.abs(a-y)>=0.005); };
+  document.querySelectorAll('[data-sbx]').forEach(box=>{
+    const cid=box.dataset.sbx, f=(siteDe(base)||{})[COTE_SITE[cid]]; if(!f) return;
+    const spI=box.querySelector('[data-sp]');
+    if(!spI){ if(dif(box.querySelector('[data-sb]').value,f.ps!=null?f.ps:f.pr)) L.push({cid,retire:false}); return; }   /* le gros : un seul prix, celui que le client paie */
+    if(dif(box.querySelector('[data-sb]').value,f.pr)||dif(spI.value,f.ps)) L.push({cid,retire:false});
+  });
+  document.querySelectorAll('[data-sbr]').forEach(box=>{
+    const cid=box.dataset.sbr, rf=retireCote(base,COTE_SITE[cid]); if(!rf) return;
+    const v=box.querySelector('[data-sr]').value, sp=box.querySelector('[data-srp]'), p=sp?sp.value:'';
+    const force=!!(FICHE.repForce&&FICHE.repForce[base.id+'|'+cid]);   /* « Remettre en ligne » : le prix est déjà bon, on republie quand même */
+    if(+v>0&&(force||dif(v,rf.f.pr)||dif(p,rf.f.ps))) L.push({cid,retire:true});
+  });
+  return L;
+}
+/* envoie ces cases une à une (chacune demande sa confirmation) ; faux = on s'arrête, la fiche n'est pas enregistrée */
+async function envoieBoitesSite(mode){
+  let reste=boitesEnAttente().length;
+  while(reste-- >0){
+    const x=boitesEnAttente()[0]; if(!x) break;
+    const ok=x.retire?await remetsPrixSite(x.cid,mode):await envoiePrixSite(x.cid,mode);
+    if(!ok) return false;
+  }
+  return true;
+}
+async function envoiePrixSite(cid,mode){
+  const base=cur[FICHE.pos];
+  const p=Object.assign({},base,FICHE.brouillon);
+  const cote=COTE_SITE[cid]; const cle=siteCle(p), f=(siteDe(p)||{})[cote]; if(!cote||!f) return true;
+  const box=document.querySelector(`[data-sbx="${cid}"]`); if(!box) return true;
+  const spI=box.querySelector('[data-sp]'), gros=!spI;
+  const sB=box.querySelector('[data-sb]').value.trim(), sP=spI?spI.value.trim():'';
+  const nB=sB===''?null:Math.round(+sB*100)/100, nP=sP===''?null:Math.round(+sP*100)/100;
+  const nomSite=cote==='g'?'wholesale.perfumestrade.com':'perfumestrade.com';
+  if(nB==null||!(nB>0)){ alert(vf(gros?'Il faut un prix de vente.':'Il faut un prix barré (le prix normal du site).')); return false; }
+  if(nP!=null&&!(nP>0&&nP<nB)){ alert(vf(`Le prix promo (${money2(nP)}) doit être plus bas que le prix barré (${money2(nB)}). Rien n'est envoyé.`)); return false; }
+  const paye=nP!=null?nP:nB;
+  /* la faute de frappe (6,3 au lieu de 63) : avant, l'envoi était refusé sous le prix d'achat.
+     9 oct. 2026 (Igal : « ne refuse jamais, pour Sam et moi ») : on prévient dans la
+     confirmation, et c'est eux qui décident. */
+  const sousPA=(p.pa!=null&&paye<p.pa);
+  const voitPA=typeof peut!=='function'||peut('voirPA');   /* qui ne voit pas les prix d'achat ne l'apprend pas par ce message (cette constante manquait ici : le message plantait quand on vendait à perte) */
+  const ancien=f.ps!=null?f.ps:f.pr, ec=ancien?Math.abs(paye-ancien)/ancien*100:0;
+  const ligne=(x,y)=>`${y!=null?money2(y):'aucune'} → ${x!=null?money2(x):'aucune'}`;
+  const msg=`« ${(p.marque||'')+' '+(p.nom||'')} » sur ${nomSite} :\n\n`+(gros?`prix de vente : ${ligne(nB,f.ps!=null?f.ps:f.pr)}`:`prix barré : ${ligne(nB,f.pr)}\npromo : ${ligne(nP,f.ps)}`)+`\n\nLe client paiera ${money2(paye)}.`
+    +(sousPA?`\n\nAttention : c'est moins que le prix d'achat${voitPA?' ('+money2(p.pa)+')':''}. Tu vends à perte.`:'')+(ec>20?`\n\nAttention : ${Math.round(ec)} % d'écart avec le prix payé aujourd'hui.`:'')+`\n\nLe prix change tout de suite sur le site. Continuer ?`;
+  if(mode==='resume') return msg;   /* la fenêtre unique de l'Enregistrer montre ce texte ; rien n'est envoyé */
+  if(mode!=='envoie'&&!confirm(vf(msg))) return false;
+  if(!demandeUser(false,'changer un prix sur le site',()=>{})) return false;
+  try{
+    const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/site/prix',{method:'POST',
+      headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},
+      body:JSON.stringify({quel:cote==='g'?'gros':'',bc:cle||p.bc,barre:nB,promo:nP==null?'':nP,attendu:{barre:f.pr,promo:f.ps}})});
+    const j=await r.json().catch(()=>({}));
+    /* ce que le site a répondu, même en cas de refus : l'outil montre les vrais prix */
+    if(j&&j.avant&&typeof j.avant==='object'&&!j.ok){ f.pr=j.avant.barre; f.ps=j.avant.promo; ecrit(KSITE,SITE); }
+    if(!r.ok) throw new Error(j.erreur||('erreur '+r.status));
+    f.pr=j.apres.barre; f.ps=j.apres.promo; ecrit(KSITE,SITE); oubliBoite(cid);
+    /* le prix payé devient le prix du canal dans l'outil */
+    const payeF=f.ps!=null?f.ps:f.pr;
+    const m=MOD[base.id]=MOD[base.id]||{}; m.pc=Object.assign({},m.pc||{},{[cid]:payeF}); sauveMOD();
+    const b=FICHE.brouillon; if(b.pc){ delete b.pc[cid]; if(!Object.keys(b.pc).length) delete b.pc; }
+    const dit=x=>gros?(x.promo!=null?money2(x.promo):x.barre!=null?money2(x.barre):'—'):'barré '+(x.barre!=null?money2(x.barre):'—')+' · promo '+(x.promo!=null?money2(x.promo):'aucune');
+    log({act:'prix',lib:'prix changés sur le site '+nomSite,bc:base.bc,ref:(base.marque||'')+' '+(base.nom||''),av:dit(j.avant||{}),ap:dit(j.apres)});
+    render(); const l=cur.findIndex(x=>x.id===base.id); if(l>=0) FICHE.pos=l; dessineFiche();
+    $('dst').textContent=vf(`${money2(payeF)} en ligne sur ${nomSite}`); $('dst').className='st ok';
+    return true;
+  }catch(err){
+    dessineFiche();
+    alert(vf('Le prix n\'a pas été changé sur le site.\n\n')+(err&&err.message||''));
+    return false;
+  }
+}
+/* Les ventes de ce canal arrivent-elles dans l'outil ? (état au 24 sept. 2026 —
+   la page Connecteurs donne l'état réel, en direct) */
+const CANAL_ETAT={site:['ok','ventes reliées'],sitegros:['ok','ventes reliées'],amazon:['ok','ventes reliées'],
+  perfumecity:['ok','ventes reliées']};
 const margeNette=(p,c,v)=>(p.pa!=null&&v>0)?((v*(1-(c.com||0)/100)-p.pa)/v*100):null;
 /* plancher : le prix sous lequel la marge nette passe sous le seuil des reglages */
 function plancher(p,com){ if(p.pa==null) return null;
@@ -2017,8 +3410,9 @@ function fermeFiche(){
   clearTimeout(T_REDRAW);
   $('dov').classList.remove('on'); $('dr').classList.remove('on');
   document.body.style.overflow=''; FICHE=null;
+  if(document.documentElement.classList.contains('cadre')){ try{ window.parent.postMessage({fiche:'fermee'},location.origin); }catch(e){} }   /* mode cadre : prévient la page qui a ouvert la fenêtre */
 }
-function valCour(p,k){ return FICHE.brouillon[k]!==undefined?FICHE.brouillon[k]:p[k]; }
+function valCour(p,k){ const b=(FICHE&&FICHE.brouillon)||{}; return b[k]!==undefined?b[k]:p[k]; }
 
 /* Comptage physique : la feuille de stock (stock.html) enregistre ses saisies
    sous cette clé, dans le même navigateur. On la relit ici si elle existe. */
@@ -2045,6 +3439,384 @@ HIST=lit(KHIST,{}); if(!HIST||typeof HIST!=='object') HIST=base(KHIST,{});
 MAR=lit(KMAR,{}); if(!MAR||typeof MAR!=='object') MAR=base(KMAR,{});
 const sauveHIST=()=>ecrit(KHIST,HIST);
 const sauveMAR =()=>ecrit(KMAR,MAR);
+
+/* ================= CE QUE LES DEUX SITES ANNONCENT =================
+   Le stock des sites est tenu à la main, tous les jours. L'écart ne se voyait
+   qu'en ouvrant le site à côté : dix-huit en ligne, quinze ici, et personne ne
+   le sait. Le cockpit relit maintenant les deux catalogues chaque heure et
+   dépose ce qu'ils annoncent ; cette colonne le met en face du nôtre.
+
+   Trois états, et il faut les trois : une quantité, « pas compté » quand la
+   fiche du site ne suit pas ses unités (WooCommerce le permet — dire « 0 »
+   serait un mensonge), et rien du tout quand le parfum n'est pas sur ce site. */
+/* Le type (EDT, EDP, OIL…) et le genre : ils sont déjà sur chaque fiche, il ne
+   manquait que de les montrer dans les fenêtres. Même pastille que partout. */
+const tyBadge=p=>{ const t=String((p&&p.type)||'').trim(), g=G[String((p&&p.genre)||'').trim().toUpperCase()]||'';
+  return (t?' <i class="ty" data-nolang>'+esc(t)+'</i>':'')+(g?' <i class="gn">'+esc(g)+'</i>':''); };
+
+const KSITE='site-stock-v1';
+let SITE={}; { const s=lit(KSITE,{}); if(s&&typeof s==='object'&&!Array.isArray(s)) SITE=s; }
+/* Le site a parfois perdu le 0 du début du code-barres (085715169587 y est rangé
+   85715169587) : 66 parfums le 24 sept. On retrouve la fiche avec ou sans ces zéros. */
+let _SITE0=null;
+const siteCle=(p)=>{ if(!p||!p.bc) return null; const b=String(p.bc).replace(/[^0-9]/g,''); if(!b) return null; if(SITE[b]) return b;
+  if(!_SITE0){ _SITE0={}; Object.keys(SITE).forEach(k=>{ if(!k.startsWith('_')) _SITE0[k.replace(/^0+/,'')]=k; }); }
+  return _SITE0[b.replace(/^0+/,'')]||null; };
+const siteDe=(p)=>{ const k=siteCle(p); return k?(SITE[k]||null):null; };
+/* Quel site fait foi ? Le DÉTAIL, parce que c'est lui qui vend au client. Prendre
+   le pire des deux — ce que faisait la première version — rendait la colonne
+   inutilisable : 472 parfums sont à zéro sur le site de gros alors que le détail
+   concorde exactement avec nous. Ce ne sont pas des erreurs de stock, ce sont des
+   parfums qu'on ne propose pas en gros, et ils noyaient les vrais écarts.
+   Le gros ne sert de référence que pour un parfum absent du détail. */
+function siteEcart(p){
+  const e=siteDe(p); if(!e) return null;
+  const val=(c)=>(c&&c.suivi&&c.q!=null)?c.q:null;
+  const d=val(e.d), g=val(e.g);
+  /* un code partagé (boîte / NOBOX / tester) : l'écart se mesure à ce que les fiches
+     annoncent ENSEMBLE sous ce code, pas à cette fiche seule */
+  const P=(typeof fichesMemeCode==='function')?fichesMemeCode(p):[p];
+  const nous=P.length>1?qteSiteDe(P,e.d||e.g):sstVendable(p).q;   /* notre quantité À VENDRE : stock moins les commandes déjà vendues, pas encore parties */
+  if(d!=null) return {cote:'d', q:d, d:d-nous, partage:P.length>1};
+  if(g!=null) return {cote:'g', q:g, d:g-nous, partage:P.length>1};
+  return null;
+}
+/* Deux chiffres sur une seule ligne — détail, puis gros — pour que la colonne
+   tienne dans le tableau sans le faire défiler : « 18 / 4 ». Un tiret quand le
+   parfum n'est pas sur ce site-là, un point quand le site ne compte pas. */
+/* les codes retirés de la vente (brouillon), les deux sites confondus — un jeu refait quand SITE change */
+let _RETS=null;
+function retireDeLaVente(p){
+  const R=SITE._retires; if(!R||!p||!p.bc) return false;
+  if(!_RETS||_RETS.ref!==R){ const s=new Set(); ['d','g'].forEach(c=>Object.keys(R[c]||{}).forEach(k=>s.add(k.replace(/^0+/,'')))); _RETS={ref:R,s}; }
+  return _RETS.s.has(String(p.bc).replace(/[^0-9]/g,'').replace(/^0+/,''));
+}
+function siteCell(p){
+  const e=siteDe(p);
+  if(!e&&retireDeLaVente(p)) return `<span class="lsv" title="Retirée de la vente (brouillon) : aucun prix sur le site. Voir « Mettre les sites à jour ».">retiré de la vente</span>`;
+  if(!e) return `<span class="lsv" title="Aucune fiche avec ce code-barres sur les deux sites.">pas en ligne</span>`;
+  const ec=siteEcart(p);
+  const un=(k)=>{ const c=e[k]; if(!c) return '<i class="lsn">—</i>';
+    if(!c.suivi||c.q==null) return '<i class="lsn">·</i>';
+    const ref = ec && ec.cote===k && ec.d!==0;
+    return `<b data-nolang class="${ref?'ecart':''}">${nf(c.q)}</b>`; };
+  const zero = p.qte>0 && e.d && e.d.suivi && e.d.q===0;
+  return `<span class="lsq" title="Ce que les deux sites annoncent — détail, puis gros — en face de notre stock.">`
+    + un('d')+'<i class="lsn"> / </i>'+un('g')+`</span>`
+    + (ec&&ec.d ? `<span class="lsd"><b data-nolang>${ec.d>0?'+':'−'}${nf(Math.abs(ec.d))}</b> par rapport à notre stock</span>` : '')
+    + (zero ? `<span class="lsz">en rupture sur le site</span>` : '');
+}
+
+/* ---- Le stock d'UN parfum sur les deux sites, depuis sa fiche (1er oct. 2026) ----
+   Igal : « sur les sites il y a 32, j'aimerais le faire passer à 0, mais il est déjà à
+   zéro dans le catalogue — donne-moi la possibilité de le passer à zéro ». L'envoi
+   automatique ne part que quand NOTRE chiffre bouge ; un parfum déjà juste chez nous
+   mais faux sur le site restait faux. Ici, on pousse notre quantité vendable (stock
+   moins les commandes à expédier) sur ce seul parfum, sur les deux sites, après une
+   question claire. Même droit que l'écran « Envoyer le stock au site » : compter. */
+function sstVendable(p){
+  const att=(typeof _ssAExpedier==='function')?((_ssAExpedier()[p.cle||p.id])||0):0;
+  return {q:Math.max(0,Math.round(p.qte||0)-att), att};
+}
+/* la quantité qu'UN code doit annoncer sur le site quand plusieurs fiches le partagent :
+   la fiche du site dit « no box » / « tester » → les fiches de l'ERP qui portent la même
+   mention ; sinon celles sans mention ; plusieurs restent (ancien / nouveau packaging) →
+   leur somme. Une seule fiche → sa quantité vendable, comme avant. */
+function qteSiteDe(P,c,EXPA){
+  EXPA=EXPA||((typeof _ssAExpedier==='function')?_ssAExpedier():{});
+  const qv=x=>Math.max(0,Math.round(x.qte||0)-(EXPA[x.cle||x.id]||0));
+  if(!P||!P.length) return 0; if(P.length===1) return qv(P[0]);
+  const men=(typeof nomMention==='function')?nomMention:(()=>'' );
+  const m=c?men(c.nom||''):'';
+  const avec=P.filter(x=>men((x.nom||'')+' '+(x.nomSrc||''))===m);
+  return (avec.length?avec:P).reduce((a,x)=>a+qv(x),0);
+}
+/* les fiches de l'ERP qui partagent le code du site de cette fiche */
+let _FMC=null, _FMC_T=0;
+function fichesMemeCode(p){ const k=siteCle(p); if(!k) return [p];
+  if(!_FMC||Date.now()-_FMC_T>1500){ _FMC={}; _FMC_T=Date.now(); tousLesArticles().forEach(x=>{ if(!x.bc) return; const kk=siteCle(x); if(kk) (_FMC[kk]=_FMC[kk]||[]).push(x); }); }
+  return _FMC[k]||[p]; }
+function blocStockSites(p){
+  const e=siteDe(p); if(!e) return '';
+  const val=c=>(c&&c.suivi&&c.q!=null)?c.q:null;
+  const d=val(e.d), g=val(e.g); if(d==null&&g==null) return '';
+  const P=fichesMemeCode(p), partage=P.length>1;
+  const q=partage?qteSiteDe(P,e.d||e.g):sstVendable(p).q, att=sstVendable(p).att;
+  const faux=(d!=null&&d!==q)||(g!=null&&g!==q);
+  const peutEnv=(typeof peut==='function'&&peut('compter'))&&typeof ckTok==='function'&&!!ckTok();
+  const un=(lab,x)=>`<span>${lab}</span> <b data-nolang class="${x!=null&&x!==q?'ecart':''}">${x==null?'—':nf(x)}</b>`;
+  return `<div class="dsst${faux?' faux':''}">
+    <div><span>Sur les sites</span> : ${un('détail',d)} · ${un('gros',g)}</div>
+    <div class="dsst2">${faux?`<span>${partage?'Chez nous, à vendre sous ce code ('+P.length+' fiches) :':'Chez nous, à vendre :'}</span> <b data-nolang>${nf(q)}</b>`
+      +(att?` <span>(${nf(att)} déjà vendu${att>1?'s':''}, pas encore parti${att>1?'s':''})</span>`:'')
+      :'<span>Les sites annoncent notre quantité.</span>'}</div>
+    ${faux&&peutEnv?`<div class="dsst3"><span>Pour corriger les sites : tape la quantité dans « Quantité en stock », puis Enregistrer.</span></div>`:''}
+  </div>`;
+}
+async function envoieStockSites(btn){
+  const base=cur[FICHE.pos]; if(!base) return;
+  const e=siteDe(base), k=siteCle(base); if(!e||!k) return;
+  const P=fichesMemeCode(base);
+  const q=P.length>1?qteSiteDe(P,e.d||e.g):sstVendable(base).q;
+  const nom=((base.marque||'')+' '+(base.nom||'')).trim();
+  const a=[];
+  if(e.d&&e.d.suivi&&e.d.q!=null&&e.d.q!==q) a.push({quel:'',cote:'d',lib:'perfumestrade.com',avant:e.d.q});
+  if(e.g&&e.g.suivi&&e.g.q!=null&&e.g.q!==q) a.push({quel:'gros',cote:'g',lib:'site de gros',avant:e.g.q});
+  if(!a.length) return;
+  if(!confirm(vf(`« ${nom} »\n\n`+a.map(x=>`${x.lib} : ${x.avant} → ${q}`).join('\n')+`\n\nLe stock change tout de suite sur les sites. Continuer ?`))) return;
+  if(btn){ btn.disabled=true; btn.textContent=vf('Envoi…'); }
+  const ok=[], ko=[];
+  for(const x of a){
+    try{
+      const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/site/stock',{method:'POST',
+        headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},
+        body:JSON.stringify({quel:x.quel,confirme:true,lignes:[{bc:k,q}]})});
+      const j=await r.json().catch(()=>({}));
+      if(!r.ok) throw new Error(j.erreur||('erreur '+r.status));
+      if(!j.ecrites&&!j.dejaBon) throw new Error((j.refus&&j.refus[0]&&j.refus[0].pourquoi)
+        ||((j.nonSuivies||[]).length?'la fiche du site ne compte pas ses unités':'')||((j.inconnues||[]).length?'parfum introuvable sur ce site':'')||'rien n\'a été écrit');
+      /* SITE a pu être relu pendant l'envoi (une autre page a écrit) : on corrige le SITE
+         d'aujourd'hui, pas l'objet lu avant la question */
+      { const z=SITE[siteCle(base)||k]; if(z&&z[x.cote]) z[x.cote].q=q; if(e[x.cote]) e[x.cote].q=q; }
+      ok.push(x);
+    }catch(err){ ko.push(x.lib+' : '+((err&&err.message)||'échec')); }
+  }
+  if(ok.length){
+    ecrit(KSITE,SITE);
+    try{ const J=lit('crm-journal-v1',[]);
+      J.push({t:new Date().toISOString(),u:NOM_UTIL||'(non renseigné)',act:'stock',
+        lib:`stock de « ${nom} » mis à ${q} sur `+ok.map(x=>x.lib+' (avant '+x.avant+')').join(' et '),
+        n:1,impact:0,det:[{bc:base.bc,ref:nom,ap:q}]});
+      ecrit('crm-journal-v1',J); }catch(_){}
+  }
+  if(ko.length) alert(vf('Pas envoyé — '+ko.join(' / ')));
+  dessineFiche(); paint();
+}
+
+/* ================= ENVOYER NOTRE STOCK SUR LES SITES =================
+   Le sens inverse de la colonne « Sur les sites ». C'est l'action la plus
+   dangereuse de l'outil : elle touche une boutique ouverte au public. D'où
+   l'écran de relecture — on montre CE QUI VA CHANGER, ligne par ligne, avant
+   que quoi que ce soit ne parte. Le garde-fou du cockpit refuse en plus tout
+   lot qui mettrait beaucoup de références à zéro d'un coup.
+
+   On n'envoie que les références du site choisi, qui comptent leurs unités,
+   et dont la quantité diffère de la nôtre. Le reste n'est pas du silence :
+   il est compté et affiché, pour qu'on sache pourquoi une ligne manque. */
+let PS={quel:'', lignes:[], zeros:0};
+function psQuel(){ const r=document.querySelector('input[name="psq"]:checked'); return r?r.value:''; }
+function psCalcule(){
+  const cote = psQuel()==='gros' ? 'g' : 'd';
+  const chg=[], nonSuivi=[], absent=[], egal=[];
+  /* les commandes « à expédier » (Statut shipping) sont vendues : le site ne doit plus
+     les proposer, même si l'ERP ne les déstocke qu'à l'envoi (1er oct. 2026) */
+  const EXPA=(typeof _ssAExpedier==='function')?_ssAExpedier():{}; let nAtt=0;
+  /* tousLesArticles() = le catalogue avec les corrections en cours appliquées :
+     c'est NOTRE stock d'aujourd'hui, pas celui du fichier d'origine. */
+  /* un code partagé par plusieurs fiches (boîte / NOBOX / tester) : le site n'a qu'une fiche
+     pour ce code — on envoie UNE quantité par code, calculée par qteSiteDe (6-7 oct. 2026 :
+     avant, les deux fiches s'envoyaient l'une après l'autre et le site changeait à chaque tour) */
+  const parK={};
+  tousLesArticles().forEach(p=>{ if(!p.bc) return; const k=siteCle(p); if(!k){ absent.push(p); return; } (parK[k]=parK[k]||[]).push(p); });
+  Object.keys(parK).forEach(k=>{
+    const P=parK[k], e=SITE[k], c=e&&e[cote], p=P[0];
+    if(!c||!c.id){ P.forEach(x=>absent.push(x)); return; }
+    if(!c.suivi){ P.forEach(x=>nonSuivi.push(x)); return; }
+    P.forEach(x=>{ const att=EXPA[x.cle||x.id]||0; if(att) nAtt+=att; });
+    const q=qteSiteDe(P,c,EXPA);
+    if(c.q===q){ P.forEach(x=>egal.push(x)); return; }
+    const nom=P.length>1?(P.map(x=>(x.marque?x.marque+' ':'')+(x.nom||'')).join(' + ')):((p.marque?p.marque+' ':'')+(p.nom||''));
+    /* le code tel que le SITE le range (parfois sans le 0 du début) */
+    chg.push({bc:k, q, avant:c.q, nom});
+  });
+  PS.quel=psQuel(); PS.lignes=chg;
+  PS.zeros=chg.filter(l=>l.q===0 && (l.avant==null||l.avant>0)).length;
+  const maj=SITE._maj&&SITE._maj[cote];
+  const tete = (nAtt?`<p class="hint">Les commandes à expédier sont déjà retirées : <b>${nf(nAtt)}</b> flacon(s) vendu(s), pas encore partis.</p>`:'')
+             + (maj ? `<p class="hint">Catalogue du site lu le <b>${esc(String(maj).slice(0,10).replace(/^(\d{4})-(\d{2})-(\d{2}).*$/,'$2/$3/$1'))}</b>.</p>`
+                   : `<p class="hint" style="color:var(--crit)">Ce site n'a pas encore été lu par le cockpit — rien ne peut partir.</p>`);
+  const $r=$('psres');
+  if(!chg.length){
+    $r.innerHTML=tete+`<div class="psvide">Rien à envoyer : les ${nf(egal.length)} références suivies par ce site
+      annoncent déjà notre quantité.</div>`+psPied(nonSuivi.length,absent.length,egal.length);
+    $('psok').disabled=true; psSansPrix(); return;
+  }
+  const L=chg.slice().sort((a,b)=>Math.abs((b.avant==null?0:b.avant)-b.q)-Math.abs((a.avant==null?0:a.avant)-a.q));
+  $r.innerHTML=tete
+    +`<div class="pstot"><b>${nf(chg.length)}</b> référence${chg.length>1?'s':''} vont changer sur le site`
+    +(PS.zeros?` — dont <b class="psz">${nf(PS.zeros)}</b> qui passeront à zéro`:'')+`.</div>`
+    +`<table class="pst"><thead><tr><th>Référence</th><th class="r">Sur le site</th><th class="r">Chez nous</th></tr></thead><tbody>`
+    +L.slice(0,300).map(l=>`<tr><td data-nolang>${esc(l.nom)}<small data-nolang>${esc(l.bc)}</small></td>
+        <td class="r">${l.avant==null?'—':nf(l.avant)}</td>
+        <td class="r"><b class="${l.q===0?'psz':''}">${nf(l.q)}</b></td></tr>`).join('')
+    +`</tbody></table>`
+    +(L.length>300?`<p class="hint">… et ${nf(L.length-300)} autres.</p>`:'')
+    +psPied(nonSuivi.length,absent.length,egal.length);
+  $('psok').disabled = !maj;
+  psSansPrix();
+}
+/* Les PRIX : ce que le client paie sur le site doit être le prix de l'outil (le grand chiffre de
+   la fiche). Igal, 9 oct. 2026, devant une fiche à 169 $ dans l'outil et 159 $ sur le site :
+   « illogique, vérifie que le prix soit le même en haut et au prix définitif ». Ici, TOUTES les
+   références de ce site dont le prix payé diffère, et un bouton (Patron/admin) pour les aligner.
+   Rien ne part sans ce clic ; le prix barré ne bouge pas, c'est la promo qui prend notre prix. */
+function psEcartsPrix(){
+  const el=$('psecarts'); if(!el) return;
+  const cote=psQuel()==='gros'?'g':'d', L=[];
+  tousLesArticles().forEach(p=>{ if(!p.bc) return; let pl; try{ pl=planPrixSites(p).plan; }catch(e){ return; }
+    pl.filter(x=>x.cote===cote).forEach(x=>L.push({p,x})); });
+  /* un code partagé par plusieurs fiches ne compte qu'une fois */
+  const vus=new Set(), U=L.filter(o=>{ const k=siteCle(o.p); if(vus.has(k)) return false; vus.add(k); return true; });
+  U.sort((a,b)=>Math.abs((b.x.paye||0)-b.x.v)-Math.abs((a.x.paye||0)-a.x.v));
+  PS.ecarts=U;
+  const lu=SITE._maj&&SITE._maj[cote];
+  if(!lu){ el.innerHTML=''; return; }
+  const patron=prixSitesOk();
+  if(!U.length){ el.innerHTML=`<div class="psvide" style="margin-top:14px">${L3('Prix : tous les prix payés sur ce site sont ceux de l\'outil.','Prices: every price paid on this site is the tool\'s price.','Precios: todos los precios pagados en este sitio son los de la herramienta.')}</div>`; return; }
+  el.innerHTML=`<div class="pstot" style="margin-top:14px"><b>${nf(U.length)}</b> ${L3('prix sur le site ne sont pas ceux de l\'outil','prices on the site are not the tool\'s','precios del sitio no son los de la herramienta')}.</div>`
+    +`<table class="pst"><thead><tr><th>${L3('Référence','Product','Referencia')}</th><th class="r">${L3('Le client paie sur le site','Customer pays on the site','El cliente paga en el sitio')}</th><th class="r">${L3('Prix de l\'outil','Tool price','Precio de la herramienta')}</th></tr></thead><tbody>`
+    +U.slice(0,300).map(o=>`<tr><td data-nolang>${esc(((o.p.marque||'')+' '+(o.p.nom||'')).trim())}<small data-nolang>${esc(o.p.bc)}</small></td>
+        <td class="r">${o.x.paye!=null?money2(o.x.paye):'—'}</td><td class="r"><b>${money2(o.x.v)}</b></td></tr>`).join('')
+    +`</tbody></table>`+(U.length>300?`<p class="hint">… ${L3('et','and','y')} ${nf(U.length-300)} ${L3('autres','more','más')}.</p>`:'')
+    +(patron?`<p style="margin:12px 0 0"><button class="btn pri" id="psalign">${L3('Mettre ces '+nf(U.length)+' prix de l\'outil sur le site','Put these '+nf(U.length)+' tool prices on the site','Poner estos '+nf(U.length)+' precios de la herramienta en el sitio')}</button></p>`
+            :`<p class="hint">${L3('Seul le dirigeant (Patron) peut changer les prix du site.','Only the owner (Patron role) can change the site prices.','Solo el dirigente (Patrón) puede cambiar los precios del sitio.')}</p>`);
+  const b=$('psalign'); if(b) b.onclick=psAligne;
+}
+async function psAligne(){
+  const U=(PS.ecarts||[]).slice(), cote=psQuel()==='gros'?'g':'d'; if(!U.length) return;
+  const site=cote==='g'?'wholesale.perfumestrade.com':'perfumestrade.com';
+  if(!confirm(vf(`Mettre ${nf(U.length)} prix de l'outil sur ${site} ?\\n\\nLe client paiera le prix de l'outil. Le prix barré ne bouge pas : c'est le prix promo qui prend notre prix. Chaque changement est inscrit au journal.`))) return;
+  const b=$('psalign'); if(b) b.disabled=true; let ok=0; const ko=[];
+  for(let i=0;i<U.length;i++){
+    $('psmsg').textContent=`Prix ${i+1} / ${U.length}…`; $('psmsg').className='msg';
+    try{ const r=await envoiePrixFiche(U[i].p.id,cote,true); if(r){ ok+=r.ok; r.ko.forEach(k=>ko.push(((U[i].p.marque||'')+' '+(U[i].p.nom||'')).trim()+' — '+k)); } }
+    catch(e){ ko.push(((U[i].p.marque||'')+' '+(U[i].p.nom||'')).trim()+' — '+((e&&e.message)||'échec')); }
+  }
+  $('psmsg').textContent=`${ok} prix mis sur ${site}`+(ko.length?` — ${ko.length} refusé(s) : ${ko.slice(0,3).join(' ; ')}`:'')+'.';
+  $('psmsg').className='msg '+(ko.length?'err':'ok');
+  psCalcule(); paint();
+}
+/* Les fiches SANS AUCUN PRIX sur ce site (Igal, 7 oct. 2026 : 504 fiches du site de gros à
+   0,00 $, achetables — aucun prix de gros n'existe pour elles). Le dirigeant les retire de la
+   vente (brouillon WooCommerce : plus visibles, plus achetables, rien d'effacé) le temps qu'un
+   prix soit fixé, puis les remet en vente. Le cockpit garde les fiches retirées (SITE._retires). */
+function psSansPrix(){
+  psEcartsPrix();
+  const cote=psQuel()==='gros'?'g':'d';
+  const L=[]; Object.keys(SITE).forEach(k=>{ if(k.startsWith('_')) return; const c=SITE[k][cote]; if(!c||!c.id) return;
+    const pr=(c.pr!=null&&c.pr!=='')?+c.pr:0, ps=(c.ps!=null&&c.ps!=='')?+c.ps:0; if(!pr&&!ps) L.push({bc:k,nom:c.nom||'',q:c.q||0}); });
+  const R=(SITE._retires&&SITE._retires[cote])||{}; const nR=Object.keys(R).length;
+  PS.sansPrix=L; PS.retires=Object.keys(R);
+  const el=$('psprix'); if(!el) return;
+  if(!L.length&&!nR){ el.innerHTML=''; return; }
+  const patron=peutPrixSite(), stock=L.filter(x=>x.q>0).length, n=L.length;
+  el.innerHTML=`<div class="pspx" style="margin-top:14px;padding:10px 12px;border-radius:8px;background:#fff3f0;border:1px solid #f3c9bf;font-size:13.5px;line-height:1.6">`
+    +(n?`<p style="margin:0">${L3(`<b>${nf(n)}</b> fiche${n>1?'s':''} de ce site n'${n>1?'ont':'a'} <b>aucun prix</b> (0,00 $) et ${n>1?'sont':'est'} achetable${n>1?'s':''}${stock?`, dont ${nf(stock)} en stock`:''}.`,
+        `<b>${nf(n)}</b> product${n>1?'s':''} on this site ${n>1?'have':'has'} <b>no price at all</b> ($0.00) and can be bought${stock?`, ${nf(stock)} of them in stock`:''}.`,
+        `<b>${nf(n)}</b> ficha${n>1?'s':''} de este sitio no ${n>1?'tienen':'tiene'} <b>ningún precio</b> (0,00 $) y se ${n>1?'pueden':'puede'} comprar${stock?`, ${nf(stock)} en stock`:''}.`)}
+       ${patron?`<button class="btn" id="psret" style="margin-left:8px">${L3('Retirer de la vente (brouillon)','Take off sale (draft)','Retirar de la venta (borrador)')}</button>`
+               :`<span class="hint">${L3('Seul le dirigeant (Patron) peut les retirer de la vente.','Only the owner (Patron role) can take them off sale.','Solo el dirigente (Patrón) puede retirarlas de la venta.')}</span>`}</p>`:'')
+    +(nR?`<p style="margin:${n?'8px':'0'} 0 0">${L3(`<b>${nf(nR)}</b> fiche${nR>1?'s':''} retirée${nR>1?'s':''} de la vente, en attente d'un prix.`,
+        `<b>${nf(nR)}</b> product${nR>1?'s':''} taken off sale, waiting for a price.`,
+        `<b>${nf(nR)}</b> ficha${nR>1?'s':''} retirada${nR>1?'s':''} de la venta, a la espera de un precio.`)}
+       ${patron?`<button class="btn" id="psrep" style="margin-left:8px">${L3('Remettre en vente','Put back on sale','Volver a poner en venta')}</button>`:''}</p>`:'')
+    +`</div>`;
+  const b1=$('psret'); if(b1) b1.onclick=()=>psStatut('retirer');
+  const b2=$('psrep'); if(b2) b2.onclick=()=>psStatut('republier');
+}
+async function psStatut(sens){
+  const quel=psQuel(), cote=quel==='gros'?'g':'d';
+  const bcs=sens==='retirer'?(PS.sansPrix||[]).map(x=>x.bc):(PS.retires||[]);
+  if(!bcs.length) return;
+  const site=L3(quel==='gros'?'le site de gros':'le site',quel==='gros'?'the wholesale site':'the website',quel==='gros'?'el sitio mayorista':'el sitio');
+  const q = sens==='retirer'
+    ? L3(`Retirer de la vente ${nf(bcs.length)} fiche(s) sans prix sur ${site} ?\n\nElles passent en brouillon dans WooCommerce : plus visibles, plus achetables. Rien n'est effacé.`,
+         `Take ${nf(bcs.length)} product(s) without a price off sale on ${site}?\n\nThey become drafts in WooCommerce: no longer visible or purchasable. Nothing is deleted.`,
+         `¿Retirar de la venta ${nf(bcs.length)} ficha(s) sin precio en ${site}?\n\nPasan a borrador en WooCommerce: ya no se ven ni se compran. No se borra nada.`)
+    : L3(`Remettre en vente ${nf(bcs.length)} fiche(s) sur ${site} ?\n\nVérifie d'abord qu'elles ont un prix.`,
+         `Put ${nf(bcs.length)} product(s) back on sale on ${site}?\n\nCheck first that they have a price.`,
+         `¿Volver a poner en venta ${nf(bcs.length)} ficha(s) en ${site}?\n\nComprueba antes que tienen precio.`);
+  if(!confirm(q)) return;
+  $('psmsg').textContent=L3('Envoi au site…','Sending to the site…','Enviando al sitio…'); $('psmsg').className='msg';
+  try{
+    const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/site/statut',{method:'POST',
+      headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},
+      body:JSON.stringify({quel,sens,bcs})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(j.erreur||('erreur '+r.status));
+    /* on recolle tout de suite ce que le cockpit vient de ranger */
+    const refus=new Set((j.refus||[]).map(x=>String(x.bc)));
+    const R=Object.assign({},(SITE._retires&&SITE._retires[cote])||{});
+    if(sens==='retirer'){ bcs.forEach(k=>{ const e=SITE[k]; if(!e||!e[cote]||refus.has(k)) return;
+        R[k]=Object.assign({},e[cote],{t:new Date().toISOString()}); delete e[cote]; if(!e.d&&!e.g) delete SITE[k]; }); }
+    else { bcs.forEach(k=>{ const f=R[k]; if(!f||refus.has(k)) return;
+        SITE[k]=SITE[k]||{}; const g=Object.assign({},f); delete g.t; SITE[k][cote]=g; delete R[k]; }); }
+    SITE._retires=Object.assign({},SITE._retires,{[cote]:R}); ecrit(KSITE,SITE); _FMC=null; _SITE0=null; _RETS=null;
+    const lib=(sens==='retirer'?j.ecrites+' fiche(s) sans prix retirée(s) de la vente':j.ecrites+' fiche(s) remise(s) en vente')+' sur le site'+(quel==='gros'?' de gros':'');
+    try{ const J=lit('crm-journal-v1',[]); J.push({t:new Date().toISOString(),u:NOM_UTIL||'(non renseigné)',act:'site',lib,n:j.ecrites,impact:0,det:[]}); ecrit('crm-journal-v1',J); }catch(e){}
+    $('psmsg').textContent=lib+((j.refus&&j.refus.length)?' — '+j.refus.length+' refusée(s)':'')+'.'; $('psmsg').className='msg ok';
+    psCalcule(); paint();
+  }catch(e){ $('psmsg').textContent=(e&&e.message)||'échec'; $('psmsg').className='msg err'; }
+}
+const psPied=(ns,ab,eg)=>`<p class="hint" style="margin-top:12px">Non envoyées : <b>${nf(eg)}</b> déjà à la bonne quantité,
+  <b>${nf(ns)}</b> dont la fiche ne compte pas ses unités sur ce site, <b>${nf(ab)}</b> absentes de ce site.</p>`;
+
+async function psEnvoie(confirme){
+  const b=$('psok'); b.disabled=true;
+  $('psmsg').textContent='Envoi au site…'; $('psmsg').className='msg';
+  try{
+    const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/site/stock',{method:'POST',
+      headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},
+      body:JSON.stringify({quel:PS.quel, confirme:!!confirme, lignes:PS.lignes.map(l=>({bc:l.bc,q:l.q}))})});
+    const j=await r.json().catch(()=>({}));
+    /* `confirme` doit être le dernier mot : si le serveur refuse encore APRÈS
+       une confirmation, on s'arrête et on le dit. Sans ce garde, un refus qui
+       persiste faisait reposer la question en boucle, sans fin. */
+    if(r.status===409 && j.confirmable && !confirme){
+      /* le garde-fou du cockpit : on repose la question, en clair */
+      if(confirm(vf(j.erreur+'\n\nEnvoyer quand même ?'))) return psEnvoie(true);
+      $('psmsg').textContent='Rien n\'a été envoyé.'; $('psmsg').className='msg'; b.disabled=false; return;
+    }
+    if(r.status===409) throw new Error((j.erreur||'refusé')+' (le site a refusé même après confirmation)');
+    if(!r.ok) throw new Error(j.erreur||('erreur '+r.status));
+    /* on recolle ce que le site dit maintenant, pour que la colonne soit juste
+       tout de suite au lieu d'attendre la relecture de l'heure suivante */
+    const cote=PS.quel==='gros'?'g':'d';
+    PS.lignes.forEach(l=>{ const e=SITE[l.bc]; if(e&&e[cote]) e[cote].q=l.q; });
+    ecrit(KSITE,SITE);
+    try{ const J=lit('crm-journal-v1',[]);
+      J.push({t:new Date().toISOString(),u:NOM_UTIL||'(non renseigné)',act:'stock',
+        lib:j.ecrites+' fiche(s) mises à jour sur le site'+(PS.quel==='gros'?' de gros':'')+(j.zeros?', dont '+j.zeros+' à zéro':''),
+        n:j.ecrites,impact:0,det:[]});
+      ecrit('crm-journal-v1',J); }catch(e){}
+    $('psmsg').textContent=j.ecrites+' fiche(s) mises à jour sur le site'
+      +((j.refus&&j.refus.length)?' — '+j.refus.length+' refusée(s) par le site':'')+'.';
+    $('psmsg').className='msg ok';
+    psCalcule(); paint();
+  }catch(e){
+    $('psmsg').textContent=(e&&e.message)||'échec'; $('psmsg').className='msg err';
+  }
+  b.disabled=false;
+}
+(function(){
+  const bt=$('psite'); if(!bt) return;
+  /* Trois conditions, et chacune évite une bêtise :
+     — le droit de compter (un commercial ne touche pas au stock d'une boutique) ;
+     — un jeton du cockpit, sinon il n'y a personne à qui parler ;
+     — un catalogue du site déjà lu, sinon on écrirait à l'aveugle.
+     On regarde le jeton et NON « EN_LIGNE » : c'est le cockpit qui compte ici,
+     pas l'adresse de la page. */
+  const lu = SITE && SITE._maj && (SITE._maj.d || SITE._maj.g);
+  const relie = (typeof ckTok==='function') && !!ckTok();
+  if(!(typeof peut==='function' && peut('compter')) || !lu || !relie) return;
+  bt.style.display='';
+  bt.onclick=()=>{ $('psmsg').textContent=''; psCalcule(); $('psov').classList.add('on'); };
+  $('psx').onclick=$('psc').onclick=()=>$('psov').classList.remove('on');
+  $('psov').addEventListener('click',e=>{ if(e.target===$('psov')) $('psov').classList.remove('on'); });
+  document.querySelectorAll('input[name="psq"]').forEach(r=>r.onchange=()=>{ $('psmsg').textContent=''; psCalcule(); });
+  $('psok').onclick=()=>psEnvoie(false);
+})();
+
 /* les relevés déjà faits à la main sont installés une fois, sans écraser une saisie */
 (function(){ let n=0;
   Object.entries(MARCHE_INIT).forEach(([k,v])=>{ if(!MAR[k]){ MAR[k]=v; n++; } });
@@ -2090,7 +3862,24 @@ function achatsPeriode(p){
   const s=isoJour(lim);
   return l.filter(x=>x.d>=s);
 }
-const jourFr=d=>{ const [a,m,j]=d.split('-'); return j+'/'+m+'/'+a.slice(2); };
+const jourFr=d=>{ const [a,m,j]=d.split('-'); return m+'/'+j+'/'+a.slice(2); };
+/* le dernier prix réellement encaissé à la caisse Lightspeed pour ce parfum (les ventes reçues de la caisse) */
+/* Le prix d'achat de la fiche est un prix MOYEN (moyenne des achats pondérée par les quantités) : Igal, 17 oct. 2026,
+   « le prix moyen mis en façade ». Sous le chiffre, en petit, le dernier prix payé au fournisseur et sa date. */
+function dernierPrixPaye(p){
+  let best=null;
+  try{ (HIST[p.id]||[]).forEach(x=>{ if(!x||!(x.p>0)) return; if(!best||String(x.d||'')>=best.d) best={d:String(x.d||''),p:+x.p}; }); }catch(e){}
+  return `<small class="lsl">${best?`<span>dernier prix payé</span> : <b>${money2(best.p)}</b>${best.d?' · '+jourFr(best.d):''}`:'<span>aucun achat enregistré</span>'}</small>`;
+}
+function dernierPrixCaisse(p){
+  let best=null;
+  try{ (lit('factures-v1',[])||[]).forEach(f=>{
+    if(!f||f.sens==='retour'||!/lightspeed/i.test((f.canal||'')+' '+(f.auto||''))) return;
+    (f.lignes||[]).forEach(l=>{ if(!(l.p>0)) return; const m=(l.cle&&l.cle===p.cle)||(l.bc&&p.bc&&String(l.bc).replace(/^0+/,'')===String(p.bc).replace(/^0+/,''));
+      if(m&&(!best||String(f.d||'')>=best.d)) best={d:String(f.d||''),p:+l.p}; }); });
+  }catch(e){}
+  return `<small class="lsl">${best?`<span>dernière vente en caisse</span> : <b>${money2(best.p)}</b> · ${jourFr(best.d)}`:vf('pas encore vendu en caisse')}</small>`;
+}
 
 /* Un seul jeu de données : ligne fine, points visibles, extrêmes seuls étiquetés. */
 function courbePrix(l){
@@ -2134,6 +3923,141 @@ function courbePrix(l){
   </svg></div>`;
 }
 
+
+/* ================= LES VENTES DE CE PARFUM =================
+   Sam, 11 oct. 2026 : « taper le nom ou le code-barres d'un produit et avoir tout son historique :
+   combien vendus, sur quel canal, à qui ». Tout vient des factures (file du site, caisse, Amazon,
+   ventes saisies ici) : un retour compte en moins. Le filtre de période est celui du bloc d'à côté. */
+function ventesDe(p){
+  const k=p.cle||p.id, bcs=new Set([String(p.bc||'')].concat(String(p.bcs||'').split(/[\s,;]+/)).filter(Boolean));
+  let F=[]; try{ F=lit('factures-v1',[])||[]; }catch(e){ F=[]; }
+  const out=[];
+  F.forEach(f=>{ if(!f||f.sens!=='vente'||f.annule) return;
+    (f.lignes||[]).forEach(l=>{ if(!l||!(l.cle===k||(l.bc&&bcs.has(String(l.bc))))) return;
+      const q=+l.q||0; if(!q) return;
+      out.push({d:f.d||'',h:f.h||'',num:f.num||'',fid:f.id||'',client:f.tiers||'',canal:f.canal||'',q:f.retour?-Math.abs(q):q,p:l.p==null?null:+l.p,
+        pa:l.paAv==null?null:+l.paAv,retour:!!f.retour,auto:f.auto||''}); }); });
+  /* les ventes d'avant les factures (ventes-v1), si elles n'ont pas déjà leur facture */
+  try{ const V=(lit('ventes-v1',{})||{})[k]||[]; const vus=new Set(out.map(x=>String(x.num).replace(/ \(remboursé\)$/,'')+'|'+x.d));
+    V.forEach(v=>{ const n=String(v.num||'').replace(/ \(remboursé\)$/,''); if(vus.has(n+'|'+v.d)) return;
+      out.push({d:v.d||'',h:v.h||'',num:n,fid:'',client:v.c||'',canal:v.k||'',q:+v.q||0,p:v.p==null?null:+v.p,pa:null,retour:(+v.q||0)<0,auto:''}); }); }catch(e){}
+  histGrosLignes(p).forEach(x=>out.push(x));
+  out.sort((a,b)=>(b.d+(b.h||'')).localeCompare(a.d+(a.h||'')));
+  return out;
+}
+function ventesPeriode(p){ const l=ventesDe(p); if(PERIODE==='tout') return l;
+  const lim=new Date(); lim.setMonth(lim.getMonth()-(+PERIODE)); const s=isoJour(lim); return l.filter(x=>x.d>=s); }
+/* le prix d'achat qui vaut pour une vente : celui noté sur la facture, sinon celui d'aujourd'hui
+   (même règle que la page Ventes : avant la mise en service, le prix d'aujourd'hui) */
+function vPa(p,x){ const fige=String((REG&&REG.paFigeDepuis)||'2026-10-01'); const paNow=(typeof paEff2==='function')?paEff2(p):(p.pa==null?null:+p.pa);
+  if(x.d&&x.d<fige&&paNow!=null) return paNow; return x.pa!=null?x.pa:paNow; }
+/* le rythme : flacons par mois sur les 12 derniers mois, en petites barres */
+function vMois(l){
+  const M=[]; const d=new Date(); d.setDate(1);
+  for(let i=11;i>=0;i--){ const x=new Date(d.getFullYear(),d.getMonth()-i,1); M.push({k:x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0'),lib:x.toLocaleDateString('en-US',{month:'short'}),q:0,m:0}); }
+  const idx=Object.fromEntries(M.map((o,i)=>[o.k,i]));
+  l.forEach(x=>{ const i=idx[String(x.d).slice(0,7)]; if(i!=null){ M[i].q+=x.q; M[i].m+=x.q*(x.p||0); } });
+  return M;
+}
+function vBarres(M){
+  const mx=Math.max(1,...M.map(o=>Math.max(0,o.q)));
+  return `<div class="vmois">${M.map(o=>`<div class="vm" title="${esc(o.lib)} : ${nf(o.q)} flacon(s) · ${money(o.m)}"><i style="height:${Math.round(Math.max(0,o.q)/mx*52)}px" class="${o.q<0?'neg':o.q?'':'z'}"></i><b>${o.q?nf(o.q):''}</b><span>${esc(o.lib)}</span></div>`).join('')}</div>`;
+}
+function joursDepuis(d){ if(!d) return null; const a=new Date(d+'T12:00:00'), b=new Date(); return Math.max(0,Math.round((b-a)/86400e3)); }
+/* L'historique de gros d'AVANT l'ERP (tableur de Sam, jusqu'au 30 sept. 2026) : ses lignes entrent dans
+   « Ventes de ce parfum » comme n'importe quelle vente — totaux, par canal, par client, rythme, 12 mois,
+   Excel. 13 oct. 2026, Igal : « l'historique n'y est pas dans la fiche produit ». Ensuite, ce sont les ventes
+   de l'ERP. Pas de n° de facture : un clic sur la ligne n'ouvre donc rien dans Ventes. */
+const CANAL_HG="Vente en gros · avant l'ERP";
+function histGrosLignes(p){
+  const H=window.D_HG; if(!H||!H.l) return [];
+  const ks=new Set([String(p.bc||'').replace(/^0+/,'')].concat(typeof bcsDe==='function'?bcsDe(p):[]));
+  const out=[]; ks.forEach(k=>{ (H.l[k]||[]).forEach(r=>out.push({d:r[0]||'',h:'',num:'',fid:'',client:H.c[r[1]]||'',canal:CANAL_HG,q:r[2],p:r[3],pa:null,retour:false,auto:'',hist:1})); });
+  return out;
+}
+function blocVentes(p){
+  const tous=ventesDe(p), l=ventesPeriode(p);
+  const VPA=typeof peut!=='function'||peut('voirPA'), VMG=VPA&&(typeof peut!=='function'||peut('voirMarge'));
+  const T=L3;
+  const chips=`<div class="per">${PERIODES.map(([v,lib])=>`<button data-per="${v}" class="${PERIODE===v?'on':''}">${lib}</button>`).join('')}</div>`;
+  const titre=`<h3>${T('Ventes de ce parfum','Sales of this perfume','Ventas de este perfume')} <span style="float:right">${nf(l.filter(x=>x.q>0).length)} ${T('vente'+(l.filter(x=>x.q>0).length>1?'s':''),'sale'+(l.filter(x=>x.q>0).length>1?'s':''),'venta'+(l.filter(x=>x.q>0).length>1?'s':''))}</span></h3>`;
+  if(!l.length) return `<div class="dsec">${titre}${chips}
+    <div class="mvide">${tous.length?T(`Aucune vente sur cette période. Il y en a ${tous.length} en tout — élargis la période.`,`No sale in this period. There are ${tous.length} in all — widen the period.`,`Ninguna venta en este período. Hay ${tous.length} en total — amplía el período.`)
+      :T('Aucune vente enregistrée pour ce parfum.','No sale recorded for this perfume.','Ninguna venta registrada para este perfume.')}</div></div>`;
+  const nQ=l.reduce((a,x)=>a+x.q,0), ca=l.reduce((a,x)=>a+x.q*(x.p||0),0), nRet=l.filter(x=>x.q<0).reduce((a,x)=>a+Math.abs(x.q),0);
+  /* pas de marge sur l'historique d'avant l'ERP : on ne connaît pas le prix d'achat de l'époque (celui d'aujourd'hui donnerait des pertes fausses) */
+  const marge=x=>{ if(x.hist) return null; const pa=vPa(p,x); return (pa==null||x.p==null)?null:(x.p-pa)*x.q; };
+  const mgTot=VMG?l.reduce((a,x)=>{ const m=marge(x); return m==null?a:a+m; },0):null;
+  /* le rythme et la couverture : sur les 90 derniers jours, retours déduits */
+  const j90=isoJour(new Date(Date.now()-90*86400e3)); const q90=tous.filter(x=>x.d>=j90).reduce((a,x)=>a+x.q,0);
+  const parSem=q90/13, stock=+p.qte||0, semaines=parSem>0?stock/parSem:null;
+  const derniere=tous.find(x=>x.q>0), premiere=tous.slice().reverse().find(x=>x.q>0), dj=derniere?joursDepuis(derniere.d):null;
+  /* 1er nov. 2026 (Igal : « sur ces valeurs-là, rajouter le prix payé par le customer ») : par client, le prix moyen payé
+     par flacon (montant ÷ flacons), et la fourchette « de X à Y » quand le client n'a pas toujours payé le même prix.
+     Les retours ne comptent pas dans la fourchette (leur prix n'est pas un prix payé). */
+  const grp=(cle)=>{ const G={}; l.forEach(x=>{ const g=cle(x)||'—'; const o=G[g]=G[g]||{n:g,q:0,m:0,mg:0,d:'',pmin:null,pmax:null}; o.q+=x.q; o.m+=x.q*(x.p||0); const mm=marge(x); if(mm!=null){ o.mg+=mm; o.mgk=1; } if(x.d>o.d) o.d=x.d;
+      if(x.q>0&&x.p!=null){ o.pmin=o.pmin==null?x.p:Math.min(o.pmin,x.p); o.pmax=o.pmax==null?x.p:Math.max(o.pmax,x.p); } });
+    return Object.values(G).sort((a,b)=>b.q-a.q||b.m-a.m); };
+  const C=grp(x=>x.canal), K=grp(x=>x.client);
+  const pxPaye=o=>{ if(!(o.q>0)) return '—'; const moy=money(o.m/o.q);
+    return (o.pmin!=null&&o.pmax-o.pmin>0.004)?`${moy}<br><small class="hint">${T('de','from','de')} ${money(o.pmin)} ${T('à','to','a')} ${money(o.pmax)}</small>`:moy; };
+  const tab=(T2,tete,max,mg,px)=>`<table class="vtab"><thead><tr><th>${tete}</th><th class="r">${T('Flacons','Bottles','Frascos')}</th><th class="r">${T('Montant','Amount','Importe')}</th>${px?`<th class="r" title="${esc(T('Prix moyen payé par flacon, et la fourchette si le client n\'a pas toujours payé le même prix','Average price paid per bottle, and the range if the customer did not always pay the same price','Precio medio pagado por frasco, y el rango si el cliente no siempre pagó el mismo precio'))}">${T('Prix payé','Price paid','Precio pagado')}</th>`:''}${mg?`<th class="r">${T('Il te reste','Left for you','Te queda')}</th>`:''}<th class="r">${T('Dernière','Last','Última')}</th></tr></thead>
+    <tbody>${T2.slice(0,max).map(o=>`<tr><td data-nolang>${esc(o.n)}</td><td class="r">${nf(o.q)}</td><td class="r">${money(o.m)}</td>${px?`<td class="r">${pxPaye(o)}</td>`:''}${mg?`<td class="r ${o.mgk&&o.mg<0?'neg':''}">${o.mgk?money(o.mg):'—'}</td>`:''}<td class="r">${o.d?jourFr(o.d):'—'}</td></tr>`).join('')}
+    ${T2.length>max?`<tr><td colspan="6" class="hint">… ${T('et','and','y')} ${nf(T2.length-max)} ${T('autres','more','más')}</td></tr>`:''}</tbody></table>`;
+  const ligne=x=>{ const m=VMG?marge(x):null;
+    return `<li${x.num?` class="vlk" data-vnum="${esc(x.num)}" title="${esc(T('Ouvrir cette vente dans Ventes','Open this sale in Sales','Abrir esta venta en Ventas'))}"`:''}><span class="d">${x.d?jourFr(x.d):'—'}${x.h?' '+esc(x.h):''}</span>
+      <span class="f" title="${esc(x.client)}"><b data-nolang>${esc(x.client||T('client non noté','customer not noted','cliente no anotado'))}</b> · <span data-nolang>${esc(x.canal)}</span>${x.num?` · <small data-nolang>${esc(x.num)}</small>`:''}</span>
+      <span class="q ${x.q<0?'ret':''}">${x.q<0?'retour ':'×'}${nf(Math.abs(x.q))}</span><span class="p">${x.p==null?'—':money(x.p)}</span>${VMG?`<span class="mg ${m!=null&&m<0?'neg':''}">${m==null?'':(m>=0?'+':'')+money(m)}</span>`:''}</li>`; };
+  const rythme=`<div class="vryt">
+      <div><span class="v">${nf(Math.round(parSem*10)/10)}</span><span class="k">${T('flacons / semaine (90 derniers jours)','bottles / week (last 90 days)','frascos / semana (últimos 90 días)')}</span></div>
+      <div><span class="v">${semaines==null?'—':(semaines>99?'99+':nf(Math.round(semaines)))}</span><span class="k">${T('semaines de stock au rythme actuel','weeks of stock at current pace','semanas de stock al ritmo actual')}${stock?` (${nf(stock)} ${T('en stock','in stock','en stock')})`:''}</span></div>
+      <div><span class="v">${dj==null?'—':dj===0?T('aujourd\'hui','today','hoy'):nf(dj)+' j'}</span><span class="k">${T('depuis la dernière vente','since the last sale','desde la última venta')}${derniere?' · '+jourFr(derniere.d):''}</span></div>
+      <div><span class="v">${premiere?jourFr(premiere.d):'—'}</span><span class="k">${T('première vente connue','first known sale','primera venta conocida')}</span></div>
+    </div>`;
+  const nV=l.filter(x=>x.q>0).length;
+  const resume=`<span class="vs-n">${nf(nV)} ${T('vente'+(nV>1?'s':''),'sale'+(nV>1?'s':''),'venta'+(nV>1?'s':''))} · ${nf(nQ)} ${T('flacons','bottles','frascos')} · ${money(ca)}${derniere?' · '+T('dernière','last','última')+' '+jourFr(derniere.d):''}</span>`;
+  const nVoir=(FICHE&&FICHE.vTout)?60:10, nPlus=l.length;
+  /* 12 oct. 2026 (Igal : « il faut réduire cette page et donner la possibilité de cliquer pour ouvrir ») : le bloc est REPLIÉ — un titre et une ligne de chiffres ;
+     un clic l'ouvre. Même ouvert, la liste ne montre que les 10 dernières ventes (un bouton pour les 60). Il reste ouvert quand la fiche se redessine. */
+  return `<details class="dsec dvt" id="dvtes"${FICHE&&FICHE.vOpen===false?'':' open'}><summary><span class="vs-t">${T('Ventes de ce parfum','Sales of this perfume','Ventas de este perfume')}</span>${resume}<span class="vs-c">▾</span></summary>
+    ${chips}
+    <div class="hst">
+      <div><span class="v">${nf(nQ)}</span><span class="k">${T('flacons vendus (retours déduits)','bottles sold (returns deducted)','frascos vendidos (devoluciones deducidas)')}</span></div>
+      <div><span class="v">${money(ca)}</span><span class="k">${T('chiffre de vente','sales amount','importe de ventas')}</span></div>
+      <div><span class="v">${nQ>0?money(ca/nQ):'—'}</span><span class="k">${T('prix moyen','average price','precio medio')}</span></div>
+      ${VMG?`<div><span class="v ${mgTot<0?'hi':'lo'}">${money(mgTot)}</span><span class="k">${T('il te reste, achat déduit','left for you, purchase deducted','te queda, compra deducida')}</span></div>`:''}
+      <div><span class="v ${nRet?'hi':''}">${nf(nRet)}</span><span class="k">${T('flacons rendus','bottles returned','frascos devueltos')}</span></div>
+    </div>
+    <div class="vdeux">
+      <div><h4>${T('Par canal','By channel','Por canal')}</h4>${tab(C,T('Canal','Channel','Canal'),6,VMG)}</div>
+      <div><h4>${T('Par client','By customer','Por cliente')}</h4>${tab(K,T('Client','Customer','Cliente'),5,false,true)}</div>
+    </div>
+    <details class="vdet" id="dvdet"${FICHE&&FICHE.vDet?' open':''}><summary>${T('Le rythme et chaque vente','Pace and every sale','El ritmo y cada venta')} <small class="hint">${T('— cliquer pour agrandir','— click to expand','— clic para ampliar')} (${nf(l.length)})</small></summary>
+    <h4>${T('Le rythme','The pace','El ritmo')}</h4>
+    ${rythme}
+    ${vBarres(vMois(tous))}
+    <h4>${T('Chaque vente','Each sale','Cada venta')} <small class="hint">${T('— un clic ouvre la vente','— click to open the sale','— un clic abre la venta')}</small></h4>
+    <ul class="ach vlist">${l.slice(0,nVoir).map(ligne).join('')}</ul>
+    <div class="dbtns" style="margin-top:8px">${nPlus>10?`<button class="btn" data-vmore="1">${(FICHE&&FICHE.vTout)?T('Voir seulement les 10 dernières','Show only the last 10','Ver solo las 10 últimas'):T('Voir plus de ventes','Show more sales','Ver más ventas')}</button>`:''}
+      ${l.length>nVoir?`<span class="hint">${T(`Les ${nVoir} plus récentes sont affichées ; l'Excel les a toutes.`,`The ${nVoir} most recent are shown; the Excel has them all.`,`Se muestran las ${nVoir} más recientes; el Excel las tiene todas.`)}</span>`:''}</div>
+    </details>
+    <div class="dbtns" style="margin-top:8px"><button class="btn" data-vxl="1">${T('Historique complet (Excel)','Full history (Excel)','Historial completo (Excel)')}</button></div>
+  </details>`;
+}
+/* l'Excel de l'historique et l'ouverture d'une vente : posés une fois, sur la fiche */
+$('ddb').addEventListener('toggle',e=>{ if(!FICHE||!e.target) return; if(e.target.id==='dvtes') FICHE.vOpen=e.target.open; else if(e.target.id==='dvdet') FICHE.vDet=e.target.open; },true);
+document.addEventListener('click',e=>{
+  const mo=e.target.closest('[data-vmore]'); if(mo&&FICHE){ FICHE.vTout=!FICHE.vTout; FICHE.vOpen=true; FICHE.vDet=true; dessineFiche(); return; }
+  const li=e.target.closest('.vlist li.vlk'); if(li&&FICHE){ location.href='ventes.html?v=__VER__&q='+encodeURIComponent(li.dataset.vnum); return; }
+  const b=e.target.closest('[data-vxl]'); if(!b||!FICHE) return;
+  const p=cur[FICHE.pos]; const l=ventesDe(p); const VMG=(typeof peut!=='function'||(peut('voirPA')&&peut('voirMarge')));
+  const nom=((p.marque||'')+' '+(p.nom||'')).trim();
+  const col=[{t:'Date',y:'d'},{t:'Heure'},{t:'N° de vente'},{t:'Client'},{t:'Canal'},{t:'Flacons',y:'n'},{t:'Prix unitaire',y:'m'},{t:'Montant',y:'m'}];
+  if(VMG) col.push({t:'Prix d\'achat',y:'m'},{t:'Il te reste',y:'m'});
+  const L=l.map(x=>{ const r=[x.d,x.h||'',x.num,x.client,x.canal,x.q,x.p,x.p==null?null:Math.round(x.q*x.p*100)/100];
+    if(VMG){ const pa=x.hist?null:vPa(p,x); r.push(pa,(pa==null||x.p==null)?null:Math.round((x.p-pa)*x.q*100)/100); } return r; });
+  sortieXlsx({titre:'Ventes — '+nom,filtre:l.length+' vente(s), toutes périodes',fichier:'ventes-'+nom.replace(/[^A-Za-z0-9]+/g,'-').slice(0,40),colonnes:col,lignes:L});
+});
 function blocHistorique(p){
   const tous=achats(p), l=achatsPeriode(p);
   const chips=`<div class="per">${PERIODES.map(([v,lib])=>
@@ -2188,10 +4112,10 @@ function blocMarche(p){
         ${m.dem?`<div class="dem"><b>${esc(m.dem)}</b> achetés le mois dernier sur Amazon</div>`:''}
         ${m.note5?`<div class="dem"><b>${String(m.note5).replace('.',',')}/5</b> ${'★'.repeat(Math.round(m.note5))}${'☆'.repeat(5-Math.round(m.note5))}${m.avis?` · ${nf(m.avis)} avis`:''}</div>`:''}
         ${m.vend?`<div class="dem">vendu par <b>${esc(m.vend)}</b>${m.n>1?` · ${m.n} vendeurs`:''}</div>`:''}
-        <div class="dt">relevé le ${d?d.toLocaleDateString('fr-FR'):'?'}${m.par?' · '+esc(m.par):''}</div></div></div>`
+        <div class="dt">relevé le ${d?d.toLocaleDateString('en-US',{timeZone:'America/New_York'}):'?'}${m.par?' · '+esc(m.par):''}</div></div></div>`
     : `<div class="mvide">${m.dem?`<b>${esc(m.dem)}</b> achetés le mois dernier sur Amazon. `:''}Le rang n'a pas été relevé
         — il se lit sur la fiche produit Amazon, section « Best Sellers Rank ».
-        ${d?`<span class="dt">Relevé le ${d.toLocaleDateString('fr-FR')}.</span>`:''}</div>`;
+        ${d?`<span class="dt">Relevé le ${d.toLocaleDateString('en-US',{timeZone:'America/New_York'})}.</span>`:''}</div>`;
   const note = m.note?`<div class="dinfo">${esc(m.note)}</div>`:'';
   /* historique des relevés : chaque mise à jour garde l'ancien point */
   const H=(m.hist&&m.hist.length?m.hist:[{le:m.le,amz:m.amz,rang:m.rang}]).filter(h=>h.amz!=null);
@@ -2199,7 +4123,7 @@ function blocMarche(p){
   if(H.length>=2){
     const lo=Math.min(...H.map(h=>h.amz)), hi=Math.max(...H.map(h=>h.amz));
     histo=`<div class="mhist"><b>${H.length} relevés Amazon</b> · plus bas ${money(lo)} · plus haut ${money(hi)}
-      <ul>${H.slice(-8).reverse().map(h=>`<li>${new Date(h.le).toLocaleDateString('fr-FR')} — ${money(h.amz)}${h.rang?` · rang #${nf(h.rang)}`:''}</li>`).join('')}</ul></div>`;
+      <ul>${H.slice(-8).reverse().map(h=>`<li>${new Date(h.le).toLocaleDateString('en-US',{timeZone:'America/New_York'})} — ${money(h.amz)}${h.rang?` · rang #${nf(h.rang)}`:''}</li>`).join('')}</ul></div>`;
   } else if(H.length===1){
     histo=`<div class="mhist">Premier relevé : l'historique Amazon se construira à chaque mise à jour (plus bas, plus haut, courbe).
       Amazon ne publie pas l'historique de ses prix ; seul un relevé régulier le donne.</div>`;
@@ -2227,7 +4151,26 @@ function blocMarche(p){
     ${alerte}${note}${histo}</div>`;
 }
 
+/* 12 oct. 2026 (Igal : « Sam a mis 58 en promo et 65 en prix barré, il l'a save et ça n'a pas save ») : la fiche se redessine dès qu'on change une autre
+   case (le prix de l'outil, par ex.), et les prix tapés dans les cases du site — pas encore enregistrés — repartaient aux valeurs du site. On les garde. */
+const CLES_BOITE=['sb','sp','sr','srp'];
 function dessineFiche(){
+  const F=FICHE, zone=$('ddb');
+  if(F){ F.bv=F.bv||{};
+    if(zone.dataset.fid===String(F.id)) zone.querySelectorAll('[data-sb],[data-sp],[data-sr],[data-srp]').forEach(i=>{
+      const c=CLES_BOITE.find(x=>i.dataset[x]!==undefined), k=c+':'+i.dataset[c];
+      if(i.value!==i.defaultValue) F.bv[k]=i.value; else delete F.bv[k]; });
+  }
+  dessineFiche0();
+  if(F){ zone.dataset.fid=String(F.id);
+    zone.querySelectorAll('[data-sb],[data-sp],[data-sr],[data-srp]').forEach(i=>{
+      const c=CLES_BOITE.find(x=>i.dataset[x]!==undefined), k=c+':'+i.dataset[c];
+      if(F.bv[k]!==undefined) i.value=F.bv[k]; });
+  }
+}
+const oubliBoite=cid=>{ if(FICHE&&FICHE.bv) Object.keys(FICHE.bv).forEach(k=>{ if(k.endsWith(':'+cid)) delete FICHE.bv[k]; }); };
+function dessineFiche0(){
+  if(!FICHE) return;                       /* une action arrivée après la fermeture de la fiche */
   const base=cur[FICHE.pos]; if(!base) return fermeFiche();
   FICHE.id=base.id;
   const p={}; Object.assign(p,base);
@@ -2239,20 +4182,32 @@ function dessineFiche(){
 
   $('dmarque').textContent=p.marque||'—';
   $('dnom').textContent=p.nom||'Sans nom';
+  { const bs=$('dsup'); if(bs) bs.hidden=!(base.neuf&&typeof peut==='function'&&peut('annuler')); }
+  /* 20 oct. 2026 (Igal : « je veux avoir la possibilité de modifier ou de supprimer un parfum ») : n'importe quel parfum se corrige
+     (marque, nom, contenance, type, genre) ; ceux du fichier de départ, qui portent l'historique, se RETIRENT du catalogue (réversible)
+     au lieu de s'effacer ; ceux ajoutés à la main se suppriment pour de bon (bouton existant). */
+  { const bm=$('dmod'), br=$('dret');
+    if(bm){ bm.hidden=!(typeof peut==='function'&&peut('modPrix')); bm.textContent=L3('Modifier le parfum','Edit the perfume','Modificar el perfume'); }
+    if(br){ br.hidden=base.neuf||!(typeof peut==='function'&&peut('annuler'));
+      br.textContent=base.masque?L3('Remettre au catalogue','Put back in the catalogue','Volver a poner en el catálogo'):L3('Retirer du catalogue','Remove from the catalogue','Quitar del catálogo'); } }   /* produit ajouté à la main + Patron/Admin seulement */
   $('dprev').disabled=FICHE.pos<=0;
   $('dnext').disabled=FICHE.pos>=cur.length-1;
 
+  /* Sam, 3 oct. 2026 : « dans la version pour les employés, je ne veux pas qu'ils voient les
+     bénéfices ». Le rôle le disait déjà (Commercial : ni prix d'achat ni marge), mais la fiche
+     montrait quand même le prix d'achat, les marges et « ce qu'il te reste ». */
+  const VPA=typeof peut!=='function'||peut('voirPA'), VMG=VPA&&(typeof peut!=='function'||peut('voirMarge'));
   const chips=[];
   if(p.neuf) chips.push('<span class="fl todo">ajouté à la main</span>');
   if(base.mod) chips.push('<span class="fl todo">fiche modifiée</span>');
   if(mq.length) chips.push(`<span class="fl w">${mq.length} champ${mq.length>1?'s':''} à compléter</span>`);
-  p.an.forEach(a=>chips.push(`<span class="fl ${AN[a][1]}">${AN[a][0]}</span>`));
+  if(VMG) p.an.forEach(a=>chips.push(`<span class="fl ${AN[a][1]}">${AN[a][0]}</span>`));
 
-  const img=p.img?`<img src="photos/${p.bc}.webp" data-far="${p.img}" alt="" onerror="secours(this)">`
+  const img=p.img?`<img src="${phSrc(p)}" data-far="${p.imgPerso?'':p.img}" alt="" onerror="secours(this)">`
     :`<div class="miss"><svg viewBox="0 0 40 64" fill="none"><rect x="14.5" y="2" width="11" height="9" rx="1.5" stroke="currentColor" stroke-width="2.4"/><path d="M11 20a6 6 0 016-6h6a6 6 0 016 6v34a6 6 0 01-6 6H17a6 6 0 01-6-6V20z" stroke="currentColor" stroke-width="2.4"/></svg><span>sans photo</span></div>`;
 
-  const champ=([k,lab,_col,t])=>{
-    const v=valCour(p,k), vide=(v==null||v===''), chg=FICHE.brouillon[k]!==undefined;
+  const champ=([k,lab,_col,t,opt])=>{
+    const v=valCour(p,k), vide=(v==null||v==='')&&!opt, chg=FICHE.brouillon[k]!==undefined;
     if(t==='sel') return `<div class="dfld${chg?' ch':''}"><label>${lab}</label>
       <select data-k="${k}">${Object.entries(GEN).map(([o,n])=>
         `<option value="${o}"${(v||'')===o?' selected':''}>${n}</option>`).join('')}</select></div>`;
@@ -2260,7 +4215,7 @@ function dessineFiche(){
       <input data-k="${k}" class="${t==='num'?'mono ':''}${vide?'vide':''}"
        type="${t==='num'?'number':'text'}" ${t==='num'?'step="any" inputmode="decimal"':''}
        value="${v==null?'':String(v).replace(/"/g,'&quot;')}"
-       placeholder="${vide?'à compléter':''}"></div>`;
+       placeholder="${vide?'à compléter':(opt||'')}"></div>`;
   };
 
   const pa=p.pa, cap=(p.qte||0)*(pa||0);
@@ -2303,121 +4258,168 @@ function dessineFiche(){
   // rail de prix : achat -> gros -> retail, avec l'écart entre chaque étape
   /* Trois cases : achat, gros, retail. La marge (par rapport au prix d'achat)
      est ecrite dans la case du prix de vente concerne, comme dans la liste. */
-  const etape=(k,lab,_col,avecMarge)=>{
+  const etape=(k,lab,_col,avecMarge,extra)=>{
     const v=valCour(p,k), vide=(v==null||v===''), chg=FICHE.brouillon[k]!==undefined;
     let mg='';
-    if(avecMarge){
+    if(avecMarge&&VMG){
       const t=marge(p,v);
       if(t==null) mg=`<i class="mg na">marge —</i>`;
       else mg=`<i class="mg ${t<0?'c':t<REG.margeMin?'w':'g'}">marge ${pc(t)}</i>`;
     }
     return `<div class="st${chg?' ch':''}"><span>${lab}</span>
       <div class="in"><input data-k="${k}" type="number" step="any" inputmode="decimal"
-       class="${vide?'vide':''}" value="${v==null?'':v}" placeholder="—"><em>$</em></div>${mg}</div>`;
+       class="${vide?'vide':''}" value="${v==null?'':v}" placeholder="—"><em>$</em></div>${mg}${extra||''}</div>`;
   };
 
   $('ddb').innerHTML=`
     <div class="dhero">
-      <div class="dph">${img}</div>
+      <div class="dphw">
+        <div class="dph">${img}</div>
+        ${(typeof peut!=='function'||peut('modPrix'))?`<div class="dphb">
+          <button type="button" class="btn dphc" data-phchg>${L3('Changer la photo','Change photo','Cambiar la foto')}</button>
+          <button type="button" class="btn dphc dphw2" data-phweb>${L3('Chercher sur Internet','Find on the Internet','Buscar en Internet')}</button>
+          ${p.imgPerso?`<button type="button" class="lnk dphr" data-phrst>${L3('Revenir à la photo d\'origine','Back to the original photo','Volver a la foto original')}</button>`:''}
+          ${p.img&&typeof ckTok==='function'&&ckTok()?`<button type="button" class="lnk dphr" data-phenv>${L3('Envoyer cette photo aux sites','Send this photo to the websites','Enviar esta foto a los sitios')}</button>`:''}
+          <input type="file" id="dphf" accept="image/*" hidden>
+        </div>`:''}
+      </div>
       <div class="dstk">
-        <div class="big"><b>${q}</b><em>flacon${q>1?'s':''} en stock</em></div>
-        ${q>0?`<div class="cap">${cap?money(cap)+' de marchandise':'valeur inconnue'}</div>`:''}
+        <!-- Sam, 2 oct. 2026 : « Quantity in stock dans la fiche du produit pas très visible » ;
+             Igal, 11 oct. 2026 : « ça prend trop de place », et la quantité ne se modifie ici que
+             par Sam ou lui (Patron, admin) — les autres passent par l'Inventaire. -->
+        ${(()=>{ const r=(()=>{ try{ return (typeof session==='function'?session():JSON.parse(localStorage.getItem('sam-session-v1')||'null')||{}).role||''; }catch(e){ return ''; } })();
+          const edit=(r==='patron'||r==='admin');
+          return `<div class="dtop">
+          <div class="dqte${FICHE.brouillon.qte!==undefined?' ch':''}${edit?'':' ro'}"><label for="dqte-in">${L3('Stock Perfumes Trade','Perfumes Trade stock','Stock Perfumes Trade')}</label>
+            <div class="dqte-l">${edit?`<input id="dqte-in" data-k="qte" type="number" step="1" min="0" inputmode="numeric" value="${q}">`:`<b data-nolang>${nf(q)}</b>`}<em>${q>1?'flacons':'flacon'}</em></div>
+            ${edit?'':`<small>${L3('modifiable par le dirigeant, ou par l\'Inventaire','editable by the owner, or via Inventory','modificable por el dirigente, o desde Inventario')}</small>`}</div>
+          ${(()=>{ /* 31 oct. 2026 (Igal : « dans la fiche produit, la quantité de stock Perfumes Trade et la quantité de stock Perfume City ») :
+             le stock de la boutique de Kim (inventaire Perfume City, pc-stock-v1), lu par le code-barres — lecture seule, il se corrige
+             dans l'Inventaire Perfume City */
+             const qp=pcStockFiche(p);
+             return `<div class="dqte dqpc ro"><label>${L3('Stock Perfume City','Perfume City stock','Stock Perfume City')}</label>
+               <div class="dqte-l">${qp?`<b data-nolang>${nf(qp.q)}</b><em>${qp.q>1?L3('flacons','bottles','frascos'):L3('flacon','bottle','frasco')}</em>`:`<b data-nolang>—</b>`}</div>
+               <small>${qp?L3('dans la boutique · se corrige dans l\'Inventaire Perfume City','in the shop · corrected in the Perfume City inventory','en la tienda · se corrige en el Inventario Perfume City'):L3('pas dans l\'inventaire de Perfume City','not in the Perfume City inventory','no está en el inventario de Perfume City')}</small></div>`; })()}
+          ${q>0&&VPA?`<div class="cap">${cap?money(cap):'—'}<small>${L3('de marchandise','of goods','de mercancía')}</small></div>`:''}
+          ${(()=>{ const a=azPourFiche(p);
+             return `<a class="damz" href="${esc(a.href)}" target="_blank" rel="noopener" title="${esc(a.titre)}">${logo('amazon','Amazon')}<span>${a.exact?L3('Ouvrir la fiche','Open the listing','Abrir la ficha'):L3('Chercher','Search','Buscar')} ↗</span>${a.prix!=null?`<small data-nolang>${money2(a.prix)}</small>`:(a.exact&&a.asin?`<small data-nolang>${esc(a.asin)}</small>`:'')}</a>`; })()}
+        </div>`; })()}
         ${vbloc}
-        ${q>0&&base.rang?`<div class="rk">Cette référence est la <b>n° ${base.rang}</b> du stock par l'argent
-          qu'elle immobilise, soit <b>${(base.partCap||0).toFixed(2).replace('.',',')}\u00a0%</b> du capital total.</div>`:''}
+        ${q>0&&base.rang&&VPA?`<div class="rk">Cette référence est la <b>n° ${base.rang}</b> du stock par l'argent
+          qu'elle immobilise, soit <b>${(base.partCap||0).toFixed(2).replace('.',',')} %</b> du capital total.</div>`:''}
         ${q===0?`<div class="rk">Conservée pour l'historique : elle a déjà été vendue, ses prix
           et son code-barres restent disponibles pour un réassort.</div>`:''}
         ${cpt}
+        ${blocStockSites(base)}
+        <!-- 12 oct. 2026 (Igal : « ça porte à confusion », puis « laisse-moi une case avec le prix qu'il y a sur Lightspeed ») : plus de cartes gros / retail ;
+             la carte du prix d'achat reste, et UNE carte « Lightspeed » : le prix boutique que l'outil envoie à la caisse, avec le dernier prix réellement encaissé en caisse. -->
+        <div class="drail mini">${VPA?etape('pa','achat moyen',null,false,dernierPrixPaye(p)):''}${etape('pvr','Lightspeed · prix boutique',null,true,dernierPrixCaisse(p))}</div>
       </div>
     </div>
     ${chips.length?`<div class="dchips">${chips.join('')}</div>`:''}
 
-    <div class="dsec"><h3>Prix et marges</h3>
-      <div class="drail">
-        ${etape('pa','achat')}${etape('pvw','gros',null,true)}${etape('pvr','retail · prix boutique',null,true)}
-      </div>
-      <div class="dgrid" style="grid-template-columns:minmax(150px,220px)">${[CH[6]].map(champ).join('')}</div>
-    </div>
+    ${blocVentes(p)}
 
-    <div class="dsec"><h3>${logo('amazon','Amazon')}</h3>
-      <div class="drail amz">
-        ${(()=>{ const m=MAR[p.id]; const ca=canaux().find(c=>c.id==='amazon')||{id:'amazon',nom:'Amazon',maj:18,com:15};
-          const {v}=prixCanal(p,ca);
-          const ref=m&&m.amz!=null?m.amz:null;
-          const d=m&&m.le?new Date(m.le).toLocaleDateString('fr-FR'):null;
-          const bulle=`Prix de vente le moins cher relevé sur Amazon pour ce produit (ou un produit similaire, même contenance)${d?', relevé le '+d:''}. Ce n'est pas mon prix : c'est ce que le client trouve en face. Mon prix Amazon se règle plus bas, avec les autres canaux.`;
-          return `<div class="st ref"><span>${logo('amazon','Amazon')} — le moins cher <i class="bul" tabindex="0" data-bul="${esc(bulle)}">i</i></span>
-            <div class="in ro"><b>${ref!=null?money(ref):(m?'indisponible':'—')}</b></div>
-            ${ref!=null&&p.pa!=null?`<i class="mg ${pcCls((ref-p.pa)/ref*100)}">${pct1((ref-p.pa)/ref*100)} de marge à ce prix-là</i>`:`<i class="mg na">${m?'aucun prix':'pas de relevé'}</i>`}
-            ${horsCanal(p,'amazon')?`<span class="rl"><b style="color:var(--crit)">ce parfum n'est pas vendu sur Amazon</b></span>`
-              :(ref!=null&&v!=null?`<span class="rl">mon prix Amazon (${money(v)}) est ${v>ref?`${money(v-ref)} au-dessus`:v<ref?`${money(ref-v)} en dessous`:'identique'}</span>`:'')}</div>
-          ${(()=>{ /* le lien vers la fiche Amazon équivalente et son rang */
-            const lien = azLien(p,m);
-            /* L'ASIN ouvre LA fiche ; le code-barres ouvre dix résultats
-               approchants dont il faut deviner lequel est le bon. */
-            const exact = !!((m&&m.url) || p.asin);
-            const bulleL = (m&&m.url)
-              ? "Lien enregistré avec le relevé : la fiche Amazon du produit équivalent."
-              : p.asin
-              ? "ASIN "+esc(p.asin)+" repris de l'inventaire : ce lien ouvre directement la fiche Amazon de ce parfum, sans passer par une recherche."
-              : (p.bc ? "Ce parfum n'a pas d'ASIN dans l'inventaire : à défaut, recherche Amazon sur son code-barres. Colle l'adresse exacte dans « Saisir un relevé » pour la garder."
-                      : "Recherche Amazon sur la marque et le nom : ce parfum n'a ni ASIN ni code-barres.");
-            return `<div class="st lien"><span>${logo('amazon','Amazon')} — rang et fiche <i class="bul" tabindex="0" data-bul="${esc(bulleL)}">i</i></span>
-              ${m&&m.rang?`<div class="rang">#${nf(m.rang)}<small>${esc(m.cat||'catégorie non précisée')}${m.rangG?` · #${nf(m.rangG)} au général`:''}</small></div>`
-                          :`<div class="rien">rang non relevé</div>`}
-              ${m&&m.note5?`<span class="dt mnote"><b style="color:var(--ink);font-size:14px">${String(m.note5).replace('.',',')}/5</b>
-                 <span class="et">${'★'.repeat(Math.round(m.note5))}${'☆'.repeat(5-Math.round(m.note5))}</span>
-                 ${m.avis?`<span>${nf(m.avis)} avis</span>`:''}</span>`:''}
-              <a class="go" href="${esc(lien)}" target="_blank" rel="noopener">${exact?'Ouvrir la fiche Amazon':'Chercher sur Amazon'} ↗</a>
-              ${m?`<span class="dt">${m.dem?`<b>${esc(m.dem)}</b> achetés le mois dernier · `:''}${m.vend?`vendu par ${esc(m.vend)} · `:''}relevé le ${d||'?'}</span>`
-                  :`<span class="dt">Aucun relevé. Ouvre la fiche Amazon, note le prix le plus bas et le « Best Sellers Rank », puis saisis-les ici.</span>`}
-              <button class="maj" data-mar="edit">${m?'Mettre à jour le relevé':'Saisir un relevé'}</button></div>`; })()}`; })()}
-      </div>
-    </div>
-
-    <details class="dsec dcanw" open><summary><h3>Mes canaux de vente<span class="hh">${(()=>{ const off=canaux().filter(c=>c.id!=='boutique'&&horsCanal(p,c.id));
-        const n=canaux().length-1-off.length;
-        return off.length?`${n>1?n+' canaux actifs':n===1?'1 canal actif':'aucun canal actif'} · <b style="color:var(--crit)">pas vendu sur ${off.map(c=>esc(c.nom)).join(', ')}</b>`
-          :canaux().filter(c=>c.id!=='boutique').map(c=>esc(c.nom)).join(' · '); })()} · la boutique vend au prix retail · règle : retail + majoration · <a href="reglages.html?v=__VER__">régler</a></span></h3></summary>
-      <div class="dcan">${canaux().filter(c=>c.id!=='boutique').map(c=>{
-        if(horsCanal(p,c.id)) return `<div class="cn off"><span class="nm" title="${esc(c.nom)}">${logo(c.id,c.nom)}${c.id==='amazon'?' — mon prix':''}</span>
-          <div class="offtx">pas vendu ici</div>
-          <button class="offb" data-on="${c.id}">Remettre ce canal</button></div>`;
-        const {v,man}=prixCanal(p,c), t=margeNette(p,c,v), chg=FICHE.brouillon.pc&&FICHE.brouillon.pc[c.id]!==undefined;
-        const bulle=c.id==='amazon'?`Le prix auquel je veux vendre sur Amazon. Pré-rempli par la règle des Réglages (retail + ${c.maj||0} %), modifiable ici. La marge nette tient compte de la commission Amazon (${c.com||0} %). Ce prix reste dans l'outil : il n'est pas envoyé à Amazon, et il n'est pas prévu de l'envoyer. L'outil regarde les prix d'Amazon, il n'y touche pas.`:'';
-        return `<div class="cn${man?' man':''}${chg?' ch':''}"><span class="nm" title="${esc(c.nom)}">${logo(c.id,c.nom)}${c.id==='amazon'?' — mon prix <i class="bul" tabindex="0" data-bul="'+esc(bulle)+'">i</i>':''}</span>
-          <div class="in"><input data-pc="${c.id}" type="number" step="any" inputmode="decimal" value="${v==null?'':v}" placeholder="—"><em>$</em></div>
-          <div class="ft"><i class="mg ${pcCls(t)}">${t==null?'marge —':'marge '+pc(t)+(c.com?' après les '+c.com+' % du canal':'')}</i>
-          ${c.com&&v!=null&&p.pa!=null?`<span class="expl">${esc(c.nom)} garde ${c.com} % (${money(v*c.com/100)}) → il reste ${money(v*(1-c.com/100))} → moins l'achat ${money(p.pa)} = <b class="${pcCls(t)}">${money(v*(1-c.com/100)-p.pa)} de marge</b></span>`:''}
-          <span class="rl">${man?`saisi à la main · <button data-pcr="${c.id}">revenir au calcul</button>`:(c.maj?`calculé : retail ${p.pvr!=null?money(p.pvr):''} + ${c.maj} %`:'= le retail')}</span>
-          <button class="offb" data-off="${c.id}" title="Ce parfum n'est pas vendu sur ${esc(c.nom)}">ne pas vendre ici</button></div>
+    <details class="dsec dcanw" open><summary><h3>Mes canaux de vente<span class="hh">${(()=>{ const off=canaux().filter(c=>c.id!=='boutique'&&c.id!=='amazon'&&horsCanal(p,c.id));
+        return off.length?`<b style="color:var(--crit)">pas vendu sur ${off.map(c=>esc(c.nom)).join(', ')}</b> · `:''; })()}<a href="reglages.html?v=__VER__">régler les canaux</a></span></h3></summary>
+      <!-- 11 oct. 2026 (Igal : « refais-moi cette partie plus clairement ») : une ligne par canal, quatre
+           colonnes toujours aux mêmes places — le canal, le prix de l'outil, ce que le client paie
+           vraiment (site, annonce Amazon), ce qu'il te reste. Le prix Amazon est celui de l'annonce de
+           Sam (rapport des annonces importé dans le cockpit), plus un prix calculé. -->
+      <div class="dcan dcanl">
+        <div class="cnh"><span>Canal</span><span>Prix de l'outil</span><span>Le client paie</span>${VMG?'<span>Il te reste</span>':'<span></span>'}<span></span></div>
+        ${canaux().filter(c=>c.id!=='boutique'&&c.id!=='amazon').sort((x,y)=>(y.id==='sitegros')-(x.id==='sitegros')).map(c=>{
+        /* 11 oct. 2026 (Igal : « inverse les deux canaux ») : wholesale d'abord, puis retail. Amazon : la ligne Amazon est retirée — son prix ne peut pas être connu
+           sans rapport, « elle ne sert à rien ». Amazon reste un canal pour les ventes reçues. */
+        const tete=`<span class="nm" title="${esc(c.nom)}">${c.id==='sitegros'?logo('site',c.nom)+'<span class="sous">wholesale</span>':logo(c.id,c.nom)}</span>`
+          +(CANAL_ETAT[c.id]?`<span class="etat ${CANAL_ETAT[c.id][0]}">${CANAL_ETAT[c.id][1]}</span>`:'')
+          +(()=>{ const inf={}, u=lienCanal(p,c,inf);
+            return u?`<a class="cvoir" href="${esc(u)}" target="_blank" rel="noopener" title="${esc(inf.brouillon?L3('Brouillon : pas visible du public. Ouvre l\'aperçu (il faut être connecté à l\'administration du site).','Draft: not public. Opens the preview (you must be logged in to the site admin).','Borrador: no es público. Abre la vista previa (hay que estar conectado a la administración del sitio).'):L3('Ouvrir ce parfum sur ','Open this perfume on ','Abrir este perfume en ')+c.nom)}">${inf.brouillon?L3('Voir le brouillon','See the draft','Ver el borrador'):L3('Voir sur la boutique','See on the shop','Ver en la tienda')} ↗</a>`:''; })();
+        if(horsCanal(p,c.id)) return `<div class="cn off"><div class="c1">${tete}</div>
+          <div class="c2"><span class="offtx">pas vendu ici</span></div><div class="c3"></div><div class="c4"></div>
+          <div class="c5"><button class="offb" data-on="${c.id}">Remettre ce canal</button></div></div>`;
+        /* Igal, 17 oct. 2026 (le gros) : « le prix de l'outil, ce que le client paie, un avertissement, et une case "prix de vente" : ça porte
+           à confusion, il faut juste un endroit où noter le prix ». Pour le site de gros, quand on connaît son prix en ligne : UNE case, ce prix.
+           Elle part sur le site à l'Enregistrer, et l'outil reprend ce prix (voir envoiePrixSite) ; plus de ligne « ⚠ pas 19 », plus de second prix. */
+        /* Précision d'Igal, même jour : « cette partie reste intéressante seulement quand il y a un cross price (prix barré + promo). Sinon aucun
+           intérêt de laisser les prix sur deux cases différentes. » Donc : le site de détail aussi n'a qu'UNE case tant qu'il n'a pas de promo ;
+           avec une promo (prix barré + prix payé), il garde ses deux cases. Le gros n'a jamais qu'un prix. */
+        const fG=COTE_SITE[c.id]?((siteDe(p)||{})[COTE_SITE[c.id]]):null;
+        const uni=!!(fG&&fG.pr!==undefined&&(fG.ps!=null?fG.ps:fG.pr)!=null&&(c.id==='sitegros'||(fG.ps==null&&!(FICHE.promoOuv&&FICHE.promoOuv[c.id]))));
+        let {v,man,src}=prixCanal(p,c); if(uni){ v=fG.ps!=null?fG.ps:fG.pr; }
+        const t=margeNette(p,c,v), chg=FICHE.brouillon.pc&&FICHE.brouillon.pc[c.id]!==undefined;
+        const frais=v!=null?r2(v*(c.com||0)/100):null, reste=(v!=null&&p.pa!=null)?r2(v-(frais||0)-p.pa):null;
+        const calc = !VMG ? '' : v==null ? `<span class="calc vide">Pas de prix : tape-le.</span>`
+          : p.pa==null ? `<span class="calc vide">Prix d'achat inconnu.</span>`
+          : `<div class="calc2"><b class="${pcCls(t)}">${money2(reste)}</b><small>${pc(t)} du prix</small>
+             <span>${money2(v)}${c.com?` − ${money2(frais)} ${L3('frais','fees','gastos')} (${String(c.com).replace('.',',')} %)`:''} − ${money2(p.pa)} ${L3('achat','purchase','compra')}</span></div>`;
+        /* colonne 3 : ce que le client paie vraiment */
+        let paie='';
+        if(c.id==='site'||c.id==='sitegros'){
+          /* une seule ligne : ce que le client paie ; les cases (prix barré, promo, envoyer) sous « régler » */
+          const e=siteDe(p), f=e&&e[COTE_SITE[c.id]], paye=f?(f.ps!=null?f.ps:f.pr):null;
+          const autre=v!=null&&paye!=null&&Math.abs(v-paye)>=0.005;
+          const box=surSite(p,c,v);
+          paie = !f ? (retireCote(p,COTE_SITE[c.id])&&peutPrixSite() ? `<div class="sbd">${box}</div>` : `<div class="azp"><small>${L3(retireCote(p,COTE_SITE[c.id])?'retirée de la vente':'pas sur ce site',retireCote(p,COTE_SITE[c.id])?'taken off sale':'not on this site',retireCote(p,COTE_SITE[c.id])?'retirada de la venta':'no está en este sitio')}</small>${!retireCote(p,COTE_SITE[c.id])&&peutPrixSite()&&p.qte>0&&melOk()?`<button class="lnk" data-mel1="${c.id}">Mettre en ligne</button>`:''}</div>`)
+            /* Igal, 11 oct. 2026 : « je veux que tu me les laisses ouvertes » — les cases restent visibles */
+            : `<div class="sbd${autre?' autre':''}"><div class="sbs"><b data-nolang>${paye!=null?money2(paye):L3('sans prix','no price','sin precio')}</b><small>${L3('payé par le client','paid by the customer','pagado por el cliente')}</small></div>${peutPrixSite()?box:''}</div>`; }
+        else if(c.id==='amazon'){ const az=prixAmazonDe(p);
+          paie = az ? `<div class="azp"><span class="sbt">sur Amazon</span><b data-nolang>${money2(az.prix)}</b>${az.qte!=null?`<small>${nf(az.qte)} ${L3('en vente','on sale','en venta')}</small>`:''}<small>${L3('annonce du','listing of','anuncio del')} ${az.le?jourFr(String(az.le).slice(0,10)):'—'}</small>
+              ${v!=null&&Math.abs(v-az.prix)>=0.005?`<div class="sbw">⚠ ${L3('Amazon vend à','Amazon sells at','Amazon vende a')} <b>${money2(az.prix)}</b>, ${L3('pas','not','no')} <b>${money2(v)}</b>. <button class="lnk" data-prend="amazon" data-pv="${az.prix}">${L3('prendre le prix Amazon','use the Amazon price','usar el precio de Amazon')}</button></div>`:''}</div>`
+            : `<div class="azp"><span class="sbt">sur Amazon</span><small>${L3('prix inconnu : importe le rapport des annonces dans le cockpit','unknown price: import the listings report in the cockpit','precio desconocido: importa el informe de anuncios en el cockpit')}</small></div>`; }
+        else if(c.id==='perfumecity'){ const sh=prixShopifyDe(p);
+          paie = !sh ? `<div class="azp"><span class="sbt">sur Shopify</span><small>${L3('pas trouvé : le code-barres n\'est pas sur Shopify','not found: the barcode is not on Shopify','no encontrado: el código de barras no está en Shopify')}</small>${peutPrixSite()&&p.qte>0&&melOk()?`<button class="lnk" data-mel1="perfumecity">${L3('Mettre en ligne','Put online','Poner en línea')}</button>`:''}</div>`
+            : sh.amb ? `<div class="azp"><span class="sbt">sur Shopify</span><small class="sbw">⚠ ${L3('ce code-barres est sur plusieurs produits de Shopify : à corriger là-bas','this barcode is on several Shopify products: fix it there','este código está en varios productos de Shopify: corrígelo allí')}</small></div>`
+            : `<div class="azp"><span class="sbt">sur Shopify</span><b data-nolang>${money2(sh.prix)}</b>${sh.actif?(peutPrixSite()&&p.qte>0&&melOk()?`<button class="lnk" data-pcpub="${esc(p.bc||'')}" title="${L3('Repose le stock de l\'ERP et publie le produit sur les canaux de vente de la boutique','Re-posts the ERP stock and publishes the product on the shop\'s sales channels','Vuelve a poner el stock y publica el producto en los canales de la tienda')}">${L3('Publier / stock '+nf(p.qte),'Publish / stock '+nf(p.qte),'Publicar / stock '+nf(p.qte))}</button>`:''):`<small>${L3('brouillon','draft','borrador')}</small>${peutPrixSite()&&p.qte>0&&melOk()?`<button class="lnk" data-pcpub="${esc(p.bc||'')}">${L3('Mettre en vente (stock : '+nf(p.qte)+')','Put on sale (stock: '+nf(p.qte)+')','Poner en venta (stock: '+nf(p.qte)+')')}</button>`:''}`}${sh.barre?`<small>${L3('barré','was','tachado')} ${money2(sh.barre)}</small>`:''}
+              ${v!=null&&Math.abs(v-sh.prix)>=0.005?`<div class="sbw">⚠ ${L3('Shopify vend à','Shopify sells at','Shopify vende a')} <b>${money2(sh.prix)}</b>, ${L3('pas','not','no')} <b>${money2(v)}</b>. ${prixPCOk()?`<span>${L3('Enregistrer envoie le nouveau prix à Shopify.','Save sends the new price to Shopify.','Guardar envía el nuevo precio a Shopify.')}</span> `:''}<button class="lnk" data-prend="perfumecity" data-pv="${sh.prix}">${L3('prendre le prix Shopify','use the Shopify price','usar el precio de Shopify')}</button></div>`:''}</div>`; }
+        else paie=`<div class="azp"><small>${L3('ventes non reliées','sales not connected','ventas no conectadas')}</small></div>`;
+        if(uni) return `<div class="cn uni" data-cn="${c.id}">
+          <div class="c1">${tete}</div>
+          <div class="c2"><div class="usb" data-sbx="${c.id}" style="display:contents">${peutPrixSite()
+            ? `<div class="in"><input data-sb="${c.id}" type="number" step="0.01" min="0" inputmode="decimal" value="${Number(v).toFixed(2)}"><em>$</em></div>`
+            : `<div class="in"><b data-nolang style="font-size:24px">${money2(v)}</b></div>`}
+            <span class="rl">${L3('prix de vente','selling price','precio de venta')}</span></div>
+            ${c.id==='site'&&peutPrixSite()?`<button class="lnk" data-promo-ouvre="${c.id}">${L3('+ ajouter un prix promo (prix barré)','+ add a promo price (crossed-out price)','+ añadir un precio promo (precio tachado)')}</button>`:''}</div>
+          <div class="c3"></div>
+          <div class="c4">${calc}</div>
+          <div class="c5"><button class="offb" data-off="${c.id}" title="Ce parfum n'est pas vendu sur ${esc(c.nom)}">ne pas vendre ici</button></div>
+        </div>`;
+        return `<div class="cn${man?' man':''}${chg?' ch':''}" data-cn="${c.id}">
+          <div class="c1">${tete}</div>
+          <div class="c2"><div class="in"><input data-pc="${c.id}" type="number" step="any" inputmode="decimal" value="${v==null?'':v}" placeholder="—"><em>$</em></div>
+            <span class="rl">${man?`saisi à la main · <button data-pcr="${c.id}">revenir au calcul</button>`:esc(sourcePrix(p,c,false,src))}</span></div>
+          <div class="c3">${paie}</div>
+          <div class="c4">${calc}</div>
+          <div class="c5"><button class="offb" data-off="${c.id}" title="Ce parfum n'est pas vendu sur ${esc(c.nom)}">ne pas vendre ici</button></div>
         </div>`; }).join('')}</div>
       ${p.src?`<div class="dinfo">Le prix retail vient de <b>perfumestrade.com</b>, il n'était pas dans l'inventaire.
-        ${p.src===2?'<b style="color:var(--crit)">Il est inférieur ou égal au prix d\'achat</b> — à ne pas reprendre tel quel.':'À valider.'}</div>`:''}
+        ${p.src===2&&VPA?'<b style="color:var(--crit)">Il est inférieur ou égal au prix d\'achat</b> — à ne pas reprendre tel quel.':'À valider.'}</div>`:''}
     </details>
 
-    ${blocHistorique(p)}
+    ${VPA?blocHistorique(p):''}
 
-    ${blocMarche(p)}
 
-    <div class="dsec"><h3>Identification</h3>
-      <div class="dgrid">${CH.slice(0,6).map(champ).join('')}</div>
-      <div class="dgrid" style="grid-template-columns:1fr;margin-top:8px">${[['bcs','Autres codes-barres de la même référence (séparés par des virgules)','-','txt']].map(champ).join('')}</div>
-      <div class="dinfo" style="margin-top:6px">Le même parfum arrive parfois avec un code différent (autre lot, autre emballage, coffret). Scanné dans une facture, une vente ou un comptage, chacun de ces codes ramène à cette fiche.</div></div>
-
-    <div class="dsec"><h3>Fournisseurs</h3>
-      ${frnHtml||'<div class="dinfo">Aucun fournisseur enregistré pour cette référence.</div>'}
-      <button class="btn" id="dfrn" style="align-self:flex-start">+ Ajouter un fournisseur</button>
-      <div id="dfsyn">${synthFrn()}</div>
+    <!-- 11 oct. 2026 (Igal : « arrange-moi cette partie, vraiment pas jolie ») : une seule carte
+         propre — les champs encadrés sur trois colonnes, les autres codes en champ facultatif avec
+         une courte aide, les fournisseurs en dessous, et l'état de la fiche en une ligne. -->
+    <div class="dsec dident"><h3>Identification</h3>
+      <div class="dcard">
+        <div class="dgrid dg3">${CH.slice(0,6).map(champ).join('')}</div>
+        <div class="dgrid" style="grid-template-columns:1fr;margin-top:10px">${[['bcs','Autres codes-barres de la même référence','-','txt','ex. 3348900012345, 3348900012346']].map(champ).join('')}</div>
+        <div class="dhint">Le même parfum arrive parfois sous un autre code (autre lot, emballage, coffret) : chacun de ces codes ramène à cette fiche.</div>
+        <div class="dline"><span>Nom d'origine dans le fichier : <b data-nolang>${esc(p.nomSrc||p.nom||'—')}</b></span>
+          <span>Photo : ${p.img?'<b>oui</b>':'<b style="color:var(--warn)">aucune</b>'}</span>
+          <span>${mq.length?`À compléter : <b style="color:var(--warn)">${mq.join(', ')}</b>`:'<b style="color:var(--good)">Fiche complète</b>'}</span></div>
+      </div>
     </div>
 
-    <div class="dsec"><h3>Fiche</h3>
-      <div class="dinfo">
-        Nom d'origine dans le fichier : <span class="mono">${esc(p.nomSrc||p.nom||'—')}</span><br>
-        Photo : ${p.img?'<b>locale, calibrée 800 × 800</b>':'<b style="color:var(--warn)">aucune</b>'}<br>
-        ${mq.length?`À compléter : <b>${mq.join(', ')}</b>`:'<b style="color:var(--good)">Fiche complète</b>'}
+    ${VPA?`<div class="dsec dfrns"><h3>Fournisseurs</h3>
+      <div class="dcard">
+        ${frnHtml||'<div class="dhint">Aucun fournisseur enregistré pour cette référence.</div>'}
+        <div class="dbtns"><button class="btn" id="dfrn">+ Ajouter un fournisseur</button></div>
+        <div id="dfsyn">${synthFrn()}</div>
       </div>
-    </div>`;
+    </div>`:''}`;
   const n=Object.keys(FICHE.brouillon).length;
   $('dst').textContent=n?`${n} modification${n>1?'s':''} non enregistrée${n>1?'s':''}`:'';
   $('dst').className='st';
@@ -2443,7 +4445,7 @@ function synthFrn(){
    TANT QU'UNE CASE DE LA FICHE A LE FOCUS, ON NE REDESSINE PAS. Le recalcul se fait quand on
    quitte les cases (clic ailleurs, Tab hors du groupe), ou à l'enregistrement. */
 let T_REDRAW=0;
-const enSaisie=()=>{ const a=document.activeElement; return !!(a&&a.dataset&&(a.dataset.k!==undefined||a.dataset.pc!==undefined)); };
+const enSaisie=()=>{ const a=document.activeElement; return !!(a&&a.dataset&&(a.dataset.k!==undefined||a.dataset.pc!==undefined||a.dataset.sb!==undefined||a.dataset.sp!==undefined)); };
 function redessineApres(){
   clearTimeout(T_REDRAW);
   const marque=$('dst');
@@ -2464,6 +4466,8 @@ function redessineFiche(){
 }
 $('ddb').addEventListener('input',e=>{
   const t=e.target;
+  if(t.dataset.sb!==undefined||t.dataset.sp!==undefined){ majEnvoi(t.dataset.sb||t.dataset.sp); return; }
+  if(t.dataset.sr!==undefined||t.dataset.srp!==undefined){ marqueSite(); return; }
   if(t.dataset.pc){
     const id=t.dataset.pc, base=cur[FICHE.pos];
     const v = t.value===''? null : +t.value;
@@ -2476,6 +4480,7 @@ $('ddb').addEventListener('input',e=>{
   }
   if(t.dataset.k){
     const k=t.dataset.k; let v=t.value;
+    if(k==='qte') FICHE.qteTapee=true;   /* même chiffre retapé : on l'enverra quand même aux sites */
     if(NUM.has(k)) v = v===''? (k==='qte'?0:null) : +v;
     FICHE.brouillon[k]=v;
     const base=cur[FICHE.pos];
@@ -2558,6 +4563,16 @@ $('ddb').addEventListener('click',e=>{
     else FICHE.brouillon.pcOff=L;
     dessineFiche(); return;
   }
+  const po=e.target.closest('[data-promo-ouvre]');
+  if(po){ /* « + ajouter un prix promo » : la ligne passe en deux cases (prix barré + promo), avec le prix actuel comme prix barré */
+    FICHE.promoOuv=Object.assign({},FICHE.promoOuv||{},{[po.dataset.promoOuvre]:true}); dessineFiche(); return; }
+  const pd=e.target.closest('[data-prend]');
+  if(pd&&(pd.dataset.prend==='amazon'||pd.dataset.prend==='perfumecity')){ /* « prendre le prix Amazon / Shopify » : le prix de l'outil pour ce canal devient celui de l'annonce */
+    const pc=Object.assign({},FICHE.brouillon.pc||{}); pc[pd.dataset.prend]=+pd.dataset.pv; FICHE.brouillon.pc=pc; dessineFiche(); return; }
+  if(pd){ const box=document.querySelector(`[data-sbx="${pd.dataset.prend}"]`); if(box){
+      const sp=box.querySelector('[data-sp]'), sb=box.querySelector('[data-sb]');
+      if(sp&&sp.value!=='') sp.value=(+pd.dataset.pv).toFixed(2); else sb.value=(+pd.dataset.pv).toFixed(2);
+      majEnvoi(pd.dataset.prend); } return; }
   const pr=e.target.closest('[data-pcr]');
   if(pr){ const id=pr.dataset.pcr, base=cur[FICHE.pos];
     const pc=Object.assign({},FICHE.brouillon.pc||{});
@@ -2598,30 +4613,314 @@ function lignesPrix(){
   });
   return L;
 }
-function confirmePrix(L){
-  const ko=L.some(l=>l.st==='ko');
-  $('pxb').innerHTML=`<table class="pxt"><thead><tr><th>Prix</th><th class="r">Avant</th><th class="r">Après</th><th>Résultat</th></tr></thead>
+function confirmePrix(L,envois){
+  envois=envois||[];
+  const ko0=L.some(l=>l.st==='ko');
+  /* 9 oct. 2026 (Igal : « pour Sam et moi, si on décide de vendre au prix d'achat ou à perte,
+     ne refuse jamais ») : le Patron et l'admin voient l'avertissement mais enregistrent quand
+     même, et le prix part aussi aux sites. Les autres comptes restent bloqués sous le plancher. */
+  const libre=peutPrixSite(), ko=ko0&&!libre;
+  /* 20 oct. 2026 (Igal : « Sam est obligé de valider plusieurs fois le changement de prix, en cliquant sur plusieurs fenêtres à la suite ») :
+     UNE seule fenêtre à l'Enregistrer. Elle montre tout : les prix tapés dans les cases des sites (WooCommerce), celui de Perfume City
+     (Shopify) et les prix de l'outil. Un seul « Enregistrer » les valide et les envoie, sans autre question. */
+  const resume=envois.length?`<div class="pxenv" style="margin:0 0 14px"><p style="margin:0 0 8px"><b>${L3('Envoyé tout de suite sur les sites :','Sent to the websites right away:','Enviado a los sitios de inmediato:')}</b></p>${envois.map(m=>`<p style="white-space:pre-line;margin:0 0 10px;padding:8px 10px;border-left:3px solid var(--iris);background:var(--surface-2);font-size:13px;line-height:1.5">${esc(vf(String(m)).replace(/\n\n[^\n]*Continuer \?\s*$/,'').replace(/\n*Continuer \?\s*$/,''))}</p>`).join('')}</div>`:'';
+  $('pxb').innerHTML=resume+(L.length?`<table class="pxt"><thead><tr><th>Prix</th><th class="r">Avant</th><th class="r">Après</th><th>Résultat</th></tr></thead>
     <tbody>${L.map(l=>`<tr class="${l.cls||''}"><td>${esc(l.lib)}${l.inchange?' <span class="st na">(inchangé)</span>':''}</td>
       <td class="r av">${l.av==null?'—':money(l.av)}</td><td class="r ap">${l.ap==null?'—':money(l.ap)}</td>
-      <td><span class="st ${l.st}">${esc(l.txt)}</span></td></tr>`).join('')}</tbody></table>
+      <td><span class="st ${l.st}">${esc(l.txt)}</span></td></tr>`).join('')}</tbody></table>`:'')+`
     <div class="pxnote">${ko?`<b>Un prix est sous le plancher.</b> Le plancher, c'est le prix d'achat plus ${REG.margeMin||0} % de marge minimum,
       commission du canal comprise. Corrige-le dans la fiche : rien n'est enregistré tant qu'il est là.`
+      :ko0?`<b>Un prix est sous le plancher — tu peux quand même l'enregistrer.</b> Le plancher, c'est le prix d'achat plus ${REG.margeMin||0} % de marge minimum,
+      commission du canal comprise. Rien n'est refusé : tu décides, et le prix part au journal avec ton nom.`
       :`<b>Vérifie les marges avant de valider.</b> La marge nette tient compte de la commission de chaque canal.
       Une fois enregistré, chaque prix part au journal avec ton nom, la date et l'heure.`}</div>`;
+  /* Sam, 3 oct. 2026 (Opium pour Homme à 95 $, « ça n'a pas changé sur WooCommerce ») : ce que
+     ce nouveau prix change sur les sites, dans la MÊME fenêtre, coché d'office. Décoché, les
+     sites gardent leur prix. */
+  if(!ko&&prixSitesOk()&&(!envois.length||L.length)){   /* des cases de sites SEULES (aucun prix d'outil touché) : pas de proposition en plus */
+    const base=cur[FICHE.pos], d=Object.assign({},base,FICHE.brouillon);
+    d.pc=Object.assign({},base.pc||{},FICHE.brouillon.pc||{}); Object.keys(d.pc).forEach(k=>{ if(d.pc[k]==null) delete d.pc[k]; });
+    /* un site dont la case est en attente reçoit CE qui est tapé dans sa case (envoyé juste avant) : le prix de l'outil ne le repasse pas */
+    const excl=envois.length?boitesEnAttente().map(x=>x.cid):[];
+    let {plan,bas,garde}=planPrixSites(d); plan=plan.filter(x=>!excl.includes(x.cid));
+    if(plan.length||bas.length||garde.length) $('pxb').insertAdjacentHTML('beforeend',`<div class="pxsit">
+      ${plan.length?`<label class="pxsc"><input type="checkbox" id="pxsites" checked> <span>Mettre aussi ces prix sur les sites</span></label>
+      <ul>${plan.map(x=>`<li>${lignePlanSite(x)}</li>`).join('')}</ul>`:''}
+      ${bas.length?`<p class="pxbas">Sous le prix d'achat : pas envoyé sur ${esc(bas.join(', '))}.</p>`:''}
+      ${garde.length?`<p class="pxbas"><span>Le prix de l'outil dépasse le prix barré du site : rien n'est changé sur</span> ${esc(garde.join(', '))}. <span>Règle le prix barré et la promo dans la case « sur le site ».</span></p>`:''}</div>`);
+  }
   $('pxok').disabled=ko; $('pxmsg').textContent=ko?'enregistrement bloqué':'';
   $('pxov').classList.add('on');
 }
-$('pxx').onclick=$('pxc').onclick=()=>$('pxov').classList.remove('on');
-$('pxok').onclick=()=>{ $('pxov').classList.remove('on'); enregistreFiche(); };
+$('pxx').onclick=$('pxc').onclick=()=>{ $('pxov').classList.remove('on'); if(FICHE){ FICHE.envoisSites=false; FICHE.repForce=null; } };
+$('pxok').onclick=async()=>{
+  if(!FICHE) return;
+  FICHE.pxSites=!!($('pxsites')&&$('pxsites').checked); $('pxov').classList.remove('on');
+  FICHE.pxExclu=FICHE.envoisSites?boitesEnAttente().map(x=>x.cid):[];
+  /* les prix des cases des sites et de Perfume City partent maintenant, SANS reposer de question : cette fenêtre est leur validation */
+  if(FICHE.envoisSites){
+    FICHE.envoisSites=false;   /* les sites dont la case est en attente sont exclus du prix de l'outil (pxExclu) ; les autres suivent la case cochée */
+    $('dok').disabled=true;
+    try{
+      if(boitesEnAttente().length && !(await envoieBoitesSite('envoie'))) return;
+      if(!FICHE) return;
+      if(pcShopEnAttente() && !(await envoiePCShopify('envoie'))) return;
+    } finally { $('dok').disabled=false; if(FICHE) FICHE.repForce=null; }
+    if(!FICHE) return;
+  }
+  enregistreFiche();
+};
 
-$('dok').onclick=()=>{
-  const b=FICHE.brouillon;
+/* Le prix tapé pour Perfume City part sur Shopify à l'Enregistrer (15 oct. 2026), comme les cases des sites WooCommerce :
+   un seul produit, confirmé, par le Patron ou l'admin ; le cockpit relit le produit juste avant d'écrire et refuse si le prix
+   a changé entre-temps. Seule une modification tapée dans CETTE ouverture de fiche compte : un ancien prix manuel resté dans
+   la fiche ne redemande rien à chaque enregistrement. */
+function pcShopEnAttente(){
+  if(!prixPCOk()||!FICHE) return null;
+  const base=cur[FICHE.pos], b=FICHE.brouillon.pc&&FICHE.brouillon.pc.perfumecity;
+  if(!base||b==null||b==='') return null;
+  const sh=prixShopifyDe(base); if(!sh||sh.amb||!(sh.prix>0)) return null;
+  const n=Math.round(+b*100)/100; if(!(n>0)||Math.abs(n-sh.prix)<0.005) return null;
+  return {k:sh.k,nouveau:n,attendu:sh.prix,base};
+}
+async function envoiePCShopify(mode){
+  const x=pcShopEnAttente(); if(!x) return true;
+  const {base}=x, p=Object.assign({},base,FICHE.brouillon);
+  const ref=(base.marque||'')+' '+(base.nom||'');
+  const sousPA=(p.pa!=null&&x.nouveau<p.pa), ec=x.attendu?Math.abs(x.nouveau-x.attendu)/x.attendu*100:0;
+  /* qui ne voit pas les prix d'achat n'apprend jamais le prix d'achat par un message d'erreur : on refuse sans le chiffre */
+  const voitPA=typeof peut!=='function'||peut('voirPA');
+  if(sousPA&&!peutPrixSite()){ alert(vf('Ce prix est trop bas : le prix n\'a pas été changé sur Shopify.\n\nDemande au patron.')); return false; }
+  const msg=`« ${ref} » chez Perfume City (Shopify) :\n\nprix : ${money2(x.attendu)} → ${money2(x.nouveau)}\n\nLe client paiera ${money2(x.nouveau)}.`
+    +(sousPA?`\n\nAttention : c'est moins que le prix d'achat${voitPA?' ('+money2(p.pa)+')':''}. Tu vends à perte.`:'')
+    +(ec>20?`\n\nAttention : ${Math.round(ec)} % d'écart avec le prix affiché aujourd'hui.`:'')
+    +`\n\nLe prix change tout de suite sur Shopify. Continuer ?`;
+  if(mode==='resume') return msg;
+  if(mode!=='envoie'&&!confirm(vf(msg))) return false;
+  if(!demandeUser(false,'changer un prix sur Shopify',()=>{})) return false;
+  try{
+    const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/shopify/prix',{method:'POST',
+      headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},
+      body:JSON.stringify({bc:base.bc,prix:x.nouveau,attendu:x.attendu})});
+    const j=await r.json().catch(()=>({}));
+    if(j&&j.avant!=null&&!j.ok) PCSHOP_OVR[x.k]=j.avant;      /* même en cas de refus : l'outil montre le vrai prix de Shopify */
+    if(!r.ok) throw new Error(j.erreur||('erreur '+r.status));
+    PCSHOP_OVR[x.k]=j.apres;
+    /* le prix de Shopify est maintenant celui de l'outil : plus rien d'« en attente » pour ce canal */
+    const b=FICHE.brouillon; if(b.pc){ delete b.pc.perfumecity; if(!Object.keys(b.pc).length) delete b.pc; }
+    const m=MOD[base.id]=MOD[base.id]||{}; if(m.pc){ delete m.pc.perfumecity; if(!Object.keys(m.pc).length) delete m.pc; } sauveMOD();
+    if(!j.inchange) log({act:'prix',lib:'prix changé chez Perfume City (Shopify)',bc:base.bc,ref,av:money2(j.avant),ap:money2(j.apres)});
+    render(); const l=cur.findIndex(y=>y.id===base.id); if(l>=0) FICHE.pos=l; dessineFiche();
+    $('dst').textContent=vf(`${money2(j.apres)} en ligne chez Perfume City`); $('dst').className='st ok';
+    return true;
+  }catch(err){
+    dessineFiche();
+    alert(vf('Le prix n\'a pas été changé sur Shopify.\n\n')+(err&&err.message||''));
+    return false;
+  }
+}
+/* ---- Supprimer définitivement un produit (Igal, 17 oct. 2026) ----
+   « un bouton sur la fiche catalogue quand je veux supprimer définitivement un produit, avec une deuxième validation ».
+   Seulement un produit AJOUTÉ À LA MAIN (les ~3 800 fiches du fichier de départ portent l'historique des ventes, des
+   achats et les liens avec les sites et la caisse : on ne les efface pas d'un clic), seulement le Patron et l'Admin
+   (le droit « annuler »), et jamais un produit déjà dans une facture : l'historique de la facture le citerait encore.
+   Deux validations : la fenêtre de confirmation, puis le mot SUPPRIMER à taper. Les sites et Lightspeed ne sont pas touchés. */
+function supprimeProduit(){
+  const F=FICHE; if(!F) return; const base=cur[F.pos]; if(!base||!base.neuf) return;
+  if(!(typeof peut==='function'&&peut('annuler'))){ alert(L3('Seuls le Patron et l\'Admin suppriment un produit.','Only the Owner and the Admin can delete a product.','Solo el Dueño y el Admin pueden eliminar un producto.')); return; }
+  AJ.forEach((o,k)=>{ if(o&&!o.id) o.id='a'+k; });          /* un produit sans identifiant le garde : l'index ne doit plus bouger */
+  const id=base.id, nom=((base.marque||'')+' '+(base.nom||'')).trim()||id;
+  const i=AJ.findIndex(o=>o&&o.id===id);
+  if(i<0){ alert(L3('Ce produit n\'est pas un produit ajouté à la main : il ne peut pas être supprimé ici.','This product was not added by hand: it cannot be deleted here.','Este producto no se añadió a mano: no se puede eliminar aquí.')); return; }
+  let facts=[]; try{ facts=(lit('factures-v1',[])||[]).filter(f=>f&&(f.lignes||[]).some(l=>l&&l.cle===id)); }catch(e){}
+  if(facts.length){
+    alert(L3(`« ${nom} » figure dans ${facts.length} facture${facts.length>1?'s':''} (${facts.slice(0,4).map(f=>f.num).join(', ')}${facts.length>4?'…':''}).\n\nIl ne peut pas être supprimé : l\'historique de ${facts.length>1?'ces factures':'cette facture'} le citerait encore.`,
+      `"${nom}" is on ${facts.length} invoice${facts.length>1?'s':''} (${facts.slice(0,4).map(f=>f.num).join(', ')}${facts.length>4?'…':''}).\n\nIt cannot be deleted: the history would still mention it.`,
+      `«${nom}» figura en ${facts.length} factura${facts.length>1?'s':''} (${facts.slice(0,4).map(f=>f.num).join(', ')}${facts.length>4?'…':''}).\n\nNo se puede eliminar: el historial lo seguiría citando.`));
+    return; }
+  const qte=+base.qte||0;
+  if(!confirm(L3(`Supprimer définitivement « ${nom} » ?\n\nCode-barres : ${base.bc||'—'}\nStock : ${qte}\n\nLe produit disparaît du Catalogue. Les sites et Lightspeed ne sont pas touchés.`,
+      `Permanently delete "${nom}"?\n\nBarcode: ${base.bc||'—'}\nStock: ${qte}\n\nThe product disappears from the Catalogue. The websites and Lightspeed are not touched.`,
+      `¿Eliminar definitivamente «${nom}»?\n\nCódigo de barras: ${base.bc||'—'}\nStock: ${qte}\n\nEl producto desaparece del Catálogo. Los sitios y Lightspeed no se tocan.`))) return;
+  const rep=prompt(L3(`Deuxième validation.\n\nPour supprimer « ${nom} » pour de bon, tape le mot SUPPRIMER :`,`Second confirmation.\n\nTo delete "${nom}" for good, type the word SUPPRIMER:`,`Segunda confirmación.\n\nPara eliminar «${nom}» definitivamente, escribe la palabra SUPPRIMER:`),'');
+  if(rep==null||rep.trim().toUpperCase()!=='SUPPRIMER'){ alert(L3('Rien n\'a été supprimé.','Nothing was deleted.','No se eliminó nada.')); return; }
+  AJ.splice(i,1); sauveAJ(); delete MOD[id]; sauveMOD();
+  log({act:'suppression',lib:'produit supprimé définitivement — '+nom,bc:base.bc||'',ref:nom,av:qte,ap:null});
+  fermeFiche(); render(); try{ remplitMarques(); }catch(e){}
+}
+/* ---- Modifier un parfum, le retirer du catalogue (Igal, 20 oct. 2026) ----
+   « Je veux avoir la possibilité de modifier ou de supprimer un parfum. » Modifier : marque, nom, contenance, type, genre — sur
+   n'importe quelle fiche, sans toucher au code-barres (c'est lui qui relie le parfum à l'historique, aux sites et à la caisse).
+   Retirer : les ~3 800 fiches du fichier de départ portent l'historique des ventes et des achats ; on ne les efface donc pas,
+   on les retire de la vue (réversible : filtre « Retirées du catalogue » › « Remettre au catalogue »). Refusé s'il reste du stock. */
+function ouvreIdentite(){
+  const F=FICHE; if(!F) return; const base=cur[F.pos]; if(!base) return;
+  if(typeof peut==='function'&&!peut('modPrix')) return;
+  let ov=$('idov');
+  if(!ov){ ov=document.createElement('div'); ov.className='ov'; ov.id='idov'; document.body.appendChild(ov); }
+  const g=base.genre||'';
+  ov.innerHTML=`<div class="mod" role="dialog" aria-modal="true"><div class="mh"><h2>${L3('Modifier le parfum','Edit the perfume','Modificar el perfume')}</h2><button class="x" id="idx" aria-label="Fermer">&times;</button></div>
+    <div class="mb"><div class="fg">
+      <div class="fld"><label>${L3('Marque','Brand','Marca')} <b>*</b></label><input id="id-marque" list="l-marques" autocomplete="off" value="${esc(base.marque||'')}"></div>
+      <div class="fld"><label>${L3('Nom du parfum','Perfume name','Nombre del perfume')} <b>*</b></label><input id="id-nom" autocomplete="off" value="${esc(base.nom||'')}"></div>
+      <div class="fld"><label>${L3('Contenance (oz)','Size (oz)','Contenido (oz)')}</label><input id="id-ml" inputmode="decimal" autocomplete="off" value="${esc(base.ml||'')}"></div>
+      <div class="fld"><label>${L3('Type','Type','Tipo')}</label><input id="id-type" list="l-types" autocomplete="off" placeholder="EDP, EDT…" value="${esc(base.type||'')}"></div>
+      <div class="fld"><label>${L3('Genre','Gender','Género')}</label><select id="id-genre"><option value="">${L3('— inconnu —','— unknown —','— desconocido —')}</option><option value="M"${g==='M'?' selected':''}>${L3('Homme','Men','Hombre')}</option><option value="W"${g==='W'?' selected':''}>${L3('Femme','Women','Mujer')}</option><option value="U"${g==='U'?' selected':''}>${L3('Unisexe','Unisex','Unisex')}</option><option value="K"${g==='K'?' selected':''}>${L3('Enfant','Kids','Niños')}</option></select></div>
+      <div class="fld"><label>${L3('Code-barres','Barcode','Código de barras')}</label><input id="id-bc" disabled value="${esc(base.bc||'')}"></div>
+    </div>
+    <p class="hint">${L3('Le code-barres ne se change pas ici : il relie ce parfum à son historique de ventes, aux sites et à la caisse. Les ventes passées restent attachées au parfum, avec le nouveau nom.','The barcode cannot be changed here: it links this perfume to its sales history, the websites and the register. Past sales stay attached to the perfume, under the new name.','El código de barras no se cambia aquí: une este perfume con su historial de ventas, los sitios y la caja. Las ventas pasadas siguen unidas al perfume, con el nuevo nombre.')}</p>
+    <div class="msg" id="id-msg"></div></div>
+    <div class="df"><span class="st"></span><button class="btn" id="id-ann">${L3('Annuler','Cancel','Cancelar')}</button><button class="btn pri" id="id-ok">${L3('Enregistrer','Save','Guardar')}</button></div></div>`;
+  ov.classList.add('on');
+  const ferme=()=>ov.classList.remove('on');
+  $('idx').onclick=$('id-ann').onclick=ferme;
+  $('id-ok').onclick=()=>enregistreIdentite(ferme);
+  setTimeout(()=>{ try{ $('id-nom').focus(); }catch(e){} },60);
+}
+function enregistreIdentite(ferme){
+  const F=FICHE; if(!F) return; const base=cur[F.pos]; if(!base) return;
+  const v={marque:$('id-marque').value.trim(),nom:$('id-nom').value.trim(),ml:$('id-ml').value.trim().replace(',','.'),type:$('id-type').value.trim(),genre:$('id-genre').value};
+  if(!v.marque||!v.nom){ $('id-msg').textContent=L3('La marque et le nom sont obligatoires.','Brand and name are required.','La marca y el nombre son obligatorios.'); return; }
+  if(v.ml&&!/^\d+(\.\d+)?$/.test(v.ml)){ $('id-msg').textContent=L3('La contenance est un nombre (ex. 3.4).','The size is a number (e.g. 3.4).','El contenido es un número (p. ej. 3.4).'); return; }
+  const chg=Object.keys(v).filter(k=>String(v[k]||'')!==String(base[k]||''));
+  if(!chg.length){ ferme(); return; }
+  if(!demandeUser(false,L3('modifier un parfum','edit a perfume','modificar un perfume'),()=>{})) return;
+  const id=base.id, m=Object.assign({},MOD[id]||{}); chg.forEach(k=>{ m[k]=v[k]; });
+  MOD[id]=m; sauveMOD();
+  const avant=((base.marque||'')+' '+(base.nom||'')).trim(), apres=(v.marque+' '+v.nom).trim();
+  log({act:'fiche',lib:'parfum modifié ('+chg.join(', ')+')'+(avant!==apres?' — « '+avant+' » devient « '+apres+' »':''),bc:base.bc||'',ref:apres,av:avant,ap:apres});
+  ferme(); render(); const l=cur.findIndex(x=>x.id===id); if(l>=0){ FICHE.pos=l; dessineFiche(); }
+  try{ remplitMarques(); }catch(e){}
+}
+function retireProduit(){
+  const F=FICHE; if(!F) return; const base=cur[F.pos]; if(!base||base.neuf) return;
+  if(!(typeof peut==='function'&&peut('annuler'))){ alert(L3('Seuls le Patron et l\'Admin retirent un parfum du catalogue.','Only the Owner and the Admin can remove a perfume from the catalogue.','Solo el Dueño y el Admin pueden quitar un perfume del catálogo.')); return; }
+  const id=base.id, nom=((base.marque||'')+' '+(base.nom||'')).trim()||id;
+  if(!demandeUser(false,L3('retirer un parfum du catalogue','remove a perfume from the catalogue','quitar un perfume del catálogo'),()=>{})) return;
+  const m=Object.assign({},MOD[id]||{});
+  if(base.masque){
+    delete m.masque; delete m.masquePar; delete m.masqueLe;
+    if(Object.keys(m).length) MOD[id]=m; else delete MOD[id];
+    sauveMOD(); log({act:'fiche',lib:'parfum remis au catalogue — '+nom,bc:base.bc||'',ref:nom,av:null,ap:null});
+  } else {
+    const qte=+base.qte||0;
+    if(qte>0){ alert(L3(`« ${nom} » a encore ${qte} flacon${qte>1?'s':''} en stock : il ne peut pas être retiré.\n\nMets d'abord son stock à 0 (inventaire ou vente), puis retire-le.`,`"${nom}" still has ${qte} bottle${qte>1?'s':''} in stock: it cannot be removed.\n\nSet its stock to 0 first, then remove it.`,`«${nom}» todavía tiene ${qte} frasco${qte>1?'s':''} en stock: no se puede quitar.\n\nPon primero su stock en 0 y luego quítalo.`)); return; }
+    if(!confirm(L3(`Retirer « ${nom} » du catalogue ?\n\nIl disparaît de la liste, mais son historique de ventes et d'achats est conservé. Tu pourras le remettre : filtre « Retirées du catalogue », puis « Remettre au catalogue ». Les sites et Lightspeed ne sont pas touchés.`,`Remove "${nom}" from the catalogue?\n\nIt disappears from the list, but its sales and purchase history is kept. You can put it back: filter "Removed from the catalogue", then "Put back in the catalogue". The websites and Lightspeed are not touched.`,`¿Quitar «${nom}» del catálogo?\n\nDesaparece de la lista, pero se conserva su historial de ventas y compras. Podrás volver a ponerlo: filtro «Quitadas del catálogo» y luego «Volver a poner en el catálogo». Los sitios y Lightspeed no se tocan.`))) return;
+    m.masque=true; m.masquePar=USR||''; m.masqueLe=new Date().toISOString(); MOD[id]=m; sauveMOD();
+    log({act:'suppression',lib:'parfum retiré du catalogue — '+nom,bc:base.bc||'',ref:nom,av:qte,ap:null});
+  }
+  fermeFiche(); render();
+}
+/* CHANGER LA PHOTO (Igal, 17 oct. 2026) : « on peut pas modifier la photo du produit ».
+   Choisie sur l'ordinateur ou prise au téléphone, réduite, gardée dans l'outil (photos-perso-v1),
+   et affichée à la place de celle du site. Ça ne touche ni les sites ni Lightspeed. */
+function photoDeFiche(){ const F=FICHE; return F&&cur[F.pos]; }
+/* la photo est prête (choisie sur l'ordinateur, ou trouvée sur Internet) : on la range et on redessine */
+function rangePhoto(base,u){
+  if(typeof peut==='function'&&!peut('modPrix')) return;
+  if(!demandeUser(false,L3('changer une photo','change a photo','cambiar una foto'),()=>{})) return;
+  PHO[base.id]=u;
+  try{ ecrit(KPHO,PHO); }catch(e){ delete PHO[base.id]; throw e; }
+  const nom=((base.marque||'')+' '+(base.nom||'')).trim();
+  log({act:'fiche',lib:'photo du produit changée — '+nom,bc:base.bc||'',ref:nom,av:null,ap:null});
+  render(); const l=cur.findIndex(x=>x.id===base.id); if(l>=0) FICHE.pos=l; dessineFiche();
+  const s2=$('dst'); if(s2){ s2.textContent=L3('photo changée','photo changed','foto cambiada'); s2.className='st ok'; }
+  diffusePhoto(base,u);
+}
+/* Igal, 17 oct. 2026 : « je veux modifier la photo sur l'ERP et qu'elle arrive sur WooCommerce ». La photo part toute seule
+   vers les canaux où le parfum existe déjà (les deux sites, Perfume City) ; là où il n'est pas, rien. Le résultat s'affiche
+   dans la fiche. Pas de cockpit (hors ligne) : la photo reste dans l'outil, et on le dit. */
+async function diffusePhoto(base,u){
+  const s2=$('dst'); const dit=(t,cls)=>{ const e=$('dst'); if(e){ e.textContent=t; e.className='st'+(cls?' '+cls:''); } };
+  if(typeof CK_URL==='undefined'||typeof ckTok!=='function'||!ckTok()){ dit(L3('photo changée — elle reste dans l\'outil (pas relié au cockpit)','photo changed — it stays in the tool (not connected to the cockpit)','foto cambiada — queda en la herramienta (sin cockpit)')); return; }
+  const data=/^data:image\/(jpeg|png|webp);base64,/.test(u||'')?u:'';
+  const url=/^https:\/\//.test(u||'')?u:'';
+  if(!data&&!url) return;
+  dit(L3('photo changée — envoi aux sites…','photo changed — sending to the websites…','foto cambiada — enviando a los sitios…'));
+  try{
+    const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/photo/diffuse',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},
+      body:JSON.stringify(Object.assign({bc:base.bc||'',nom:((base.marque||'')+' '+(base.nom||'')).trim()},data?{imageData:data}:{image:url}))});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(j.erreur||('erreur '+r.status));
+    const C=j.canaux||{}, N={site:'perfumestrade.com',sitegros:'wholesale.perfumestrade.com',perfumecity:'Perfume City'};
+    const ok=Object.keys(N).filter(k=>C[k]&&C[k].ok).map(k=>N[k]);
+    const ko=Object.keys(N).filter(k=>C[k]&&!C[k].ok&&!C[k].absent).map(k=>N[k]+' : '+(C[k].err||'refus'));
+    /* la photo du site a changé : on la range aussi ici, pour que la colonne « Sur les sites » la voie */
+    try{ Object.keys(COTE_SITE).forEach(k=>{ const c=C[k]; if(c&&c.ok&&c.img){ const kk=siteCle(base); const e=kk&&SITE[kk]&&SITE[kk][COTE_SITE[k]]; if(e) e.img=c.img; } }); ecrit(KSITE,SITE); _FMC=null; _SITE0=null; }catch(e){}
+    if(ok.length) log({act:'site',lib:'photo envoyée sur '+ok.join(', ')+' — '+((base.marque||'')+' '+(base.nom||'')).trim(),bc:base.bc||'',ref:'',av:null,ap:null});
+    dit((ok.length?L3('photo changée et envoyée sur ','photo changed and sent to ','foto cambiada y enviada a ')+ok.join(', '):L3('photo changée — ce parfum n\'est sur aucun site','photo changed — this perfume is not on any website','foto cambiada — este perfume no está en ningún sitio'))+(ko.length?' · '+ko.join(' · '):''),ko.length?'':'ok');
+  }catch(e){ dit(L3('photo changée dans l\'outil, mais pas envoyée aux sites : ','photo changed in the tool, but not sent to the websites: ','foto cambiada en la herramienta, pero no enviada a los sitios: ')+((e&&e.message)||'')); }
+}
+async function changePhoto(fichier){
+  const base=photoDeFiche(); if(!base||!fichier) return;
+  if(typeof peut==='function'&&!peut('modPrix')) return;
+  const st=$('dst');
+  try{ rangePhoto(base,await photoReduite(fichier)); }
+  catch(err){ if(st){ st.textContent=L3('Photo non enregistrée : ','Photo not saved: ','Foto no guardada: ')+(err&&err.message||''); st.className='st'; } }
+}
+/* Igal, 17 oct. 2026 : « chercher la photo sur Internet, proposer un choix, un clic pour l'intégrer » */
+async function photoDuWeb(){
+  const base=photoDeFiche(); if(!base) return;
+  if(typeof peut==='function'&&!peut('modPrix')) return;
+  const q=[base.marque,base.nom,base.ml?base.ml+' oz':'',base.type,'perfume'].map(v=>String(v||'').trim()).filter(Boolean).join(' ');
+  const u=await photoWeb(q); if(!u) return;
+  const b2=photoDeFiche(); if(!b2||b2.id!==base.id) return;
+  try{ rangePhoto(b2,u); }catch(err){ const st=$('dst'); if(st){ st.textContent=L3('Photo non enregistrée : ','Photo not saved: ','Foto no guardada: ')+(err&&err.message||''); st.className='st'; } }
+}
+function photoOrigine(){
+  const base=photoDeFiche(); if(!base||!PHO[base.id]) return;
+  if(!(typeof peut!=='function'||peut('modPrix'))) return;
+  delete PHO[base.id]; ecrit(KPHO,PHO);
+  log({act:'fiche',lib:'photo du produit remise à l\'origine — '+((base.marque||'')+' '+(base.nom||'')).trim(),bc:base.bc||'',ref:((base.marque||'')+' '+(base.nom||'')).trim(),av:null,ap:null});
+  render(); const l=cur.findIndex(x=>x.id===base.id); if(l>=0) FICHE.pos=l; dessineFiche();
+}
+$('ddb').addEventListener('click',e=>{
+  if(e.target.closest('[data-phchg]')){ const f=$('dphf'); if(f){ f.value=''; f.click(); } return; }
+  if(e.target.closest('[data-phweb]')){ photoDuWeb(); return; }
+  if(e.target.closest('[data-phrst]')){ photoOrigine(); }
+  if(e.target.closest('[data-phenv]')){ const b=photoDeFiche(); if(b&&b.img){ if(typeof peut==='function'&&!peut('modPrix')) return; diffusePhoto(b,b.img); } }
+});
+$('ddb').addEventListener('change',e=>{ if(e.target&&e.target.id==='dphf'&&e.target.files&&e.target.files[0]) changePhoto(e.target.files[0]); });
+document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('[data-sbr-go]'); if(!b||!FICHE) return;
+  const base=cur[FICHE.pos]; if(!base) return;
+  FICHE.repForce=Object.assign({},FICHE.repForce,{[base.id+'|'+b.dataset.sbrGo]:true});
+  $('dok').click(); });
+$('dsup').onclick=supprimeProduit;
+$('dmod').onclick=ouvreIdentite;
+$('dret').onclick=retireProduit;
+$('dok').onclick=async()=>{
+  /* les prix tapés dans les cases du site partent d'abord (Igal, 12 oct. 2026) ; si on annule ou si le site refuse, rien d'autre n'est enregistré.
+     20 oct. 2026 : une SEULE fenêtre de confirmation pour tout (cases des sites, Perfume City, prix de l'outil) — plus de fenêtres à la suite. */
+  if(!FICHE) return;
+  FICHE.envoisSites=false;
+  const attente=boitesEnAttente(), pcA=pcShopEnAttente(), b=FICHE.brouillon;
   const prixChg=['pa','pvw','pvr'].some(k=>b[k]!==undefined)||b.pc!==undefined;
+  if(attente.length||pcA){
+    const envois=[];
+    /* on valide d'abord, sans rien envoyer : un prix absurde (promo au-dessus du prix barré…) est refusé avant toute question */
+    for(const x of attente){ const m=await (x.retire?remetsPrixSite(x.cid,'resume'):envoiePrixSite(x.cid,'resume')); if(m===false){ FICHE.repForce=null; return; } if(typeof m==='string') envois.push(m); }
+    if(!FICHE) return;
+    if(pcA){ const m=await envoiePCShopify('resume'); if(m===false) return; if(typeof m==='string') envois.push(m); }
+    if(!FICHE) return;
+    if(!envois.length){ if(prixChg){ confirmePrix(lignesPrix()); return; } enregistreFiche(); return; }
+    FICHE.envoisSites=true;
+    confirmePrix(prixChg?lignesPrix():[],envois); return;
+  }
   if(prixChg){ confirmePrix(lignesPrix()); return; }
   enregistreFiche();
 };
 function enregistreFiche(){
   const id=FICHE.id;
+  /* Igal, 1er oct. 2026 : « quand je vais dans quantité en stock, il y a écrit zéro, mais le
+     site dit 32 — je veux pouvoir la mettre à zéro et qu'elle apparaisse à zéro sur les sites ».
+     Retaper le même chiffre ne change rien chez nous, donc l'envoi automatique ne partait
+     pas. La quantité tapée part donc aussi aux sites à l'enregistrement, s'ils disent autre
+     chose. Quand le chiffre change et que l'envoi automatique est allumé, c'est lui qui s'en
+     charge (pas de double question). */
+  const qteTapee=!!FICHE.qteTapee, qteChange=FICHE.brouillon.qte!==undefined;
+  const prixChange=['pvr','pvw','pc'].some(k=>FICHE.brouillon[k]!==undefined), pxSites=!!FICHE.pxSites, pxExclu=FICHE.pxExclu||[];
+  FICHE.pxSites=false; FICHE.pxExclu=null;
+  FICHE.qteTapee=false;
   const base=cur[FICHE.pos];
   const nch=Object.keys(FICHE.brouillon).length;
   const frnAv=JSON.stringify((MOD[id]&&MOD[id].frn)||[]);
@@ -2667,21 +4966,91 @@ function enregistreFiche(){
   dessineFiche();
   $('dst').textContent='enregistré'; $('dst').className='st ok';
   setTimeout(()=>{ if(FICHE) $('dst').textContent=''; },2200);
+  const auto=qteChange&&typeof _ssAllume==='function'&&_ssAllume();
+  if(qteTapee&&!auto) setTimeout(()=>{ if(FICHE&&FICHE.id===id) envoieStockSites(null); },60);
+  if(prixChange&&pxSites) setTimeout(()=>{ envoiePrixFiche(id,undefined,undefined,pxExclu); },qteTapee&&!auto?900:80);
+  try{ remplitMarques(); }catch(e){}
 }
-$('dann').onclick=()=>{ FICHE.brouillon={};
+/* ---- Le prix changé dans la fiche part aussi sur les sites (Sam, 3 oct. 2026) ----
+   « J'ai voulu changer le prix d'Opium pour Homme, le mettre à 95 $, mais ça n'a pas changé
+   sur WooCommerce. » Le prix retail et le prix de gros de la fiche sont ceux de l'ERP ; les
+   sites ne bougeaient que par la case « sur le site » de Mes canaux de vente, que Sam n'avait
+   pas vue. Désormais, quand il enregistre un nouveau prix, l'ERP lui propose de le mettre
+   aussi sur les sites — une seule question, qui dit pour chaque site ce que le client paie
+   aujourd'hui et ce qu'il paiera. Sur un site en promo, c'est la promo qui change (le prix
+   barré reste) ; si le nouveau prix dépasse le prix barré, il devient le prix normal et la
+   promo s'enlève. Jamais sous le prix d'achat. Seul le Patron peut le faire, comme avant. */
+function planPrixSites(p){
+  const plan=[], bas=[], garde=[];
+  const e=siteDe(p); if(!e) return {plan,bas,garde};
+  canaux().forEach(c=>{
+    const cote=COTE_SITE[c.id]; if(!cote||horsCanal(p,c.id)) return;
+    const f=e[cote]; if(!f||f.pr===undefined) return;
+    const v=prixCanal(p,c).v; if(v==null||!(v>0)) return;
+    const paye=f.ps!=null?f.ps:f.pr;
+    if(paye!=null&&Math.abs(v-paye)<0.005) return;
+    const nomSite=cote==='g'?'wholesale.perfumestrade.com':'perfumestrade.com';
+    if(p.pa!=null&&v<p.pa&&!peutPrixSite()){ bas.push(nomSite); return; }   /* Patron/admin : jamais de refus, même à perte (9 oct. 2026) */
+    /* 12 oct. 2026 (Sam : 58 $ dans l'outil a fait disparaître le prix barré sur perfumestrade.com : barré 35 / promo 29 → barré 58, plus de promo) :
+       un prix d'outil au-dessus du prix barré ne remplace plus le barré en effaçant la promo. Le site n'est pas touché : les deux prix se règlent
+       dans la case « sur le site » (prix barré + promo), que l'Enregistrer envoie. */
+    if(cote!=='g'&&f.ps!=null&&f.pr!=null&&v>=f.pr){ garde.push(nomSite); return; }
+    const promo=(cote!=='g'&&f.ps!=null&&f.pr!=null&&v<f.pr);   /* le gros n'a pas de prix barré : un seul prix */
+    plan.push({cid:c.id,cote,f,v,paye,nomSite,nB:promo?f.pr:v,nP:promo?v:null});
+  });
+  return {plan,bas,garde};
+}
+const prixSitesOk=()=>peutPrixSite()&&typeof CK_URL!=='undefined'&&typeof ckTok==='function'&&!!ckTok();
+/* Perfume City (Shopify) a son propre droit « prixPC » : on peut le donner à Kim, qui ne voit pas les marges, sans lui ouvrir
+   les prix des autres sites. Le Patron et l'Admin l'ont d'office. */
+const peutPrixPC=()=>{ try{ return peutPrixSite()||(typeof peut==='function'&&peut('prixPC')); }catch(e){ return false; } };
+const prixPCOk=()=>peutPrixPC()&&typeof CK_URL!=='undefined'&&typeof ckTok==='function'&&!!ckTok();
+/* la ligne d'un site, telle que Sam la lit avant de valider */
+const lignePlanSite=x=>`<b>${x.nomSite}</b> : le client paie ${x.paye!=null?money2(x.paye):'sans prix'} → <b>${money2(x.v)}</b>`
+  +(x.nP!=null?` <small>(prix promo ; le prix barré ${money2(x.nB)} ne bouge pas)</small>`:(x.f.ps!=null?' <small>(la promo est retirée)</small>':''));
+async function envoiePrixFiche(id,seulCote,silencieux,exclus){
+  if(!prixSitesOk()) return;
+  const p=cur.find(x=>x.id===id)||tousLesArticles().find(x=>x.id===id); if(!p) return;
+  let {plan}=planPrixSites(p);
+  if(seulCote) plan=plan.filter(x=>x.cote===seulCote);
+  if(exclus&&exclus.length) plan=plan.filter(x=>!exclus.includes(x.cid));
+  if(!plan.length) return;
+  const nom=((p.marque||'')+' '+(p.nom||'')).trim();
+  const ok=[], ko=[];
+  for(const x of plan){
+    try{
+      const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/site/prix',{method:'POST',
+        headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},
+        body:JSON.stringify({quel:x.cote==='g'?'gros':'',bc:siteCle(p)||p.bc,barre:x.nB,promo:x.nP==null?'':x.nP,attendu:{barre:x.f.pr,promo:x.f.ps}})});
+      const j=await r.json().catch(()=>({}));
+      if(j&&j.avant&&typeof j.avant==='object'&&!j.ok){ x.f.pr=j.avant.barre; x.f.ps=j.avant.promo; }
+      if(!r.ok) throw new Error(j.erreur||('erreur '+r.status));
+      x.f.pr=j.apres.barre; x.f.ps=j.apres.promo; ok.push(x);
+      const dit=o=>'barré '+(o&&o.barre!=null?money2(o.barre):'—')+' · promo '+(o&&o.promo!=null?money2(o.promo):'aucune');
+      log({act:'prix',lib:'prix changés sur le site '+x.nomSite,bc:p.bc,ref:nom,av:dit(j.avant||{}),ap:dit(j.apres)});
+    }catch(err){ ko.push(x.nomSite+' : '+((err&&err.message)||'échec')); }
+  }
+  ecrit(KSITE,SITE);
+  if(silencieux) return {ok:ok.length,ko};
+  if(FICHE&&FICHE.id===id){ dessineFiche();
+    if(ok.length){ $('dst').textContent=ok.map(x=>vf(`${money2(x.v)} en ligne sur ${x.nomSite}`)).join(' · '); $('dst').className='st ok'; } }
+  if(ko.length) alert(vf('Le prix n\'a pas été changé sur le site.\n\n')+ko.join('\n'));
+}
+$('dann').onclick=()=>{ FICHE.brouillon={}; FICHE.qteTapee=false;
   FICHE.frn=(MOD[FICHE.id]&&MOD[FICHE.id].frn)?JSON.parse(JSON.stringify(MOD[FICHE.id].frn)):[];
   dessineFiche(); };
 $('ddx').onclick=fermeFiche; $('dov').onclick=fermeFiche;
-$('dprev').onclick=()=>{ if(FICHE.pos>0){FICHE.pos--;FICHE.brouillon={};
+$('dprev').onclick=()=>{ if(FICHE.pos>0){FICHE.pos--;FICHE.brouillon={}; FICHE.qteTapee=false;
   FICHE.frn=(MOD[cur[FICHE.pos].id]&&MOD[cur[FICHE.pos].id].frn)?JSON.parse(JSON.stringify(MOD[cur[FICHE.pos].id].frn)):[];
   dessineFiche();} };
-$('dnext').onclick=()=>{ if(FICHE.pos<cur.length-1){FICHE.pos++;FICHE.brouillon={};
+$('dnext').onclick=()=>{ if(FICHE.pos<cur.length-1){FICHE.pos++;FICHE.brouillon={}; FICHE.qteTapee=false;
   FICHE.frn=(MOD[cur[FICHE.pos].id]&&MOD[cur[FICHE.pos].id].frn)?JSON.parse(JSON.stringify(MOD[cur[FICHE.pos].id].frn)):[];
   dessineFiche();} };
 document.addEventListener('keydown',e=>{
   /* une fenêtre ouverte se ferme la première : Échap ne doit pas fermer la fiche
      dessous et laisser la fenêtre orpheline */
   if(e.key==='Escape'){
+    if(document.getElementById('pw-ov')) return;      /* la recherche de photo se ferme la première */
     const f=['ajov','achov','marov','fcov'].find(i=>$(i)&&$(i).classList.contains('on'));
     if(f){ $(f).classList.remove('on'); return; }
   }
@@ -2704,13 +5073,13 @@ SEG.addEventListener('click',e=>{
 });
 $('qx').onclick=()=>{ $('q').value=''; render(); $('q').focus(); };
 /* arrivée depuis le journal (ou un lien) avec ?q=code-barres : on montre la référence, en stock ou en historique */
-{ const q0=new URLSearchParams(location.search).get('q'); if(q0){ $('q').value=q0; $('fs').value=''; render(); } }
+
 $('advb').onclick=()=>{
   const o=$('adv').classList.toggle('on');
   $('advb').classList.toggle('on',o); $('advb').setAttribute('aria-expanded',o);
 };
 
-const LIB={fb:'Marque',fg:'Genre',ft:'Type',fan:'Prix',fp:'Photo',fx:'Fiches',fo:'Tri'};
+const LIB={fb:'Marque',fg:'Genre',ft:'Type',fan:'Prix',fp:'Photo',fx:'Fiches',fd:'Diffusion',fo:'Tri'};
 const txtOpt=id=>{const e=$(id),o=e.options[e.selectedIndex];return o?o.textContent.trim():'';};
 
 function majBarre(){
@@ -2718,7 +5087,7 @@ function majBarre(){
   $('srch').classList.toggle('has',!!q);
 
   // état visuel des listes
-  ['fb','fg','ft','fan','fp','fx'].forEach(id=>{
+  ['fb','fg','ft','fan','fp','fx','fd'].forEach(id=>{
     const w=$(id).closest('.selw'); if(w) w.classList.toggle('act',$(id).value!=='');
   });
   const w=$('fo').closest('.selw'); if(w) w.classList.toggle('act',$('fo').value!=='b');
@@ -2731,7 +5100,7 @@ function majBarre(){
   // pastilles
   const ch=[];
   if(q) ch.push(['q','Recherche',q]);
-  ['fb','fg','ft','fan','fp','fx'].forEach(id=>{ if($(id).value!=='') ch.push([id,LIB[id],txtOpt(id)]); });
+  ['fb','fg','ft','fan','fp','fx','fd'].forEach(id=>{ if($(id).value!=='') ch.push([id,LIB[id],txtOpt(id)]); });
   if($('fo').value!=='b') ch.push(['fo',LIB.fo,txtOpt('fo').replace(/^Tri\s*:\s*/,'')]);
   if(TRI&&COLI[TRI.col]) ch.push(['tri','Tri',
     COLI[TRI.col].lib+(TRI.dir==='asc'?' ↑ croissant':' ↓ décroissant')]);
@@ -2754,7 +5123,7 @@ $('chips').addEventListener('click',e=>{
     else $(id).value = id==='fo' ? 'b' : '';
     render(); return; }
   if(e.target.id==='raz'){
-    $('q').value=''; ['fb','fg','ft','fan','fp','fx'].forEach(i=>$(i).value='');
+    $('q').value=''; ['fb','fg','ft','fan','fp','fx','fd'].forEach(i=>$(i).value='');
     $('fo').value='b'; $('fa').checked=false; $('fc').checked=false; TRI=null; sauveTRI();
     document.body.classList.remove('client'); render();
   }
@@ -2821,6 +5190,19 @@ const sauveFRN=()=>ecrit(KFRN,FRN);
    obligatoire — c'est lui qui donne son sens au mouvement, et il part au journal. */
 const KAJ='ajustements-v1';
 let AJU=lit(KAJ,[]); if(!Array.isArray(AJU)) AJU=base(KAJ,[]);
+/* LE FIL EN DIRECT (1er oct. 2026) : une modification faite sur un autre poste (stock, prix,
+   fiche, achat, vente) arrive dans la seconde ; la page relit ses données et se redessine sur
+   place, à la même hauteur — sans recharger, et jamais pendant une saisie ou une fiche ouverte
+   (dans ce cas, un bandeau propose de recharger). */
+window.__rafraichir=()=>{ const y=window.scrollY;
+  { const m=lit(KMOD,{}); if(m&&typeof m==='object'&&!Array.isArray(m)) MOD=m; }
+  { const a=lit(KADD,[]); if(Array.isArray(a)) AJ=a; }
+  { const h=lit(KPHO,{}); if(h&&typeof h==='object'&&!Array.isArray(h)) PHO=h; }
+  { const a=lit(KAJ,[]); if(Array.isArray(a)) AJU=a; }
+  { const j=lit(KJOU,[]); if(Array.isArray(j)) JOU=j; }
+  { const s=lit(KSITE,{}); if(s&&typeof s==='object'&&!Array.isArray(s)) SITE=s; }
+  try{ const r=JSON.parse(localStorage.getItem(KEXT)||'null'); if(r&&r.q) EXT=r; }catch(e){}
+  paint(); window.scrollTo(0,y); };
 const sauveAJU=()=>ecrit(KAJ,AJU);
 const MOTIFS=[
  {id:'casse',   lib:'Casse',              sens:-1, aide:'flacon cassé ou abîmé'},
@@ -2854,11 +5236,19 @@ function motMot(m,d){
    Les deux chiffres sont écrits séparément — le vendable dans l'inventaire de la
    boutique, le testeur dans sa propre liste — pour que la feuille de comptage
    attende bien 5 flacons en rayon et n'invente pas un écart. */
-const K_PC='inventaire-local-pc-v1', K_TEST='testeurs-pc-v1';
+const K_TEST='testeurs-pc-v1';
 function pcClef(p){ return p.bc ? String(p.bc).replace(/^0+/,'') : 'n-'+((p.marque||'')+(p.nom||'')+(p.ml||'')).toLowerCase().replace(/[^a-z0-9]/g,''); }
 function pcTesteurs(){ const t=lit(K_TEST,{}); return (t&&typeof t==='object'&&!Array.isArray(t))?t:{}; }
-function pcLignes(){ let r=null; try{ r=JSON.parse(localStorage.getItem(K_PC)||'null'); }catch(e){}
-  return Array.isArray(r)?r:null; }
+function pcLignes(){ return pcsRows(); }
+/* le stock de Perfume City d'une fiche : son code-barres, ou un de ses autres codes (fiches-modifiees-v1 › bcs) ; null si absent */
+function pcStockFiche(p){
+  try{ const m=pcsCarte(); const s0=x=>String(x||'').replace(/[^0-9A-Za-z]/g,'').replace(/^0+/,'');
+    const ks=[p.bc].concat(String((MOD[p.id]||{}).bcs||p.bcs||'').split(/[\s,;]+/)).map(s0).filter(Boolean);
+    for(const k of ks){ const o=m[k]; if(o) return {q:Math.max(0,Math.round(+o.q||0))}; }
+    const o=m[String(p.id||'')]; if(o) return {q:Math.max(0,Math.round(+o.q||0))};
+  }catch(e){}
+  return null;
+}   /* le stock de Perfume City est un magasin partagé (voir _fusion.py) */
 /* n flacons partent : combien deviennent vendables chez Perfume City, combien en vitrine */
 function pcRepartit(p,n,forceT){
   const k=pcClef(p), T=pcTesteurs();
@@ -2878,11 +5268,11 @@ function pcPeint(){
   el.innerHTML=`<h4>Ce que Perfume City reçoit</h4>
     <div class="rep">
       <div><b>${nf(r.vend)}</b><span class="k">en vente</span></div>
-      <div><b>${nf(r.t)}</b><span class="k">en vitrine (testeur)</span></div>
+      <div><b>${nf(r.t)}</b><span class="k">tester</span></div>
       <div><b>${nf(n)}</b><span class="k">flacons livrés</span></div>
     </div>
     <label class="sw"><input type="checkbox" id="ajpct" ${r.t?'checked':''}>
-      <span>Un flacon part en vitrine comme testeur${r.deja?' — <b>attention : la boutique en a déjà un</b> pour cette référence'
+      <span>Un flacon part comme tester${r.deja?' — <b>attention : la boutique en a déjà un</b> pour cette référence'
         :''}. Décoche si les ${nf(n)} flacons partent tous en vente.</span></label>
     ${inv===null?`<p class="dj">L'inventaire de Perfume City est encore vide : cette sortie va le créer.</p>`:''}`;
   const c=$('ajpct'); if(c) c.onchange=()=>{ AJC.pcT=c.checked; pcPeint(); recapAjust(); };
@@ -2901,7 +5291,7 @@ function pcDepose(p,r){
     rows[idx][7]= rows[idx][6]!=null ? rows[idx][5]*rows[idx][6] : null; }
   else rows.push([p.bc||'',p.nom||'',p.marque||'',p.ml||'',p.type||'',r.vend,pa,
                   pa!=null?r.vend*pa:null,'non',(p.bc?'b'+p.bc:r.k),null,null]);
-  try{ localStorage.setItem(K_PC,JSON.stringify(rows)); }catch(e){ return false; }
+  if(!pcsSauve(rows)) return false;
   if(r.t){ const T=pcTesteurs();
     T[r.k]=Object.assign({},T[r.k]||{},{n:(+(T[r.k]&&T[r.k].n||0))+r.t,
       bc:p.bc||'', ref:((p.marque||'')+' '+(p.nom||'')).trim(),
@@ -2915,7 +5305,7 @@ let AJC={p:null,motif:null};
 function ouvreAjust(p){
   AJC={p,motif:null,pcT:null};
   const bpc=$('ajpc'); if(bpc){ bpc.hidden=true; bpc.innerHTML=''; }
-  $('ajp').innerHTML=`<div><b>${esc(p.marque||'')} ${esc(p.nom||'')}</b>
+  $('ajp').innerHTML=`<div><b>${esc(p.marque||'')} ${esc(p.nom||'')}${tyBadge(p)}</b>
     <span style="display:block;font-size:12px;color:var(--ink-3)">${esc(p.bc||'sans code-barres')} · stock actuel <b>${nf(p.qte)}</b></span></div>`;
   const carte=m=>`<label data-m="${m.id}"><input type="radio" name="ajm" value="${m.id}">
     <span class="t">${esc(m.lib)}</span><span class="a">${esc(m.aide)}</span></label>`;
@@ -2975,7 +5365,7 @@ function recapAjust(){
       ${m.sens===0?'<br>Correction d\'écriture : aucun flacon n\'a bougé, c\'est le chiffre de SAM qui était faux.':''}
       ${d===0?'<br>Le stock est déjà à cette valeur — rien à enregistrer.':''}
       ${trop?`<br><span class="w">Tu déclares ${nf(n)} flacons, il n'y en avait que ${nf(p.qte)}.</span> Seuls ${nf(p.qte)} sortent — vérifie le chiffre, ou passe par « Erreur d'inventaire ».`:''}
-      ${m.id==='pcity'&&AJC.pc?`<br>Chez Perfume City : <b>${nf(AJC.pc.vend)}</b> en vente${AJC.pc.t?` et <b>${nf(AJC.pc.t)}</b> en vitrine`:''}.`:''}
+      ${m.id==='pcity'&&AJC.pc?`<br>Chez Perfume City : <b>${nf(AJC.pc.vend)}</b> en vente${AJC.pc.t?` et <b>${nf(AJC.pc.t)}</b> en tester`:''}.`:''}
     </div>`;
   $('ajok').disabled = d===0;
   AJC.ap=ap; AJC.n = m.sens===-1 ? Math.min(n,p.qte) : n; AJC.d=d;
@@ -3008,7 +5398,7 @@ $('ajok').onclick=()=>{
   let suitePC='';
   if(m.id==='pcity'){
     const r=pcRepartit(p,AJC.n,AJC.pcT);
-    if(pcDepose(p,r)) suitePC=' — Perfume City : '+r.vend+' en vente'+(r.t?', '+r.t+' en vitrine':'');
+    if(pcDepose(p,r)) suitePC=' — Perfume City : '+r.vend+' en vente'+(r.t?', '+r.t+' en tester':'');
     else $('ajmsg').textContent='inventaire Perfume City non mis à jour (mémoire du navigateur pleine)';
   }
   log({act:'stock',lib:'ajustement — '+m.lib.toLowerCase()+suitePC+($('aj-note').value.trim()?' ('+$('aj-note').value.trim()+')':''),
@@ -3153,7 +5543,7 @@ function peintAchP(){
   if(!p){ el.className='achp'; el.innerHTML=''; $('ach-q').hidden=false; return; }
   el.className='achp on';
   el.innerHTML=`${p.img?`<img src="photos/${p.bc}.webp" alt="" onerror="this.style.visibility='hidden'">`:'<div class="miss"></div>'}
-    <div class="t"><b>${esc(p.marque||'')} ${esc(p.nom||'')}</b><span>${esc(p.ml||'')} ${p.ml?'oz · ':''}${esc(p.bc||'sans code-barres')} · stock ${nf(p.qte)} · achat actuel ${p.pa!=null?money(p.pa):'—'}</span></div>
+    <div class="t"><b>${esc(p.marque||'')} ${esc(p.nom||'')}${tyBadge(p)}</b><span>${esc(p.ml||'')} ${p.ml?'oz · ':''}${esc(p.bc||'sans code-barres')} · stock ${nf(p.qte)} · achat actuel ${p.pa!=null?money(p.pa):'—'}</span></div>
     <button type="button" id="achchg">changer</button>`;
   $('ach-q').hidden=true;
   $('achchg').onclick=()=>{ ACH.p=null; peintAchP(); recapAchat(); $('ach-q').focus(); };
@@ -3166,7 +5556,7 @@ function chercheAchat(q){
     if(num.length>=6 && String(p.bc||'').replace(/^0+/,'').includes(num.replace(/^0+/,''))) return true;
     return (p.marque+' '+p.nom).toLowerCase().includes(t);
   }).slice(0,8);
-  res.innerHTML=L.length?L.map(p=>`<div data-id="${p.id}"><b>${esc(p.marque||'')} ${esc(p.nom||'')}</b><span>${esc(p.ml||'')}${p.ml?' oz · ':''}${esc(p.bc||'')} · stock ${nf(p.qte)}</span></div>`).join('')
+  res.innerHTML=L.length?L.map(p=>`<div data-id="${p.id}"><b>${esc(p.marque||'')} ${esc(p.nom||'')}${tyBadge(p)}</b><span>${esc(p.ml||'')}${p.ml?' oz · ':''}${esc(p.bc||'')} · stock ${nf(p.qte)}</span></div>`).join('')
     :`<div class="vide">Aucun produit ne correspond — crée-le d'abord avec « + Nouvel article ».</div>`;
   res.hidden=false;
   if(num.length>=8&&L.length===1&&String(L[0].bc||'').replace(/^0+/,'')===num.replace(/^0+/,'')){ ACH.p=L[0]; peintAchP(); recapAchat(); res.hidden=true; $('ach-f').focus(); }
@@ -3243,10 +5633,15 @@ function normBC2(v){ const d=String(v==null?'':v).replace(/[^0-9]/g,'');
 /* Retrouve un produit meme si le zero de tete a saute quelque part. */
 function trouve(bc){
   const T=tousLesArticles();
-  const cand=[bc, bc.replace(/^0+/,''), bc.padStart(12,'0'), bc.padStart(13,'0')];
-  for(const c of cand){ const p=T.find(x=>x.bc===c); if(p) return p; }
+  /* « 3605533286555nobox » : les mêmes chiffres que la boîte, pas la même fiche (Sam, 6 oct. 2026) */
+  const M=(typeof mentionBC==='function')?mentionBC(bc):{digits:String(bc).replace(/[^0-9]/g,''),mention:''};
+  bc=M.digits||String(bc);
   const nu=bc.replace(/^0+/,'');
-  return T.find(x=>x.bc && x.bc.replace(/^0+/,'')===nu) || T.find(x=>x.bcs && bcsDe(x).includes(nu)) || null;
+  const C=T.filter(x=>x.bc && String(x.bc).replace(/^0+/,'')===nu);
+  if(C.length){ const p=(typeof parMention==='function')?parMention(C,M.mention,x=>x.nom+' '+(x.nomSrc||'')):C[0]; if(p) return p; if(M.mention) return null; }
+  if(M.mention) return null;
+  return T.find(x=>x.bcs && bcsDe(x).includes(nu))
+    || T.find(x=>(bcExtra()[x.cle]||[]).includes(nu)) || null;
 }
 
 function litFacture(txt){
@@ -3306,7 +5701,7 @@ function dessineFacture(){
     const anc=p.pa, d=anc!=null?x.p-anc:null;
     if(d!=null) effet += d*(x.q||0);
     const cls=d==null?'':(d<0?'baisse':d>0?'hausse':'');
-    return `<tr><td class="ref"><b>${esc(p.marque)} ${esc(p.nom)}</b><span>${p.bc}</span></td>
+    return `<tr><td class="ref"><b>${esc(p.marque)} ${esc(p.nom)}${tyBadge(p)}</b><span>${p.bc}</span></td>
       <td class="n">${x.q??'—'}</td><td class="n">${money(x.p)}</td>
       <td class="n">${anc!=null?money(anc):'—'}</td>
       <td class="n ${cls}">${d==null?'—':(d===0?'inchangé':(d>0?'+':'−')+money(Math.abs(d)))}</td></tr>`;
@@ -3522,8 +5917,8 @@ $('svup').addEventListener('change',e=>{
     const q=Object.entries(d.donnees).map(([k,v])=>{
       const c=CLES.find(x=>x[0]===k); return c?`${c[2](v)} ${c[1]}`:null; }).filter(Boolean);
     const dd=new Date(d.le);
-    if(!confirm(`Restaurer la sauvegarde du ${dd.toLocaleDateString('fr-FR')} à `+
-      `${dd.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}`+
+    if(!confirm(`Restaurer la sauvegarde du ${dd.toLocaleDateString('en-US',{timeZone:'America/New_York',})} à `+
+      `${dd.toLocaleTimeString('fr-FR',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit'})}`+
       (d.par?` (${d.par})`:'')+` ?\n\n${q.join('\n')}\n\n`+
       `Tout ce qui est actuellement saisi dans ce navigateur sera remplacé.`)) return;
     Object.entries(d.donnees).forEach(([k,v])=>{
@@ -3579,72 +5974,159 @@ function decoupe(txt){
   });
 }
 
-function normBC(v){
-  const d=String(v==null?'':v).replace(/[^0-9]/g,'');
-  return (d.length>=8&&d.length<=14)?d:'';
+/* ============ MISE À JOUR DEPUIS LE TABLEUR (Google Sheet) ============
+   30 sept. 2026 — la mise à jour ne reprenait que les QUANTITÉS : les prix restaient
+   ceux du fichier de début septembre (un prix d'achat deux fois trop haut faussait une
+   marge Amazon), et un parfum ajouté au Sheet depuis n'existait pas ici (une trentaine
+   en stock, dont un vendu sur Amazon). Elle reprend maintenant, pour chaque ligne :
+     - la quantité (le tableau fait foi, comme avant) ;
+     - le prix d'achat, le prix de détail et le prix de gros, s'il y a une colonne
+       qui porte ce nom (unit price / pvr / pvw, ou prix d'achat / retail / gros) ;
+     - le parfum lui-même quand il n'existe pas ici et qu'il est en stock.
+   Rapprochement : par le code-barres (avec ou sans zéros du début, les codes collés,
+   les « autres codes-barres » d'une fiche), et à défaut par la marque + le nom exact
+   — c'est ainsi qu'un code-barres changé dans le Sheet retrouve sa fiche, et le
+   nouveau code est ajouté à la fiche au lieu d'en créer une seconde.
+   Un code écrit avec des lettres (« …NOBOX », « …tester ») est un article à part :
+   on ne le confond plus avec la version en boîte qui porte les mêmes chiffres. */
+function cleCodes(v){
+  const s=String(v==null?'':v).trim();
+  if(!s||s==='-'||s==='—') return [];
+  if(/[A-Za-z]/.test(s)){
+    /* « 3605533286555nobox » : les chiffres de la boîte + la mention — rapproché par les
+       chiffres, départagé par la mention (voir trouve) ; un vrai texte reste un texte */
+    const M=(typeof mentionBC==='function')?mentionBC(s):{digits:'',mention:''};
+    if(M.mention&&M.digits.length>=8) return ['M:'+M.mention+':'+M.digits.replace(/^0+/,'')];
+    return ['T:'+s.toUpperCase().replace(/[^A-Z0-9]/g,'')];
+  }
+  const out=[], tout=s.replace(/[^0-9]/g,'').replace(/^0+/,'');
+  if(tout.length>=6) out.push(tout);
+  s.split(/[^0-9]+/).forEach(t=>{ if(t.length>=8&&t.length<=14) out.push(t.replace(/^0+/,'')); });
+  return [...new Set(out)];
 }
-
+function normBC(v){ const k=cleCodes(v).find(x=>!x.startsWith('T:')&&x.length<=14); return k||''; }
+const nomCle=(m,n)=>(String(m||'')+' | '+String(n||'')).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')
+  .replace(/[^a-z0-9|]+/g,' ').replace(/\s+/g,' ').trim();
+const COLS_SHEET={
+  pa:/^(unit ?price|prix d.?achat|co[uû]t( d.?achat)?|cost|pa)$/i,
+  pvr:/^(pvr|retail( price)?|prix (de )?d[ée]tail|prix retail)$/i,
+  pvw:/^(pvw|wholesale( price)?|prix de gros)$/i,
+  nom:/^(name|nom|d[ée]signation|product|produit)$/i,
+  marque:/^(brand|marque)$/i,
+  ml:/^(ml|oz|ml ?\/ ?fl ?oz|contenance|size|taille)$/i,
+  type:/^type$/i, genre:/^(gender|genre|sexe)$/i
+};
 function analyseStock(txt){
   const L=decoupe(txt);
   if(L.length<2) return {err:"Il faut au moins une ligne d'en-tête et une ligne de données."};
   const nc=Math.max(...L.map(r=>r.length));
-  const corps=L.slice(1);
-  const INDEX={}; P.forEach(p=>INDEX[p.bc]=p);
+  const ent=L[0], corps=L.slice(1);
+  const T=tousLesArticles();
+  const IDX={}, NOMS={};
+  /* un même code peut porter DEUX fiches (le coffret et le flacon, la version sans boîte :
+     11 paires dans le fichier de Sam) — on garde toutes les fiches d'un code */
+  const pose=(k,a)=>{ if(!k) return; const l=IDX[k]||(IDX[k]=[]); if(!l.includes(a)) l.push(a); };
+  /* une fiche dont le code porte LUI-MÊME la mention (« …tester » en toutes lettres, créée par
+     un import d'avant la règle des mentions) est aussi rangée sous ses chiffres : la ligne
+     « …tester » du Sheet la retrouve, au lieu de donner ses flacons à la boîte */
+  T.forEach(a=>{ cleCodes(a.bc).forEach(k=>{ pose(k,a); if(k.startsWith('M:')) pose(k.split(':')[2],a); });
+    (bcExtra()[a.cle||a.id]||[]).forEach(k=>pose(String(k).replace(/^0+/,''),a));
+    bcsDe(a).forEach(k=>pose(k,a));
+    /* marque + nom : seulement quand UNE seule fiche le porte (sinon on ne devine pas) */
+    [...new Set([a.nomSrc,a.nom].filter(Boolean))].forEach(n=>{ const k=nomCle(a.marque,n);
+      if(!(k in NOMS)) NOMS[k]=a; else if(NOMS[k]!==a) NOMS[k]=null; }); });
+  const nomsDe=a=>[a.nomSrc,a.nom].filter(Boolean).map(n=>nomCle(a.marque,n));
+  /* plusieurs fiches pour ce code : celle qui porte le même nom, sinon une pas encore prise */
+  const trouve=(c,nk,pris)=>{ const K=cleCodes(c); const C=[];
+    /* un code à mention : les fiches des mêmes chiffres, puis celle qui porte la mention — et
+       seulement elle : sans fiche « nobox », la ligne est un parfum à créer, pas la boîte */
+    if(K.length&&K[0].startsWith('M:')){ const [,mention,digits]=K[0].split(':');
+      (IDX[digits]||[]).forEach(a=>{ if(!C.includes(a)) C.push(a); });
+      return (typeof parMention==='function')?parMention(C,mention,a=>a.nom+' '+(a.nomSrc||'')):null; }
+    for(const k of K) (IDX[k]||[]).forEach(a=>{ if(!C.includes(a)) C.push(a); });
+    if(C.length<2) return C[0]||null;
+    /* un code sans mention ne prend pas une fiche « nobox » / « tester » s'il y a la boîte */
+    const sans=C.filter(a=>!nomMention(a.nom+' '+(a.nomSrc||'')));
+    const P=sans.length?sans:C;
+    return (nk&&P.find(a=>nomsDe(a).includes(nk)))||(pris&&P.find(a=>!pris[a.id]))||P[0]; };
 
-  /* colonne code-barres : celle qui reconnaît le plus de références de l'inventaire */
+  /* colonne code-barres : celle qui reconnaît le plus de références */
   let cbc=-1, meilleur=0;
-  for(let c=0;c<nc;c++){
-    let n=0;
-    for(const r of corps){ const b=normBC(r[c]); if(b&&INDEX[b]) n++; }
-    if(n>meilleur){ meilleur=n; cbc=c; }
-  }
+  for(let c=0;c<nc;c++){ let n=0; for(const r of corps) if(trouve(r[c])) n++; if(n>meilleur){ meilleur=n; cbc=c; } }
   if(cbc<0||meilleur<3) return {err:"Aucune colonne de codes-barres reconnue. Le tableau doit contenir une colonne de codes-barres correspondant à l'inventaire."};
 
-  /* colonne quantité : entiers, jamais un code-barres, et dont l'écart total
-     avec l'inventaire est le plus faible — c'est ce qui la distingue d'une colonne de prix */
-  let cq=-1, best=Infinity;
-  for(let c=0;c<nc;c++){
-    if(c===cbc) continue;
-    let n=0, ecart=0, gros=0;
-    for(const r of corps){
-      const b=normBC(r[cbc]); if(!b||!INDEX[b]) continue;
-      const v=nombre(r[c]);
-      if(v==null||v<0||!Number.isInteger(v)) continue;
-      if(v>100000){ gros++; continue; }
-      n++; ecart+=Math.abs(v-(INDEX[b].qte||0));
-    }
-    if(n<3||gros>n) continue;
-    const moy=ecart/n;
-    if(moy<best){ best=moy; cq=c; }
-  }
+  /* colonne quantité : son nom d'abord (REAL QTY, quantité, stock), sinon celle des
+     entiers dont l'écart avec l'inventaire est le plus faible */
+  let cq=ent.findIndex((h,c)=>c!==cbc&&/^(real ?qty|qty|quantit[ée]s?|qt[ée]|stock|quantity)$/i.test(String(h||'').trim()));
+  if(cq<0){ let best=Infinity;
+    for(let c=0;c<nc;c++){
+      if(c===cbc) continue;
+      let n=0, ecart=0, gros=0;
+      for(const r of corps){ const a=trouve(r[cbc]); if(!a) continue; const v=nombre(r[c]);
+        if(v==null||v<0||!Number.isInteger(v)) continue; if(v>100000){ gros++; continue; } n++; ecart+=Math.abs(v-(a.qte||0)); }
+      if(n<3||gros>n) continue;
+      const moy=ecart/n; if(moy<best){ best=moy; cq=c; }
+    } }
   if(cq<0) return {err:"Aucune colonne de quantités trouvée. Il faut une colonne de nombres entiers."};
+  const col={}; Object.entries(COLS_SHEET).forEach(([k,re])=>{ const i=ent.findIndex((h,c)=>c!==cbc&&c!==cq&&re.test(String(h||'').trim())); if(i>=0) col[k]=i; });
 
-  const ent=L[0];
-  const res={colBC:ent[cbc]||('colonne '+(cbc+1)), colQ:ent[cq]||('colonne '+(cq+1)),
-             lignes:corps.length, connues:0, inconnues:[], change:[], egales:0, doublons:0, q:{}};
-  const vu={};
+  const res={colBC:ent[cbc]||('colonne '+(cbc+1)), colQ:ent[cq]||('colonne '+(cq+1)), col,
+             lignes:corps.length, connues:0, inconnues:[], change:[], egales:0, doublons:0,
+             q:{}, prix:[], nouveaux:[], alias:[], parNom:0};
+  const vu={}, qte={}, prixVu={};
+  /* une fiche déjà retrouvée par son code sur une autre ligne n'est jamais reprise par le nom */
+  const nkDe=r=>col.nom!=null?nomCle(col.marque!=null?r[col.marque]:'',r[col.nom]):'';
+  const parCode={}; corps.forEach(r=>{ const a=trouve(r[cbc],nkDe(r),parCode); if(a) parCode[a.id]=true; });
   for(const r of corps){
-    const b=normBC(r[cbc]); if(!b) continue;
-    const p=INDEX[b];
-    if(!p){ if(res.inconnues.length<40) res.inconnues.push(b); continue; }
-    const v=nombre(r[cq]);
+    const code=String(r[cbc]||'').trim(), v=nombre(r[cq]);
+    const nom=col.nom!=null?String(r[col.nom]||'').trim():'', marque=col.marque!=null?String(r[col.marque]||'').trim():'';
+    let a=trouve(code,nkDe(r),vu), parNom=false;
+    if(!a&&nom){ const x=NOMS[nomCle(marque,nom)]; if(x&&!vu[x.id]&&!parCode[x.id]){ a=x; parNom=true; } }
+    const px=k=>{ if(col[k]==null) return null; const n=nombre(r[col[k]]); return (n!=null&&n>0&&n<100000)?Math.round(n*100)/100:null; };
+    if(!a){
+      if(code&&res.inconnues.length<40) res.inconnues.push(code);
+      if(nom&&v!=null&&Number.isInteger(v)&&v>0){
+        const k=cleCodes(code)[0]||nomCle(marque,nom);
+        const M=(typeof mentionBC==='function')?mentionBC(code):{digits:'',mention:''};
+        const bcN=(code==='-'||code==='—')?'':(M.mention&&M.digits.length>=8?M.digits:code);
+        const nomN=(M.mention&&typeof nomAvecMention==='function')?nomAvecMention(nom,M.mention):nom;
+        if(!res.nouveaux.some(o=>o._k===k))
+          res.nouveaux.push({_k:k,bc:bcN,nom:nomN,marque,
+            ml:col.ml!=null?String(r[col.ml]||'').trim():'',type:col.type!=null?String(r[col.type]||'').trim().toUpperCase():'',
+            genre:col.genre!=null?String(r[col.genre]||'').trim().toUpperCase().slice(0,1):'',
+            qte:v,pa:px('pa'),pvr:px('pvr'),pvw:px('pvw')});
+      }
+      continue;
+    }
+    if(parNom){ res.parNom++;
+      const n=cleCodes(code).find(x=>!x.startsWith('T:')&&x.length<=14);
+      if(n&&!res.alias.some(z=>z.id===a.id)) res.alias.push({id:a.id,code:n,marque:a.marque,nom:a.nom}); }
     if(v==null||v<0||!Number.isInteger(v)) continue;
-    if(vu[b]!==undefined){ res.doublons++; }
-    vu[b]=true;
-    res.connues++;
-    res.q[b]=v;
-    const av=p.qte||0;
-    if(v===av) res.egales++;
-    else res.change.push({bc:b,nom:p.nom,marque:p.marque,av,ap:v,d:v-av,
-                          val:(v-av)*(p.pa||0)});
+    if(vu[a.id]!==undefined) res.doublons++;
+    vu[a.id]=true; res.connues++; qte[a.id]={a,v};
+    ['pa','pvr','pvw'].forEach(k=>{ const n=px(k); if(n==null) return; prixVu[a.id+'|'+k]={a,k,n}; });
   }
+  /* le stock importé est rangé par code-barres : deux fiches qui partagent un code
+     prendraient la même quantité — pour elles, la quantité va dans la fiche */
+  const nbBC={}; T.forEach(a=>{ if(!String(a.id).startsWith('a')&&a.bc) nbBC[a.bc]=(nbBC[a.bc]||0)+1; });
+  res.qMod={};
+  Object.values(qte).forEach(({a,v})=>{
+    /* une fiche SANS code-barres (74 dans le fichier) : sa quantité va dans la fiche —
+       rangée sous la clé vide, elle aurait été donnée à toutes les fiches sans code */
+    if(!String(a.id).startsWith('a')){ if(!a.bc||nbBC[a.bc]>1) res.qMod[a.id]=v; else res.q[a.bc]=v; }
+    const av=a.qte||0;
+    if(v===av) res.egales++;
+    else res.change.push({id:a.id,bc:a.bc,nom:a.nom,marque:a.marque,type:a.type,genre:a.genre,av,ap:v,d:v-av,val:(v-av)*(a.pa||0)});
+  });
+  res.qId=Object.fromEntries(Object.values(qte).map(({a,v})=>[a.id,v]));
+  Object.values(prixVu).forEach(({a,k,n})=>{ const av=a[k]; if(av==null||Math.abs(av-n)>0.005)
+    res.prix.push({id:a.id,bc:a.bc,marque:a.marque,nom:a.nom,k,av:av==null?null:av,ap:n}); });
+  res.prix.sort((x,y)=>Math.abs((y.ap||0)-(y.av||0))-Math.abs((x.ap||0)-(x.av||0)));
   res.change.sort((a,b)=>Math.abs(b.val)-Math.abs(a.val));
   res.impact=res.change.reduce((a,c)=>a+c.val,0);
-  res.absents=P.filter(p=>p.qte>0 && res.q[p.bc]===undefined);
-  res.perdusMod=Object.keys(MOD).filter(id=>{
-    if(MOD[id].qte===undefined) return false;
-    const p=P.find(x=>x.id===id); return p && res.q[p.bc]!==undefined && res.q[p.bc]!==MOD[id].qte;
-  }).length;
+  res.absents=T.filter(a=>a.qte>0 && res.qId[a.id]===undefined);
+  res.perdusMod=Object.keys(MOD).filter(id=>MOD[id].qte!==undefined&&res.qId[id]!==undefined&&res.qId[id]!==MOD[id].qte).length;
+  res.total=res.change.length+res.prix.length+res.nouveaux.length+res.alias.length;
   return res;
 }
 
@@ -3652,38 +6134,189 @@ function dessineMJ(r){
   const box=$('mjres');
   if(r.err){ box.innerHTML=`<div class="mjw">${esc(r.err)}</div>`; $('mjok').disabled=true; MJ=null; return; }
   MJ=r;
+  const t3=(a,b,c)=>(typeof L3==='function'?L3(a,b,c):a);
+  const LIBK={pa:t3("prix d'achat",'cost','precio de compra'),pvr:t3('prix de détail','retail price','precio minorista'),pvw:t3('prix de gros','wholesale price','precio mayorista')};
+  const h3=s=>`<h3 data-nolang style="font-family:Inter,sans-serif;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);font-weight:700;margin:18px 0 8px">${s}</h3>`;
   const li=r.change.slice(0,15).map(c=>`<tr>
-    <td><b>${esc(c.marque)}</b><br><span style="color:var(--ink-3)">${esc(c.nom)}</span></td>
+    <td><b>${esc(c.marque)}</b><br><span style="color:var(--ink-3)">${esc(c.nom)}${tyBadge(c)}</span></td>
     <td class="n">${c.av}</td>
     <td class="n ${c.d>0?'up':'dn'}">${c.d>0?'+':'−'}${Math.abs(c.d)}</td>
     <td class="n">${c.ap}</td>
     <td class="n ${c.val>0?'up':'dn'}">${c.val?money(c.val):'—'}</td></tr>`).join('');
+  const lp=r.prix.slice(0,20).map(c=>`<tr><td><b>${esc(c.marque)}</b> <span style="color:var(--ink-3)">${esc(c.nom)}</span></td>
+    <td data-nolang>${esc(LIBK[c.k])}</td><td class="n" data-nolang>${c.av==null?'—':money(c.av)}</td><td class="n" data-nolang>${money(c.ap)}</td></tr>`).join('');
+  const ln=r.nouveaux.map(o=>`<tr><td><b>${esc(o.marque)}</b> <span style="color:var(--ink-3)">${esc(o.nom)}</span></td>
+    <td class="mono" style="font-size:11.5px" data-nolang>${esc(o.bc||'—')}</td><td class="n" data-nolang>${o.qte}</td>
+    <td class="n" data-nolang>${o.pa==null?'—':money(o.pa)}</td></tr>`).join('');
+  const la=r.alias.map(z=>`<tr><td><b>${esc(z.marque)}</b> <span style="color:var(--ink-3)">${esc(z.nom)}</span></td><td class="mono" data-nolang>${esc(z.code)}</td></tr>`).join('');
   box.innerHTML=`
   <div class="mjmap">Colonne code-barres reconnue : <b>${esc(r.colBC)}</b> ·
     colonne quantité : <b>${esc(r.colQ)}</b></div>
   <div class="mjk" style="margin-top:12px">
     <div><span class="v">${nf(r.connues)}</span><span class="k">références reconnues</span></div>
     <div><span class="v" style="color:var(--iris)">${nf(r.change.length)}</span><span class="k">quantités modifiées</span></div>
-    <div><span class="v">${nf(r.egales)}</span><span class="k">inchangées</span></div>
+    <div><span class="v" style="color:var(--iris)">${nf(r.prix.length)}</span><span class="k" data-nolang>${t3('prix modifiés','prices changed','precios modificados')}</span></div>
+    <div><span class="v" style="color:var(--iris)">${nf(r.nouveaux.length)}</span><span class="k" data-nolang>${t3('parfums créés','perfumes created','perfumes creados')}</span></div>
     <div><span class="v" style="color:${r.impact>=0?'var(--good)':'var(--crit)'}">${r.impact?money(r.impact):'0 $'}</span><span class="k">effet sur la valeur du stock</span></div>
   </div>
-  ${r.inconnues.length?`<div class="mjw" style="margin-top:12px"><b>${nf(r.inconnues.length)}${r.inconnues.length>=40?'+':''} code${r.inconnues.length>1?'s':''}-barres absent${r.inconnues.length>1?'s':''} de l'inventaire</b> — ces lignes seront ignorées.
-    Ce sont soit de nouvelles références à créer, soit des codes mal saisis :
-    <span class="mono" style="font-size:11.5px">${r.inconnues.slice(0,6).map(esc).join(', ')}${r.inconnues.length>6?'…':''}</span></div>`:''}
+  ${(r.col.pa==null&&r.col.pvr==null&&r.col.pvw==null)?`<div class="mjw" style="margin-top:12px" data-nolang>${t3('Aucune colonne de prix reconnue (unit price, pvr, pvw) : seules les quantités seront reprises.','No price column recognized (unit price, pvr, pvw): only quantities will be updated.','Ninguna columna de precios reconocida (unit price, pvr, pvw): solo se actualizarán las cantidades.')}</div>`:''}
   ${r.absents.length?`<div class="mjw" style="margin-top:12px"><b>${nf(r.absents.length)} référence${r.absents.length>1?'s':''} en stock ici mais absente${r.absents.length>1?'s':''} du tableau collé.</b>
     Leur quantité n'est <b>pas</b> remise à zéro — le tableau est peut-être partiel. Si le Sheet est censé être complet, ces références sont écoulées et il faut les passer à zéro à la main.</div>`:''}
   ${r.doublons?`<div class="mjw" style="margin-top:12px"><b>${nf(r.doublons)} code${r.doublons>1?'s':''}-barres en double</b> dans le tableau — c'est la dernière ligne qui l'emporte.</div>`:''}
   ${r.perdusMod?`<div class="mjw" style="margin-top:12px"><b>${nf(r.perdusMod)} quantité${r.perdusMod>1?'s':''} que tu avais corrigée${r.perdusMod>1?'s':''} à la main</b> ${r.perdusMod>1?'seront remplacées':'sera remplacée'} par la valeur du tableau. Le tableau fait foi.</div>`:''}
+  ${r.nouveaux.length?h3(t3(`${r.nouveaux.length} parfum${r.nouveaux.length>1?'s':''} en stock dans le tableau, absent${r.nouveaux.length>1?'s':''} d'ici — ${r.nouveaux.length>1?'ils seront créés':'il sera créé'}`,`${r.nouveaux.length} perfume${r.nouveaux.length>1?'s':''} in stock in the sheet, missing here — will be created`,`${r.nouveaux.length} perfume${r.nouveaux.length>1?'s':''} en stock en la hoja, ausente${r.nouveaux.length>1?'s':''} aquí — se crearán`))+
+    `<div style="overflow-x:auto"><table class="mjt"><thead><tr data-nolang><th>${t3('Parfum','Perfume','Perfume')}</th><th>${t3('Code-barres','Barcode','Código de barras')}</th><th style="text-align:right">${t3('Stock','Stock','Stock')}</th><th style="text-align:right">${t3('Achat','Cost','Compra')}</th></tr></thead><tbody>${ln}</tbody></table></div>`:''}
+  ${r.alias.length?h3(t3(`${r.alias.length} code${r.alias.length>1?'s':''}-barres changé${r.alias.length>1?'s':''} dans le tableau — ajouté${r.alias.length>1?'s':''} à la fiche existante`,`${r.alias.length} barcode${r.alias.length>1?'s':''} changed in the sheet — added to the existing item`,`${r.alias.length} código${r.alias.length>1?'s':''} cambiado${r.alias.length>1?'s':''} en la hoja — añadido${r.alias.length>1?'s':''} a la ficha existente`))+
+    `<div style="overflow-x:auto"><table class="mjt"><tbody>${la}</tbody></table></div>`:''}
+  ${r.prix.length?h3(t3(`Les ${Math.min(20,r.prix.length)} plus gros changements de prix${r.prix.length>20?' sur '+nf(r.prix.length):''}`,`The ${Math.min(20,r.prix.length)} biggest price changes${r.prix.length>20?' out of '+nf(r.prix.length):''}`,`Los ${Math.min(20,r.prix.length)} mayores cambios de precio${r.prix.length>20?' de '+nf(r.prix.length):''}`))+
+    `<div style="overflow-x:auto"><table class="mjt"><thead><tr data-nolang><th>${t3('Parfum','Perfume','Perfume')}</th><th>${t3('Prix','Price','Precio')}</th><th style="text-align:right">${t3('Avant','Before','Antes')}</th><th style="text-align:right">${t3('Après','After','Después')}</th></tr></thead><tbody>${lp}</tbody></table></div>`:''}
   ${r.change.length?`<h3 style="font-family:Inter,sans-serif;font-size:9.5px;letter-spacing:.14em;
     text-transform:uppercase;color:var(--ink-2);font-weight:700;margin:18px 0 8px">
     Les ${Math.min(15,r.change.length)} plus gros mouvements${r.change.length>15?` sur ${nf(r.change.length)}`:''}</h3>
    <div style="overflow-x:auto"><table class="mjt"><thead><tr>
     <th>Référence</th><th style="text-align:right">Avant</th><th style="text-align:right">Écart</th>
     <th style="text-align:right">Après</th><th style="text-align:right">Valeur</th></tr></thead>
-    <tbody>${li}</tbody></table></div>`:'<div class="mjw" style="margin-top:12px">Aucune quantité ne change : le tableau est identique à l\'inventaire actuel.</div>'}`;
-  $('mjok').disabled = !r.change.length;
-  $('mjok').textContent = r.change.length?`Appliquer ${nf(r.change.length)} changement${r.change.length>1?'s':''}`:'Appliquer';
+    <tbody>${li}</tbody></table></div>`:(r.total?'':'<div class="mjw" style="margin-top:12px">Aucune quantité ne change : le tableau est identique à l\'inventaire actuel.</div>')}`;
+  $('mjok').disabled = !r.total;
+  $('mjok').textContent = r.total?`Appliquer ${nf(r.total)} changement${r.total>1?'s':''}`:'Appliquer';
 }
+
+/* ===== LA PRICE LIST (Igal, 22 oct. 2026) =====
+   « À la demande d'un client, Sam doit envoyer la price list de 100 % de ses produits en stock, avec le prix de
+   gros, en Excel ou en PDF avec le logo ; à lui de cocher s'il met les prix, la quantité. » Tout ce qui est en
+   stock, trié par marque ; le PDF est un vrai texte (pas une photo) : 1 900 lignes tiennent en ~40 pages légères. */
+const PL_T={
+  en:{titre:'Wholesale price list',pour:'Prepared for',date:'Date',n:'products in stock',brand:'Brand',prod:'Product',size:'Size',type:'Type',qty:'Qty',price:'Wholesale',upc:'UPC',demande:'on request',page:'Page',pdf:'price-list'},
+  es:{titre:'Lista de precios mayorista',pour:'Preparada para',date:'Fecha',n:'productos en stock',brand:'Marca',prod:'Producto',size:'Tamaño',type:'Tipo',qty:'Cant.',price:'Mayorista',upc:'UPC',demande:'a consultar',page:'Página',pdf:'lista-de-precios'},
+  fr:{titre:'Price list de gros',pour:'Préparée pour',date:'Date',n:'parfums en stock',brand:'Marque',prod:'Parfum',size:'Contenance',type:'Type',qty:'Qté',price:'Prix de gros',upc:'Code-barres',demande:'sur demande',page:'Page',pdf:'price-list'}};
+function plOpts(){ return {prix:$('pl-prix').checked,qte:$('pl-qte').checked,sans:$('pl-sans').checked,fmt:(document.querySelector('input[name=plf]:checked')||{}).value||'pdf',lg:$('pl-lg').value||'en',client:$('pl-client').value.trim()}; }
+function plLignes(o){
+  const out=[];
+  tousLesArticles().forEach(p=>{ const q=+p.qte||0; if(q<=0) return;
+    const nom=String(p.nom||'').trim(), marque=String(p.marque||'').trim(); if(!nom&&!marque) return;
+    const pvw=(p.pvw!=null&&p.pvw!=='')?+p.pvw:null; if(!(pvw>0)&&!o.sans) return;
+    out.push({bc:String(p.bc||'').trim(),marque,nom,ml:String(p.ml||'').trim(),type:String(p.type||'').trim(),q,pvw:pvw>0?pvw:null}); });
+  out.sort((a,b)=>(a.marque.toLowerCase()+' '+a.nom.toLowerCase()).localeCompare(b.marque.toLowerCase()+' '+b.nom.toLowerCase()));
+  return out;
+}
+function plCompte(){ try{ const o=plOpts(); const L=plLignes(o); const sans=L.filter(x=>x.pvw==null).length;
+  $('pl-compte').textContent=nf(L.length)+' '+L3('parfums en stock','products in stock','perfumes en stock')+(sans?' — '+nf(sans)+' '+L3('sans prix de gros','without wholesale price','sin precio mayorista'):'')+(o.prix?'':' — '+L3('sans les prix','without prices','sin precios'));
+  $('pl-wa').style.display=$('pl-em').style.display=o.fmt==='pdf'?'':'none'; $('pl-env').style.display=o.fmt==='pdf'?'':'none'; }catch(e){} }
+const plNum=()=>{ const d=new Date(); const z=n=>String(n).padStart(2,'0'); return 'PL-'+d.getFullYear()+z(d.getMonth()+1)+z(d.getDate())+'-'+z(d.getHours())+z(d.getMinutes()); };
+const plDateUS=()=>{ const d=new Date(); return (d.getMonth()+1)+'/'+d.getDate()+'/'+d.getFullYear(); };
+const plUSD=v=>'$'+Number(v).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+function plXlsx(L,o){
+  const T=PL_T[o.lg]||PL_T.en;
+  const col=[{t:T.brand},{t:T.prod},{t:T.size},{t:T.type}]; if(o.qte) col.push({t:T.qty,y:'n'}); if(o.prix) col.push({t:T.price,y:'m'}); col.push({t:T.upc});
+  sortieXlsx({titre:T.titre+(o.client?' — '+o.client:''),fichier:T.pdf+'-'+plDateUS().replace(/\//g,'-'),colonnes:col,
+    lignes:L.map(x=>{ const r=[x.marque,x.nom,x.ml?x.ml+' oz':'',x.type]; if(o.qte) r.push(x.q); if(o.prix) r.push(x.pvw==null?T.demande:x.pvw); r.push(x.bc); return r; })});
+}
+async function plPdfLibs(){
+  if(window.jspdf) return;
+  if(location.protocol==='file:') throw new Error("Le PDF se fabrique sur la version en ligne de l'outil.");
+  await new Promise((res,rej)=>{ const sc=document.createElement('script'); sc.src='lib/pdf/jspdf.umd.min.js'; sc.onload=res; sc.onerror=()=>rej(new Error('Moteur PDF introuvable')); document.head.appendChild(sc); });
+}
+/* la taille d'une image (data URL) pour la placer sans la déformer */
+const plImg=src=>new Promise(r=>{ const i=new Image(); i.onload=()=>r({w:i.naturalWidth,h:i.naturalHeight,ok:true}); i.onerror=()=>r({ok:false}); i.src=src; });
+async function plPdf(L,o){
+  await plPdfLibs();
+  const T=PL_T[o.lg]||PL_T.en, F=Object.assign({enseigne:'Perfumes Trade'},(REG&&REG.fact)||{});
+  const {jsPDF}=window.jspdf; const pdf=new jsPDF({unit:'pt',format:'letter',orientation:'portrait',compress:true});
+  const W=pdf.internal.pageSize.getWidth(), H=pdf.internal.pageSize.getHeight(), m=40, ligneH=13.5, bas=H-40;
+  /* les colonnes : largeur fixe pour ce qui est court, le reste au nom */
+  const cols=[{k:'marque',t:T.brand,w:100},{k:'nom',t:T.prod,w:0},{k:'ml',t:T.size,w:44,r:true},{k:'type',t:T.type,w:40}];
+  if(o.qte) cols.push({k:'q',t:T.qty,w:34,r:true}); if(o.prix) cols.push({k:'pvw',t:T.price,w:62,r:true}); cols.push({k:'bc',t:T.upc,w:76});
+  const fixe=cols.reduce((a,c)=>a+(c.w||0),0); cols.find(c=>!c.w).w=W-2*m-fixe;
+  const coupe=(s,w,taille)=>{ pdf.setFontSize(taille); s=String(s==null?'':s); if(pdf.getTextWidth(s)<=w) return s; while(s.length&&pdf.getTextWidth(s+'…')>w) s=s.slice(0,-1); return s+'…'; };
+  const val=(x,k)=>k==='ml'?(x.ml?x.ml+' oz':''):k==='q'?String(x.q):k==='pvw'?(x.pvw==null?T.demande:plUSD(x.pvw)):(x[k]||'');
+  let y=m, page=1;
+  const entete=async()=>{
+    y=m;
+    if(page===1){
+      let x=m;
+      if(F.logo){ const im=await plImg(F.logo); if(im.ok){ const h=46, w=Math.min(170,h*im.w/im.h); try{ pdf.addImage(F.logo,'PNG',m,y,w,h); x=m+w+14; }catch(e){ try{ pdf.addImage(F.logo,'JPEG',m,y,w,h); x=m+w+14; }catch(_){} } } }
+      pdf.setFont('helvetica','bold'); pdf.setFontSize(16); pdf.text(F.enseigne||'Perfumes Trade',x,y+16);
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(9); pdf.setTextColor(90);
+      const co=[F.adresse,F.tel,F.email].filter(Boolean).join('  ·  '); if(co) pdf.text(coupe(co,W-x-m,9),x,y+30);
+      pdf.setTextColor(0);
+      y+=62;
+      pdf.setFont('helvetica','bold'); pdf.setFontSize(13); pdf.text(T.titre,m,y);
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(9.5);
+      /* chiffres en anglais : l'espace fine du format français n'existe pas dans la police du PDF */
+      pdf.text(T.date+': '+plDateUS()+'   ·   '+L.length.toLocaleString('en-US')+' '+T.n,W-m,y,{align:'right'});
+      y+=16;
+      if(o.client){ pdf.setFontSize(10.5); pdf.text(T.pour+' '+o.client,m,y); y+=16; }
+      y+=4;
+    }
+    /* les titres des colonnes, sur chaque page */
+    pdf.setFillColor(240,239,244); pdf.rect(m,y-9,W-2*m,ligneH+1,'F');
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(8.5); let x=m+3;
+    cols.forEach(c=>{ pdf.text(c.t,c.r?x+c.w-6:x,y+1,c.r?{align:'right'}:undefined); x+=c.w; });
+    y+=ligneH+2; pdf.setFont('helvetica','normal'); pdf.setFontSize(8.5);
+  };
+  const pied=()=>{ pdf.setFontSize(8); pdf.setTextColor(120); pdf.text((F.enseigne||'Perfumes Trade')+'  ·  '+T.titre+'  ·  '+plDateUS(),m,H-22); pdf.text(T.page+' '+page,W-m,H-22,{align:'right'}); pdf.setTextColor(0); };
+  await entete();
+  let marqueAv='';
+  for(const x of L){
+    if(y+ligneH>bas){ pied(); pdf.addPage(); page++; await entete(); marqueAv=''; }
+    let px=m+3;
+    cols.forEach(c=>{ let v=val(x,c.k);
+      if(c.k==='marque'){ if(v===marqueAv) v=''; else marqueAv=v; pdf.setFont('helvetica',v?'bold':'normal'); } else pdf.setFont('helvetica','normal');
+      v=coupe(v,c.w-8,8.5); pdf.text(v,c.r?px+c.w-6:px,y,c.r?{align:'right'}:undefined); px+=c.w; });
+    pdf.setDrawColor(228); pdf.line(m,y+4,W-m,y+4);
+    y+=ligneH;
+  }
+  pied();
+  return pdf.output('blob');
+}
+function plNote(o,L,quoi,a){
+  log({act:'vente',lib:'price list de gros '+quoi+(a?' — '+a:'')+' ('+(o.fmt==='pdf'?'PDF':'Excel')+', '+nf(L.length)+' parfums'+(o.prix?', avec les prix':', sans les prix')+(o.qte?', avec les quantités':'')+(o.client?', pour '+o.client:'')+')',ref:'',av:null,ap:null});
+}
+async function plLien(blob,o,L){
+  if(typeof CK_URL==='undefined'||typeof ckTok!=='function'||!ckTok()) throw new Error("Pas de session serveur : télécharge le PDF et envoie-le toi-même.");
+  const T=PL_T[o.lg]||PL_T.en, num=plNum(), F=(REG&&REG.fact)||{};
+  const q='?type=pricelist&enseigne='+encodeURIComponent(F.enseigne||'Perfumes Trade')+'&date='+encodeURIComponent(plDateUS())+'&lignes='+L.length+'&langue='+o.lg;
+  const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/docs/'+encodeURIComponent(num)+q,{method:'PUT',headers:{'Content-Type':'application/pdf',Authorization:'Bearer '+ckTok()},body:blob});
+  const j=await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.erreur||('Dépôt du PDF refusé ('+r.status+')'));
+  return {num,url:j.url,T};
+}
+const plMsg=(t,err)=>{ const e=$('pl-msg'); e.textContent=t||''; e.style.color=err?'var(--crit)':''; };
+$('plb').onclick=()=>{ $('plov').classList.add('on'); plMsg(''); plCompte(); };
+$('pl-x').onclick=$('pl-ann').onclick=()=>$('plov').classList.remove('on');
+['pl-prix','pl-qte','pl-sans','pl-lg'].forEach(i=>$(i).addEventListener('change',plCompte));
+document.querySelectorAll('input[name=plf]').forEach(r=>r.addEventListener('change',plCompte));
+$('pl-dl').onclick=async()=>{ const o=plOpts(), L=plLignes(o); if(!L.length){ plMsg('Aucun parfum en stock.',true); return; }
+  $('pl-dl').disabled=true;
+  try{
+    if(o.fmt==='xlsx'){ plXlsx(L,o); plNote(o,L,'téléchargée'); plMsg(L3('Excel téléchargé.','Excel downloaded.','Excel descargado.')); }
+    else { plMsg(L3('Fabrication du PDF…','Building the PDF…','Creando el PDF…')); const b=await plPdf(L,o); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=(PL_T[o.lg]||PL_T.en).pdf+'-'+plDateUS().replace(/\//g,'-')+'.pdf'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); plNote(o,L,'téléchargée'); plMsg(L3('PDF téléchargé.','PDF downloaded.','PDF descargado.')); }
+  }catch(e){ plMsg((e&&e.message)||'échec',true); }
+  $('pl-dl').disabled=false; };
+$('pl-wa').onclick=async()=>{ const o=plOpts(), L=plLignes(o); const num=String($('pl-tel').value||'').replace(/[^\d]/g,'');
+  if(!num||num.length<8){ plMsg(L3('Tape le numéro WhatsApp du client.','Type the customer\'s WhatsApp number.','Escribe el número de WhatsApp del cliente.'),true); $('pl-tel').focus(); return; }
+  const w=window.open('','_blank'); $('pl-wa').disabled=true;
+  try{ plMsg(L3('Fabrication du PDF…','Building the PDF…','Creando el PDF…')); const b=await plPdf(L,o); plMsg(L3('Dépôt en ligne…','Uploading…','Subiendo…')); const d=await plLien(b,o,L);
+    const txt=(o.lg==='es'?'Hola'+(o.client?' '+o.client:'')+', aquí está nuestra lista de precios mayorista ('+plDateUS()+').':o.lg==='fr'?'Bonjour'+(o.client?' '+o.client:'')+', voici notre price list de gros ('+plDateUS()+').':'Hello'+(o.client?' '+o.client:'')+', here is our wholesale price list ('+plDateUS()+').')+'\n\n'+d.url;
+    const url='https://wa.me/'+(num.length<=10?'1'+num:num)+'?text='+encodeURIComponent(txt); window.__wa=url;
+    let ok=false; try{ if(w&&!w.closed){ w.location.href=url; ok=true; } }catch(e){} if(!ok) window.open(url,'_blank');
+    plNote(o,L,'envoyée par WhatsApp',num); plMsg(L3('Lien envoyé dans WhatsApp.','Link sent to WhatsApp.','Enlace enviado a WhatsApp.'));
+  }catch(e){ try{ if(w&&!w.closed) w.close(); }catch(_){} plMsg((e&&e.message)||'échec',true); }
+  $('pl-wa').disabled=false; };
+$('pl-em').onclick=async()=>{ const o=plOpts(), L=plLignes(o); const a=String($('pl-mail').value||'').trim();
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a)){ plMsg(L3('Tape l\'adresse email du client.','Type the customer\'s email address.','Escribe el email del cliente.'),true); $('pl-mail').focus(); return; }
+  $('pl-em').disabled=true;
+  try{ plMsg(L3('Fabrication du PDF…','Building the PDF…','Creando el PDF…')); const b=await plPdf(L,o); plMsg(L3('Dépôt en ligne…','Uploading…','Subiendo…')); const d=await plLien(b,o,L);
+    const F=(REG&&REG.fact)||{}; const ens=F.enseigne||'Perfumes Trade';
+    const sujet=(o.lg==='es'?'Lista de precios mayorista — ':o.lg==='fr'?'Price list de gros — ':'Wholesale price list — ')+ens+' ('+plDateUS()+')';
+    const texte=(o.lg==='es'?'Hola'+(o.client?' '+o.client:'')+',\n\nAquí está nuestra lista de precios mayorista del '+plDateUS()+' ('+nf(L.length)+' productos en stock) :\n\n'+d.url+'\n\nGracias,\n'+ens
+      :o.lg==='fr'?'Bonjour'+(o.client?' '+o.client:'')+',\n\nVoici notre price list de gros du '+plDateUS()+' ('+nf(L.length)+' parfums en stock) :\n\n'+d.url+'\n\nMerci,\n'+ens
+      :'Hello'+(o.client?' '+o.client:'')+',\n\nHere is our wholesale price list as of '+plDateUS()+' ('+nf(L.length)+' products in stock):\n\n'+d.url+'\n\nThank you,\n'+ens);
+    plMsg(L3('Envoi…','Sending…','Enviando…'));
+    const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/docs/'+encodeURIComponent(d.num)+'/courrier',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},body:JSON.stringify({a,sujet,texte})});
+    const j=await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.erreur||('Envoi refusé ('+r.status+')'));
+    plNote(o,L,'envoyée par email',a); plMsg(L3('Envoyée à ','Sent to ','Enviada a ')+a+' ✓');
+  }catch(e){ plMsg((e&&e.message)||'échec',true); }
+  $('pl-em').disabled=false; };
 
 $('maj').onclick=()=>{ $('mjov').classList.add('on'); $('mjres').innerHTML='';
   $('mjtxt').value=''; $('mjok').disabled=true; $('mjmsg').textContent=''; MJ=null;
@@ -3705,20 +6338,37 @@ $('mjfile').addEventListener('change',e=>{ const f=e.target.files[0]; if(!f) ret
 $('mjok').onclick=()=>{
   if(!MJ) return;
   if(!demandeUser(false,"mettre le stock à jour",()=>$('mjok').click())) return;
-  EXT={q:MJ.q,date:new Date().toISOString(),src:MJ.colBC+' / '+MJ.colQ};
-  log({act:'import',lib:'mise à jour du stock depuis un tableur',
+  const t=new Date().toISOString();
+  EXT={q:MJ.q,date:t,src:MJ.colBC+' / '+MJ.colQ};
+  /* les articles ajoutés ici portent leur quantité eux-mêmes */
+  AJ.forEach(o=>{ if(o&&o.id&&MJ.qId[o.id]!==undefined) o.qte=MJ.qId[o.id]; });
+  if(MJ.change.length) log({act:'import',lib:'mise à jour du stock depuis un tableur',
        n:MJ.change.length,impact:Math.round(MJ.impact),
        det:MJ.change.slice(0,600).map(c=>({bc:c.bc,ref:c.marque+' '+c.nom,av:c.av,ap:c.ap}))});
-  /* le tableau fait foi : on retire les corrections manuelles de quantite qu'il contredit */
+  /* le tableau fait foi : on retire les corrections de quantité qu'il contredit */
   Object.keys(MOD).forEach(id=>{
-    if(MOD[id].qte===undefined) return;
-    const p=P.find(x=>x.id===id);
-    if(p&&MJ.q[p.bc]!==undefined&&MJ.q[p.bc]!==MOD[id].qte){
-      delete MOD[id].qte;
-      if(!Object.keys(MOD[id]).length) delete MOD[id];
-    }
+    if(MOD[id].qte===undefined||MJ.qId[id]===undefined) return;
+    delete MOD[id].qte;
+    if(!Object.keys(MOD[id]).length) delete MOD[id];
   });
-  sauveEXT(); sauveMOD(); fermeMJ(); render(); majBandeau();
+  Object.entries(MJ.qMod||{}).forEach(([id,v])=>{ MOD[id]=Object.assign({},MOD[id]||{},{qte:v}); });
+  /* les prix du tableau */
+  MJ.prix.forEach(c=>{ MOD[c.id]=Object.assign({},MOD[c.id]||{},{[c.k]:c.ap}); });
+  /* une ligne de journal par prix, comme un changement fait dans la fiche */
+  MJ.prix.forEach(c=>log({act:'prix',champ:c.k,lib:(LIBCH[c.k]||c.k)+' — repris du tableur',bc:c.bc,ref:c.marque+' '+c.nom,av:c.av,ap:c.ap}));
+  /* un code-barres changé dans le tableau : ajouté à la fiche, pas une seconde fiche */
+  MJ.alias.forEach(z=>{ const m=MOD[z.id]||{}; const l=String(m.bcs||'').split(/[^0-9]+/).filter(Boolean);
+    if(!l.includes(z.code)) l.push(z.code); MOD[z.id]=Object.assign({},m,{bcs:l.join(', ')}); });
+  if(MJ.alias.length) log({act:'fiche',lib:MJ.alias.length+(MJ.alias.length>1?' codes-barres ajoutés depuis le tableur':' code-barres ajouté depuis le tableur'),
+       n:MJ.alias.length,det:MJ.alias.map(z=>({bc:z.code,ref:z.marque+' '+z.nom,champ:'bcs',av:null,ap:z.code}))});
+  /* les parfums qui n'existaient pas ici */
+  MJ.nouveaux.forEach(o=>{
+    const x={id:'a'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),bc:o.bc,nom:o.nom,marque:o.marque,ml:o.ml,
+      type:o.type,genre:o.genre,qte:o.qte,pa:o.pa,pvr:o.pvr,pvw:o.pvw,src:'tableur',cree:t};
+    AJ.push(x); });
+  if(MJ.nouveaux.length) log({act:'creation',lib:MJ.nouveaux.length+(MJ.nouveaux.length>1?' parfums créés depuis le tableur':' parfum créé depuis le tableur'),
+       n:MJ.nouveaux.length,det:MJ.nouveaux.map(o=>({bc:o.bc,ref:o.marque+' '+o.nom,av:null,ap:o.qte}))});
+  sauveEXT(); sauveMOD(); sauveAJ(); fermeMJ(); render(); majBandeau();
 };
 
 function majBandeau(){
@@ -3727,9 +6377,8 @@ function majBandeau(){
   const d=new Date(EXT.date), n=Object.keys(EXT.q).length;
   el.style.display='';
   el.innerHTML=`<span class="mjsrc">stock importé</span>
-    <span>${nf(n)} références mises à jour depuis le tableur le
-    ${d.toLocaleDateString('fr-FR',{day:'numeric',month:'long'})} à
-    ${d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}.</span>
+    <span data-nolang>${(()=>{ const j=d.toLocaleDateString((typeof lgLocale==='function'?lgLocale():'fr-FR'),{timeZone:'America/New_York',day:'numeric',month:'long'}), h=d.toLocaleTimeString('fr-FR',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit'});
+      return L3(`${nf(n)} références mises à jour depuis le tableur le ${j} à ${h}.`,`${nf(n)} references updated from the spreadsheet on ${j} at ${h}.`,`${nf(n)} referencias actualizadas desde la hoja de cálculo el ${j} a las ${h}.`); })()}</span>
     <button class="btn" id="extx" style="margin-left:auto">Revenir au fichier d'origine</button>`;
   $('extx').onclick=()=>{ if(!confirm("Abandonner le stock importé et revenir aux quantités du fichier d'inventaire ?")) return;
     EXT={q:{},date:null,src:''}; sauveEXT(); render(); majBandeau(); };
@@ -3894,12 +6543,22 @@ $('mo').onclick=()=>{
   sauveAJ(); PARSED=[]; $('ta').value=''; $('fi').value='';
   $('pv').style.display='none'; $('pv2').style.display='none';
   CHAMPS.forEach(k=>{ const el=$('f-'+k); if(el) el.value=''; });
-  ferme(); $('fx').value='neuf'; render();
+  ferme(); $('fx').value='neuf'; remplitMarques(); render();
   const n=lot.length-doubl;
   if(n===0){ alert(`Aucun article ajouté.\n\nLes ${doubl} ligne${doubl>1?'s':''} correspondent à des codes-barres déjà présents dans le catalogue — ce sont des références que tu as déjà.`); return; }
   alert(`${n} article${n>1?'s':''} ajouté${n>1?'s':''}.`+
     (doubl?`\n${doubl} ignoré${doubl>1?'s':''} : code-barres déjà présent dans le catalogue.`:'')+
     `\n\nIls apparaissent avec une bordure violette et l'étiquette « nouveau ».\nPense à les exporter pour les intégrer au fichier maître.`);
+  /* Igal, 18 oct. 2026 : « quand tu crées un produit, est-ce qu'on peut intégrer une photo ou en chercher une ? » — UN article saisi à
+     la main : sa fiche s'ouvre tout de suite, et s'il n'a pas de photo, la recherche sur Internet se lance (un clic pour choisir). */
+  if(pane==='man'&&n===1){ const x=lot.find(z=>z.id); if(x){ let i=cur.findIndex(p=>p.id===x.id);
+    if(i<0&&$('fs').value==='in'){ $('fs').value=''; render(); i=cur.findIndex(p=>p.id===x.id); }   /* un article créé à 0 en stock était caché par « En stock » */
+    if(i>=0){ ouvreFiche(x.id);
+    setTimeout(()=>{ const b=photoDeFiche(); if(b&&b.id===x.id&&!b.img&&typeof ckTok==='function'&&ckTok()) photoDuWeb(); },400); }
+    /* 20 oct. 2026 (Igal) : le produit est mis sur tous les canaux tout de suite, sans repasser par la fiche */
+    /* …mais APRÈS la recherche de photo si elle est ouverte : la photo choisie part alors avec le produit, et les deux fenêtres ne se marchent pas dessus */
+    const attends=()=>{ if(document.getElementById('pw-ov')) { setTimeout(attends,600); return; } enLigneAuto(x.id); };
+    if((+x.pvr>0)||(+x.pvw>0)) setTimeout(attends,900); } }   /* sans aucun prix saisi, rien à mettre en ligne : l'article reste « à compléter » */
 };
 
 /* ============ EXPORT DES AJOUTS ============ */
@@ -3937,7 +6596,129 @@ function exporteAjouts(){
   el.click(); URL.revokeObjectURL(el.href);
 }
 
+/* ============ NOUVELLES RÉFÉRENCES POUR LIGHTSPEED (3 oct. 2026) ============
+   Sam, point 8 : « dans l'inventaire que j'envoie à Lightspeed, s'il y a une nouvelle
+   référence, les infos rentrées dans l'ERP seront-elles prises en compte ? » Non : le
+   fichier d'inventaire ne fait que changer des quantités, et ignore un code inconnu.
+   Ce fichier-ci est l'import PRODUITS de Lightspeed (X-Series), mêmes colonnes que son
+   export : il crée les fiches. On compare à la liste des produits de la caisse que le
+   cockpit tient à jour (caisse-produits-v1, nourrie par le zap « produits »).
+   Ce qui est douteux reste HORS du fichier et s'affiche à part :
+     - un code-barres retrouvé DANS un SKU de la caisse (« …NOBOX », préfixe) : le
+       produit existe peut-être déjà, c'est à Sam de trancher ;
+     - pas de code-barres : impossible de savoir s'il existe déjà ;
+     - pas de prix détail : il passerait à 0 $ à la caisse. */
+const LS_COLS=['id','handle','sku','composite_name','composite_sku','composite_quantity','name','description','product_category','variant_option_one_name','variant_option_one_value','variant_option_two_name','variant_option_two_value','variant_option_three_name','variant_option_three_value','tags','active_online','weight','weight_unit','length','width','height','dimensions_unit','supply_price','retail_price','account_code','account_code_purchase','brand_name','supplier_name','supplier_code','active','track_inventory','outlet_tax_Main_Outlet','inventory_Main_Outlet','reorder_point_Main_Outlet','reorder_quantity_Main_Outlet','min_quantity_Main_Outlet','max_quantity_Main_Outlet','items_on_special_order_Main_Outlet'];
+let LSNV=null;
+const lsNorm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9.]+/g,' ').trim();
+/* le nom à la façon de la caisse : « Bois d'Iris by Geparlys - EDP - 3.4 oz » */
+function lsNom(a){
+  const n=String(a.nom||'').trim(), m=String(a.marque||'').trim(), t=String(a.type||'').trim(), ml=String(a.ml||'').trim();
+  const nn=' '+lsNorm(n)+' ';
+  let s=n;
+  if(m && nn.indexOf(' '+lsNorm(m)+' ')<0) s+=' by '+m;
+  if(t && nn.indexOf(' '+lsNorm(t)+' ')<0) s+=' - '+t;
+  if(ml && nn.indexOf(' '+lsNorm(ml)+' ')<0) s+=' - '+ml+(parseFloat(ml)>20?' ml':' oz');
+  return s.replace(/\s+/g,' ').trim();
+}
+/* range chaque parfum de l'ERP : connu de la caisse, nouveau, ou à vérifier */
+function lsTrie(V,tous){
+  const codes=new Set(), skus=[], skuSet=new Set(), parSku={};
+  Object.values(V||{}).forEach(p=>{ if(!p) return;
+    if(p.bc) codes.add(String(p.bc).replace(/^0+/,''));
+    const k=String(p.sku||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+    if(k){ skus.push(k); skuSet.add(k); skuSet.add(k.replace(/^0+/,'')); parSku[k]=p; } });
+  const out={neufs:[],verif:[],connus:0};
+  tousLesArticles().forEach(a=>{
+    const q=+a.qte||0;
+    const brut=String(a.bc||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+    const ks=cleCodes(a.bc).filter(k=>!k.startsWith('T:')), ex=bcsDe(a);
+    if(brut&&(skuSet.has(brut)||skuSet.has(brut.replace(/^0+/,'')))){ out.connus++; return; }
+    if([...ks,...ex].some(k=>codes.has(k)||skuSet.has(k))){ out.connus++; return; }
+    if(!tous&&q<=0) return;
+    if(!brut){ out.verif.push({a,why:'pas de code-barres'}); return; }
+    const pres=ks.filter(k=>k.length>=8).map(k=>skus.find(s=>s!==k&&s.indexOf(k)>=0)).find(Boolean);
+    if(pres){ out.verif.push({a,why:'code-barres déjà dans un SKU de la caisse',ls:pres+' — '+((parSku[pres]||{}).nom||'')}); return; }
+    /* un vrai code-barres = 8 à 14 chiffres. Deux codes collés (« 783320427152783320413698 »),
+       un nom (« Cloudnobox1oz ») ou une mention (« …tester ») feraient une fiche que la
+       caisse ne retrouvera jamais au scanner : on les montre, on ne les crée pas. */
+    if(!/^\d{8,14}$/.test(brut)){ out.verif.push({a,why:'code-barres à corriger : pas 8 à 14 chiffres'}); return; }
+    if(a.pvr==null||!(+a.pvr>0)){ out.verif.push({a,why:'pas de prix détail'}); return; }
+    out.neufs.push(a);
+  });
+  const tri=(x,y)=>String(x.marque||'').localeCompare(String(y.marque||''),'fr')||String(x.nom||'').localeCompare(String(y.nom||''),'fr');
+  out.neufs.sort(tri); out.verif.sort((x,y)=>tri(x.a,y.a));
+  return out;
+}
+function lsLigne(a){
+  const code=String(a.bc||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  const o={handle:code,sku:code,name:lsNom(a),active_online:'0',
+    variant_option_one_name:a.type?'type':'',variant_option_one_value:a.type||'',
+    variant_option_two_name:a.ml?'content':'',variant_option_two_value:a.ml||'',
+    supply_price:a.pa!=null?String(+a.pa):'',retail_price:(+a.pvr).toFixed(2),
+    brand_name:a.marque||'',active:'1',track_inventory:'1',outlet_tax_Main_Outlet:'Default Tax',
+    inventory_Main_Outlet:String(Math.max(0,Math.round(+a.qte||0))),items_on_special_order_Main_Outlet:'0'};
+  const q=v=>{ v=String(v==null?'':v); return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  return LS_COLS.map(c=>q(o[c]||'')).join(',');
+}
+function lsPeint(){
+  const R=LSNV; if(!R) return;
+  const tous=!!($('lstous')&&$('lstous').checked);
+  const T=lsTrie(R.V,tous); R.T=T;
+  const m=R.maj?new Date(R.maj):null;
+  const d=m&&!isNaN(m)?m.toLocaleDateString('fr-FR')+' '+m.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'';
+  const ligne=a=>`<tr><td data-nolang>${esc(a.bc||'—')}</td><td data-nolang>${esc(lsNom(a))}</td><td class="num">${+a.qte||0}</td><td class="num" data-nolang>${a.pa!=null?money(+a.pa):'—'}</td><td class="num" data-nolang>${a.pvr!=null?money(+a.pvr):'—'}</td></tr>`;
+  let h=`<div class="lsnv-tete"><b>${T.neufs.length} parfum${T.neufs.length>1?'s':''} à créer dans la caisse</b></div>`;
+  h+=`<p class="hint">Comparé aux ${R.n} produits que la caisse connaît${d?` (mis à jour le ${d})`:''}.</p>`;
+  h+=`<label class="lsnv-case"><input type="checkbox" id="lstous"${tous?' checked':''}> <span>Ajouter aussi ceux à 0 en stock</span></label>`;
+  if(T.neufs.length){
+    h+=`<div class="prev lsnv-tab"><table><thead><tr><th>Code-barres</th><th>Nom dans la caisse</th><th class="num">Qté</th><th class="num">Achat</th><th class="num">Détail</th></tr></thead><tbody>`
+      +T.neufs.slice(0,200).map(ligne).join('')+`</tbody></table></div>`;
+    if(T.neufs.length>200) h+=`<p class="hint">Les ${T.neufs.length-200} autres sont dans le fichier.</p>`;
+  } else h+=`<p class="hint">Rien à créer : la caisse connaît déjà tous ces parfums.</p>`;
+  if(T.verif.length){
+    h+=`<div class="lsnv-tete lsnv-av"><b>À vérifier avant : ${T.verif.length} hors du fichier</b></div>`
+      +`<div class="prev lsnv-tab"><table><tbody>`+T.verif.map(x=>`<tr><td data-nolang>${esc(x.a.bc||'—')}</td><td data-nolang>${esc(lsNom(x.a))}${x.ls?`<br><small><span>Dans la caisse :</span> <span data-nolang>${esc(x.ls)}</span></small>`:''}</td><td class="num">${+x.a.qte||0}</td><td class="lsnv-why">${esc(x.why)}</td></tr>`).join('')+`</tbody></table></div>`;
+  }
+  $('lsres').innerHTML=h;
+  $('lstous').onchange=lsPeint;
+  $('lsok').disabled=!T.neufs.length;
+}
+async function lsOuvre(){
+  LSNV=null; $('lsres').innerHTML='<p class="hint">Lecture des produits de la caisse…</p>';
+  $('lsok').disabled=true; $('lsmsg').textContent=''; $('lsmsg').className='msg';
+  $('lsov').classList.add('on');
+  if(!(typeof CK_URL!=='undefined'&&typeof ckTok==='function'&&ckTok())){
+    $('lsres').innerHTML='<p class="hint">Il faut ouvrir l\'ERP en ligne : la liste des produits de la caisse est sur le serveur.</p>'; return; }
+  try{
+    const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/donnees/caisse-produits-v1',{headers:{Authorization:'Bearer '+ckTok()},cache:'no-store'});
+    if(r.status===404) throw new Error('vide');
+    if(!r.ok) throw new Error('serveur '+r.status);
+    const j=await r.json(); const V=(j&&j.val&&typeof j.val==='object')?j.val:{};
+    const n=Object.keys(V).length; if(!n) throw new Error('vide');
+    LSNV={V,n,maj:j.maj||''}; lsPeint();
+  }catch(e){
+    $('lsres').innerHTML=(e&&e.message==='vide')
+      ?'<p class="hint">Le serveur ne connaît pas encore les produits de la caisse : sans eux, impossible de savoir lesquels sont nouveaux.</p>'
+      :'<p class="hint">Le serveur ne répond pas. Réessaie dans un instant.</p>';
+  }
+}
+function lsTelecharge(){
+  const T=LSNV&&LSNV.T; if(!T||!T.neufs.length) return;
+  const li=[LS_COLS.join(',')].concat(T.neufs.map(lsLigne));
+  const el=document.createElement('a');
+  el.href=URL.createObjectURL(new Blob(['﻿'+li.join('\r\n')],{type:'text/csv;charset=utf-8'}));
+  el.download=`lightspeed_nouvelles_references_${ajd()}.csv`;
+  document.body.appendChild(el); el.click(); el.remove(); setTimeout(()=>URL.revokeObjectURL(el.href),1000);
+  const m=$('lsmsg'); m.textContent=`Fichier prêt : ${T.neufs.length} parfum${T.neufs.length>1?'s':''}.`; m.className='msg ok';
+}
+function lsFerme(){ $('lsov').classList.remove('on'); }
+$('lsnv').onclick=lsOuvre; $('lsx').onclick=lsFerme; $('lsannul').onclick=lsFerme; $('lsok').onclick=lsTelecharge;
+$('lsov').addEventListener('click',e=>{ if(e.target===$('lsov')) lsFerme(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&$('lsov').classList.contains('on')) lsFerme(); });
+
 majVue();
+try{ remplitMarques(); }catch(e){}
 $('fseuil').value=SEUIL;
 $('fseuil').addEventListener('input',()=>{
   const v=parseInt($('fseuil').value,10);
@@ -3947,15 +6728,46 @@ $('fseuil').addEventListener('input',()=>{
 });
 render();
 majSeuil();
+/* catalogue.html?q=… (lien depuis une autre page) et, depuis le 25 oct. 2026, catalogue.html?photo=0 (le tableau
+   de bord envoie sur « Sans photo »). Ici, APRÈS le premier render : plus haut dans le script, nf() n'existait
+   pas encore et le lien plantait la page. */
+{ const sp=new URLSearchParams(location.search), q0=sp.get('q'), ph0=sp.get('photo');
+  if(q0){ $('q').value=q0; $('fs').value=''; render(); }
+  if(ph0==='0'||ph0==='1'){ $('fp').value=ph0; render(); }
+  /* 25 oct. 2026 : le tableau de bord (« Pas en vente partout ») envoie sur le filtre Diffusion */
+  const df=sp.get('diff'); if(df&&['any','site','sitegros','perfumecity','all'].includes(df)){ $('fd').value=df; render(); } }
 /* catalogue.html#cle=b123… : ouvrir directement une fiche (lien depuis VIP wholesale, Ventes…) */
 /* Arrivée depuis l'Inventaire par « Mettre à jour depuis un fichier » :
    la fenêtre d'import s'ouvre toute seule. */
 (function(){ if(location.hash!=='#maj') return;
   setTimeout(()=>{ try{ $('maj').click(); }catch(e){} },120); })();
 
-(function(){ const m=location.hash.match(/cle=([^&]+)/); if(!m) return;
-  const id=decodeURIComponent(m[1]); const p=tousLesArticles().find(x=>x.id===id); if(!p) return;
-  $('fs').value=''; $('q').value=p.bc||p.nom; render(); setTimeout(()=>ouvreFiche(id),60); })();
+/* Mode « cadre » (17 oct. 2026, Igal : « quand je clique sur un produit, une fenêtre s'ouvre pour que Sam ait la fiche ») :
+   la page Factures ouvre catalogue.html#cle=…&cadre=1 dans une fenêtre. On n'y montre que la fiche, sans le menu ni la
+   liste, et sa fermeture prévient la page qui l'a ouverte. */
+if(/[#&]cadre=1/.test(location.hash) && window.parent!==window){
+  document.documentElement.classList.add('cadre');
+  /* un lien de la fiche ne doit jamais remplacer la fiche par une autre page DANS la fenêtre : il s'ouvre dans un nouvel onglet,
+     et la page d'où l'on vient (Ventes, Factures…) reste là où elle est */
+  document.addEventListener('click',e=>{ const a=e.target.closest&&e.target.closest('a[href]');
+    if(a&&!a.target&&!/^#/.test(a.getAttribute('href')||'')){ a.target='_blank'; a.rel='noopener'; } },true);
+}
+(function(){ const cadre=document.documentElement.classList.contains('cadre');
+  const pret=()=>{ if(cadre) document.documentElement.classList.add('cp'); };
+  const m=location.hash.match(/cle=([^&]+)/); if(!m){ pret(); return; }
+  const id=decodeURIComponent(m[1]); const p=tousLesArticles().find(x=>x.id===id); if(!p){ pret(); return; }
+  $('fs').value=''; $('q').value=p.bc||p.nom; render(); setTimeout(()=>{ ouvreFiche(id); pret();
+    /* 25 oct. 2026 : depuis le tableau de bord (« Pas en vente partout »), &mel=1 ouvre tout de suite la fenêtre
+       « Mettre en ligne » de CE parfum, sur les canaux où il manque — un clic depuis le tableau de bord, pas trois. */
+    /* 31 oct. 2026 : depuis le tableau de bord (&canaux=1), la fiche s'ouvre directement sur « Mes canaux de vente », où chaque site
+       manquant a son bouton (Mettre en ligne / Remettre en vente) — rien ne cache les prix */
+    if(/[#&]canaux=1/.test(location.hash)){ setTimeout(()=>{ try{ const z=document.querySelector('.dcanw'); if(z){ z.open=true; z.scrollIntoView({block:'start'}); z.classList.add('flash'); setTimeout(()=>z.classList.remove('flash'),2200); } }catch(e){} },150); }
+    if(/[#&]mel=1/.test(location.hash)){ try{ const ids=CAN_DIFF.map(c=>c[0]).filter(i=>statutDiff(p,i)==='non');
+      if(ids.length){ ouvreMel([p],ids);
+        /* depuis le tableau de bord on vient pour mettre EN VENTE (Igal, 30 oct. 2026 : « qu'ils aillent directement sur le
+           site concerné ») : le choix est déjà sur « en vente tout de suite », le brouillon reste possible */
+        const mm=document.getElementById('melm'); if(mm) mm.value='publie'; } }catch(e){} }
+  },60); })();
 
 /* ---------------------------------------------------------------
    Ouvert depuis une copie (Téléchargements, Bureau) : les autres
@@ -4008,8 +6820,8 @@ out=(TPL.replace('__FUSION__',FUSION)
        .replace('__COMPTES__',COMPTES).replace('__AIDECSS__',_aide.CSS)
        .replace('__SAUVE__',SAUVE)
        .replace('__MENU__',MENU)
-       .replace('__LANGUE__',LANGUE).replace('__LIRE__',_lire.bloc()).replace('__ACCEPT_TAB__',_lire.ACCEPT_TAB)
-       .replace('__IDENT__',IDENT)
+       .replace('__LANGUE__',LANGUE).replace('__VOCAB__',_langue.VOCAB).replace('__LIRE__',_lire.bloc()).replace('__SORTIE__',_sortie.JS).replace('__ACCEPT_TAB__',_lire.ACCEPT_TAB)
+       .replace('__IDENT__',IDENT).replace('__IDENT_TOT__',_identite.TOT).replace('__FILE_AUTO__',_file_auto.FILE_AUTO)
        .replace('__GARDE__',_donnees.garde(['produits']))
        .replace('__DATA__','window.D_PROD')
        .replace('__LOGOS__',json.dumps(_logos))
@@ -4023,7 +6835,7 @@ _ncli=(len([c for c in json.load(open('clients_seed.json'))['clients']
 out=out.replace('__BARRE__', barre('Catalogue'))
 for k,v in {'__NCLI__':str(_ncli),'__TOTAL__':n(S['total']),'__ENSTOCK__':n(S['enstock']),'__RUPTURE__':n(S['rupture']),
             '__UNITES__':n(S['unites']),'__PHOTOS__':n(S['photos']),'__A0__':n(S['anytot']),
-            '__VERSION__':__import__('datetime').datetime.now().strftime('%d/%m/%Y \u00e0 %Hh%M'),
+            '__VERSION__':__import__('datetime').datetime.now().strftime('%m/%d/%Y \u00e0 %Hh%M'),
             '__VER__':__import__('datetime').datetime.now().strftime('%Y%m%d%H%M')}.items():
     out=out.replace(k,v)
 for i in range(1,10):

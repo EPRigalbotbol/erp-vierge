@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import json
 from build_crm import coquille
-import _donnees
+import _donnees, _lire
 C=json.load(open('cat.json'))
-IDX={r[15]:[r[0],r[13],r[2],r[12],r[6],r[8]] for r in C}   # cle -> bc,nom,marque,pa,qte,pvw
+IDX={r[15]:[r[0],r[13],r[2],r[12],r[6],r[8],r[4],r[5]] for r in C}   # cle -> bc,nom,marque,pa,qte,pvw,TYPE,genre
 
 CSS = r'''
 .sous{margin:5px 0 0;font-size:14px;color:var(--ink-2);max-width:74ch;line-height:1.5}
@@ -132,11 +132,19 @@ background:var(--surface-2);max-width:66ch;margin:16px auto}
 .vide h3{margin:0 0 11px;font-size:20px;font-weight:700;letter-spacing:-.02em}
 .vide p{margin:0 0 14px;font-size:14px;color:var(--ink-2);line-height:1.65}
 .vide .btn{margin:2px 4px}
+/* déposer n'importe quel document sur la page : le voile pendant le glisser */
+.dpz{position:fixed;inset:0;z-index:60;background:rgba(91,75,138,.14);border:4px dashed var(--iris);display:none;align-items:center;justify-content:center;pointer-events:none}
+.dpz.on{display:flex}
+.dpz>div{background:var(--surface);border-radius:14px;padding:22px 30px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.15)}
+.dpz b{display:block;font-size:18px;margin-bottom:4px}.dpz span{font-size:13px;color:var(--ink-2)}
+#dp-deja{color:var(--warn)}
 '''
 
 CORPS = r'''
 <div class="tools">
   <a class="btn pri" href="factures.html">Enregistrer une facture</a>
+  <button class="btn" id="depot" title="Une facture, une price list, un listing, une carte de visite en photo : l'outil lit le nom et les coordonnées, et crée le fournisseur">Déposer un document</button>
+  <input type="file" id="dfich" accept="__ACCEPT__" hidden>
   <button class="btn" id="nouv">+ Nouveau fournisseur</button>
   <span id="exp"></span>
   <span class="sp"></span>
@@ -148,6 +156,26 @@ CORPS = r'''
 <div id="kpis"></div>
 <div id="corps"></div>
 
+<div class="dpz" id="dpz"><div><b>Dépose le document ici</b><span>facture, price list, listing, photo d'une carte de visite…</span></div></div>
+<div class="ov" id="dpov"><div class="mod" style="max-width:580px">
+  <div class="mh"><h2 id="dp-titre">Document lu</h2><button class="x" id="dp-x">&times;</button></div>
+  <div class="mb">
+    <p class="hint" id="dp-quoi" style="margin:0 0 12px"></p>
+    <div class="fg2">
+      <div class="fld"><label for="dp-nom">Nom du fournisseur</label><input id="dp-nom" autocomplete="off"></div>
+      <div class="fld"><label for="dp-email">E-mail</label><input id="dp-email" autocomplete="off"></div>
+    </div>
+    <div class="fg2">
+      <div class="fld"><label for="dp-tel">Téléphone</label><input id="dp-tel" autocomplete="off"></div>
+      <div class="fld"><label for="dp-site">Site web</label><input id="dp-site" autocomplete="off"></div>
+    </div>
+    <p class="hint" id="dp-deja" style="margin:0" hidden></p>
+  </div>
+  <div class="mf"><span class="msg" id="dp-msg"></span>
+    <button class="btn" id="dp-non">Annuler</button>
+    <button class="btn" id="dp-fiche">Créer la fiche</button>
+    <button class="btn pri" id="dp-suite" hidden></button></div>
+</div></div>
 <div class="ov" id="frov"><div class="mod" style="max-width:600px;max-height:88vh;display:flex;flex-direction:column">
   <div class="mh"><h2 id="fr-titre">Nouveau fournisseur</h2><button class="x" id="fr-x">&times;</button></div>
   <div class="mb" style="overflow:auto;flex:1;min-height:0">
@@ -180,10 +208,25 @@ CORPS = r'''
 
 JS = r'''
 const IDX=__IDX__, FRN_INIT=__FRNINIT__;
+/* Le type (EDT, EDP, OIL…) et le genre, comme partout ailleurs. */
+const GEN={M:'Homme',W:'Femme',U:'Unisexe',K:'Enfant'};
+const tyBadge=cle=>{ const v=IDX[cle]||[]; const t=String(v[6]||'').trim(), g=GEN[String(v[7]||'').trim().toUpperCase()]||'';
+  return (t?' <i class="ty" data-nolang>'+esc(t)+'</i>':'')+(g?' <i class="gn">'+esc(g)+'</i>':''); };
 const KHIST='prix-achat-hist-v1', KFRN='fournisseurs-v1', KUSR='crm-utilisateur-v1', KJOU='crm-journal-v1',
       KMOD='fiches-modifiees-v1', KEXT='stock-externe-v1';
 let HIST=lit(KHIST,{}); if(!HIST||typeof HIST!=='object'||Array.isArray(HIST)) HIST=base(KHIST,{});
 let FRN =lit(KFRN ,{}); if(!FRN ||typeof FRN !=='object'||Array.isArray(FRN )) FRN =base(KFRN ,{});
+/* Les price lists reçues (Étude de devis, magasin etudes-devis-v1) : rattachées au
+   fournisseur par son nom. Igal, 12 sept. 2026 : « le répertoire fournisseur avec
+   ses price lists enregistrées et comparées avec nos informations ». */
+const KETU='etudes-devis-v1';
+let ETU=lit(KETU,[]); if(!Array.isArray(ETU)) ETU=[];
+const cNorm=s=>String(s==null?'':s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+const etudesDe=nom=>ETU.filter(e=>e&&cNorm(e.frn)===cNorm(nom)).sort((a,b)=>(b.d||'').localeCompare(a.d||'')||(b.t||'').localeCompare(a.t||''));
+/* notre prix habituel : la moyenne pondérée de ce qu'on a vraiment payé (factures) */
+const notrePrix=cle=>{ const l=(HIST[cle]||[]).filter(a=>a.src!=='fichier'&&a.p>0); const q=l.reduce((s,a)=>s+(+a.q||0),0);
+  if(!l.length) return {moy:null,der:null,n:0}; const moy=q?l.reduce((s,a)=>s+a.p*(+a.q||0),0)/q:l.reduce((s,a)=>s+a.p,0)/l.length;
+  const der=l.slice().sort((a,b)=>(a.d||'').localeCompare(b.d||'')).pop(); return {moy,der:der?der.p:null,n:l.length}; };
 let USR=NOM_UTIL;
 window.__nomChange.push(v=>{ USR=v; try{ majUser(); }catch(e){} });
 /* le stock en vigueur : la fiche corrigée l'emporte sur le fichier d'inventaire,
@@ -198,37 +241,9 @@ const sauveFRN=()=>ecrit(KFRN,FRN);
     if(!FRN[k]) { FRN[k]=v; n++; } else FRN[k]=Object.assign({},v,FRN[k]); });
   if(n) sauveFRN(); })();
 
-/* Un fournisseur de démonstration, pour voir une fiche pleine avant la première
-   vraie facture. Posé une seule fois, marqué demo:1 partout, et retirable d'un
-   clic depuis sa fiche — rien de lui ne se mélange aux vrais chiffres. */
-(function(){
-  const K='frn-demo-galou-v1';
-  try{ if(localStorage.getItem(K)) return; }catch(e){ return; }
-  const F='Galou';
-  const lignes=[
-    /* juin */
-    ['b8011003809219', '2026-06-12','GAL-2026-041',36,38.00],
-    ['b8005610328799', '2026-06-12','GAL-2026-041',24,29.00],
-    ['b6294015164299', '2026-06-12','GAL-2026-041',48,27.00],
-    /* juillet */
-    ['b3616303423841', '2026-07-21','GAL-2026-058',18,44.00],
-    ['b8011003809219', '2026-07-21','GAL-2026-058',24,37.50],
-    /* août */
-    ['b8005610328799', '2026-08-19','GAL-2026-073',36,31.00],
-    ['b6294015164299', '2026-08-19','GAL-2026-073',60,25.50],
-    /* septembre */
-    ['b8011003809219', '2026-09-03','GAL-2026-089',48,36.50],
-    ['b3616303423841', '2026-09-03','GAL-2026-089',12,44.00],
-    ['b6294015164299', '2026-09-03','GAL-2026-089',36,25.50]];
-  lignes.forEach(([cle,d,num,q,p])=>{ (HIST[cle]=HIST[cle]||[]).push({f:F,src:'facture',d,num,q,p,demo:1}); });
-  ecrit(KHIST,HIST);
-  FRN[F]=Object.assign({},FRN[F]||{},{nom:F,raison:'Galou Fragrances LLC',
-    adresse:'2100 NW 82nd Avenue, Doral FL 33122, US',tel:'(305) 555-0184',email:'orders@galou-fragrances.com',
-    site:'www.galou-fragrances.com',contact:'Léa Benmoussa — lea@galou-fragrances.com',
-    note:'Fournisseur de démonstration : ses factures sont inventées, pour voir à quoi ressemble une fiche remplie. À retirer avant la vraie mise en service.',demo:1});
-  sauveFRN();
-  try{ localStorage.setItem(K,'1'); }catch(e){}
-})();
+/* 30 sept. 2026 (Igal : « supprime le fournisseur Galou ») : le fournisseur de démonstration
+   n'est plus posé. Il l'était une fois PAR NAVIGATEUR — un nouveau poste le recréait. Celui
+   qui existait a été retiré du serveur, avec ses prix inventés (copie dans corbeille-v1). */
 function retireDemo(nom){
   if(!confirm('Retirer « '+nom+' » et ses factures de démonstration ? Rien d\'autre ne bouge.')) return;
   Object.keys(HIST).forEach(k=>{ HIST[k]=(HIST[k]||[]).filter(a=>!(a.demo&&a.f===nom)); if(!HIST[k].length) delete HIST[k]; });
@@ -256,6 +271,8 @@ function agrege(){
   /* Un fournisseur dont on connaît les coordonnées existe, même sans facture. */
   Object.keys(FRN).forEach(n=>{ if(!F[n]) F[n]={nom:n,refs:new Set(),lignes:0,montant:0,
     factures:new Set(),der:null,prem:null,mouv:[]}; });
+  ETU.forEach(e=>{ if(!e||!e.frn||/non précisé/.test(e.frn)) return; const n=Object.keys(F).find(k=>cNorm(k)===cNorm(e.frn))||e.frn;
+    if(!F[n]) F[n]={nom:n,refs:new Set(),lignes:0,montant:0,factures:new Set(),der:null,prem:null,mouv:[]}; });
   return Object.values(F).map(f=>{
     f.nrefs=f.refs.size;
     return f;
@@ -300,7 +317,7 @@ function carte(f){
   if(c.email) lig.push(['E-mail',`<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>`]);
   if(c.site) lig.push(['Site',esc(c.site)]);
   if(c.contact) lig.push(['Contact',esc(c.contact)]);
-  const dfr=d=>{ if(!d) return '—'; const [a,mo,j]=d.split('-'); return j+'/'+mo+'/'+a.slice(2); };
+  const dfr=d=>{ if(!d) return '—'; const [a,mo,j]=d.split('-'); return mo+'/'+j+'/'+a.slice(2); };
   return `<article class="fcard ouvrable" data-fiche="${esc(f.nom)}" title="Ouvrir la fiche détaillée">
     <header><div style="flex:1;min-width:0"><h3>${esc(f.nom)}</h3>
       <div class="rs">${f.factures.size?`${f.factures.size} facture${f.factures.size>1?'s':''} · `:''}dernière le ${dfr(f.der)}</div></div>
@@ -311,6 +328,7 @@ function carte(f){
       <div><span>références</span><b>${nf(f.nrefs)}</b></div>
       <div><span>lignes</span><b>${nf(f.lignes)}</b></div>
       <div><span>montant</span><b style="color:var(--iris)">${money(f.montant)}</b></div>
+      <div><span>price lists</span><b>${nf(etudesDe(f.nom).length)}</b></div>
     </div>
     ${lig.length?`<div class="coord">${lig.map(([k,v])=>`<div><i>${k}</i><span>${v}</span></div>`).join('')}</div>`:''}
     ${(baisses||hausses)?`<div class="fmv ${gain<0?'b':'h'}">${
@@ -321,10 +339,41 @@ function carte(f){
   </article>`;
 }
 
+/* ---------- les price lists d'un fournisseur, comparées en direct ---------- */
+/* La comparaison n'est pas celle du jour où la liste a été lue : elle est refaite
+   maintenant, avec le prix qu'on paie d'habitude (nos factures) et le stock
+   d'aujourd'hui. Une price list de mars comparée aux prix de mars ne dit rien
+   en septembre. */
+function priceListsHTML(nom){
+  const L=etudesDe(nom);
+  const dfr=d=>{ if(!d) return '—'; const [a,mo,j]=String(d).slice(0,10).split('-'); return mo+'/'+j+'/'+a.slice(2); };
+  if(!L.length) return `<div style="padding:12px;color:var(--ink-3);font-size:13px">Aucune price list enregistrée pour lui. « Déposer une price list » lit son devis et le compare à nos prix.</div>`;
+  return `<div class="facs">${L.map((e,i)=>{
+    const lignes=(e.lignes||[]).map(l=>{ const np=l.cle?notrePrix(l.cle):{moy:null,der:null,n:0}; const stock=l.cle?qteEff(l.cle):null;
+      const ecart=(np.moy&&l.p)?(l.p-np.moy)/np.moy*100:null;
+      const v=ecart==null?(l.cle?'inc':'inc'):ecart<=-3?'bon':ecart>=3?'cher':'ok';
+      return Object.assign({},l,{np,stock,ecart,v}); });
+    const nBon=lignes.filter(l=>l.v==='bon').length, nCher=lignes.filter(l=>l.v==='cher').length, nInc=lignes.filter(l=>l.v==='inc').length;
+    const eco=lignes.reduce((s,l)=>s+((l.np.moy&&l.p)?(l.np.moy-l.p)*(l.q||1):0),0);
+    return `<div class="fac" data-pl="${i}">
+        <span class="fnum">${esc(e.num||'price list')}</span><span class="fdate">${dfr(e.d)}</span>
+        <span class="fdet">${nf(lignes.length)} référence${lignes.length>1?'s':''} · <span class="dn">${nBon} moins ch${nBon>1?'ères':'ère'}</span> · <span class="up">${nCher} plus ch${nCher>1?'ères':'ère'}</span>${nInc?` · ${nInc} jamais acheté${nInc>1?'es':'e'}`:''}${e.par?' · lue par <span data-nolang>'+esc(e.par)+'</span>':''}</span>
+        <b class="fmt">${money(e.montant||0)}</b></div>
+      <div class="det" data-pld="${i}" hidden><table><thead><tr><th>Référence</th><th class="n">Qté</th><th class="n">Son prix</th><th class="n">Notre prix habituel</th><th class="n">Écart</th><th class="n">Stock</th><th>Verdict</th></tr></thead>
+        <tbody>${lignes.map(l=>{ const vI=IDX[l.cle]||[]; const ref=l.cle?((vI[2]||'')+' '+(vI[1]||'')):(l.ref||l.bc||'?');
+          return `<tr><td class="pr"><b data-nolang>${esc(ref)}${tyBadge(l.cle)}</b><span>${esc(l.bc||'')}</span></td>
+            <td class="n">${l.q!=null?nf(l.q):'—'}</td><td class="n"><b>${l.p!=null?money2(l.p):'—'}</td>
+            <td class="n">${l.np.moy!=null?money2(l.np.moy)+(l.np.der!=null&&Math.abs(l.np.der-l.np.moy)>0.005?`<span style="display:block;font-size:11px;color:var(--ink-3)">dernier ${money2(l.np.der)}</span>`:''):'<span style="color:var(--ink-3)">jamais acheté</span>'}</td>
+            <td class="n">${l.ecart==null?'—':`<span class="${l.ecart<0?'dn':l.ecart>0?'up':'eq'}">${l.ecart>0?'+':''}${l.ecart.toFixed(1).replace('.',',')} %</span>`}</td>
+            <td class="n">${l.stock!=null?nf(l.stock):'—'}</td>
+            <td>${l.v==='bon'?'<span class="dn">bon prix</span>':l.v==='cher'?'<span class="up">plus cher que d\'habitude</span>':l.v==='ok'?'<span class="eq">dans les prix</span>':'<span style="color:var(--ink-3)">pas de repère</span>'}</td></tr>`; }).join('')}</tbody></table>
+        <div style="padding:8px 12px;font-size:12.5px;color:var(--ink-2)">${eco>=0?'Économie':'Surcoût'} sur cette liste, aux quantités proposées : <b>${money(Math.abs(eco))}</b>. <a href="etude.html?etude=${encodeURIComponent(e.id)}">Rouvrir dans l'Étude</a></div></div>`; }).join('')}</div>`;
+}
+
 /* ---------- la fiche détaillée d'un fournisseur ---------- */
 function ficheHTML(f){
   const c=FRN[f.nom]||{};
-  const dfr=d=>{ if(!d) return '—'; const [a,mo,j]=d.split('-'); return j+'/'+mo+'/'+a.slice(2); };
+  const dfr=d=>{ if(!d) return '—'; const [a,mo,j]=d.split('-'); return mo+'/'+j+'/'+a.slice(2); };
   const m=f.mouv.slice().sort((a,b)=>a.d.localeCompare(b.d)||String(a.num).localeCompare(String(b.num)));
 
   /* les factures, avec leurs lignes */
@@ -345,7 +394,7 @@ function ficheHTML(f){
   /* les douze derniers mois */
   const now=new Date(), mois=[];
   for(let i=11;i>=0;i--){ const d=new Date(now.getFullYear(),now.getMonth()-i,1);
-    mois.push({k:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'), lib:d.toLocaleDateString('fr-FR',{month:'short'}), t:0}); }
+    mois.push({k:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'), lib:d.toLocaleDateString((typeof lgLocale==='function'?lgLocale():'fr-FR'),{month:'short'}), t:0}); }
   m.forEach(x=>{ const k=(x.d||'').slice(0,7); const mm=mois.find(o=>o.k===k); if(mm) mm.t+=(x.q||0)*x.p; });
   const maxM=Math.max(1,...mois.map(o=>o.t));
 
@@ -368,6 +417,7 @@ function ficheHTML(f){
           <button class="btn" data-ecr2="${esc(f.nom)}" style="padding:6px 12px;font-size:12.5px">Écrire</button>
           <button class="btn" data-ed2="${esc(f.nom)}" style="padding:6px 12px;font-size:12.5px">Modifier la fiche</button>
           <a class="btn pri" href="factures.html?sens=achat&frn=${encodeURIComponent(f.nom)}" style="padding:6px 12px;font-size:12.5px;text-decoration:none">Déposer une facture</a>
+          <a class="btn" href="etude.html?frn=${encodeURIComponent(f.nom)}" style="padding:6px 12px;font-size:12.5px;text-decoration:none" title="Un devis ou une price list de ce fournisseur : l'outil le lit et le compare à nos prix">Déposer une price list</a>
           ${c.demo?`<button class="btn" data-demo2="${esc(f.nom)}" style="padding:6px 12px;font-size:12.5px;color:var(--crit)">Retirer cette démonstration</button>`:''}</div>
         ${c.demo?'<div class="demotag">Fournisseur de démonstration — chiffres inventés</div>':''}</div>
       ${coord.length?`<div class="co">${coord.map(([k,v])=>`<div><i>${k}</i>${esc(v)}</div>`).join('')}</div>`:''}
@@ -390,9 +440,12 @@ function ficheHTML(f){
         <span class="fdet">${nf(x.l.length)} ligne${x.l.length>1?'s':''} · ${nf(x.q)} flacon${x.q>1?'s':''}</span>
         <b class="fmt">${money(x.t)}</b></div>
       <div class="det" data-fd="${i}" hidden><table><thead><tr><th>Produit</th><th class="n">Qté</th><th class="n">PU</th><th class="n">Total</th></tr></thead>
-        <tbody>${x.l.map(l=>{ const v=IDX[l.cle]||[]; return `<tr><td class="pr"><b>${esc(v[2]||'')} ${esc(v[1]||l.cle)}</b><span>${esc(v[0]||'')}</span></td>
+        <tbody>${x.l.map(l=>{ const v=IDX[l.cle]||[]; return `<tr><td class="pr"><b>${esc(v[2]||'')} ${esc(v[1]||l.cle)}${tyBadge(l.cle)}</b><span>${esc(v[0]||'')}</span></td>
           <td class="n">${nf(l.q||0)}</td><td class="n">${money2(l.p)}</td><td class="n">${money2((l.q||0)*l.p)}</td></tr>`; }).join('')}</tbody></table></div>`).join('')||
       '<div style="padding:12px;color:var(--ink-3);font-size:13px">Aucune facture enregistrée — seulement des coordonnées.</div>'}</div>
+
+    <h3>Ses price lists <em>ce qu'il propose, comparé à ce qu'on paie d'habitude et au stock d'aujourd'hui</em></h3>
+    ${priceListsHTML(f.nom)}
 
     <h3>Produits achetés <em>${nf(prods.length)} référence${prods.length>1?'s':''}, du plus gros montant au plus petit</em></h3>
     ${prods.length>8?'<div class="rech"><input id="fd-q" placeholder="Filtrer les produits…"></div>':''}
@@ -413,7 +466,8 @@ function ouvreFiche(nom){
   const mod=ov.querySelector('.mod'); mod.innerHTML=ficheHTML(f);
   mod.querySelector('#fd-x').onclick=()=>ov.classList.remove('on');
   mod.querySelectorAll('.fac').forEach(tr=>tr.onclick=()=>{
-    const d=mod.querySelector('.det[data-fd="'+tr.dataset.f+'"]'); d.hidden=!d.hidden; tr.classList.toggle('on',!d.hidden); });
+    const d=tr.dataset.f!==undefined?mod.querySelector('.det[data-fd="'+tr.dataset.f+'"]'):mod.querySelector('.det[data-pld="'+tr.dataset.pl+'"]');
+    if(!d) return; d.hidden=!d.hidden; tr.classList.toggle('on',!d.hidden); });
   const q=mod.querySelector('#fd-q'); if(q) q.oninput=()=>{ const t=q.value.trim().toLowerCase();
     mod.querySelectorAll('#fd-prods tbody tr').forEach(tr=>{ tr.hidden=t&&!tr.dataset.t.includes(t); }); };
   const e=mod.querySelector('[data-ecr2]'); if(e) e.onclick=()=>ecrire(nom);
@@ -449,7 +503,7 @@ function dessine(){
     $('src').innerHTML='';
     return;
   }
-  const dfr=d=>{ if(!d) return '—'; const [a,m,j]=d.split('-'); return j+'/'+m+'/'+a.slice(2); };
+  const dfr=d=>{ if(!d) return '—'; const [a,m,j]=d.split('-'); return m+'/'+j+'/'+a.slice(2); };
   $('corps').innerHTML=`
     <h2 class="sec">Les fournisseurs <em>${F.length} · alimentés par les factures enregistrées</em></h2>
     <div class="fgrid">${F.map(carte).join('')}</div>
@@ -533,6 +587,101 @@ $('fr-ok').onclick=()=>{
   if(!FR_EDIT && confirm('Fournisseur « '+nom+' » créé. Déposer maintenant une de ses factures ?')) location.href='factures.html?sens=achat&frn='+encodeURIComponent(nom);
 };
 
+/* ---------- déposer n'importe quel document : le fournisseur naît de ce qu'on y lit ----------
+   Une facture, une price list, un listing, la photo d'une carte de visite. On lit le
+   texte (tableur, PDF, photo : même porte que Factures), on en tire le nom et les
+   coordonnées, on crée la fiche — et si le document porte des lignes de prix, on
+   l'emmène dans Factures ou dans l'Étude, sans le redéposer. */
+let DP=null;
+function litFrnDe(txt){
+  const o={};
+  const bas=txt.toLowerCase();
+  let soc=''; try{ soc=String((JSON.parse(localStorage.getItem('reglages-v1')||'{}')||{}).societe||'').toLowerCase(); }catch(e){}
+  const connu=Object.keys(FRN).find(n=>n.length>2&&bas.includes(n.toLowerCase()));
+  if(connu) o.deja=connu;
+  const li=txt.split('\n').map(x=>x.trim()).filter(Boolean);
+  const pasNous=x=>!(soc&&x.toLowerCase().includes(soc))&&!/perfumes ?trade|dasy/i.test(x);
+  const soc1=li.find(x=>/\b(LLC|INC\.?|CORP\.?|LTD\.?|GROUP|SAS|SARL|GMBH|S\.A\.|TRADING|DISTRIBUTION|IMPORT|EXPORT|PERFUMES?|FRAGRANCES?|COSMETICS?|BEAUTY|WHOLESALE)\b/i.test(x)&&x.length<70&&pasNous(x));
+  const prem=li.find(x=>/[A-Za-z]{3}/.test(x)&&!/\d{3}/.test(x)&&x.length>=3&&x.length<50&&pasNous(x)&&!/^(invoice|facture|price ?list|date|page|tel|phone|email|www)/i.test(x));
+  o.nom=connu||(soc1||prem||'').replace(/\s{2,}.*$/,'').replace(/\b(COMPANY|LOGO)\b/gi,'').trim().slice(0,60);
+  const em=txt.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi)||[]; o.email=em.find(e=>pasNous(e))||'';
+  const tel=(txt.match(/(?:\+?\d[\d\s().-]{8,16}\d)/g)||[]).find(t=>{ const d=t.replace(/\D/g,''); return d.length>=10&&d.length<=15&&!/^\d{4}[-\/]\d{2}[-\/]\d{2}/.test(t.trim()); });
+  o.tel=tel?tel.trim():'';
+  const site=txt.match(/\b(?:https?:\/\/)?(?:www\.)[a-z0-9.-]+\.[a-z]{2,}(?:\/\S*)?/i); o.site=site&&pasNous(site[0])?site[0]:'';
+  /* un prix avec centimes (60.00) OU un prix rond précédé d'un signe $ (juste "$60",
+     très courant dans une petite liste tapée vite) : sans le $, un nombre rond seul
+     ressemble trop à une quantité ou un code-barres pour compter comme un prix.
+     Igal, 12 sept. 2026, sur une price list d'un fournisseur déjà connu : « rubrique
+     price list à effectuer, elle était déjà créée » — la fiche se créait, mais la
+     price list, elle, n'était pas reconnue comme telle (trop peu de lignes chiffrées). */
+  o.nPrix=li.filter(x=>/\d+[.,]\d{2}\b/.test(x)||/\$\s?\d+(?:[.,]\d{1,2})?\b/.test(x)).length;
+  if(/\b(invoice|facture|factura|total due|amount due|bill to|balance due)\b/i.test(txt)) o.type='facture';
+  else if(/\b(price ?list|wholesale|tarif|catalog(ue)?|listing|offer|oferta|lista de precios)\b/i.test(txt)||o.nPrix>=2) o.type='pricelist';
+  else o.type='autre';
+  const m=txt.match(/(?:Invoice|Facture|N[°º]|No\.?)\s*[:#]?\s*([A-Z]{0,6}[-\/]?\d{3,}[A-Z0-9-]*)/i); if(m) o.num=m[1];
+  return o;
+}
+async function depotDoc(file){
+  if(!file) return;
+  DP={file,texte:'',lu:null};
+  $('dp-titre').textContent='Lecture de '+file.name+'…';
+  $('dp-quoi').textContent='Un instant : on lit le document.';
+  ['nom','email','tel','site'].forEach(k=>$('dp-'+k).value='');
+  $('dp-deja').hidden=true; $('dp-msg').textContent=''; $('dp-suite').hidden=true; $('dp-fiche').disabled=true;
+  $('dpov').classList.add('on');
+  try{
+    DP.texte=await lireFichier(file, m=>{ $('dp-quoi').textContent=m; });
+  }catch(e){ $('dp-quoi').textContent=(e&&e.message)||'Lecture impossible.'; $('dp-fiche').disabled=false; return; }
+  const o=DP.lu=litFrnDe(DP.texte);
+  $('dp-titre').textContent='Document lu : '+file.name;
+  $('dp-nom').value=o.nom||''; $('dp-email').value=o.email||''; $('dp-tel').value=o.tel||''; $('dp-site').value=o.site||'';
+  const quoi=o.type==='facture'?`Ça ressemble à une <b>facture</b>${o.num?' n° '+esc(o.num):''}${o.nPrix?' · '+nf(o.nPrix)+' ligne'+(o.nPrix>1?'s':'')+' avec un prix':''}.`
+    :o.type==='pricelist'?`Ça ressemble à une <b>price list</b> · ${nf(o.nPrix)} ligne${o.nPrix>1?'s':''} avec un prix.`
+    :`Pas de lignes de prix : on garde <b>le nom et les coordonnées</b>.`;
+  $('dp-quoi').innerHTML=quoi+' Vérifie le nom, corrige si besoin.';
+  $('dp-fiche').disabled=false;
+  if(o.deja){ $('dp-deja').hidden=false; $('dp-deja').innerHTML=`Ce fournisseur existe déjà : <b data-nolang>${esc(o.deja)}</b>. Les coordonnées ci-dessus complètent sa fiche (rien n'est écrasé).`; $('dp-fiche').textContent='Compléter la fiche'; }
+  else $('dp-fiche').textContent='Créer la fiche';
+  if(o.type==='facture'){ $('dp-suite').hidden=false; $('dp-suite').textContent=(o.deja?'':'Créer la fiche et ')+'enregistrer la facture →'; }
+  else if(o.type==='pricelist'){ $('dp-suite').hidden=false; $('dp-suite').textContent=(o.deja?'':'Créer la fiche et ')+'lire la price list →'; }
+  else $('dp-suite').hidden=true;
+  setTimeout(()=>$('dp-nom').focus(),60);
+}
+/* crée ou complète la fiche depuis la fenêtre ; rend le nom retenu, ou null */
+function depotFiche(){
+  const dis=t=>{ $('dp-msg').textContent=t; $('dp-msg').className='msg err'; };
+  let nom=$('dp-nom').value.trim();
+  if(nom.length<2){ dis('Donne un nom au fournisseur.'); return null; }
+  const exist=Object.keys(FRN).find(k=>k.toLowerCase()===nom.toLowerCase()); if(exist) nom=exist;
+  const em=$('dp-email').value.trim();
+  if(em && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){ dis("L'adresse e-mail n'est pas valable."); return null; }
+  const c=Object.assign({nom},FRN[nom]||{});
+  [['email',em],['tel',$('dp-tel').value.trim()],['site',$('dp-site').value.trim()]].forEach(([k,v])=>{ if(v&&!c[k]) c[k]=v; });
+  const neuf=!FRN[nom];
+  if(neuf) c.note=[c.note,'Créé depuis le document « '+(DP.file.name||'')+' »'].filter(Boolean).join(' · ');
+  FRN[nom]=c; sauveFRN();
+  const J=lit(KJOU,[]);
+  J.push({t:new Date().toISOString(),u:USR||'(non renseigné)',act:'fournisseur',
+          lib:neuf?'fournisseur créé depuis un document':'fiche fournisseur complétée depuis un document',ref:nom,av:null,ap:DP.file.name||''});
+  ecrit(KJOU,J);
+  return nom;
+}
+$('dp-fiche').onclick=()=>{ const nom=depotFiche(); if(!nom) return; $('dpov').classList.remove('on'); dessine(); ouvreFiche(nom); };
+$('dp-suite').onclick=async()=>{ const nom=depotFiche(); if(!nom) return;
+  $('dp-msg').className='msg'; $('dp-msg').textContent='Le document part avec toi…';
+  try{ await docAttentePose(DP.file); }catch(e){ $('dp-msg').className='msg err'; $('dp-msg').textContent="Le document n'a pas pu être emporté : redépose-le sur la page suivante."; }
+  location.href=(DP.lu&&DP.lu.type==='facture')?('factures.html?sens=achat&doc=attente&frn='+encodeURIComponent(nom)):('etude.html?doc=attente&frn='+encodeURIComponent(nom)); };
+$('dp-x').onclick=$('dp-non').onclick=()=>$('dpov').classList.remove('on');
+$('depot').onclick=()=>$('dfich').click();
+$('dfich').addEventListener('change',e=>{ const f=e.target.files[0]; if(f) depotDoc(f); e.target.value=''; });
+/* glisser un fichier n'importe où sur la page */
+{ let n=0;
+  document.addEventListener('dragenter',e=>{ if(!e.dataTransfer||![...e.dataTransfer.types].includes('Files')) return; n++; $('dpz').classList.add('on'); });
+  document.addEventListener('dragleave',()=>{ n=Math.max(0,n-1); if(!n) $('dpz').classList.remove('on'); });
+  document.addEventListener('dragover',e=>{ if(e.dataTransfer&&[...e.dataTransfer.types].includes('Files')) e.preventDefault(); });
+  document.addEventListener('drop',e=>{ n=0; $('dpz').classList.remove('on'); if(!e.dataTransfer||!e.dataTransfer.files.length) return; e.preventDefault(); depotDoc(e.dataTransfer.files[0]); }); }
+window.__FRN=Object.assign(window.__FRN||{},{litFrnDe,depotDoc,depotFiche});
+
 $('tri').addEventListener('change',dessine);
 poseSortie('exp', ()=>{
   const L=[];
@@ -562,7 +711,7 @@ dessine();
 html = coquille("Mes fournisseurs", "Fournisseurs",
   "Chaque fournisseur est construit à partir des factures enregistrées : ce qu'il vend, "
   "à quel prix, comment ses prix bougent, et sur quelles références il est battu par un autre.",
-  CSS, CORPS, JS, donnees=('produits',))
+  CSS, CORPS.replace('__ACCEPT__', _lire.ACCEPT), JS, donnees=('produits',))
 html = html.replace('__IDX__', 'Object.fromEntries(D_TOUS().map(r=>[r[15],[r[0],r[13],r[2],r[12],r[6],r[8]]]))')
 html = html.replace('__FRNINIT__', open('frn_seed.json').read().strip())
 open('fournisseurs.html','w').write(html)

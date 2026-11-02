@@ -220,7 +220,7 @@ function sortieImprime(S){
     if(y==='p') return Number(v).toFixed(1).replace('.',',')+' %';
     if(y==='n') return Number(v).toLocaleString('fr-FR');
     if(y==='d'){ const m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})/);
-                 return m?`${m[3]}/${m[2]}/${m[1].slice(2)}`:String(v); }
+                 return m?`${m[2]}/${m[3]}/${m[1].slice(2)}`:String(v); }
     return String(v);
   };
   const dr=y=>(y==='n'||y==='m'||y==='p')?' class="r"':'';

@@ -1,9 +1,70 @@
 <!DOCTYPE html>
-<html lang="fr"><head><meta charset="utf-8">
+<html lang="fr"><head><meta charset="utf-8"><script>/* à qui appartient cette installation : posé par nouveau_client.py, lu par _comptes.py et _serveur.py */window.COCKPIT_ORG="demo";</script><script>/* ============ LE GRENIER (17 oct. 2026) ============
+   La mémoire « localStorage » d'un navigateur est limitée à 5 Mo par site. Le 17 octobre, celle de Sam était PLEINE
+   (relevé des sites 1,1 Mo, factures 1 Mo, journal 0,75 Mo, devis 0,8 Mo…) : « This browser's storage is full », les
+   dernières données n'étaient plus rangées, et la page travaillait sur une copie périmée. Les GROS magasins (24 Ko et
+   plus) vont désormais au grenier : IndexedDB, qui offre des gigaoctets.
+   Pour que RIEN ne change pour le code des pages — il lit et écrit localStorage, de façon synchrone — chaque gros
+   magasin est gardé en mémoire vive dès l'ouverture de la page, et localStorage est doublé : getItem, setItem,
+   removeItem, key et length répondent pour les deux endroits à la fois. Le grenier est chargé AVANT que la page ne
+   démarre (voir l'AMORCE, qui attend window.__GRENIER). Entre deux onglets, un canal (BroadcastChannel) rejoue
+   l'événement « storage » que le navigateur n'envoie plus pour ces magasins. Au premier passage, ce qui était gros
+   dans localStorage déménage au grenier : la place se libère d'elle-même. */
+(function(){
+  const SEUIL=24*1024, MEM=new Map(); let DB=null, CANAL=null;
+  const P=Storage.prototype, N={get:P.getItem,set:P.setItem,rem:P.removeItem,key:P.key,len:Object.getOwnPropertyDescriptor(P,'length').get};
+  const local=s=>{ try{ return s===window.localStorage; }catch(e){ return false; } };
+  /* 27 oct. 2026 : écriture « relaxed » (pas d'attente du disque) : avec plusieurs onglets ouverts qui rangent les mêmes gros
+     magasins toutes les quelques secondes, les écritures s'empilaient et la lecture d'un nouvel onglet attendait derrière elles */
+  const range=(k,v)=>{ if(!DB) return; try{ DB.transaction('m','readwrite',{durability:'relaxed'}).objectStore('m').put(v,k); }catch(e){ try{ DB.transaction('m','readwrite').objectStore('m').put(v,k); }catch(_){} } };
+  const efface=(k)=>{ if(!DB) return; try{ DB.transaction('m','readwrite').objectStore('m').delete(k); }catch(e){} };
+  const annonce=(k)=>{ try{ if(CANAL) CANAL.postMessage({k}); }catch(e){} };
+  P.getItem=function(k){ if(local(this)){ const s=String(k); if(MEM.has(s)) return MEM.get(s); } return N.get.call(this,k); };
+  P.setItem=function(k,v){ if(!local(this)) return N.set.call(this,k,v); const s=String(k), t=String(v);
+    if(MEM.has(s)||t.length>=SEUIL){ if(MEM.get(s)===t) return; MEM.set(s,t); range(s,t); try{ if(N.get.call(this,s)!=null) N.rem.call(this,s); }catch(e){} annonce(s); return; }
+    return N.set.call(this,k,v); };
+  P.removeItem=function(k){ if(local(this)){ const s=String(k); if(MEM.has(s)){ MEM.delete(s); efface(s); annonce(s); } } return N.rem.call(this,k); };
+  P.key=function(i){ if(local(this)){ const n=N.len.call(this); if(i>=n){ const ks=[...MEM.keys()]; return i-n<ks.length?ks[i-n]:null; } } return N.key.call(this,i); };
+  Object.defineProperty(P,'length',{configurable:true,get(){ const n=N.len.call(this); return local(this)?n+MEM.size:n; }});
+  const evt=(k)=>{ try{ window.dispatchEvent(new StorageEvent('storage',{key:k,storageArea:window.localStorage})); }catch(e){} };
+  window.__GRENIER=new Promise(res=>{
+    /* 27 oct. 2026 (Igal : « la rubrique Sales est vide ») : un onglet de l'ERP resté ouvert peut tenir le grenier sans le
+       rendre ; la lecture attendait alors sans fin et la page restait blanche. Au bout de 2,5 s on démarre sans lui : ce qui
+       manque est redemandé au serveur (verifCopies), et une lecture tardive du grenier n'écrase plus rien. */
+    let FINI=false;
+    const fini=(ok)=>{ if(FINI) return; FINI=true; res(ok);
+      /* ce qui vient d'arriver du grenier : le menu (pastilles) a pu lire « rien » avant, on le prévient */
+      try{ for(const k of MEM.keys()) evt(k); }catch(e){} };
+    try{
+      const q=indexedDB.open('sam-grenier',1);
+      q.onupgradeneeded=()=>{ try{ q.result.createObjectStore('m'); }catch(e){} };
+      q.onerror=()=>fini(false); q.onblocked=()=>fini(false);
+      q.onsuccess=()=>{ DB=q.result;
+        try{ CANAL=new BroadcastChannel('sam-grenier'); CANAL.onmessage=(m)=>{ const k=m&&m.data&&m.data.k; if(!k) return;
+          try{ const r=DB.transaction('m','readonly').objectStore('m').get(k); r.onsuccess=()=>{ if(typeof r.result==='string') MEM.set(k,r.result); else MEM.delete(k); evt(k); }; }catch(e){} }; }catch(e){}
+        let rk, rv;
+        try{ const t=DB.transaction('m','readonly').objectStore('m'); rk=t.getAllKeys(); rv=t.getAll(); }catch(e){ fini(false); return; }
+        rv.onerror=()=>fini(false);
+        rv.onsuccess=()=>{ if(FINI) return; const ks=rk.result||[], vs=rv.result||[];
+          ks.forEach((k,i)=>{ if(typeof vs[i]==='string') MEM.set(String(k),vs[i]); });
+          /* déménagement : ce qui est gros dans localStorage part au grenier (une fois ; la place se libère) */
+          try{ const L=window.localStorage, n=N.len.call(L), gros=[];
+            for(let i=0;i<n;i++){ const k=N.key.call(L,i); const v=N.get.call(L,k); if(v!=null&&(MEM.has(k)||v.length>=SEUIL)) gros.push([k,v]); }
+            gros.forEach(([k,v])=>{ if(!MEM.has(k)){ MEM.set(k,v); range(k,v); } N.rem.call(L,k); });
+          }catch(e){}
+          fini(true); };
+      };
+    }catch(e){ fini(false); }
+    setTimeout(()=>{ if(!FINI){ window.__GRENIER_KO=true; try{ console.warn('grenier bloqué par un autre onglet : démarrage sans lui'); }catch(e){} fini(false); } },2500);
+  });
+})();</script>
+<!-- l'icône d'onglet : Sam a toujours beaucoup d'onglets ouverts ; le flacon du logo, blanc sur rose vif (choisi par Igal), se repère d'un coup d'œil (27 sept. 2026) -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23FF1F7A'/%3E%3Cg fill='none' stroke='%23fff' stroke-width='4' stroke-linejoin='round'%3E%3Crect x='25' y='7' width='14' height='8' rx='2' fill='%23fff'/%3E%3Crect x='28' y='15' width='8' height='6'/%3E%3Cpath d='M19 21 H45 L51 27 V51 L45 57 H19 L13 51 V27 Z'/%3E%3C/g%3E%3Cpath d='M36 28 Q44 29 45 36' stroke='%23fff' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
+<script>/* en anglais ou en espagnol, l'écran reste caché le temps que la traduction passe (quelques ms) : on ne voit jamais le français d'origine */try{var _l=localStorage.getItem('langue-v1');if(_l&&_l!=='fr'){document.documentElement.style.visibility='hidden';setTimeout(function(){document.documentElement.style.visibility='';},1500);}}catch(e){}</script>
 
 <title>Perfumes Trade — ERP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -149,7 +210,449 @@ input[type=text]:focus,input[type=password]:focus{outline:0;border-color:var(--b
 
 </div>
 
-<script>/* à qui appartient cette installation : posé par nouveau_client.py, lu par _comptes.py et _serveur.py */window.COCKPIT_ORG="demo";</script><script src="donnees/langue.js"></script>
+<script>
+/* ===== LE VOCABULAIRE DE LA MAISON, AVANT LA PREMIÈRE PEINTURE =====
+   Ce script n'est PAS différé : il tourne pendant que la page se construit, avant
+   que l'écran ne s'affiche. Sinon on voyait « Devis » une demi-seconde, puis
+   « Cote » — le temps que le cockpit réponde et que le code de la page démarre.
+   Igal l'a vu le 12 septembre : « code apparaît, après code disparaît ». */
+(function(){
+/* ---- le vocabulaire de la maison, en français ----
+   Sam et son équipe ne disent pas « devis » : ils disent « cote » (la quote de
+   la caisse). Plutôt que de réécrire des centaines de phrases à la main — avec
+   les fautes d'accord que ça sème — le mot est remplacé au moment de l'affichage,
+   avec ses articles et ses participes. Le dictionnaire EN/ES, lui, part toujours
+   du français d'origine : rien ne change pour les autres langues. */
+const LG_VOCAB_EXACT=[
+  ["Un devis ne sort rien du stock. Il pourra être transformé en facture en un clic, quand le client confirme.",
+   "Une cote ne sort rien du stock. Elle pourra être transformée en facture en un clic, quand le client confirme."],
+  ["Le devis est gardé et devient une facture en un clic.","La cote est gardée et devient une facture en un clic."],
+  ["Un fournisseur propose un devis : vaut-il le coup ?","Un fournisseur propose une cote : vaut-elle le coup ?"],
+  ["Un devis de fournisseur, ligne par ligne, comparé à","Une cote de fournisseur, ligne par ligne, comparée à"],
+  ["Dépose le devis ici, ou clique pour le choisir","Dépose la cote ici, ou clique pour la choisir"],
+  ["Un devis se lit s'il porte","Une cote se lit si elle porte"],
+  ["Un devis, c'est une ligne","Une cote, c'est une ligne"],
+  ["Devis restés sans commande","Cotes restées sans commande"],
+  ["Devis proposé","Cote proposée"],
+  ["Devis chargé","Cote chargée"],
+  ["Étudier un autre devis","Étudier une autre cote"],
+  ["Étudier un devis","Étudier une cote"],
+  ["Faire un devis","Faire une cote"],
+  ["Factures et devis","Factures et cotes"]];
+const LG_PART='(enregistré|converti|archivé|désarchivé|gardé|chargé|supprimé|envoyé|ouvert|jeté|corrigé|refermé|émis|payé|transformé|créé|accepté|refusé|mémorisé|déposé|lu|reçu|proposé|effacé|retrouvé|rangé)';
+/* \b ne connaît pas les lettres accentuées en JavaScript : on borne à la main */
+/* 15 oct. 2026 : une instruction « lookbehind » dans une page la fait mourir tout entière sur les Safari d'avant la 16.4
+   (la page se recharge sans rien faire, sans message). On ne l'utilise que si le navigateur la connaît. */
+const LG_LB=(function(){ try{ new RegExp('(?<!a)b'); return true; }catch(e){ return false; } })();
+const L_=LG_LB?'(?<![A-Za-zÀ-ÿ])':'\\b', _L='(?![A-Za-zÀ-ÿ])';
+function lgVocab(t){
+  let s=String(t); if(!/devis/i.test(s)) return s;
+  LG_VOCAB_EXACT.forEach(([a,b])=>{ if(s.includes(a)) s=s.split(a).join(b); });
+  /* le pluriel : « les devis », « des devis », « 3 devis », « factures et devis » */
+  s=s.replace(new RegExp(L_+'(tous|certains|nouveaux|derniers|anciens|vieux)\\s+(les\\s+|des\\s+)?devis'+_L,'gi'),(m,a,b)=>{
+    const A={tous:'toutes',certains:'certaines',nouveaux:'nouvelles',derniers:'dernières',anciens:'anciennes',vieux:'vieilles'};
+    let r=A[a.toLowerCase()]||a; if(a[0]===a[0].toUpperCase()) r=r[0].toUpperCase()+r.slice(1); return r+' '+(b||'')+'cotes'; });
+  s=s.replace(new RegExp(L_+'(les|des|ces|mes|tes|ses|nos|vos|leurs|aux|plusieurs|quelques|deux|trois|\\d+)\\s+devis'+_L,'gi'),(m,a)=>a+' cotes');
+  s=s.replace(new RegExp(L_+'devis (clients|restés|gardés|convertis|archivés|créés|en attente)'+_L,'gi'),(m,a)=>'cotes '+a.replace(/és$/,'ées'));
+  s=s.replace(/(Factures?|factures?) et devis/g,(m,a)=>a+' et cotes');
+  /* le singulier avec son article */
+  s=s.replace(new RegExp(L_+'(le|un|ce|du|au|mon|ton|son|nouveau|premier|dernier|seul|quel|tout|aucun|chaque|cet)\\s+devis'+_L,'gi'),(m,a)=>{
+    const A={le:'la',un:'une',ce:'cette',cet:'cette',du:'de la',au:'à la',mon:'ma',ton:'ta',son:'sa',nouveau:'nouvelle',premier:'première',dernier:'dernière',seul:'seule',quel:'quelle',tout:'toute',aucun:'aucune',chaque:'chaque'};
+    const k=a.toLowerCase(); let r=A[k]||a; if(a[0]===a[0].toUpperCase()) r=r[0].toUpperCase()+r.slice(1); return r+' cote'; });
+  /* le mot seul, majuscules respectées */
+  s=s.replace(new RegExp(L_+'DEVIS'+_L,'g'),'COTE').replace(new RegExp(L_+'Devis'+_L,'g'),'Cote').replace(new RegExp(L_+'devis'+_L,'g'),'cote');
+  /* l'accord du participe qui suit : « cote DV-2026-0003 enregistré » → « enregistrée »,
+     « la cote a été enregistré » → « enregistrée », « 1 cotes créées » → « 1 cote créée » */
+  s=s.replace(new RegExp(L_+'([Cc]otes?)((?:\\s+[A-Z]{2}-[\\d-]+)?)((?:\\s+(?:a été|est|sera|ont été|sont|seront))?)\\s+'+LG_PART+'s?'+_L,'g'),(m,c,n,v,p)=>c+n+v+' '+p+(c.endsWith('s')?'es':'e'));
+  s=s.replace(new RegExp(L_+'1 cotes'+_L,'g'),'1 cote').replace(new RegExp(L_+'1 cote ([a-zé]+)es'+_L,'g'),'1 cote $1e');
+  return s;
+}
+
+window.__lgVocab=lgVocab;
+/* le premier passage, sur ce que la page contient déjà (menu, titre, filtres) */
+try{
+  let l='fr'; try{ l=localStorage.getItem('langue-v1')||'fr'; }catch(e){}
+  if(l!=='fr' || /catalogue|stock|inventaire/.test(location.pathname) || !document.body) return;
+  const DATA='.lnm,.lmq,.nom,.nm,.mq,.marque,.produit,.bc,.lbc,.lid,.pd,td.ref,[data-nolang]';
+  const saute=n=>{ let e=n.parentNode; while(e&&e.nodeType===1){ if(/^(SCRIPT|STYLE|TEXTAREA|CODE|PRE|INPUT)$/.test(e.nodeName)||(e.matches&&e.matches(DATA))) return true; e=e.parentNode; } return false; };
+  const it=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,{acceptNode:n=>saute(n)?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
+  const L=[]; let n; while((n=it.nextNode())) L.push(n);
+  L.forEach(n=>{ const o=n.nodeValue; if(!/devis/i.test(o)) return; const v=lgVocab(o); if(v!==o){ n.__fr=o; n.nodeValue=v; } });
+  document.body.querySelectorAll('[placeholder],[title],[aria-label]').forEach(el=>['placeholder','title','aria-label'].forEach(a=>{
+    const s0=el.getAttribute(a); if(!s0||!/devis/i.test(s0)) return; const v=lgVocab(s0); if(v!==s0){ el['__fr_'+a]=s0; el.setAttribute(a,v); } }));
+}catch(e){}
+})();
+</script>
+<script src="donnees/langue.js"></script>
+<script>
+/* la langue de l'écran, AVANT le code de la page : le texte n'est jamais vu dans une autre langue */
+
+/* ============ TROIS LANGUES ============ */
+const K_LANG='langue-v1';
+/* Le dictionnaire vit dans donnees/langue.js, chargé par chaque page avant son
+   propre code — comme les produits. Avant, il était recopié dans chaque page :
+   700 phrases en deux langues, seize fois. S'il manque, MOTS est vide et la
+   page reste simplement en français. */
+const MOTS=(typeof window!=='undefined'&&window.D_LANGUE)||{};
+const LANGUES={fr:'Français', en:'English', es:'Español'};
+const lgLit=()=>{ try{ const v=localStorage.getItem(K_LANG); return LANGUES[v]?v:'fr'; }catch(e){ return 'fr'; } };
+let LANG=lgLit();
+
+/* i = 0 pour l'anglais, 1 pour l'espagnol */
+/* Les nombres varient, la phrase autour non : « 1 892 références en stock » est
+   la même phrase que « 40 références en stock ». On remplace chaque nombre par
+   {n}, on cherche la phrase à trous dans le dictionnaire, puis on remet les
+   nombres dans l'ordre. Un « [s] » dans la traduction devient « s » si le premier
+   nombre n'est pas 1 : « {n} reference[s] ». Les montants gardent leur forme
+   d'origine (l'espace fine, la virgule) : ce sont des données, pas du texte. */
+const LG_NUM=(function(){ try{ return new RegExp(String.raw`\bB0[A-Z0-9]{8}\b|(?:(?<![\w-])[-−])?\d(?:[\d\s  .,:/h]*\d)?`,'g'); }catch(e){ return /\bB0[A-Z0-9]{8}\b|\d(?:[\d\s  .,:/h]*\d)?/g; } })();   /* nombres, et codes ASIN */
+const LG_NUM0=/\bB0[A-Z0-9]{8}\b|\d(?:[\d\s  .,:/h]*\d)?/g;   /* nombres, et codes ASIN */
+function lgTrous(k,lg){
+  if(!/\d|«/.test(k)) return null;
+  /* les « mots entre guillemets » sont des trous eux aussi : « Facture » ou
+     « Devis » se traduisent à part, et la phrase autour reste une seule entrée */
+  const cit=[]; let gab=k.replace(/«\s*([^»]*?)\s*»/g,(m,q)=>{ cit.push(q); return '{q}'; });
+  /* deux lectures : le signe moins collé au nombre (« -1 flacon »), puis sans (les
+     entrées plus anciennes écrivent « −{n} $ » avec le signe en dur) */
+  let nums=[], g1=gab.replace(LG_NUM,m=>{ nums.push(m); return '{n}'; });
+  let e=MOTS[g1];
+  if(!e){ const n2=[]; const g2=gab.replace(LG_NUM0,m=>{ n2.push(m); return '{n}'; }); if(MOTS[g2]){ e=MOTS[g2]; nums=n2; g1=g2; } }
+  gab=g1; if(!e) return null;
+  let v=e[lg==='en'?0:1]; if(!v||v===gab) return null;
+  const un=String(nums[0]||'').replace(/[\s  ]/g,'')==='1';
+  v=v.replace(/\[s\]/g,un?'':'s').replace(/\[es\]/g,un?'':'es');
+  let i=0; v=v.replace(/\{n\}/g,()=>nums[i++]!==undefined?nums[i-1]:'');
+  let j=0; v=v.replace(/\{q\}/g,()=>{ const q=cit[j++]; if(q===undefined) return '';
+    const t=lgMot(q,lg)||q; return lg==='en'?('“'+t+'”'):('«\u00a0'+t+'\u00a0»'); });
+  return v;
+}
+/* le vocabulaire de la maison (« cote ») vit dans VOCAB, un script non différé
+   qui passe avant la première peinture ; ici on s'en sert seulement */
+function lgVocab(t){ return (window.__lgVocab)?window.__lgVocab(t):String(t); }
+/* pour les textes fabriqués en JavaScript (WhatsApp, courrier, fenêtres de confirmation) */
+function vf(t,l){ return ((l||LANG)==='fr')?lgVocab(t):t; }
+function lgMot(t,l,entier){
+  const lg=l||LANG;
+  if(lg==='fr'){ const k=String(t).replace(/\s+/g,' ').trim(); const v=lgVocab(k); return v!==k?v:null; }
+  const k=String(t).replace(/\s+/g,' ').trim();
+  const e=MOTS[k];
+  if(e){ const v=e[lg==='en'?0:1]; return (v&&v!==k)?v:null; }
+  const tr=lgTrous(k,lg); if(tr!==null||entier) return tr;
+  return lgMorceaux(k,lg);
+}
+/* ---- une phrase faite de morceaux ----
+   Le journal, les notes, les motifs sont écrits une fois, en français, avec des
+   données au milieu : « commande 20701 expédiée le 24/09/2026 (Site perfumestrade.com)
+   — facture faite, stock sorti ». La phrase entière n'est jamais au dictionnaire (les
+   noms et les numéros changent), mais chacun de ses morceaux l'est. On coupe aux
+   séparateurs (tiret long, point médian, virgule, deux-points, parenthèses), on
+   traduit chaque morceau, et on recolle. Un morceau qui n'est qu'une donnée (un nom,
+   un numéro) reste tel quel. On ne rend rien si aucun morceau n'a bougé. */
+const LG_COUPE=/( — | – | · |, |; | : |: | \()/;
+/* des phrases avec un NOM au milieu (un client, un fournisseur, un canal) : le nom
+   n'est ni un nombre ni entre « » — on le reconnaît par la forme de la phrase */
+const LG_MODELES=[
+  [/^message envoyé à (.+)$/,'message sent to $1','mensaje enviado a $1'],
+  [/^Fiche de (.+)$/,'Record of $1','Ficha de $1'],
+  [/^Écrire à (.+)$/,'Write to $1','Escribir a $1'],
+  [/^devis (.+) du (\S+)$/,'quote $1 of $2','cotización $1 del $2'],
+  [/^cote (.+) du (\S+)$/,'quote $1 of $2','cotización $1 del $2'],
+  [/^canal (.+)$/,(m,a)=>'channel '+(lgMot(a,'en')||a),(m,a)=>'canal '+(lgMot(a,'es')||a)],
+  [/^saisi par (.+)$/,'entered by $1','registrado por $1'],
+  [/^enregistrée par (.+?)\.?$/,'recorded by $1.','registrada por $1.'],
+  [/^Vente (\S+) du (\S+) sur (.+)$/,'Sale $1 of $2 on $3','Venta $1 del $2 en $3'],
+  [/^Vente (\S+)$/,'Sale $1','Venta $1'],
+  [/^commande (\S+)$/,'order $1','pedido $1'],
+  [/^Ventes importées (\S+)$/,'Imported sales $1','Ventas importadas $1'],
+  [/^commande (\S+) annulée par (.+)$/,'order $1 cancelled by $2','pedido $1 anulado por $2'],
+  [/^canal coupé pour ce parfum : (.+)$/,'channel turned off for this perfume: $1','canal desactivado para este perfume: $1'],
+  [/^canal remis pour ce parfum : (.+)$/,'channel turned back on for this perfume: $1','canal reactivado para este perfume: $1'],
+  [/^facture enregistrée n° (\S+)$/,'invoice recorded no. $1','factura registrada n.º $1'],
+  [/^facture enregistrée$/,'invoice recorded','factura registrada'],
+  [/^facture installée n° (\S+)$/,'invoice installed no. $1','factura instalada n.º $1'],
+  [/^article créé depuis la facture (\S*)$/,'item created from invoice $1','artículo creado desde la factura $1'],
+  [/^prix d'achat, facture (\S+)$/,"purchase price, invoice $1",'precio de compra, factura $1'],
+  [/^prix d'achat, depuis (.+)$/,"purchase price, from $1",'precio de compra, desde $1'],
+  [/^prix d'achat rétabli \(facture (\S+) annulée\)$/,'purchase price restored (invoice $1 cancelled)','precio de compra restablecido (factura $1 anulada)'],
+  [/^réception — achat (.+)$/,'receipt — purchase $1','recepción — compra $1'],
+  [/^ventes (.+) — export (\S+)$/,'sales $1 — export $2','ventas $1 — exportación $2'],
+  [/^nom reconnu : « (.+) » = (.+)$/,'name recognized: “$1” = $2','nombre reconocido: «$1» = $2'],
+  [/^le code (\S+) est ajouté à la fiche \(autres codes-barres\)$/,'code $1 is added to the record (other barcodes)','el código $1 se añade a la ficha (otros códigos de barras)'],
+  [/^Retirer le canal « (.+) » \?/,'Remove the channel “$1”?','¿Quitar el canal «$1»?'],
+];
+LG_MODELES.push(
+  [/^(.+) ↑ croissant$/,(m,a)=>(lgMot(a)||a)+' ↑ ascending',(m,a)=>(lgMot(a)||a)+' ↑ ascendente'],
+  [/^(.+) ↓ décroissant$/,(m,a)=>(lgMot(a)||a)+' ↓ descending',(m,a)=>(lgMot(a)||a)+' ↓ descendente'],
+  [/^Annuler la facture (\S+) \((.*)\) \?$/,'Cancel invoice $1 ($2)?','¿Anular la factura $1 ($2)?'],
+  [/^Supprimer (.+) \?$/,'Delete $1?','¿Eliminar $1?'],
+  [/^Marge nette : prix de vente moins le prix d'achat et la commission (.+) \((\d+) %\)$/,'Net margin: selling price minus the purchase price and the $1 fee ($2%)','Margen neto: precio de venta menos el precio de compra y la comisión de $1 ($2 %)'],
+  [/^Envoyer ses accès à (.+) \?$/,'Send their access to $1?','¿Enviar sus accesos a $1?'],
+  [/^Impossible : (.+) (?:a|ont) ce rôle\. Change-leur d'abord le rôle, puis supprime celui-ci\.$/,'Not possible: $1 has this role. Change their role first, then delete this one.','Imposible: $1 tiene este rol. Cámbiales primero el rol y luego elimina este.']);
+function lgModele(k,lg){
+  for(const [re,en,es] of LG_MODELES){ if(re.test(k)) return k.replace(re,lg==='en'?en:es); }
+  return null;
+}
+function lgMorceaux(k,lg){
+  const m0=lgModele(k,lg); if(m0!==null) return m0;
+  /* un séparateur en tête (« · 1 parfum », « — reste dû ») : on le garde tel quel */
+  const tete=(k.match(/^[·—–,:;]\s*/)||[''])[0]; if(tete){ const v=lgMot(k.slice(tete.length),lg); return v!==null?tete+v:null; }
+  if(!LG_COUPE.test(k)||k.length>600) return null;
+  /* on coupe aux séparateurs ; une parenthèse fermante coupe aussi, sauf dans « (s) » */
+  const P0=k.split(LG_COUPE), P=[];
+  P0.forEach((m,i)=>{ if(i%2===1){ P.push(m); return; }
+    const x=m.match(/^(.*?[^(\s][^(]*?)(\)(?!\w))(.*)$/);
+    if(x&&!/\((s|es|x)$/.test(x[1])&&x[1].indexOf('(')<0){ P.push(x[1]); P.push(x[2]); P.push(x[3]); } else P.push(m); });
+  let chg=false;
+  const R=P.map((m,i)=>{ if(i%2===1||!m.trim()) return m;
+    const t=m.trim(); const e=MOTS[t]; let v=e?e[lg==='en'?0:1]:null;
+    if(!v||v===t) v=lgTrous(t,lg);
+    if(!v||v===t) v=lgModele(t,lg);
+    if(v!==null&&v!==undefined&&v!==t){ chg=true; return m.replace(t,v); }
+    return m; });
+  return chg?R.join(''):null;
+}
+/* la langue des dates et des mois fabriqués par Intl (« déc. », « vendredi ») */
+function lgLocale(l){ const lg=l||LANG; return lg==='en'?'en-US':lg==='es'?'es-ES':'fr-FR'; }
+/* une phrase écrite d'un bloc dans les trois langues, quand elle porte des données
+   (un nom, un canal) au milieu et ne peut donc pas passer par le dictionnaire */
+function L3(fr,en,es){ return LANG==='en'?en:LANG==='es'?es:fr; }
+/* les fenêtres du navigateur (alert, confirm, prompt) ne passent pas par la page : on
+   traduit leur texte au vol, ligne par ligne. Igal, 26 sept. 2026 : « j'ai des gens
+   qui ne comprennent pas un mot de français ». */
+(function(){
+  if(typeof window==='undefined') return;
+  const tr=m=>{ try{ if(LANG==='fr') return m; return String(m==null?'':m).split('\n').map(l=>{ const t=l.trim(); if(!t) return l; const v=lgMot(t); return v!==null?l.replace(t,v):l; }).join('\n'); }catch(e){ return m; } };
+  const a=window.alert, c=window.confirm, p=window.prompt;
+  if(a&&!a.__lg){ window.alert=function(m){ return a.call(window,tr(m)); }; window.alert.__lg=1; }
+  if(c&&!c.__lg){ window.confirm=function(m){ return c.call(window,tr(m)); }; window.confirm.__lg=1; }
+  if(p&&!p.__lg){ window.prompt=function(m,d){ return p.call(window,tr(m),d); }; window.prompt.__lg=1; }
+})();
+/* ---- une zone peut imposer SA langue, quelle que soit celle de l'écran ----
+   Une facture ne part pas chez celui qui la regarde : elle part chez le client.
+   Elle porte donc data-lang="en" et reste en anglais même si Sam travaille en
+   français — et le contraire est vrai aussi. C'est la seule façon d'avoir un
+   outil en français et des documents dans la langue du destinataire. */
+function lgLangDe(n){
+  let e=(n&&n.nodeType===1)?n:(n&&n.parentNode);
+  while(e&&e.nodeType===1){
+    const v=e.getAttribute&&e.getAttribute('data-lang');
+    if(v&&LANGUES[v]) return v;
+    e=e.parentNode;
+  }
+  return LANG;
+}
+/* on garde le français d'origine pour pouvoir revenir en arrière sans recharger */
+function lgTexte(n){
+  /* On repart toujours du français d'origine, jamais de ce qui est affiché :
+     sinon, passer de l'anglais à l'espagnol chercherait « Catalogue » dans un
+     texte qui dit déjà « Catalog », et ne trouverait rien. */
+  const orig=(n.__fr!==undefined)?n.__fr:n.nodeValue;
+  if(!orig||!/[A-Za-zÀ-ÿ]/.test(orig)) return;
+  const v=lgMot(orig,lgLangDe(n));
+  /* on n'écrit que si ça change : réécrire la même valeur relance l'observateur, sans fin */
+  if(v!==null){ if(n.__fr===undefined) n.__fr=orig; const nv=orig.replace(orig.trim(),v); if(n.nodeValue!==nv) n.nodeValue=nv; }
+  else if(n.__fr!==undefined && n.nodeValue!==n.__fr) n.nodeValue=n.__fr;
+}
+const LG_ATTR=['placeholder','title','aria-label'];
+function lgAttrs(el){
+  LG_ATTR.forEach(a=>{
+    if(!el.hasAttribute(a)) return;
+    const cle='__fr_'+a, mis='__lg_'+a, cur=el.getAttribute(a);
+    /* la page a posé un NOUVEAU texte (placeholder changé par le code) : c'est le
+       nouveau français d'origine. Ce que j'ai moi-même posé ne compte pas. */
+    if(el[cle]!==undefined && cur!==el[mis] && cur!==el[cle]) el[cle]=cur;
+    const src=el[cle]!==undefined?el[cle]:cur;
+    const v=lgMot(src,lgLangDe(el));
+    if(v!==null){ if(el[cle]===undefined) el[cle]=src; el[mis]=v; if(cur!==v) el.setAttribute(a,v); }
+    else if(el[cle]!==undefined){ el[mis]=el[cle]; if(cur!==el[cle]) el.setAttribute(a,el[cle]); }
+  });
+}
+/* Les zones de saisie ne sont jamais touchées : ce que l'utilisateur a tapé
+   lui appartient. Les données non plus — elles ne sont pas dans le dictionnaire. */
+const LG_SAUT={SCRIPT:1,STYLE:1,TEXTAREA:1,CODE:1,PRE:1,INPUT:1,OPTION:0};
+/* Les noms de parfums, de marques et de clients ne se traduisent jamais.
+   Le dictionnaire ne les contient pas — mais on met en plus une barrière :
+   tout ce qui porte une de ces classes est laissé strictement intact. */
+const LG_DATA='.lnm,.lmq,.nom,.nm,.mq,.marque,.produit,.bc,.lbc,.lid,.pd,td.ref,[data-nolang]';
+function lgDonnee(n){
+  let e=n.parentNode;
+  while(e&&e!==document.body){
+    if(e.nodeType===1&&(e.matches&&e.matches(LG_DATA))) return true;
+    e=e.parentNode;
+  }
+  return false;
+}
+/* ---- les phrases coupées par un mot en gras ----
+   « Compte ce qui porte <b>l'argent</b> » fait trois morceaux de texte, et
+   aucun des trois n'est une phrase du dictionnaire. On regarde donc aussi
+   l'élément entier : si son texte complet est au dictionnaire, on remplace son
+   contenu — la traduction peut porter ses propres <b>. On ne le fait que sur des
+   éléments courts qui contiennent une balise, jamais sur une zone de données. */
+const LG_BLOC='p,li,span,label,small,div,td,th,h1,h2,h3,h4,button,a,em,strong,summary,legend,dt,dd';
+function lgTexteFr(el){
+  /* les morceaux sont joints par une espace : « Sam<br>Patron » se lit
+     « Sam Patron », pas « SamPatron » — la clé du dictionnaire reste lisible */
+  let s=''; const it=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);
+  let n; while((n=it.nextNode())) s+=' '+(n.__fr!==undefined?n.__fr:n.nodeValue);
+  return s.replace(/\s+/g,' ').trim();
+}
+/* La traduction d'un bloc peut désigner les balises d'origine par leur rang :
+   <1>texte</1> reprend la 1re balise du bloc (avec son href, sa classe, son id)
+   et y met ce texte ; <3/> recopie la 3e telle quelle (un <br>, un chiffre, un
+   nom). Les balises écrites en clair (<b>…</b>) passent aussi. Ainsi un lien
+   traduit reste un lien, et un bouton traduit garde son identifiant. */
+function lgRendBloc(el,v){
+  if(!/<\d+\/?>/.test(v)){ el.innerHTML=v; return; }
+  const tpl=document.createElement('template'); tpl.innerHTML=el.__frHTML;
+  const kids=[...tpl.content.querySelectorAll('*')];
+  let html=v.replace(/<(\d+)\/>/g,(m,i)=>{ const k=kids[+i-1]; return k?k.outerHTML:''; });
+  html=html.replace(/<(\d+)>([\s\S]*?)<\/\1>/g,(m,i,txt)=>{ const k=kids[+i-1]; if(!k) return txt;
+    const c=k.cloneNode(false); c.innerHTML=txt; return c.outerHTML; });
+  el.innerHTML=html;
+}
+function lgHtmlFr(el){
+  /* le HTML français d'origine, reconstruit : chaque nœud de texte garde son __fr */
+  const c=el.cloneNode(true);
+  const A=document.createTreeWalker(el,NodeFilter.SHOW_TEXT), B=document.createTreeWalker(c,NodeFilter.SHOW_TEXT);
+  let x,y; while((x=A.nextNode())&&(y=B.nextNode())){ if(x.__fr!==undefined) y.nodeValue=x.__fr; }
+  return c.innerHTML;
+}
+function lgBlocs(r){
+  if(!r.querySelectorAll) return;
+  /* le bloc ajouté lui-même compte aussi : un avertissement posé d'un coup dans la page
+     (« 1 ligne pas encore reconnue… ») est l'élément ajouté, pas un de ses enfants */
+  [...((r.matches&&r.matches(LG_BLOC))?[r]:[]), ...r.querySelectorAll(LG_BLOC)].forEach(el=>{
+    if(LG_SAUT[el.nodeName]||el.children.length===0||el.children.length>12) return;
+    if(el.querySelector('input,textarea,select,table,ul,ol,img,svg,canvas')) return;
+    if(el.textContent.length>1200) return;      /* un conteneur, pas une phrase */
+    if(el.matches(LG_DATA)||lgDonnee(el)) return;
+    const lg=lgLangDe(el);
+    /* « rendu » : le bloc est encore exactement tel que je l'ai laissé. Sinon, la
+       page l'a réécrit (un compteur qui change) : on relit le français dedans. */
+    const rendu = el.__lgRendu!==undefined && el.innerHTML===el.__lgRendu;
+    if(rendu && lg==='fr'){ el.innerHTML=el.__frHTML; el.__lgRendu=undefined; el.__lgLang=undefined; return; }
+    if(lg==='fr') return;
+    const orig=rendu?el.__frTxt:lgTexteFr(el);
+    if(!orig||orig.length>900||!/[A-Za-zÀ-ÿ]/.test(orig)) return;
+    const v=lgMot(orig,lg,true); if(v===null) return;   /* un bloc : phrase entière seulement, jamais recollée par morceaux (elle perdrait ses balises) */
+    /* une traduction sans repères <1>…</1> remplacerait tout le HTML du bloc, boutons
+       et identifiants compris (la page ne les retrouverait plus) : on la laisse aux
+       mots un par un, sauf si le bloc n'a que des sauts de ligne */
+    if(!/<\d+\/?>/.test(v) && [...el.children].some(c=>!/^(BR|WBR)$/.test(c.nodeName))) return;
+    if(rendu && lg===el.__lgLang) return;
+    if(!rendu){ el.__frHTML=lgHtmlFr(el); el.__frTxt=orig; }
+    lgRendBloc(el,v); el.__lgLang=lg; el.__lgRendu=el.innerHTML;
+  });
+}
+function lgApplique(racine,sansBlocs){
+  const r=racine||document.body; if(!r) return;
+  if(!sansBlocs) lgBlocs(r);
+  const it=document.createTreeWalker(r,NodeFilter.SHOW_TEXT,{acceptNode:n=>
+    ((n.parentNode&&LG_SAUT[n.parentNode.nodeName])||lgDonnee(n))
+      ?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
+  const L=[]; let n; while((n=it.nextNode())) L.push(n);
+  L.forEach(lgTexte);
+  if(r.querySelectorAll) r.querySelectorAll('[placeholder],[title],[aria-label]').forEach(lgAttrs);
+  if(r.nodeType===1) lgAttrs(r);
+}
+/* le français d'origine d'un élément déjà traduit à l'écran : pour le code qui relit un
+   libellé dans la page (une option choisie) et le réutilise dans une autre phrase */
+function lgFr(el){ if(!el) return ''; let t=''; const it=document.createTreeWalker(el,NodeFilter.SHOW_TEXT); let n; while((n=it.nextNode())) t+=(n.__fr!==undefined?n.__fr:n.nodeValue); return t; }
+function lgChange(l){
+  if(!LANGUES[l]) return;
+  LANG=l; try{ localStorage.setItem(K_LANG,l); }catch(e){}
+  lgApplique(document.body);
+  document.querySelectorAll('#lgsel button').forEach(b=>b.classList.toggle('on',b.dataset.l===l));
+  document.documentElement.lang=l; lgTitre();
+  try{ const J=lit('crm-journal-v1',[]);
+    J.push({t:new Date().toISOString(),u:(typeof NOM_UTIL!=='undefined'?NOM_UTIL:''),
+            act:'reglage',lib:'langue de l\'écran',ref:'langue',av:null,ap:LANGUES[l]});
+    ecrit('crm-journal-v1',J); }catch(e){}
+}
+/* le titre de l'onglet du navigateur (« Étude de cote — Perfumes Trade ») */
+function lgTitre(){
+  try{ if(document.__titreFr===undefined) document.__titreFr=document.title;
+    const m=String(document.__titreFr).split(' — ');
+    const v=LANG==='fr'?lgVocab(m[0]):lgMot(m[0]);
+    document.title=((v&&v!==m[0])?v:m[0])+(m.length>1?' — '+m.slice(1).join(' — '):''); }catch(e){}
+}
+/* le choix, au bas de la barre de gauche */
+function lgBouton(){
+  const p=(document.getElementById('sfline')||document.querySelector('.side .sfoot')); if(!p||document.getElementById('lgsel')) return;
+  const d=document.createElement('div'); d.id='lgsel';
+  d.style.cssText='display:flex;gap:4px;margin-top:8px';
+  d.innerHTML=Object.keys(LANGUES).map(l=>
+    `<button data-l="${l}" class="${l===LANG?'on':''}" title="${LANGUES[l]}"
+      style="font-family:inherit;font-size:10.5px;font-weight:600;letter-spacing:.06em;
+      padding:3px 7px;border-radius:3px;cursor:pointer;border:1px solid var(--line-2);
+      background:transparent;color:var(--ink-3)">${l.toUpperCase()}</button>`).join('');
+  p.appendChild(d);
+  d.addEventListener('click',e=>{ const b=e.target.closest('[data-l]'); if(b) lgChange(b.dataset.l); });
+  const st=document.createElement('style');
+  st.textContent='#lgsel button.on{background:var(--iris);border-color:var(--iris);color:#fff}';
+  document.head.appendChild(st);
+}
+/* En français, le vocabulaire de la maison (« cote ») demande de parcourir la page
+   aussi. On s'en dispense sur les pages à milliers de lignes (catalogue, stock),
+   où le mot n'apparaît pas et où le parcours coûterait cher à chaque redessin. */
+const LG_FR_PARCOURS=!/catalogue|stock|inventaire/.test(location.pathname);
+(function(){
+  /* Deux temps. 1) Tout de suite, avant que le code de la page ne tourne : les mots,
+     un par un — pour que l'écran ne montre jamais un texte dans la mauvaise langue
+     (Igal, 12 sept. 2026 : « code apparaît, après code disparaît »). 2) Au tour
+     suivant, comme avant : les phrases en bloc (lgBlocs), qui réécrivent un
+     paragraphe entier ; elles doivent passer APRÈS que la page a pris ses repères
+     dans le HTML, sinon elle ne retrouve plus ses éléments. */
+  const tot=()=>{
+    try{ lgBouton(); }catch(e){}
+    try{ lgTitre(); }catch(e){}
+    try{
+      if(LANG!=='fr'){ document.documentElement.lang=LANG; lgApplique(document.body,true); }
+      else if(LG_FR_PARCOURS) lgApplique(document.body,true);
+    }catch(e){}
+    /* l'en-tête de la page avait caché l'écran en attendant : on le montre */
+    try{ document.documentElement.style.visibility=''; }catch(e){}
+  };
+  const go=()=>{
+    try{ lgTitre(); }catch(e){}
+    try{ lgBouton();
+      if(LANG!=='fr'){ document.documentElement.lang=LANG; lgApplique(document.body); }
+      else if(LG_FR_PARCOURS) lgApplique(document.body);
+      else document.querySelectorAll('[data-lang]').forEach(z=>{ try{ lgApplique(z); }catch(e){} });
+    }catch(e){}
+  };
+  /* Le JavaScript des pages redessine des morceaux en permanence. On traite ce qui
+     vient d'être ajouté TOUT DE SUITE : le rappel de l'observateur tourne avant que
+     l'écran ne soit repeint, donc le mot n'est jamais vu dans la mauvaise langue.
+     Avant, on attendait 120 ms puis on repassait sur toute la page : on voyait
+     « Devis » clignoter en « Cote » à chaque redessin. En français sur le catalogue
+     et le stock (des milliers de lignes), on ne visite que les zones qui imposent
+     leur propre langue — un document. */
+  const veille=()=>{
+    try{
+      /* les phrases en bloc, elles, passent un peu après (comme avant) : elles
+         réécrivent le HTML du bloc, et la page doit d'abord y avoir pris ses repères */
+      let t=null; const attente=new Set();
+      const blocsPlusTard=()=>{ if(t) return; t=setTimeout(()=>{ t=null; const L=[...attente]; attente.clear();
+        try{ L.forEach(n=>{ if(n.isConnected) lgBlocs(n); }); }catch(e){} },120); };
+      new MutationObserver(recs=>{ try{
+        if(LANG==='fr' && !LG_FR_PARCOURS){ if(document.querySelector('[data-lang]')) document.querySelectorAll('[data-lang]').forEach(z=>lgApplique(z)); return; }
+        const vus=new Set();
+        recs.forEach(r=>{
+          if(r.type==='attributes'){ const el=r.target; if(el&&el.nodeType===1&&el.getAttribute(r.attributeName)!==el['__lg_'+r.attributeName]) lgAttrs(el); return; }
+          if(r.type==='characterData'){ const n=r.target; if(n.nodeType===3&&!vus.has(n)&&!(n.parentNode&&LG_SAUT[n.parentNode.nodeName])&&!lgDonnee(n)){ vus.add(n); lgTexte(n); } return; }
+          r.addedNodes.forEach(n=>{ if(vus.has(n)) return; vus.add(n);
+            if(n.nodeType===3){ if(!(n.parentNode&&LG_SAUT[n.parentNode.nodeName])&&!lgDonnee(n)) lgTexte(n); }
+            else if(n.nodeType===1&&n.isConnected){ lgApplique(n,true); if(LANG!=='fr'){ attente.add(n); blocsPlusTard(); } } }); });
+      }catch(e){} })
+        .observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['placeholder','title','aria-label']});
+    }catch(e){}
+  };
+  if(document.body){ tot(); veille(); } else { try{ document.documentElement.style.visibility=''; }catch(e){} }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',go); else setTimeout(go,0);
+})();
+
+</script>
 <script type="text/plain" id="page-js">
 
 /* ============ ECRITURE PARTAGEE ENTRE ONGLETS ============ */
@@ -158,33 +661,49 @@ const _cp=v=>{ try{ return JSON.parse(JSON.stringify(v)); }catch(e){ return null
 const _sig=v=>JSON.stringify(v===undefined?null:v);
 const _dq=(cle,vide)=>{ try{ const t=localStorage.getItem(cle); return t==null?vide:JSON.parse(t); }catch(e){ return vide; } };
 /* a appeler juste apres avoir lu un magasin : c'est le point de comparaison */
-function base(cle,val){ _REF[cle]=_cp(val); return val; }
+/* 22 oct. 2026 — LA VENTE 21057 EFFACÉE. Le point de comparaison était UN PAR MAGASIN (_REF[cle]) : la moindre lecture
+   faite ailleurs dans le même onglet (l'enregistrement automatique des ventes relit factures-v1, le stock, le journal)
+   le remplaçait. La page, elle, gardait sa copie d'avant. À son enregistrement suivant, la règle du 18 octobre voyait
+   des lignes « dans le repère mais plus dans la copie » et les retirait — la vente du site, sa sortie de stock et ses
+   deux lignes de journal ont disparu sans un mot. Le repère est désormais attaché à CHAQUE COPIE lue (_SNAP) : une
+   page ne retire que ce qu'elle a elle-même retiré de SA copie. _REF[cle] reste le repère de secours pour une valeur
+   construite sans lecture. */
+const _SNAP=(typeof WeakMap==='function')?new WeakMap():null;
+const _repere=(cle,val)=>(_SNAP&&val&&typeof val==='object'&&_SNAP.has(val))?_SNAP.get(val):_REF[cle];
+function base(cle,val){ const c=_cp(val); _REF[cle]=c; if(_SNAP&&val&&typeof val==='object'){ try{ _SNAP.set(val,_cp(c)); }catch(e){} } return val; }
 /* identite d'une ligne, pour reconnaitre la meme entree ecrite par l'autre onglet */
 const _IDdef=x=>_sig(x);
 /* Les lignes ajoutées par CET onglet reçoivent un identifiant unique avant d'être écrites.
    Sans lui, deux lignes de journal écrites dans la même milliseconde (une facture de 30
    lignes en écrit 30 d'un coup) avaient la même identité et se dévoraient entre elles. */
 const _UID={'crm-journal-v1':1,'factures-v1':1,'ajustements-v1':1,'articles-ajoutes-v1':1,
-            'caisse-file-v1':1};
+            'caisse-file-v1':1,'expeditions-v1':1};
 let _seq=0;
 const _neuf=()=>'x'+Date.now().toString(36)+(++_seq).toString(36)+Math.random().toString(36).slice(2,6);
 const _ID={
+  /* 18 oct. 2026 (Coach Floral) : les articles ajoutés à la main n'avaient pas d'identité ici (toute la ligne servait d'identité),
+     alors que le serveur les reconnaît par leur _i : une suppression envoyée « en delta » partait avec la mauvaise identité et le
+     serveur ne retirait rien — en silence. Même identité des deux côtés, désormais. */
+  'articles-ajoutes-v1': x=>x._i||_sig(x),
   'crm-journal-v1': x=>x._i||[x.t,x.act||'',x.lib||'',x.ref||'',x.bc||''].join('|'),
   'factures-v1'   : x=>x._i||x.id||[x.num||'',x.d||'',x.montant].join('|'),
   'ajustements-v1': x=>x._i||[x.t,x.cle||''].join('|'),
   /* la file des ventes de caisse : l'identifiant vient du serveur, on ne le refabrique jamais */
-  'caisse-file-v1' : x=>x._i||''};
+  'caisse-file-v1' : x=>x._i||'',
+  /* les commandes à expédier : même identifiant que dans la file, il vient du serveur */
+  'expeditions-v1' : x=>x._i||''};
 const _MAX={'crm-journal-v1':4000,'ajustements-v1':4000};
 /* pour ces magasins, on garde les plus RÉCENTS quand le plafond est atteint */
 const _DATE={'crm-journal-v1':x=>x.t||'','ajustements-v1':x=>x.t||''};
 /* magasins objet dont chaque valeur est elle-meme une liste a fusionner */
 const _IMBR={'ventes-v1'         : x=>x._i||[x.d||'',x.num||'',x.q,x.p,x.c||'',x.k||''].join('|'),
-             'prix-achat-hist-v1': x=>[x.d||'',x.p,x.f||'',x.q,x.num||'',x.src||''].join('|')};
+             'prix-achat-hist-v1': x=>[x.d||'',x.p,x.f||'',x.q,x.num||'',x.src||''].join('|'),
+             'caisse-especes-v1' : x=>[x.t||'',x.u||'',x.montant].join('|')};   /* les récoltes d'espèces (24 oct. 2026) */
 /* magasins dont une sous-clé est elle-même une carte à fusionner clé par clé */
 const _SOUSMAP={'stock-externe-v1':['q']};
 /* magasins ou chaque fiche est un paquet de champs : on fusionne champ par champ,
    pour que deux onglets puissent corriger deux champs differents du meme produit */
-const _CHAMPS={'fiches-modifiees-v1':1,'clients-v1':1,'reglements-v1':1,'fournisseurs-v1':1,'marche-v1':1};
+const _CHAMPS={'pc-stock-v1':1,'testeurs-pc-v1':1,'fiches-modifiees-v1':1,'clients-v1':1,'reglements-v1':1,'fournisseurs-v1':1,'marche-v1':1,'photos-perso-v1':1};
 function fusChamps(dq,ref,cour){
   const o=(dq&&typeof dq==='object'&&!Array.isArray(dq))?Object.assign({},dq):{};
   const r=ref||{};
@@ -200,7 +719,10 @@ function fusListe(disque,ref,cour,idf){
     if(vus.has(i)) return;
     if(mR.has(i)&&!mC.has(i)) return;                 /* supprimee ici : on la retire aussi */
     out.push(mC.has(i)&&_sig(mC.get(i))!==_sig(mR.get(i)) ? mC.get(i) : x); vus.add(i); });
-  (cour||[]).forEach(x=>{ const i=idf(x); if(!vus.has(i)){ out.push(x); vus.add(i); } });
+  /* 18 oct. 2026 (Igal : « Coach Floral, je l'avais supprimé, Sam le voit encore ») : une ligne que CET onglet avait
+     déjà lue (ref) et n'a pas touchée, mais qui n'est plus sur le disque, a été SUPPRIMÉE AILLEURS — on ne la remet pas.
+     Seules les lignes que cet onglet ne connaissait pas (absentes de ref) sont vraiment nouvelles. */
+  (cour||[]).forEach(x=>{ const i=idf(x); if(!vus.has(i)&&!mR.has(i)){ out.push(x); vus.add(i); } });
   return out;
 }
 
@@ -244,7 +766,7 @@ function _adopte(val,sortie){
 /* après une écriture locale : le serveur, s'il y en a un, est prévenu ici (voir _serveur.py) */
 const _apresEcrit=[];
 function ecrit(cle,val){
-  const ref=_REF[cle];
+  const ref=_repere(cle,val);
   /* on marque les lignes que cet onglet vient d'ajouter, pour qu'elles restent reconnaissables */
   if(_UID[cle]&&Array.isArray(val)){
     const deja=new Set((Array.isArray(ref)?ref:[]).map(x=>_sig(x)));
@@ -254,13 +776,23 @@ function ecrit(cle,val){
         if(!x.r){ try{ const sx=(typeof session==='function')?session():null; if(sx&&sx.role) x.r=sx.role; }catch(e){} } } } });
   }
   const sortie=fusionne(cle,_dq(cle,Array.isArray(val)?[]:{}),ref,val);
-  try{ localStorage.setItem(cle,typeof sortie==='string'?sortie:JSON.stringify(sortie)); }catch(e){ return val; }
+  /* 30 sept. 2026 : quand la mémoire du navigateur est pleine, l'enregistrement était perdu
+     EN SILENCE — ni rangé ici, ni envoyé au serveur (la « new order » de Sam). Désormais on
+     l'envoie quand même au serveur, et on prévient. */
+  try{ localStorage.setItem(cle,typeof sortie==='string'?sortie:JSON.stringify(sortie)); }
+  catch(e){ try{ if(typeof _syPlein==='function') _syPlein(); }catch(_){} }
   _adopte(val,sortie);
-  const avant=_REF[cle];
-  _REF[cle]=_cp(val);
+  /* `avant` = le repère de CETTE copie : ce que le serveur retire en delta, c'est ce que cette page a retiré de sa
+     copie, jamais ce qu'une autre page a ajouté entre-temps */
+  const avant=ref;
+  const c=_cp(val); _REF[cle]=c; if(_SNAP&&val&&typeof val==='object'){ try{ _SNAP.set(val,_cp(c)); }catch(e){} }
   _apresEcrit.forEach(f=>{ try{ f(cle,val,avant); }catch(e){} });
   return val;
 }
+/* Deux pages (Factures, Étude de cote) tournent en module : leurs fonctions ne sont
+   pas visibles des scripts communs (menu, langue). Le menu renommé ne s'enregistrait
+   donc pas depuis ces pages, sans rien dire (Igal, 27 sept. 2026 : « elle reste à
+   Étude de cote »). On les rend visibles partout. */
 /* ================= LE JOUR, VU DE LA BOUTIQUE =================
    `new Date().toISOString().slice(0,10)` donne le jour à GREENWICH. Le magasin
    est à Miami, quatre heures derrière l'été, cinq l'hiver. Tout ce qui se vend
@@ -285,11 +817,194 @@ function isoJour(d){
          +'-'+String(x.getDate()).padStart(2,'0');
 }
 function ajd(){ return isoJour(); }
+/* La boîte (x, y, largeur, hauteur) qui contient le flacon, ou null s'il n'y a rien à rogner. */
+function _boiteFlacon(d,w,h){
+  const px=(x,y)=>{ const i=(y*w+x)*4; return [d[i],d[i+1],d[i+2]]; };
+  const C=[px(0,0),px(w-1,0),px(0,h-1),px(w-1,h-1)];
+  const bg=[0,1,2].map(j=>Math.round(C.reduce((t,c)=>t+c[j],0)/4));
+  if(C.some(c=>Math.max(Math.abs(c[0]-bg[0]),Math.abs(c[1]-bg[1]),Math.abs(c[2]-bg[2]))>40)) return null;
+  const lig=new Array(h).fill(0), col=new Array(w).fill(0);
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++){
+    const i=(y*w+x)*4;
+    if(Math.max(Math.abs(d[i]-bg[0]),Math.abs(d[i+1]-bg[1]),Math.abs(d[i+2]-bg[2]))>34){ lig[y]++; col[x]++; }
+  }
+  const premier=(T,n)=>{ for(let i=0;i<T.length;i++) if(T[i]>=n) return i; return -1; };
+  const dernier=(T,n)=>{ for(let i=T.length-1;i>=0;i--) if(T[i]>=n) return i; return -1; };
+  const x0=premier(col,2), x1=dernier(col,2), y0=premier(lig,2), y1=dernier(lig,2);
+  if(x0<0||y0<0||x1<=x0||y1<=y0) return null;
+  let bw=x1-x0+1, bh=y1-y0+1;
+  if(bw*bh<0.03*w*h) return null;                       /* trois grains de poussière : on ne rogne pas sur eux */
+  const m=Math.round(0.04*Math.max(bw,bh));
+  const X=Math.max(0,x0-m), Y=Math.max(0,y0-m), X2=Math.min(w,x1+1+m), Y2=Math.min(h,y1+1+m);
+  if((X2-X)>=0.97*w&&(Y2-Y)>=0.97*h) return null;       /* déjà plein cadre */
+  return [X,Y,X2-X,Y2-Y];
+}
+/* UNE PHOTO CHOISIE À LA MAIN (Igal, 17 oct. 2026 : « changer la photo du produit ») : l'image est
+   redessinée plus petite (640 px au plus, fond blanc, JPEG) avant d'être gardée — une photo de
+   téléphone fait plusieurs Mo et la mémoire du navigateur n'en garde que quelques-uns.
+   Rend une promesse : l'adresse « data: » de l'image, ou une erreur lisible. */
+function photoReduite(fichier,max){
+  max=max||640;
+  return new Promise((ok,ko)=>{
+    if(!fichier||!/^image\//.test(fichier.type||'')){ ko(new Error('pas une image')); return; }
+    const r=new FileReader();
+    r.onerror=()=>ko(new Error('lecture impossible'));
+    r.onload=()=>{
+      const im=new Image();
+      im.onerror=()=>ko(new Error('image illisible'));
+      im.onload=()=>{
+        try{
+          /* Igal, 17 oct. 2026 : « elle est petite à l'intérieur, j'aimerais qu'elle soit vraiment dans le cadre ».
+             Une photo trouvée sur Internet a presque toujours de larges marges blanches : on les rogne (le flacon
+             remplit le cadre, avec une petite marge) avant de réduire. Le fond est reconnu aux quatre coins ; si les
+             coins ne sont pas du même ton (photo d'ambiance, dégradé), on ne rogne rien. */
+          const W=im.width, H=im.height, k0=Math.min(1,800/Math.max(W,H));
+          const aw=Math.max(1,Math.round(W*k0)), ah=Math.max(1,Math.round(H*k0));
+          const a=document.createElement('canvas'); a.width=aw; a.height=ah;
+          const ga=a.getContext('2d'); ga.fillStyle='#fff'; ga.fillRect(0,0,aw,ah); ga.drawImage(im,0,0,aw,ah);
+          let sx=0, sy=0, sw=W, sh=H;
+          const box=_boiteFlacon(ga.getImageData(0,0,aw,ah).data,aw,ah);
+          if(box){ sx=box[0]/k0; sy=box[1]/k0; sw=box[2]/k0; sh=box[3]/k0; }
+          const k=Math.min(max/Math.max(sw,sh),box?1.5:1);
+          const w=Math.max(1,Math.round(sw*k)), h=Math.max(1,Math.round(sh*k));
+          const c=document.createElement('canvas'); c.width=w; c.height=h;
+          const g=c.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,w,h);
+          g.drawImage(im,sx,sy,sw,sh,0,0,w,h);
+          ok(c.toDataURL('image/jpeg',0.86));
+        }catch(e){ ko(e); }
+      };
+      im.src=r.result;
+    };
+    r.readAsDataURL(fichier);
+  });
+}
+/* LA FICHE DU PARFUM DANS UNE FENÊTRE, par-dessus la page en cours (Igal, 17 oct. 2026 : depuis une facture, puis
+   depuis le détail d'une vente — « sans avoir à passer par le catalogue pour voir le produit »). C'est la fiche du
+   Catalogue elle-même, ouverte en « mode cadre » (catalogue.html#cle=…&cadre=1) : mêmes champs, mêmes droits, même
+   enregistrement. À la fermeture, `apres` est appelée pour que la page relise ce qui a pu changer. */
+function ficheFenetre(cle,apres,plus){
+  if(!cle||document.getElementById('fv-ov')) return;
+  if(!document.getElementById('fv-css')){
+    const st=document.createElement('style'); st.id='fv-css';
+    st.textContent='.fv-ov{position:fixed;inset:0;z-index:95;background:rgba(23,23,29,.45);backdrop-filter:blur(2px);display:flex;justify-content:flex-end}'
+      +'.fv-ov iframe{border:0;width:min(940px,100%);height:100%;background:var(--surface,#fff);box-shadow:-8px 0 30px rgba(0,0,0,.18)}';
+    document.head.appendChild(st);
+  }
+  const ov=document.createElement('div'); ov.id='fv-ov'; ov.className='fv-ov';
+  const fr=document.createElement('iframe'); fr.title='Fiche du parfum'; fr.src='catalogue.html#cle='+encodeURIComponent(cle)+'&cadre=1'+(plus||'');   /* plus : « &mel=1 » ouvre « Mettre en ligne » (tableau de bord) */
+  ov.appendChild(fr); document.body.appendChild(ov);
+  const ferme=()=>{ window.removeEventListener('message',onMsg); ov.remove(); try{ if(apres) apres(); }catch(e){} };
+  const onMsg=e=>{ if(e.origin===location.origin&&e.data&&e.data.fiche==='fermee') ferme(); };
+  window.addEventListener('message',onMsg);
+  ov.addEventListener('click',e=>{ if(e.target===ov) ferme(); });
+}
+/* CHERCHER LA PHOTO SUR INTERNET (Igal, 17 oct. 2026 : « chercher la photo sur Internet, proposer un choix à Sam,
+   qu'il puisse cliquer sur la photo et l'intégrer »). Une fenêtre : une case de recherche (préremplie), des miniatures ;
+   un clic prend la photo, la réduit comme les autres et la rend. C'est le cockpit qui cherche et qui rapporte l'image
+   (le navigateur n'a pas le droit de le faire seul). Rend une promesse : l'adresse « data: » de la photo, ou null si on ferme. */
+function photoWeb(requete){
+  const T=(typeof L3==='function')?L3:(f)=>f;
+  return new Promise(fini=>{
+    if(document.getElementById('pw-ov')){ fini(null); return; }
+    if(!document.getElementById('pw-css')){
+      const st=document.createElement('style'); st.id='pw-css';
+      st.textContent='.pw-ov{position:fixed;inset:0;z-index:90;background:rgba(23,23,29,.55);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;padding:18px}'
+      +'.pw{background:var(--surface,#fff);color:var(--ink,#17171d);border-radius:14px;width:min(780px,100%);max-height:100%;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}'
+      +'.pw-h{display:flex;justify-content:space-between;align-items:center;padding:16px 20px 10px}.pw-h h2{margin:0;font-size:18px}'
+      +'.pw-x{border:0;background:none;font-size:26px;line-height:1;color:var(--ink-3,#777);cursor:pointer}.pw-x:hover{color:var(--iris,#5b3f8c)}'
+      +'.pw-r{display:flex;gap:8px;padding:0 20px 10px}.pw-r input{flex:1;min-width:0;padding:9px 11px;border:1px solid var(--line,#ddd);border-radius:8px;font:inherit;font-size:14px;background:var(--surface,#fff);color:inherit}'
+      +'.pw-r input:focus{border-color:var(--iris,#5b3f8c);outline:0;box-shadow:0 0 0 3px var(--iris-soft,#eee)}'
+      +'.pw-r button{padding:9px 16px;border:0;border-radius:8px;background:var(--iris,#5b3f8c);color:#fff;font:inherit;font-size:14px;cursor:pointer}.pw-r button:disabled{opacity:.5;cursor:default}'
+      +'.pw-m{padding:0 20px 8px;font-size:12.5px;color:var(--ink-3,#777);min-height:18px}.pw-m.bad{color:var(--bad,#c0392b)}.pw-m a{color:inherit}'
+      +'.pw-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px;padding:2px 20px 14px;overflow:auto;min-height:60px}'
+      +'.pw-c{border:1px solid var(--line,#ddd);border-radius:10px;background:var(--surface-2,#faf9f7);padding:6px;cursor:pointer;display:flex;flex-direction:column;gap:5px;text-align:left;font:inherit;color:inherit}'
+      +'.pw-c:hover,.pw-c:focus-visible{border-color:var(--iris,#5b3f8c);outline:0;box-shadow:0 0 0 3px var(--iris-soft,#eee)}'
+      +'.pw-c .im{aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;background:#fff;border-radius:6px;overflow:hidden}.pw-c img{max-width:100%;max-height:100%;object-fit:contain}'
+      +'.pw-c small{font-size:10.5px;color:var(--ink-3,#777);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+      +'.pw-c.pris{opacity:.55;pointer-events:none}'
+      +'.pw-n{padding:8px 20px 14px;font-size:11.5px;color:var(--ink-3,#777);border-top:1px solid var(--line,#ddd)}';
+      document.head.appendChild(st);
+    }
+    const e=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const ov=document.createElement('div'); ov.id='pw-ov'; ov.className='pw-ov';
+    ov.innerHTML='<div class="pw" role="dialog" aria-modal="true" aria-labelledby="pw-t">'
+      +'<div class="pw-h"><h2 id="pw-t">'+e(T('Chercher la photo sur Internet','Find the photo on the Internet','Buscar la foto en Internet'))+'</h2><button type="button" class="pw-x" id="pw-x" aria-label="'+e(T('Fermer','Close','Cerrar'))+'">&times;</button></div>'
+      +'<div class="pw-r"><input id="pw-q" autocomplete="off" aria-label="'+e(T('Recherche','Search','Búsqueda'))+'"><button type="button" id="pw-b">'+e(T('Chercher','Search','Buscar'))+'</button></div>'
+      +'<div class="pw-m" id="pw-m" role="status"></div><div class="pw-g" id="pw-g"></div>'
+      +'<div class="pw-n">'+e(T('Ces photos viennent d\'Internet : vérifie que tu as le droit de les utiliser. Clique sur celle qui convient.','These photos come from the Internet: check that you may use them. Click the one you want.','Estas fotos vienen de Internet: comprueba que puedes usarlas. Haz clic en la que te sirva.'))+'</div></div>';
+    document.body.appendChild(ov);
+    const g=id=>document.getElementById(id), msg=(m,mal)=>{ g('pw-m').textContent=m||''; g('pw-m').className='pw-m'+(mal?' bad':''); };
+    g('pw-q').value=requete||'';
+    let clos=false;
+    const ferme=v=>{ if(clos) return; clos=true; document.removeEventListener('keydown',onKey); ov.remove(); fini(v||null); };
+    const onKey=ev=>{ if(ev.key==='Escape') ferme(null); };
+    document.addEventListener('keydown',onKey);
+    g('pw-x').onclick=()=>ferme(null);
+    ov.addEventListener('click',ev=>{ if(ev.target===ov) ferme(null); });
+    const jeton=()=>{ try{ return (typeof ckTok==='function'&&ckTok())||''; }catch(x){ return ''; } };
+    const hors=()=>{ const q=encodeURIComponent(g('pw-q').value.trim());
+      return ' <a href="https://www.google.com/search?tbm=isch&q='+q+'" target="_blank" rel="noopener">'+e(T('Ouvrir la recherche d\'images dans un nouvel onglet','Open the image search in a new tab','Abrir la búsqueda de imágenes en una pestaña nueva'))+'</a>'; };
+    const appel=async chemin=>{
+      const t=jeton(); if(!t) throw new Error(T('Pas connecté au serveur : reconnecte-toi, ou utilise « Ajouter une photo ».','Not connected to the server: sign in again, or use "Add a photo".','Sin conexión al servidor: vuelve a entrar, o usa «Añadir una foto».'));
+      return fetch(CK_URL+'/api/o/'+CK_ORG+chemin,{headers:{Authorization:'Bearer '+t}});
+    };
+    let enCours=false;
+    const cherche=async()=>{
+      const q=g('pw-q').value.trim(); if(q.length<3||enCours) { if(q.length<3) msg(T('Tape au moins trois lettres.','Type at least three letters.','Escribe al menos tres letras.'),true); return; }
+      enCours=true; g('pw-b').disabled=true; g('pw-g').innerHTML=''; msg(T('Recherche en cours…','Searching…','Buscando…'));
+      try{
+        const r=await appel('/photos/cherche?q='+encodeURIComponent(q)); const j=await r.json().catch(()=>({}));
+        if(!r.ok) throw new Error(j.erreur||('erreur '+r.status));
+        const L=j.resultats||[];
+        if(!L.length){ msg(T('Aucune photo trouvée. Change les mots de la recherche.','No photo found. Change the search words.','No se encontró ninguna foto. Cambia las palabras.'),true); }
+        else{
+          msg(L.length+' '+T('photos — clique sur la bonne.','photos — click the right one.','fotos — haz clic en la correcta.'));
+          g('pw-g').innerHTML=L.map((x,i)=>'<button type="button" class="pw-c" data-i="'+i+'"><span class="im"><img src="'+e(x.mini)+'" alt="" loading="lazy" referrerpolicy="no-referrer"></span><small>'+e(x.site||x.titre||'')+(x.l&&x.h?' · '+x.l+'×'+x.h:'')+'</small></button>').join('');
+          g('pw-g').querySelectorAll('.pw-c').forEach(b=>{ b.onclick=()=>prend(L[+b.dataset.i],b); b.querySelector('img').onerror=function(){ b.remove(); }; });
+        }
+      }catch(err){ g('pw-m').innerHTML=''; msg('',true); g('pw-m').className='pw-m bad'; g('pw-m').innerHTML=e((err&&err.message)||T('La recherche a échoué.','The search failed.','La búsqueda falló.'))+hors(); }
+      enCours=false; g('pw-b').disabled=false;
+    };
+    const prend=async(x,b)=>{
+      if(enCours) return; enCours=true; b.classList.add('pris'); msg(T('Je prends la photo…','Getting the photo…','Obteniendo la foto…'));
+      let u=null;
+      for(const adr of [x.image,x.mini]){
+        try{
+          const r=await appel('/photos/prend?u='+encodeURIComponent(adr)); if(!r.ok) continue;
+          const bl=await r.blob(); u=await photoReduite(bl); if(u) break;
+        }catch(err){ if(!jeton()){ msg(err.message,true); break; } }
+      }
+      enCours=false;
+      if(u){ ferme(u); return; }
+      b.classList.remove('pris'); msg(T('Cette photo n\'a pas pu être récupérée (le site la protège). Choisis-en une autre.','This photo could not be fetched (the site protects it). Pick another one.','No se pudo obtener esta foto (el sitio la protege). Elige otra.'),true);
+    };
+    g('pw-b').onclick=cherche; g('pw-q').onkeydown=ev=>{ if(ev.key==='Enter'){ ev.preventDefault(); cherche(); } };
+    setTimeout(()=>{ g('pw-q').focus(); if((requete||'').trim().length>=3) cherche(); },30);
+  });
+}
 /* L'HEURE, vue de la boutique : « 14:32 » à Miami, quel que soit l'ordinateur qui
    enregistre. Sert à horodater les ventes ; sans argument, c'est maintenant. */
 function heureMiami(t){
   try{ const x=(t==null)?new Date():(t instanceof Date?t:new Date(t)); if(isNaN(x.getTime())) return '';
     return x.toLocaleTimeString('en-GB',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit',hour12:false}); }
+  catch(e){ return ''; }
+}
+
+/* le jour à Miami d'un instant (« 2026-09-27T04:05:00Z » → « 2026-09-27 ») */
+function jourMiami(t){
+  try{ const x=(t==null)?new Date():(t instanceof Date?t:new Date(t)); if(isNaN(x.getTime())) return '';
+    return x.toLocaleDateString('en-CA',{timeZone:'America/New_York'}); }
+  catch(e){ return ''; }
+}
+
+/* Le jour et l'heure à Miami d'un instant enregistré (« 2026-09-25T02:56:00Z »
+   → « 24/09/26 · 22:56 »). Igal, 25 sept. 2026 : « mets-moi tout à la même heure » —
+   les horodatages étaient lus tels quels, donc en temps universel, avec un jour
+   d'écart le soir. Vide si l'instant n'est pas lisible. */
+function quandMiami(t){
+  try{ const x=(t==null)?null:(t instanceof Date?t:new Date(t)); if(!x||isNaN(x.getTime())) return '';
+    const j=x.toLocaleDateString('en-US',{timeZone:'America/New_York',day:'2-digit',month:'2-digit',year:'2-digit'});
+    return j+' · '+heureMiami(x); }
   catch(e){ return ''; }
 }
 
@@ -319,23 +1034,61 @@ let lit=(k,d)=>{
   }
   return base(k,v);
 };
+/* (voir plus haut) visibles des scripts communs, même depuis une page en module ;
+   on passe par la variable pour suivre un éventuel remplacement de lit */
+try{ if(typeof window!=='undefined'){ if(!window.lit) window.lit=(k,d)=>lit(k,d); if(!window.ecrit) window.ecrit=(k,v)=>ecrit(k,v); if(!window._apresEcrit) window._apresEcrit=_apresEcrit; } }catch(e){}
 
 
 /* Le catalogue complet : les références du fichier (D_PROD) + les articles ajoutés à la main
    (articles-ajoutes-v1), mis au même format. Chaque page qui indexe les produits passe par ici,
    sinon un article créé dans le catalogue n'existe ni pour les factures ni pour les ventes. */
+/* 30 oct. 2026 : un nom, une marque, une contenance ou un type changés dans la fiche du Catalogue
+   (fiches-modifiees-v1) ne se voyaient QUE dans le Catalogue — l'Inventaire, les Ventes et les
+   Factures gardaient le nom du fichier de départ (« Nom (Clone de…) » chez
+   l'un, « Nom » chez l'autre). Les lignes du fichier reçoivent l'identité de la fiche
+   une fois pour toutes, à la première lecture ; le nom d'origine (colonne 1) ne bouge pas, il
+   sert à reconnaître une vente du site et à chercher. */
+let _identiteFaite=false;
+function _identiteFiches(){
+  if(_identiteFaite) return; _identiteFaite=true;
+  let M={}; try{ M=_dq('fiches-modifiees-v1',{})||{}; }catch(e){ M={}; }
+  if(!M||typeof M!=='object'||Array.isArray(M)) return;
+  const col={nom:13,marque:2,ml:3,type:4,genre:5};
+  (window.D_PROD||[]).forEach(r=>{ const m=r&&r[15]&&M[r[15]]; if(!m) return;
+    for(const k in col){ if(m[k]!=null&&m[k]!=='') r[col[k]]=(k==='type'||k==='genre')?String(m[k]).toUpperCase():String(m[k]); } });
+}
 function D_TOUS(){
+  _identiteFiches();
   const A=_dq('articles-ajoutes-v1',[]); const L=Array.isArray(A)?A:[];
+  let M={}; try{ M=_dq('fiches-modifiees-v1',{})||{}; }catch(e){ M={}; }
   const n=v=>(v==null||v==='')?null:+v;
-  const rows=L.map((o,i)=>[String(o.bc||'').trim(),o.nom||'',o.marque||'',String(o.ml||'').trim(),String(o.type||'').toUpperCase(),
-    String(o.genre||'').toUpperCase(),n(o.qte)||0,n(o.pvr),n(o.pvw),'',0,[],n(o.pa),o.nom||'','',o.id||('a'+i),null,null]);
+  const rows=L.map((o,i)=>{ const m=(M&&M[o.id])||{}, nom=(m.nom!=null&&m.nom!=='')?m.nom:(o.nom||'');
+    return [String(o.bc||'').trim(),o.nom||'',m.marque||o.marque||'',String(m.ml!=null&&m.ml!==''?m.ml:(o.ml||'')).trim(),String(m.type||o.type||'').toUpperCase(),
+    String(m.genre||o.genre||'').toUpperCase(),n(o.qte)||0,n(o.pvr),n(o.pvw),'',0,[],n(o.pa),nom,'',o.id||('a'+i),null,null]; });
   return (window.D_PROD||[]).concat(rows);
 }
+
+/* Les codes-barres extraits d'une case COLLÉE du fichier de Sam (colonne 19 des données,
+   voir build_data.py) : la fiche garde sa case telle quelle — sa clé en dépend — mais
+   chacun des deux codes doit la retrouver. cle → codes, sans zéros de tête. */
+let _BCX=null;
+function bcExtra(){
+  if(!_BCX){ _BCX={}; try{
+    (window.D_PROD||[]).forEach(r=>{ if(r&&r[15]&&Array.isArray(r[19])&&r[19].length) _BCX[r[15]]=r[19].map(x=>String(x).replace(/^0+/,'')); });
+    /* la page Inventaire n'a que ses propres lignes (colonne 12) */
+    (window.D_INV||[]).forEach(r=>{ if(r&&r[9]&&Array.isArray(r[12])&&r[12].length) _BCX[r[9]]=r[12].map(x=>String(x).replace(/^0+/,'')); });
+  }catch(e){} }
+  return _BCX;
+}
+function cleParBCX(n){ n=String(n||'').replace(/[^0-9]/g,'').replace(/^0+/,''); if(!n) return null; const B=bcExtra(); for(const c in B) if(B[c].includes(n)) return c; return null; }
 
 /* quelqu'un d'autre (autre onglet, autre personne) vient d'écrire : on le dit, sans rien écraser */
 let _averti=false;
 function avertitMaj(msg){
   if(_averti||!document.body) return;
+  /* la fiche ouverte dans une fenêtre (mode cadre) et la page qui l'a ouverte écrivent dans les mêmes données :
+     ce n'est pas « un autre onglet », et recharger la page effacerait la facture en cours de lecture */
+  if(document.documentElement.classList.contains('cadre')||document.getElementById('fv-ov')) return;
   _averti=true;
   const b=document.createElement('div');
   b.style.cssText='position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:9999;'
@@ -353,8 +1106,53 @@ function avertitMaj(msg){
 }
 addEventListener('storage',e=>{
   if(!e.key||!(e.key in _REF)) return;
+  /* 17 oct. 2026 : une page qui sait se redessiner le fait quand elle est calme, sans bandeau (voir _serveur.py) */
+  if(typeof window.__rafraichir==='function'&&typeof _syPlusTard==='function'){ window.__SY_A_MONTRER=true; _syPlusTard(); return; }
   avertitMaj('Un autre onglet vient de modifier les données.');
 });
+
+/* ============ LE STOCK DE PERFUME CITY (13 oct. 2026) ============
+   Perfume City est une boutique à part (celle de Kim). Son stock était gardé dans le navigateur
+   d'UN seul ordinateur (inventaire-local-pc-v1) : Kim et Sam ne voyaient pas le même. Il vit
+   maintenant dans un magasin PARTAGÉ, pc-stock-v1 : une fiche par code-barres, fusionnée champ
+   par champ (deux postes qui touchent deux parfums différents ne s'écrasent pas).
+   Les pages continuent de parler en « lignes » (les 12 colonnes d'avant) : pcsRows() / pcsSauve(). */
+const K_PCS='pc-stock-v1', K_PCL='inventaire-local-pc-v1';
+const pcsCle=r=>{ const bc=r&&r[0]?String(r[0]).replace(/^0+/,''):''; return bc||String((r&&r[9])||''); };
+const pcsDe=r=>({bc:String(r[0]||''),nom:r[1]||'',m:r[2]||'',ml:String(r[3]||''),ty:r[4]||'',q:Math.round(+r[5]||0),
+                 pa:r[6]==null||r[6]===''?null:+r[6],pvr:r[10]==null||r[10]===''?null:+r[10],pvw:r[11]==null||r[11]===''?null:+r[11],
+                 cle:r[9]||(r[0]?'b'+r[0]:'')});
+const pcsVers=o=>{ const q=+o.q||0, pa=o.pa==null?null:+o.pa;
+  return [o.bc||'',o.nom||'',o.m||'',o.ml||'',o.ty||'',q,pa,pa!=null?q*pa:null,'non',o.cle||(o.bc?'b'+o.bc:''),
+          o.pvr==null?null:o.pvr,o.pvw==null?null:o.pvw]; };
+/* lit le magasin ; l'ancien stock gardé dans ce navigateur y entre une fois (sans écraser ce qui y est déjà) */
+function pcsCarte(){
+  let m=lit(K_PCS,{}); if(!m||typeof m!=='object'||Array.isArray(m)) m={};
+  let vieux=null; try{ vieux=JSON.parse(localStorage.getItem(K_PCL)||'null'); }catch(e){}
+  if(Array.isArray(vieux)&&vieux.length){
+    let n=0; vieux.forEach(r=>{ const k=pcsCle(r); if(k&&!m[k]){ m[k]=pcsDe(r); n++; } });
+    if(n) ecrit(K_PCS,m);
+    try{ localStorage.removeItem(K_PCL); }catch(e){}
+  }
+  return m;
+}
+/* les lignes de l'inventaire Perfume City, rangées par marque puis nom ; null tant qu'il est vide */
+function pcsRows(){
+  const m=pcsCarte(), L=Object.keys(m).map(k=>pcsVers(m[k]));
+  if(!L.length) return null;
+  L.sort((a,b)=>String(a[2]).localeCompare(String(b[2]))||String(a[1]).localeCompare(String(b[1]))||String(a[3]).localeCompare(String(b[3])));
+  return L;
+}
+/* écrit les lignes données : seules celles qui ont changé partent au serveur ; remplace=true vide d'abord */
+function pcsSauve(rows,remplace){
+  try{
+    const m=remplace?(lit(K_PCS,{}),{}):pcsCarte(); let n=0;
+    (rows||[]).forEach(r=>{ const k=pcsCle(r); if(!k) return; const o=pcsDe(r);
+      if(JSON.stringify(m[k])!==JSON.stringify(o)){ m[k]=o; n++; } });
+    if(n||remplace) ecrit(K_PCS,m);
+    return true;
+  }catch(e){ return false; }
+}
 
 
 /* ============ COMPTES, RÔLES ET SESSION ============ */
@@ -367,7 +1165,7 @@ const K_ROLES='sam-roles-v1';           /* les rôles fabriqués par le patron *
 const _cLit=(k,d)=>{ try{ const t=localStorage.getItem(k); return t==null?d:JSON.parse(t); }catch(e){ return d; } };
 const _cEcr=(k,v)=>{ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} };
 
-/* Les huit droits, une bonne fois. La rubrique Accès s'en sert pour dessiner
+/* Les droits, une bonne fois. La rubrique Accès s'en sert pour dessiner
    les cases à cocher : ajouter un droit ici suffit à le voir apparaître là-bas. */
 const DROITS=[
   ['voirPA',    "Voit les prix d'achat"],
@@ -378,6 +1176,7 @@ const DROITS=[
   ['reglages',  'Change les réglages'],
   ['acces',     'Ouvre et ferme les accès'],
   ['annuler',   'Annule une facture enregistrée (le stock et les prix reviennent en arrière)'],
+  ['prixPC',    'Change le prix de Perfume City sur Shopify'],
   ['technique', 'Branche les services extérieurs et leurs clés']];
 
 /* Les quatre rôles d'origine. On ne les touche pas : ils servent de repère,
@@ -393,15 +1192,15 @@ const ROLES_BASE={
      Admin peut aussi modifier le compte du Patron : sans ça, un patron qui perd
      son mot de passe n'a plus personne pour le lui rendre. */
   admin:     {lib:'Admin',             aide:'Tout, plus le branchement des services extérieurs et leurs clés',
-              voirPA:1, voirMarge:1, modPrix:1, vendre:1, compter:1, reglages:1, acces:1, annuler:1, technique:1},
+              voirPA:1, voirMarge:1, modPrix:1, vendre:1, compter:1, reglages:1, acces:1, annuler:1, prixPC:1, technique:1},
   patron:    {lib:'Patron',            aide:'Tout sur son entreprise — sauf le branchement des services extérieurs',
-              voirPA:1, voirMarge:1, modPrix:1, vendre:1, compter:1, reglages:1, acces:1, annuler:1, technique:0},
+              voirPA:1, voirMarge:1, modPrix:1, vendre:1, compter:1, reglages:1, acces:1, annuler:1, prixPC:1, technique:0},
   commercial:{lib:'Commercial',        aide:'Vend et voit les prix de vente — pas les prix d\'achat',
-              voirPA:0, voirMarge:0, modPrix:0, vendre:1, compter:0, reglages:0, acces:0, annuler:0},
+              voirPA:0, voirMarge:0, modPrix:0, vendre:1, compter:0, reglages:0, acces:0, annuler:0, prixPC:0},
   entrepot:  {lib:'Entrepôt',          aide:'Compte le stock et ajuste — ne voit aucun prix',
-              voirPA:0, voirMarge:0, modPrix:0, vendre:0, compter:1, reglages:0, acces:0, annuler:0},
+              voirPA:0, voirMarge:0, modPrix:0, vendre:0, compter:1, reglages:0, acces:0, annuler:0, prixPC:0},
   comptable: {lib:'Comptable',         aide:'Lit tout, y compris les prix d\'achat — ne modifie rien',
-              voirPA:1, voirMarge:1, modPrix:0, vendre:0, compter:0, reglages:0, acces:0, annuler:0}};
+              voirPA:1, voirMarge:1, modPrix:0, vendre:0, compter:0, reglages:0, acces:0, annuler:0, prixPC:0}};
 
 /* ROLES = les quatre d'origine + ceux que le patron a fabriqués. Toutes les
    pages lisent ROLES[...] sans savoir d'où vient le rôle : c'est le but. */
@@ -453,6 +1252,11 @@ function session(){
 }
 function role(){ const s=session(); return (s&&ROLES[s.role])?ROLES[s.role]:null; }
 function peut(d){ const r=role(); return r?!!r[d]:false; }
+/* Sur les pages dont le code tourne en module (Étude de devis, Factures…), ces fonctions n'étaient pas
+   visibles du menu, qui s'appliquait AVANT : un Commercial y voyait toute la partie Pilotage
+   (Connecteurs, Accès, Réglages…). On les rend visibles, puis on réapplique le menu (19 oct. 2026). */
+try{ window.session=session; window.role=role; window.peut=peut;
+  if(typeof mnApplique==='function') mnApplique(); }catch(e){}
 
 /* empreinte du mot de passe : on ne garde jamais le mot de passe en clair,
    même si ce n'est pas une protection contre quelqu'un de déterminé */
@@ -513,11 +1317,13 @@ const ACCUEIL_ROLE={patron:'tableau.html', comptable:'tableau.html',
                     commercial:'ventes.html', entrepot:'stock.html'};
 const DEPARTS=[['tableau.html','Tableau de bord'],['ventes.html','Ventes'],
                ['stock.html','Inventaire'],['catalogue.html','Catalogue'],
-               ['factures.html','Factures'],['clients.html','VIP wholesale']];
+               ['factures.html','Factures'],['clients.html','Clients']];
 /* Le ?v=… collé au bout : le navigateur garde longtemps en mémoire une page
    ouverte depuis un fichier local, et sert alors une version d'avant. Une
    adresse qui change à chaque livraison le force à relire. */
-const versUrl=()=> (typeof VER_URL!=='undefined' && VER_URL) ? ('?v='+VER_URL) : '';
+/* try : appelée avant la ligne qui pose VER_URL (session absente au chargement), le
+   « typeof » ne protège pas d'une const pas encore posée — l'erreur bloquait le renvoi. */
+const versUrl=()=>{ try{ return VER_URL ? ('?v='+VER_URL) : ''; }catch(e){ return ''; } };
 /* pageDeDepart rend le NOM de la page — c'est une identité, comparable.
    urlDepart rend l'adresse où aller, avec le ?v=… qui force la relecture. */
 function pageDeDepart(r){
@@ -679,7 +1485,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 
 /* ============ EN LIGNE : LES DONNÉES VIVENT SUR LE SERVEUR ============ */
-const _SY_EXCLUS=new Set(["sam-session-v1", "ck-token", "ck-versions", "crm-utilisateur-v1", "crm-utilisateurs-v1", "sam-comptes-v1", "sam-roles-v1", "sam-comptes-demo-v1", "frn-demo-galou-v1", "vue-catalogue-v1", "tri-colonne-v1", "retail-vue-v1", "langue-v1", "menu-perso-v1", "dossier-outil-v1", "repere-installation-v1", "derniere-sauvegarde-v1", "derniere-sauvegarde-compte-v1", "connecteurs-v1"]);
+const _SY_EXCLUS=new Set(["sam-session-v1", "ck-token", "ck-versions", "crm-utilisateur-v1", "crm-utilisateurs-v1", "sam-comptes-v1", "sam-roles-v1", "sam-comptes-demo-v1", "frn-demo-galou-v1", "vue-catalogue-v1", "tri-colonne-v1", "retail-vue-v1", "langue-v1", "dossier-outil-v1", "repere-installation-v1", "derniere-sauvegarde-v1", "derniere-sauvegarde-compte-v1", "connecteurs-v1"]);
 const _SY_ON=EN_LIGNE && !!ckTok();
 const _SY_K='ck-versions';
 let _SY_V={}; try{ _SY_V=JSON.parse(localStorage.getItem(_SY_K)||'{}')||{}; }catch(e){ _SY_V={}; }
@@ -688,11 +1494,24 @@ const _SY_ATT=new Map();    /* magasins en attente d'envoi : cle -> {val} */
 const _SY_ENVOI=new Set();  /* envois en cours */
 let _SY_HORS=!!(window.__CK&&window.__CK.hors);
 const _sySauveV=()=>{ try{ localStorage.setItem(_SY_K,JSON.stringify(_SY_V)); }catch(e){} };
-const _syOk=cle=>_SY_ON && !_SY_EXCLUS.has(cle) && /^[a-z0-9-]+-v\d+$/.test(cle);
+const _SY_SRV=k=>/^(corbeille-v1|caisse-produits-v1|amazon-annonces-v1|amazon-illisibles)$|^sauvegarde-/.test(k);   /* serveur seulement : jamais gardés ici */
+const _SY_KVS='ck-versions-srv';
+let _SY_VS={}; try{ _SY_VS=JSON.parse(localStorage.getItem(_SY_KVS)||'{}')||{}; }catch(e){ _SY_VS={}; }
+const _syOk=cle=>_SY_ON && !_SY_EXCLUS.has(cle) && !_SY_SRV(cle) && /^[a-z0-9-]+-v\d+$/.test(cle);
 
 /* on garde la version "serveur" de chaque magasin lu, pour savoir plus tard ce que CET appareil a changé */
 { const _lit0=lit; lit=(k,d)=>{ const v=_lit0(k,d); if(_syOk(k)&&!(k in _SY_BASE)) _SY_BASE[k]=_cp(v); return v; }; }
 
+/* la mémoire du navigateur est pleine : on le DIT, en rouge, au lieu de travailler en silence
+   sur des données périmées */
+function _syPlein(){
+  try{ if(document.getElementById('sy-plein')||!document.body) return;
+    const b=document.createElement('div'); b.id='sy-plein';
+    b.style.cssText='position:fixed;left:50%;top:10px;transform:translateX(-50%);z-index:9999;background:#8a2f2f;color:#fff;padding:10px 16px;border-radius:9px;font:600 13px Inter,system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.3);max-width:640px';
+    b.textContent=(typeof L3==='function'?L3('⚠ La mémoire de ce navigateur est pleine : les dernières données ne sont pas à jour. Prévenez Igal.','⚠ This browser\'s storage is full: the latest data is not up to date. Tell Igal.','⚠ La memoria de este navegador está llena: los últimos datos no están al día. Avise a Igal.'):'⚠ La mémoire de ce navigateur est pleine.');
+    document.body.appendChild(b); }catch(e){}
+}
+if(window.__CK&&window.__CK.plein) setTimeout(_syPlein,500);
 /* le voyant : ce qui n'est pas encore parti */
 function _syVoyant(){
   let b=document.getElementById('sy-voyant');
@@ -706,20 +1525,46 @@ function _syVoyant(){
   b.style.background=_SY_HORS?'#8a2f2f':'#1c1b22';
 }
 
-async function _syPut(cle,val){
-  const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/donnees/'+encodeURIComponent(cle),{method:'PUT',
-    headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},
-    body:JSON.stringify({val,base:_SY_V[cle]||0})});
+/* 20 oct. 2026 — LA PAGE DIT DE QUELLE GÉNÉRATION ELLE EST. Une page ouverte depuis la veille garde son ancien code
+   tant qu'on ne la recharge pas ; c'est une telle page (sans « grenier ») qui a écrasé les données le 19 octobre.
+   Le serveur refuse désormais les écritures des pages qui ne portent pas ce numéro : elles affichent un bandeau
+   « recharge cette page », et ne peuvent plus rien abîmer. À augmenter quand une ancienne génération devient dangereuse. */
+const _SY_PROTO='3';
+let _SY_PERIMEE=false;
+function _syPerimee(){
+  if(_SY_PERIMEE) return; _SY_PERIMEE=true;
+  try{ const b=document.createElement('div');
+    b.style.cssText='position:fixed;left:0;right:0;top:0;z-index:2147483647;background:#8a2f2f;color:#fff;font:600 15px/1.45 Inter,system-ui,sans-serif;padding:12px 18px;text-align:center';
+    b.textContent=(typeof L3==='function')?L3("Cette page est d'une ancienne version de l'ERP : recharge-la (⌘ + R) avant de continuer. Rien n'a été enregistré depuis.",
+      "This page is from an old version of the ERP: reload it (⌘ + R) before going on. Nothing has been saved since.",
+      "Esta página es de una versión antigua del ERP: recárgala (⌘ + R) antes de seguir. No se ha guardado nada desde entonces.")
+      :"Cette page est d'une ancienne version de l'ERP : recharge-la (⌘ + R).";
+    document.body.appendChild(b); }catch(e){}
+}
+const _SY_T0=new Map(), _SY_LOURD=new Set();   /* début de l'envoi en cours ; envois trop gros pour survivre à un changement de page */
+async function _syPut(cle,val,avant){
+  /* `connu` : combien d'éléments la copie de ce poste contenait — le serveur refuse qu'un poste qui ne les
+     connaissait pas en fasse disparaître la moitié (garde-fou du 20 oct. 2026, voir le cockpit) */
+  const _n=v=>Array.isArray(v)?v.length:(v&&typeof v==='object')?Object.keys(v).length:0;
+  const corps=JSON.stringify({val,base:_SY_V[cle]||0,connu:_n(_SY_BASE[cle])});
+  /* un envoi « keepalive » continue même si on change de rubrique (limite du navigateur : 64 Ko) */
+  const petit=corps.length<60000; if(petit) _SY_LOURD.delete(cle); else _SY_LOURD.add(cle);
+  const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/donnees/'+encodeURIComponent(cle),{method:'PUT',keepalive:petit,
+    headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok(),'X-ERP-Proto':_SY_PROTO},
+    body:corps});
   if(r.status===401){ ckPerdu(); throw new Error('session'); }
+  if(r.status===426){ _syPerimee(); throw new Error('page périmée'); }
   const j=await r.json().catch(()=>({}));
   if(r.status===409){
     /* quelqu'un a écrit entre-temps : on fusionne sa version avec ce que cet appareil a changé */
-    const fus=fusionne(cle,j.val,_SY_BASE[cle],val);
+    /* 22 oct. 2026 : le repère de la fusion est celui de LA COPIE de cette page (ce qu'elle avait lu), pas la dernière
+       version reçue du serveur — sinon une page restée ouverte retirait ce que les autres avaient ajouté entre-temps */
+    const fus=fusionne(cle,j.val,(avant!==undefined&&avant!==null)?avant:_SY_BASE[cle],val);
     _SY_V[cle]=j.ver; _SY_BASE[cle]=_cp(j.val);
     try{ localStorage.setItem(cle,JSON.stringify(fus)); }catch(e){}
-    _adopte(val,fus); _REF[cle]=_cp(val);
+    _adopte(val,fus); base(cle,val);
     avertitMaj('Quelqu\'un d\'autre vient de modifier les données ('+(j.par||'')+'). Elles ont été fusionnées.');
-    return _syPut(cle,val);
+    return _syPut(cle,val,_cp(val));
   }
   if(!r.ok) throw new Error(j.erreur||('serveur '+r.status));
   _SY_V[cle]=j.ver; _SY_BASE[cle]=_cp(val); _sySauveV();
@@ -730,31 +1575,33 @@ async function _syPatch(cle,val,avant){
   const idf=_ID[cle]||_IDdef;
   const mA=new Map((avant||[]).map(x=>[idf(x),x])), mV=new Map((val||[]).map(x=>[idf(x),x]));
   const ajoute=[], retire=[];
-  for(const [i,x] of mV){ if(!mA.has(i)) ajoute.push(x); else if(_sig(mA.get(i))!==_sig(x)) return _syPut(cle,val); }
+  for(const [i,x] of mV){ if(!mA.has(i)) ajoute.push(x); else if(_sig(mA.get(i))!==_sig(x)) return _syPut(cle,val,avant); }
   for(const i of mA.keys()) if(!mV.has(i)) retire.push(i);
   if(!ajoute.length&&!retire.length) return;
   const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/donnees/'+encodeURIComponent(cle)+'/delta',{method:'POST',
-    headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},
+    headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok(),'X-ERP-Proto':_SY_PROTO},
     body:JSON.stringify({ajoute,retire,max:_MAX[cle]||0,date:_DATE[cle]?'t':''})});
   if(r.status===401){ ckPerdu(); throw new Error('session'); }
+  if(r.status===426){ _syPerimee(); throw new Error('page périmée'); }
   const j=await r.json().catch(()=>({}));
   if(!r.ok) throw new Error(j.erreur||('serveur '+r.status));
   _SY_V[cle]=j.ver; _SY_BASE[cle]=_cp(val); _sySauveV();
 }
 
 async function _syPousse(cle){
-  if(_SY_ENVOI.has(cle)) return;
+  if(_SY_ENVOI.has(cle)||_SY_PERIMEE) return;
   const e=_SY_ATT.get(cle); if(!e) return;
-  _SY_ATT.delete(cle); _SY_ENVOI.add(cle); _syVoyant();
+  _SY_ATT.delete(cle); _SY_ENVOI.add(cle); _SY_T0.set(cle,Date.now()); _syVoyant();
   try{
     if(_UID[cle]&&Array.isArray(e.val)&&Array.isArray(e.avant)&&_SY_V[cle]) await _syPatch(cle,e.val,e.avant);
-    else await _syPut(cle,e.val);
+    else await _syPut(cle,e.val,e.avant);
     _SY_HORS=false;
   }catch(err){
-    if(err.message!=='session'){ _SY_HORS=true; if(!_SY_ATT.has(cle)) _SY_ATT.set(cle,e); }
+    if(err.message==='page périmée'){ if(!_SY_ATT.has(cle)) _SY_ATT.set(cle,e); }
+    else if(err.message!=='session'){ _SY_HORS=true; if(!_SY_ATT.has(cle)) _SY_ATT.set(cle,e); }
   }
   _SY_ENVOI.delete(cle); _syVoyant();
-  if(_SY_ATT.has(cle)&&!_SY_HORS) _syPousse(cle);
+  if(_SY_ATT.has(cle)&&!_SY_HORS&&!_SY_PERIMEE) _syPousse(cle);
 }
 _apresEcrit.push((cle,val,avant)=>{
   if(!_syOk(cle)) return;
@@ -763,8 +1610,36 @@ _apresEcrit.push((cle,val,avant)=>{
   _syPousse(cle);
 });
 /* ce qui n'est pas parti (serveur injoignable) repart tout seul */
-setInterval(()=>{ if(_SY_ATT.size&&!_SY_ENVOI.size){ _SY_HORS=false; for(const k of _SY_ATT.keys()) _syPousse(k); } },20000);
-window.addEventListener('beforeunload',e=>{ if(_SY_ATT.size||_SY_ENVOI.size){ e.preventDefault(); e.returnValue='Des modifications ne sont pas encore enregistrées sur le serveur.'; } });
+setInterval(()=>{ if(_SY_PERIMEE) return; if(_SY_ATT.size&&!_SY_ENVOI.size){ _SY_HORS=false; for(const k of _SY_ATT.keys()) _syPousse(k); } },20000);
+/* 13 oct. 2026 (Igal : « tous les boutons ne répondent pas… ça ne fait pas sérieux » — c'était la fenêtre de
+   Chrome « Quitter le site Web ? », qui bloque tous les clics, affichée à chaque changement de rubrique).
+   Désormais la page ne retient celui qui part QUE pour un vrai travail en danger :
+     - jamais pour ce que l'ERP enregistre tout seul (tableau des quantités, marqueur « ventes vues ») ;
+     - jamais pour un petit envoi en route depuis moins de 4 s : il continue tout seul (keepalive) ;
+     - oui pour un envoi qui n'est pas parti (serveur injoignable), trop gros pour continuer, ou bloqué.
+   Ce qui l'a retenue est noté (ck-blocage) pour pouvoir le relire si cela se reproduit. */
+const _SY_DERIVES=new Set(['stock-erp-v1','ventes-vues-v1']);
+const _syRetient=()=>{ const r=[];
+  _SY_ATT.forEach((e,k)=>{ if(!_SY_DERIVES.has(k)) r.push(k); });
+  _SY_ENVOI.forEach(k=>{ if(_SY_DERIVES.has(k)||r.includes(k)) return;
+    if(_SY_HORS||_SY_LOURD.has(k)||Date.now()-(_SY_T0.get(k)||0)>4000) r.push(k); });
+  return r; };
+window.addEventListener('beforeunload',e=>{ const r=_syRetient();
+  if(r.length){ try{ localStorage.setItem('ck-blocage',JSON.stringify({t:new Date().toISOString(),page:location.pathname,retient:r,hors:_SY_HORS})); }catch(_){}
+    e.preventDefault(); e.returnValue='Des modifications ne sont pas encore enregistrées sur le serveur.'; } });
+
+/* « Ça bug » : tout ralentissement de plus de 250 ms est noté (page, dernier clic, fonctions en cause)
+   dans ck-lent, pour pouvoir le relire au lieu de deviner (13 oct. 2026). Rien n'est envoyé nulle part. */
+(function(){ try{
+  const K='ck-lent'; let dernier='';
+  document.addEventListener('click',e=>{ try{ const t=e.target&&e.target.closest?e.target.closest('button,a,tr,select,input,.tab,label'):null;
+    dernier=t?(((t.dataset&&(t.dataset.t||t.dataset.k||t.dataset.c))||t.id||String(t.className||'')||t.tagName)+' | '+String(t.textContent||'').trim().slice(0,30)):''; }catch(_){} },true);
+  const note=(type,d,x)=>{ try{ const L=JSON.parse(localStorage.getItem(K)||'[]'); L.push({t:new Date().toISOString(),page:location.pathname.split('/').pop(),type:type,ms:Math.round(d),clic:dernier,x:x}); while(L.length>25) L.shift(); localStorage.setItem(K,JSON.stringify(L)); }catch(_){} };
+  if(!window.PerformanceObserver) return;
+  try{ new PerformanceObserver(l=>l.getEntries().forEach(e=>{ if(e.duration<250) return;
+      note('image',e.duration,(e.scripts||[]).slice(0,3).map(z=>[z.invoker||'',z.sourceFunctionName||'',Math.round(z.duration)])); })).observe({type:'long-animation-frame',buffered:true}); }
+  catch(_){ try{ new PerformanceObserver(l=>l.getEntries().forEach(e=>{ if(e.duration>=250) note('tâche',e.duration,null); })).observe({entryTypes:['longtask']}); }catch(__){} }
+}catch(_){} })();
 
 /* premier passage : le serveur n'a encore rien, cet appareil a tout → on l'y dépose */
 if(_SY_ON && window.__CK && window.__CK.charge && !Object.keys(window.__CK.charge).length){
@@ -773,27 +1648,481 @@ if(_SY_ON && window.__CK && window.__CK.charge && !Object.keys(window.__CK.charg
   if(cles.length){ console.log('cockpit : premier dépôt de',cles.length,'magasins'); for(const k of _SY_ATT.keys()) _syPousse(k); }
 }
 
+/* 27 sept. 2026 (Igal) : « en démo, Sam n'a pas le même menu que moi, pas dans le même
+   ordre ». Le menu réglé restait dans le navigateur qui l'avait réglé. Il est maintenant
+   commun à toute l'équipe, sur le serveur. Le premier appareil qui en a un réglé l'y
+   dépose, une seule fois ; ensuite chaque appareil reçoit celui du serveur. */
+if(_SY_ON && window.__CK && window.__CK.charge && !window.__CK.charge['menu-perso-v1']){
+  const v=_dq('menu-perso-v1',null);
+  if(v&&typeof v==='object'&&((v.ordre||[]).length||Object.keys(v.noms||{}).length||(v.caches||[]).length)){
+    _SY_ATT.set('menu-perso-v1',{val:v,avant:null}); _syPousse('menu-perso-v1'); }
+}
+
+/* ============ LE STOCK PART SUR LES DEUX SITES ============
+   Igal, 27 sept. 2026 : « quand je rentre des factures d'achat, je veux que le stock soit
+   mis à jour sur l'ERP et sur les deux sites » — et, pour savoir si c'est à chaque
+   mouvement ou seulement aux achats, « fais au mieux » : à chaque mouvement (achat, vente,
+   comptage, retour, expédition), sinon une vente en caisse laisse sur le site un flacon
+   qui n'existe plus.
+   On ne s'accroche à aucun écran en particulier : on regarde les écritures du stock
+   lui-même (fiches-modifiees-v1, stock-externe-v1). Toute référence dont la quantité a
+   changé est mise de côté ; quelques secondes plus tard, les nouvelles quantités partent
+   au cockpit, qui les pose sur les deux sites. Rien ne part tant que l'interrupteur des
+   Réglages est éteint — et le cockpit le relit de son côté. */
+const _SS_K='stock-sites-attente';           /* propre à ce navigateur : pas de -vN, jamais synchronisé */
+let _SS_T=0, _SS_ENV=false;
+const _ssAllume=()=>{ try{ const r=JSON.parse(localStorage.getItem('reglages-v1')||'{}'); return !!(r&&r.stockSitesAuto===true); }catch(e){ return false; } };
+const _ssAtt=()=>{ try{ const a=JSON.parse(localStorage.getItem(_SS_K)||'{}'); return (a&&typeof a==='object'&&!Array.isArray(a))?a:{}; }catch(e){ return {}; } };
+const _ssPose=a=>{ try{ localStorage.setItem(_SS_K,JSON.stringify(a)); }catch(e){} };
+/* la fiche de base d'une référence : dans le catalogue (produits.js) ou l'inventaire (inventaire.js) */
+let _SS_IDX=null;
+function _ssFiche(cle){
+  if(!_SS_IDX){ _SS_IDX={};
+    try{ (window.D_PROD||[]).forEach(r=>{ if(r&&r[15]) _SS_IDX[r[15]]={bc:String(r[0]||''),q:+r[6]||0,nom:[r[2],r[13]||r[1]].filter(Boolean).join(' ')}; }); }catch(e){}
+    try{ (window.D_INV||[]).forEach(r=>{ if(r&&r[9]&&!_SS_IDX[r[9]]) _SS_IDX[r[9]]={bc:String(r[0]||''),q:+r[5]||0,nom:[r[2],r[1]].filter(Boolean).join(' ')}; }); }catch(e){} }
+  return _SS_IDX[cle]||null;
+}
+/* Les flacons VENDUS mais pas encore partis : les commandes « à expédier » de Statut
+   shipping (1er oct. 2026). L'ERP ne les déstocke qu'à l'envoi — c'est voulu : le flacon
+   est encore sur l'étagère, et le recomptage de Sam doit tomber juste. Mais le SITE, lui,
+   ne doit plus le proposer : un client achèterait un flacon déjà vendu. Ce qui part aux
+   sites, c'est donc le stock MOINS ces commandes. */
+/* Un cache de 2 s POUR L'AFFICHAGE (11 oct. 2026) : la colonne « Sur les sites » appelle ceci pour CHAQUE ligne
+   du catalogue (3 800) ; relire et réanalyser les expéditions à chaque fois gelait la page. Les chemins qui
+   décident d'un envoi (comparaison avant/après, envoi) demandent toujours le calcul frais : _ssAExpedier(true). */
+/* LECTURES GROUPÉES (13 oct. 2026). `_dq` relit ET réanalyse tout le magasin à chaque appel ; le tableau des quantités
+   le faisait une fois PAR parfum (3 800 × plusieurs Mo) : la page restait figée ~15 s, 9 s après chaque ouverture
+   (« page ne répond pas »). Pendant un calcul en masse on ouvre un « memo » : chaque magasin n'est lu qu'une fois. */
+let _SS_MEMO=null;
+function _ssDq(cle,vide){
+  if(!_SS_MEMO) return _dq(cle,vide);
+  if(!(cle in _SS_MEMO)) _SS_MEMO[cle]=_dq(cle,vide);
+  return _SS_MEMO[cle];
+}
+function _ssEnMasse(f){ const avait=_SS_MEMO; if(!avait) _SS_MEMO={}; try{ return f(); } finally{ if(!avait) _SS_MEMO=null; } }
+let _SS_EXPC=null, _SS_EXPT=0;
+function _ssAExpedier(frais){
+  if(!frais&&_SS_EXPC&&Date.now()-_SS_EXPT<2000) return _SS_EXPC;
+  const m=_ssEnMasse(_ssAExpedierCalc); _SS_EXPC=m; _SS_EXPT=Date.now(); return m;
+}
+function _ssAExpedierCalc(){
+  const E=_ssDq('expeditions-v1',[])||[], m={};
+  (Array.isArray(E)?E:[]).forEach(e=>{ if(!e||e.statut!=='attente') return;
+    (Array.isArray(e.lignes)?e.lignes:[]).forEach(l=>{ const k=l&&l.cle, q=Math.round(+(l&&l.q)||0); if(k&&q>0) m[k]=(m[k]||0)+q; }); });
+  /* + les commandes « on-hold » du site (en attente de paiement) : WooCommerce a déjà retiré
+     leurs flacons du site ; le cockpit les lit et les range dans site-reserve-v1 (11 oct. 2026) */
+  const Rv=_ssReserve(); for(const k in Rv) m[k]=(m[k]||0)+Rv[k];
+  return m;
+}
+/* site-reserve-v1 : code-barres → flacons d'une commande on-hold. Rattachés aux fiches de l'ERP
+   qui ont du stock (un code partagé par plusieurs fiches : on prend là où il y en a). */
+function _ssReserve(){
+  const R=((_ssDq('site-reserve-v1',null)||{}).q)||{}, m={};
+  for(const bc in R){ let reste=Math.round(+R[bc])||0; if(reste<=0) continue;
+    const cles=_ssFichesDuBC(bc); if(!cles.length) continue;
+    for(const c of cles){ if(reste<=0) break; const r=_ssQte(c,{}); const dispo=r?r.q:0; const pris=Math.min(reste,dispo);
+      if(pris>0){ m[c]=(m[c]||0)+pris; reste-=pris; } }
+    if(reste>0) m[cles[0]]=(m[cles[0]]||0)+reste; }
+  return m;
+}
+/* la quantité vendable d'aujourd'hui, comme la calcule le Catalogue : la fiche corrigée,
+   sinon l'import du tableur, sinon le fichier d'origine — moins ce qui attend l'envoi */
+function _ssQte(cle,EXPA){
+  const M=_ssDq('fiches-modifiees-v1',{})||{}, m=M[cle]||{}, f=_ssFiche(cle);
+  const bc=String(m.bc||(f&&f.bc)||(/^b\d/.test(cle)?cle.slice(1):'')); if(!bc) return null;
+  let q=null;
+  if(m.qte!=null) q=+m.qte;
+  else { const E=_ssDq('stock-externe-v1',{})||{}; const e=E.q&&E.q[bc]; if(e!=null) q=+e; else if(f) q=f.q; }
+  if(q==null||!Number.isFinite(q)) return null;
+  const att=((EXPA||_ssAExpedier())[cle])||0;
+  return {bc, q:Math.max(0,Math.round(q)-att), att, nom:(f&&f.nom)||m.nom||''};
+}
+/* ---- un code-barres, plusieurs fiches (la boîte, la « (NOBOX) », le tester) : le site n'a
+   qu'UNE fiche pour ce code. Avant (6-7 oct. 2026), chaque fiche envoyait sa propre quantité
+   et la dernière gagnait : My Way passait de 12 à 0 à 12 à chaque envoi, et « Update the
+   websites » ne finissait jamais. Règle : la fiche du site dit « no box » ou « tester » →
+   la fiche de l'ERP qui porte la même mention ; sinon les fiches sans mention ; et si
+   plusieurs restent (ancien / nouveau packaging), leur somme — c'est ce que le site peut
+   vendre sous ce code. */
+const _ssMention=n=>/no\s*-?\s*box|unbox|\(\s*nb\s*\)/i.test(String(n||''))?'NOBOX':(/tester|testeur|probador/i.test(String(n||''))?'TESTER':'');
+let _SS_PARBC=null;
+function _ssFichesDuBC(bc){
+  if(!_SS_PARBC){ _ssFiche('_'); _SS_PARBC={};
+    for(const cle in _SS_IDX){ const b=String(_SS_IDX[cle].bc||'').replace(/[^0-9]/g,'').replace(/^0+/,''); if(b) (_SS_PARBC[b]=_SS_PARBC[b]||[]).push(cle); } }
+  return _SS_PARBC[String(bc||'').replace(/[^0-9]/g,'').replace(/^0+/,'')]||[];
+}
+/* la quantité à annoncer sur un site pour ce code ; null = une seule fiche, l'appelant garde la sienne */
+function _ssQteSite(bc,cote,EXPA){
+  const cles=_ssFichesDuBC(bc); if(cles.length<2) return null;
+  const S=_ssDq('site-stock-v1',{})||{}; const k=_ssCleSite(bc); const e=k&&S[k]; const c=e&&(e[cote]||e.d||e.g);
+  const m=c?_ssMention(c.nom||''):'';
+  const avec=cles.filter(x=>_ssMention((_SS_IDX[x]||{}).nom||'')===m);
+  const P=avec.length?avec:cles;
+  let q=0; P.forEach(x=>{ const r=_ssQte(x,EXPA); if(r) q+=r.q; });
+  return q;
+}
+/* le code tel que le SITE le range (parfois sans les 0 du début) ; absent des sites → null */
+function _ssCleSite(bc){
+  const S=_ssDq('site-stock-v1',{})||{}; if(S[bc]) return bc;
+  const k=String(bc).replace(/^0+/,'');
+  if(_SS_MEMO){                                   /* en masse : l'index sans les 0 du début est fait une seule fois */
+    let I=_SS_MEMO['#sans0']; if(!I){ I=_SS_MEMO['#sans0']={}; for(const x in S){ if(x.startsWith('_')) continue; const z=x.replace(/^0+/,''); if(!(z in I)) I[z]=x; } }
+    return I[k]||null; }
+  for(const x in S){ if(!x.startsWith('_')&&x.replace(/^0+/,'')===k) return x; }
+  return null;
+}
+_apresEcrit.push((cle,val,avant)=>{
+  if(!_SY_ON||!_ssAllume()) return;
+  if(cle==='expeditions-v1'){ _ssExpVerifie(); return; }
+  if(cle!=='fiches-modifiees-v1'&&cle!=='stock-externe-v1') return;
+  if(avant==null||typeof avant!=='object') return;      /* on ne sait pas ce qui a bougé : on ne devine pas */
+  const A=_ssAtt(); let n=0;
+  if(cle==='fiches-modifiees-v1'){
+    const v=val||{}; new Set([...Object.keys(avant),...Object.keys(v)]).forEach(k=>{
+      const qa=avant[k]?avant[k].qte:null, qv=v[k]?v[k].qte:null;
+      if((qa==null?null:+qa)!==(qv==null?null:+qv)){ A[k]=1; n++; } });
+  } else {
+    const a=avant.q||{}, v=(val&&val.q)||{}; new Set([...Object.keys(a),...Object.keys(v)]).forEach(bc=>{
+      if((a[bc]==null?null:+a[bc])!==(v[bc]==null?null:+v[bc])){ A['b'+bc]=1; n++; } });
+  }
+  if(!n) return;
+  _ssPose(A); clearTimeout(_SS_T); _SS_T=setTimeout(_ssEnvoie,3000);
+});
+async function _ssEnvoie(){
+  if(_SS_ENV||!_SY_ON||!_ssAllume()) return;
+  const A=_ssAtt(), cles=Object.keys(A); if(!cles.length) return;
+  const lignes=[], det=[], EXPA=_ssAExpedier(true);
+  const vusBC=new Set();
+  _ssEnMasse(()=>cles.forEach(k=>{ const x=_ssQte(k,EXPA); if(!x) return; const s=_ssCleSite(x.bc); if(!s) return;
+    if(vusBC.has(s)) return; vusBC.add(s);
+    const qs=_ssQteSite(x.bc,'d',EXPA); const q=qs==null?x.q:qs;
+    lignes.push({bc:s,q}); det.push({bc:x.bc,ref:x.nom,ap:q}); }));
+  if(!lignes.length){ _ssPose({}); return; }
+  _SS_ENV=true;
+  try{
+    const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/site/stock/auto',{method:'POST',
+      headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},body:JSON.stringify({lignes})});
+    const j=await r.json().catch(()=>({}));
+    if(r.status===409&&j.eteint){ _ssPose({}); return; }
+    if(!r.ok) throw new Error(j.erreur||('serveur '+r.status));
+    /* ce qui est parti ne repart pas ; une nouvelle modification pendant l'envoi reste en attente */
+    const reste=_ssAtt(); cles.forEach(k=>delete reste[k]); _ssPose(reste);
+    const S=j.sites||{}, nb=x=>(x&&x.ecrites)||0, refus=[S.detail,S.gros].filter(x=>x&&x.err);
+    if(nb(S.detail)||nb(S.gros)||refus.length){
+      const J=_dq('crm-journal-v1',[])||[];
+      J.push({t:new Date().toISOString(),u:(()=>{ try{ const x=(typeof session==='function')?session():null; return (x&&x.nom)||''; }catch(e){ return ''; } })(),act:'stock',
+        lib:refus.length?('stock NON envoyé aux sites — '+refus.map(x=>x.err).join(' / ')):
+          ('stock envoyé aux sites — '+nb(S.detail)+' fiche(s) sur perfumestrade.com, '+nb(S.gros)+' sur le site de gros'),
+        n:det.length,det:det.slice(0,50)});
+      ecrit('crm-journal-v1',J);
+      if(refus.length) avertitMaj('Le stock n\'a pas été envoyé aux sites : '+refus[0].err+' Pour l\'envoyer quand même : Catalogue › Envoyer le stock au site.');
+    }
+    if(Object.keys(_ssAtt()).length){ clearTimeout(_SS_T); _SS_T=setTimeout(_ssEnvoie,3000); }
+  }catch(e){ /* serveur injoignable : on garde tout, on réessaie à la prochaine occasion */
+    clearTimeout(_SS_T); _SS_T=setTimeout(_ssEnvoie,60000);
+  }finally{ _SS_ENV=false; }
+}
+/* une commande passe « à expédier » (ou part, ou est annulée) : les parfums concernés
+   repartent aux sites avec leur nouvelle quantité vendable. On compare à ce qu'on avait
+   vu — que le changement vienne de cette page ou d'un autre poste (ck-maj). */
+let _SS_EXPVU=null;
+function _ssExpVerifie(){
+  if(!_SY_ON) return;
+  const now=_ssAExpedier(true);
+  if(_SS_EXPVU&&_ssAllume()){
+    const A=_ssAtt(); let n=0;
+    new Set([...Object.keys(_SS_EXPVU),...Object.keys(now)]).forEach(k=>{ if((_SS_EXPVU[k]||0)!==(now[k]||0)){ A[k]=1; n++; } });
+    if(n){ _ssPose(A); clearTimeout(_SS_T); _SS_T=setTimeout(_ssEnvoie,3000); }
+  }
+  _SS_EXPVU=now;
+}
+window.addEventListener('ck-maj',e=>{ try{ if((e.detail&&e.detail.cles||[]).includes('expeditions-v1')) _ssExpVerifie(); }catch(_){} });
+/* ce qui attendait (page fermée trop tôt, coupure) repart à l'ouverture suivante */
+if(_SY_ON){ setTimeout(_ssEnvoie,5000); setTimeout(_ssExpVerifie,0); }
+
+/* LE TABLEAU DE NOS QUANTITÉS (11 oct. 2026). Igal : « quand il y a 25 parfums dispo, je veux
+   25 sur chaque site ». L'envoi ci-dessus ne part que quand NOUS touchons au stock ; un site qui
+   bouge tout seul restait faux. Le cockpit compare maintenant, toutes les 5 minutes, ce que les
+   sites annoncent à ce tableau — « code-barres du site → quantité de l'ERP, AVANT retrait des
+   commandes déjà vendues » (le cockpit retire lui-même les commandes à expédier, la file et les
+   commandes en attente de paiement). Publié à chaque écriture du stock (3 s après) et à
+   l'ouverture de la page ; il ne contient que des codes que les sites connaissent. */
+let _SS_PUB=0;
+function _ssPublie(){
+  if(!_SY_ON||!_ssAllume()) return;
+  try{
+    _ssFiche('_');
+    const q=_ssEnMasse(()=>{
+    const M=_ssDq('fiches-modifiees-v1',{})||{}, E=_ssDq('stock-externe-v1',{})||{}, E0={};
+    const cles=new Set([...Object.keys(_SS_IDX||{}),...Object.keys(M)]);
+    const q={}, vus=new Set();
+    cles.forEach(k=>{
+      const m=M[k]||{}, f=_ssFiche(k);
+      const bc=String(m.bc||(f&&f.bc)||(/^b\d/.test(k)?k.slice(1):'')); if(!bc) return;
+      const s=_ssCleSite(bc); if(!s||vus.has(s)) return; vus.add(s);
+      let v=null;
+      if(m.qte!=null) v=+m.qte; else { const e=E.q&&E.q[bc]; if(e!=null) v=+e; else if(f) v=f.q; }
+      if(v==null||!Number.isFinite(v)) return;
+      const qs=_ssQteSite(bc,'d',E0);        /* un code partagé : la somme des fiches concernées */
+      q[s]=Math.max(0,qs==null?Math.round(v):qs);
+    });
+    return vus.size?q:null;
+    });
+    if(!q) return;
+    ecrit('stock-erp-v1',{t:new Date().toISOString(),q});
+  }catch(e){ console.warn('tableau des quantités non publié',e); }
+}
+_apresEcrit.push((cle)=>{
+  if(!_SY_ON||!_ssAllume()) return;
+  if(cle==='fiches-modifiees-v1'||cle==='stock-externe-v1'){ clearTimeout(_SS_PUB); _SS_PUB=setTimeout(_ssPublie,3000); }
+});
+if(_SY_ON){ setTimeout(_ssPublie,9000); }
+/* les commandes en attente de paiement ont changé (lues par le cockpit) : les parfums concernés repartent */
+window.addEventListener('ck-maj',e=>{ try{ if((e.detail&&e.detail.cles||[]).includes('site-reserve-v1')) _ssExpVerifie(); }catch(_){} });
+
 /* toutes les 45 s : quelqu'un d'autre a-t-il écrit ? */
-async function _syVeille(){
-  if(!_SY_ON||_SY_ENVOI.size||_SY_ATT.size||document.hidden) return;
+/* Un onglet CACHÉ relève aussi, une fois par minute (Igal, 1er oct. 2026 : une commande du site
+   a attendu 59 min parce que l'ERP était ouvert… derrière une autre fenêtre). Et un seul onglet,
+   le « chef » désigné par le serveur, enregistre les ventes qui arrivent : sinon deux ordinateurs
+   ouverts en même temps faisaient chacun la facture. */
+let _SY_DERH=0;
+/* ===== LA VENTE SORT DU STOCK DU SERVEUR, JAMAIS D'UNE COPIE (20 oct. 2026) =====
+   PC-1556 et PC-1562 (Perfume City, 19 oct.) : la page qui les a enregistrées travaillait sur une copie
+   périmée de l'inventaire Perfume City — 0 flacon là où le serveur en avait 3 et 2. Les ventes sont
+   passées « à découvert » et le stock n'a pas baissé. Le numéro de version de la copie disait « à jour » :
+   on ne peut donc pas se fier à lui. Désormais, juste avant d'enregistrer une vente (automatique ou
+   faite à la main), les magasins de stock sont RELUS sur le serveur, en entier ; si le serveur ne répond
+   pas, rien n'est enregistré — la vente attend dans la file, intacte, et repasse au tour suivant. */
+const _SY_STOCK=['pc-stock-v1','fiches-modifiees-v1','stock-externe-v1','caisse-file-v1'];
+window.__syEnLigne=()=>!!_SY_ON;
+window.__syFrais=async function(cles){
+  if(!_SY_ON) return true;                                   /* outil hors ligne (essais, fichier local) : comme avant */
+  if(_SY_ENVOI.size||_SY_ATT.size) return false;             /* un envoi de ce poste part encore : on repassera après */
+  cles=(cles&&cles.length?cles:_SY_STOCK).filter(_syOk);
+  try{
+    const R=await Promise.all(cles.map(k=>fetch(CK_URL+'/api/o/'+CK_ORG+'/donnees/'+encodeURIComponent(k),
+      {headers:{Authorization:'Bearer '+ckTok()},cache:'no-store'}).then(async r=>{
+        if(r.status===404) return {k,vide:true};
+        if(r.status===401){ ckPerdu(); throw new Error('session'); }
+        if(!r.ok) throw new Error('serveur '+r.status);
+        const j=await r.json(); if(!j||!('val' in j)) throw new Error('réponse sans valeur'); return Object.assign({k},j); })));
+    if(_SY_ENVOI.size||_SY_ATT.size) return false;           /* une écriture est partie pendant la lecture */
+    for(const x of R){ if(x.vide) continue;
+      try{ localStorage.setItem(x.k,JSON.stringify(x.val)); }catch(e){ _syPlein(); return false; }
+      _SY_BASE[x.k]=_cp(x.val); _SY_V[x.k]=x.ver; }
+    _sySauveV();
+    window.__SY_FRAIS_T=Date.now();
+    return true;
+  }catch(e){ try{ console.warn('stock du serveur illisible : les ventes attendent',e); }catch(_){} return false; }
+};
+/* Les ventes arrivées : un seul onglet (le « chef ») les enregistre, sur le stock relu à l'instant. */
+let _SY_FILE_EN_COURS=false, _SY_FILE_ESSAI=0, _SY_PAS_CHEF=false;
+async function _syTraiteFile(){
+  if(!_SY_ON||_SY_FILE_EN_COURS) return false;
+  const peut=typeof fileAuto==='function'&&Array.isArray(window.D_PROD)&&window.D_PROD.length>0;
+  if(!peut) return false;
+  _SY_FILE_EN_COURS=true;
+  try{
+    if(!(await _syChef())){ _SY_PAS_CHEF=true; return false; }
+    _SY_PAS_CHEF=false;
+    if(!(await window.__syFrais(_SY_STOCK))){
+      /* serveur muet ou envoi en cours : on réessaie bientôt, la vente reste dans la file */
+      clearTimeout(_SY_FILE_ESSAI); _SY_FILE_ESSAI=setTimeout(()=>{ _syTraiteFile(); },6000); return true; }
+    let r=null; try{ r=window.__FILE_AUTO=fileAuto(); }catch(e){ try{ console.error('ventes arrivées :',e); }catch(_){} }
+    if(!r||!r.faites) return true;
+    const cache=!!document.hidden;
+    if(_syPageCalme() && typeof window.__rafraichir==='function'){ try{ window.__rafraichir(); return true; }catch(e){} }
+    if(cache){ window.__SY_A_MONTRER=true; return true; }
+    if(typeof window.__rafraichir==='function'){ window.__SY_A_MONTRER=true; _syPlusTard(); return true; }
+    avertitMaj('De nouvelles ventes sont arrivées et ont été enregistrées. Recharge la page pour les voir.'); return true;
+  } finally { _SY_FILE_EN_COURS=false; }
+}
+window.__syTraiteFile=_syTraiteFile;
+window.__syVeille=(f)=>_syVeille(f);   /* la vérification complète (Ventes) relit le serveur avant d'enregistrer la file */
+/* le filet : une vente restée dans la file (le chef a fermé sa page, le serveur ne répondait pas)
+   est reprise par n'importe quelle page ouverte, sans attendre qu'une AUTRE vente arrive */
+let _SY_FILE_SIG='', _SY_FILE_SIG_T=0;
+setInterval(()=>{ try{
+  if(!_SY_ON||_SY_FILE_EN_COURS) return;
+  const F=lit('caisse-file-v1',[]); if(!Array.isArray(F)||!F.length) return;
+  const sig=F.map(v=>v&&v._i).join('|');
+  /* la même file qu'au dernier essai (des références inconnues qui attendent quelqu'un) : on ne relit
+     le stock qu'une fois toutes les dix minutes, pas à chaque passage */
+  /* refusé parce qu'un autre onglet était chef : on redemande à chaque passage — si cet onglet-là a
+     été fermé, le serveur nous donne la place au bout de 90 s et la vente n'attend pas la suivante */
+  if(sig===_SY_FILE_SIG && !_SY_PAS_CHEF && Date.now()-_SY_FILE_SIG_T<600000) return;
+  _SY_FILE_SIG=sig; _SY_FILE_SIG_T=Date.now();
+  _syTraiteFile();
+}catch(e){} },90000);
+const _SY_TAB=(()=>{ try{ let t=sessionStorage.getItem('ck-onglet'); if(!t){ t='o'+Date.now().toString(36)+Math.random().toString(36).slice(2,8); sessionStorage.setItem('ck-onglet',t); } return t; }catch(e){ return 'o'+Math.random().toString(36).slice(2,10); } })();
+async function _syChef(){
+  if(_SY_PERIMEE) return false;
+  try{ const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/file/bail',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok(),'X-ERP-Proto':_SY_PROTO},body:JSON.stringify({tab:_SY_TAB})});
+    if(r.status===404) return true;                 /* cockpit d'avant : comme avant */
+    if(!r.ok) return false;
+    const j=await r.json(); return !!j.chef; }catch(e){ return false; }
+}
+let _SY_FLUX=false, _SY_DERV=0;
+async function _syVeille(force){
+  if(!_SY_ON||_SY_ENVOI.size||_SY_ATT.size) return;
+  const cache=!!document.hidden;
+  /* le fil en direct prévient dans la seconde : la relève régulière ne sert plus que de filet */
+  if(!force){
+    if(_SY_FLUX && Date.now()-_SY_DERV<30000) return;
+    if(cache){ if(Date.now()-_SY_DERH<55000) return; _SY_DERH=Date.now(); }
+  }
+  _SY_DERV=Date.now();
   try{
     const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/donnees/versions',{headers:{Authorization:'Bearer '+ckTok()}});
     if(r.status===401){ ckPerdu(); return; }
     if(!r.ok) return;
-    const V=await r.json();
+    const V=await r.json(); window.__SY_OK=Date.now();     /* le serveur a répondu : cette page est à jour à cet instant */
+    { let d=false; for(const k in V){ if(_SY_SRV(k)&&_SY_VS[k]!==V[k]){ _SY_VS[k]=V[k]; d=true; } }
+      if(d){ try{ localStorage.setItem(_SY_KVS,JSON.stringify(_SY_VS)); }catch(e){} } }
     const chg=Object.keys(V).filter(k=>_syOk(k)&&V[k]!==(_SY_V[k]||0));
     if(!chg.length) return;
-    const r2=await fetch(CK_URL+'/api/o/'+CK_ORG+'/donnees/lire',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},body:JSON.stringify({versions:_SY_V})});
+    const r2=await fetch(CK_URL+'/api/o/'+CK_ORG+'/donnees/lire',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},body:JSON.stringify({versions:Object.assign({},_SY_V,_SY_VS)})});
     if(!r2.ok) return;
-    const j=await r2.json(); let qui='', touche=false;
+    const j=await r2.json(); let qui='', touche=false, ventes=false;
+    const rates=[];
     for(const k in j.magasins){ if(!_syOk(k)) continue;
-      try{ localStorage.setItem(k,JSON.stringify(j.magasins[k].val)); }catch(e){}
-      _SY_BASE[k]=_cp(j.magasins[k].val); qui=j.magasins[k].par||qui; if(k in _REF) touche=true; }
-    _SY_V=j.versions||_SY_V; _sySauveV();
-    if(touche) avertitMaj('Les données ont été modifiées'+(qui?' par '+qui:'')+'.');
+      try{ localStorage.setItem(k,JSON.stringify(j.magasins[k].val)); }
+      catch(e){ rates.push(k); _syPlein(); continue; }   /* pas rangée : sa version ne sera pas notée, elle sera redemandée */
+      _SY_BASE[k]=_cp(j.magasins[k].val); qui=j.magasins[k].par||qui; if(k in _REF && k!=='messages-v1') touche=true;   /* les messages se redessinent seuls (ck-maj) : pas de bandeau */
+      /* le cockpit a déposé des ventes du site ou de la caisse : elles s'enregistrent à
+         l'ouverture d'une page (voir _file_auto.py), pas au milieu d'un travail en cours */
+      if(k==='caisse-file-v1'&&Array.isArray(j.magasins[k].val)&&j.magasins[k].val.length) ventes=true;
+      if(k==='menu-perso-v1'){ try{ if(typeof mnApplique==='function') mnApplique(); }catch(e){} } }
+    { const nv=Object.assign({},j.versions||_SY_V); Object.keys(nv).filter(_SY_SRV).forEach(k=>delete nv[k]); rates.forEach(k=>{ if(k in _SY_V) nv[k]=_SY_V[k]; else delete nv[k]; }); _SY_V=nv; } _sySauveV();
+    /* 29 sept. (Igal : « Sam ne reçoit les messages que s'il actualise ») : on prévient la
+       page de ce qui vient d'arriver — la messagerie et la pastille se redessinent seules */
+    try{ window.dispatchEvent(new CustomEvent('ck-maj',{detail:{cles:Object.keys(j.magasins||{})}})); }catch(e){}
+    try{ (window.__SYDBG=window.__SYDBG||[]).push({t:Date.now(),cles:Object.keys(j.magasins||{}),touche,ventes}); if(window.__SYDBG.length>20) window.__SYDBG.shift(); }catch(_){}
+    if(!touche&&!ventes) return;
+    /* les ventes arrivées : seul le chef les enregistre ; les autres onglets les recevront
+       enregistrées au tour suivant (comme une modification faite par un autre poste) */
+    /* seule une page qui a le catalogue sait reconnaître les parfums : les autres (Réglages,
+       Journal, Inventaire…) ne demandent pas à être chef — sinon elles garderaient la place
+       sans rien pouvoir enregistrer */
+    const peut=typeof fileAuto==='function'&&Array.isArray(window.D_PROD)&&window.D_PROD.length>0;
+    if(ventes && peut && await _syTraiteFile()) return;     /* chef : enregistrées sur le stock relu au serveur */
+    if(ventes && peut) ventes=false;     /* un autre onglet, chef, s'en charge */
+    if(!touche&&!ventes) return;
+    if(cache){ window.__SY_A_MONTRER=true; return; }
+    /* Igal, 24 sept. 2026 : « je trouve ça long » — les ventes arrivées devaient
+       entrer sans attendre. On le faisait en rechargeant la page ; Igal, 26 sept. :
+       « le ERP se réactualise en plein milieu du travail, page blanche, ça ne fait
+       pas sérieux ». On ne recharge donc plus JAMAIS la page tout seul : les ventes
+       s'enregistrent sur place (fileAuto) et la page se redessine dans l'écran, sans
+       blanc, à condition qu'elle sache le faire (window.__rafraichir) et que personne
+       ne soit en train de saisir. Sinon, un bandeau propose de recharger. */
+    if((ventes||touche) && _syPageCalme() && typeof window.__rafraichir==='function'){
+      try{ window.__rafraichir(); return; }
+      catch(e){ try{ console.error('rafraîchissement sur place :',e); }catch(_){} }
+    }
+    /* Igal, 17 oct. 2026 : « comment faire pour ne pas avoir ce message en bas de la page » — une page qui sait se
+       redessiner ne montre plus de bandeau : elle attend d'être calme (fiche fermée, plus de saisie) et se redessine alors. */
+    if(typeof window.__rafraichir==='function'){ window.__SY_A_MONTRER=true; _syPlusTard(); return; }
+    if(ventes) avertitMaj('De nouvelles ventes du site ou de la caisse sont arrivées. Elles seront enregistrées au rechargement de la page.');
+    else if(touche) avertitMaj('Les données ont été modifiées'+(qui?' par '+qui:'')+'.');
   }catch(e){}
 }
-setInterval(_syVeille,45000);
+/* on repasse toutes les 2 s : dès que la page est calme et visible, elle se redessine, sans un mot */
+let _SY_PT=null, _SY_PT_T0=0;
+const SY_ATTENTE_MAX=30000;
+/* 20 oct. 2026 (Igal : la vente PC-1562 était enregistrée, mais la page Ventes de Sam ne l'a montrée qu'au moment où Igal s'est
+   connecté) : un curseur laissé dans un champ (« Chercher un client »…) rendait la page « pas calme » pour toujours — et depuis
+   le 17 oct., sans bandeau, elle attendait en silence. Désormais, au bout de 30 s, si aucune fenêtre n'est ouverte, la page se
+   redessine quand même, en remettant le curseur dans le champ, avec ce qui y était tapé. Une fenêtre ouverte (fiche, vente en
+   cours) continue, elle, de bloquer : on ne redessine jamais sous une saisie en cours. */
+function _syFenetreOuverte(){ try{ return !!document.querySelector('.ov.on,.dov.on,.mod.on,dialog[open],.mvoile'); }catch(e){ return true; } }
+function _syRedessineEnGardantLeChamp(){
+  const a=document.activeElement; const id=a&&a.id, val=a&&a.value, deb=a&&a.selectionStart, fin=a&&a.selectionEnd;
+  try{ window.__rafraichir(); }catch(e){}
+  if(!id) return;
+  try{ const b=document.getElementById(id); if(!b) return;
+    if(b!==a && 'value' in b && b.value!==val) b.value=val;
+    b.focus({preventScroll:true}); if(deb!=null&&typeof b.setSelectionRange==='function'){ try{ b.setSelectionRange(deb,fin); }catch(_){} } }catch(e){}
+}
+function _syPlusTard(){
+  if(_SY_PT) return;
+  _SY_PT_T0=Date.now();
+  _SY_PT=setInterval(()=>{ if(!window.__SY_A_MONTRER){ clearInterval(_SY_PT); _SY_PT=null; return; }
+    if(document.hidden||typeof window.__rafraichir!=='function') return;
+    const calme=_syPageCalme();
+    if(!calme && (Date.now()-_SY_PT_T0<SY_ATTENTE_MAX || _syFenetreOuverte())) return;
+    window.__SY_A_MONTRER=false; clearInterval(_SY_PT); _SY_PT=null;
+    if(calme){ try{ window.__rafraichir(); }catch(e){} } else _syRedessineEnGardantLeChamp(); },2000);
+}
+function _syPageCalme(){
+  try{
+    if(document.querySelector('.ov.on,.dov.on,.mod.on,dialog[open],.mvoile')) return false;
+    const a=document.activeElement; if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)&&a.type!=='checkbox'&&a.type!=='radio') return false;
+    return true;
+  }catch(e){ return false; }
+}
+/* toutes les 8 s (et non plus 45) : un message doit arriver comme un message, pas une
+   minute plus tard. La question posée au serveur est minuscule (des numéros de version). */
+setInterval(()=>_syVeille(false),8000);
+/* 20 oct. 2026 (Igal : entre le 19 à 18h35 et le 20 à 14h27, Sam ne voyait pas ses ventes — elles étaient bien sur le serveur) :
+   une page qui ne reçoit plus rien ne doit JAMAIS rester silencieuse. Si le serveur n'a pas répondu à cette page depuis 2 minutes
+   alors qu'elle est visible, une bande rouge le dit et propose de recharger. Elle disparaît d'elle-même quand le serveur répond. */
+window.__SY_OK=Date.now();
+function _syControlePerime(force){
+  if(!_SY_ON&&!force) return;
+  const age=Date.now()-(window.__SY_OK||0);
+  let b=document.getElementById('sy-perime');
+  if(document.hidden||age<120000){ if(b) b.remove(); return; }
+  const lg=(typeof LANG==='string')?LANG:'fr', m=Math.max(2,Math.round(age/60000));
+  const T=lg==='en'?['This page has not received anything from the server for '+m+' min: sales may be missing here. ','Reload']
+    :lg==='es'?['Esta página no recibe nada del servidor desde hace '+m+' min: pueden faltar ventas aquí. ','Recargar']
+    :['Cette page ne reçoit plus rien du serveur depuis '+m+' min : des ventes peuvent manquer ici. ','Recharger'];
+  if(!b){ b=document.createElement('div'); b.id='sy-perime'; b.setAttribute('data-nolang','');
+    b.style.cssText='position:fixed;z-index:2147483646;left:0;right:0;top:0;background:#9B2C2C;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:10px 16px;text-align:center';
+    document.body.appendChild(b); }
+  b.innerHTML=''; b.appendChild(document.createTextNode(T[0]));
+  const bt=document.createElement('button'); bt.textContent=T[1]; bt.style.cssText='margin-left:8px;padding:4px 12px;border:0;border-radius:6px;font-weight:700;cursor:pointer';
+  bt.onclick=()=>location.reload(); b.appendChild(bt);
+}
+window.__syControlePerime=_syControlePerime;
+setInterval(()=>_syControlePerime(),10000);
+/* LE FIL EN DIRECT (1er oct. 2026, Igal : « il faut qu'à chaque fois que quelqu'un touche à
+   l'ERP, les modifications soient instantanées ») : une connexion ouverte avec le cockpit, qui
+   dit dans la seconde quels magasins ont changé. On va alors chercher ce qui a changé. Lu avec
+   fetch (et non EventSource) pour envoyer la clé de session dans l'en-tête, pas dans l'adresse.
+   Coupé (veille de l'ordinateur, réseau) : il se rebranche tout seul, et la relève toutes les
+   8 s reprend en attendant. */
+let _SY_TOUT_T=0;
+function _syTout(){
+  if(_SY_ENVOI.size||_SY_ATT.size){ clearTimeout(_SY_TOUT_T); _SY_TOUT_T=setTimeout(_syTout,400); return; }
+  _syVeille(true);
+}
+async function _syFlux(){
+  if(!_SY_ON||typeof fetch!=='function'||typeof TextDecoder!=='function') return;
+  for(;;){
+    try{
+      const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/flux',{headers:{Authorization:'Bearer '+ckTok()},cache:'no-store'});
+      if(r.status===401){ ckPerdu(); return; }
+      if(r.status===404) return;                       /* cockpit d'avant : la relève suffit */
+      if(!r.ok||!r.body||!r.body.getReader) throw new Error('flux');
+      _SY_FLUX=true; _syTout();                        /* ce qui a pu changer pendant la coupure */
+      const rd=r.body.getReader(), dec=new TextDecoder(); let buf='';
+      for(;;){ const x=await rd.read(); if(x.done) break; buf+=dec.decode(x.value,{stream:true});
+        let i; while((i=buf.indexOf('\n\n'))>=0){ const bloc=buf.slice(0,i); buf=buf.slice(i+2); if(/^data:/m.test(bloc)) _syTout(); } }
+    }catch(e){}
+    _SY_FLUX=false;
+    await new Promise(ok=>setTimeout(ok,3000));
+  }
+}
+window.__SY_FLUX=()=>_SY_FLUX;
+if(_SY_ON) setTimeout(_syFlux,1500);
+document.addEventListener('visibilitychange',()=>{ if(document.hidden) return;
+  /* de retour sur un onglet qui a reçu des nouveautés pendant qu'il était caché */
+  if(window.__SY_A_MONTRER){ window.__SY_A_MONTRER=false;
+    if(_syPageCalme() && typeof window.__rafraichir==='function'){ try{ window.__rafraichir(); }catch(e){} }
+    else if(typeof window.__rafraichir==='function'){ window.__SY_A_MONTRER=true; _syPlusTard(); }
+    else avertitMaj('Des données ont changé pendant ton absence. Recharge la page pour les voir.'); }
+  _syVeille(true); });
 
 /* ---------- Poser une question au support technique ---------- */
 /* Elle part vers le cockpit, pas dans le navigateur : une question enfermée
@@ -822,12 +2151,10 @@ async function aidApi(methode,corps){
    qu'une case à cocher de plus est une case qu'on oublie de cocher. */
 function aidVu(){ try{ return +(localStorage.getItem(AID_VU)||0)||0; }catch(e){ return 0; } }
 function aidPastille(n){
-  const b=document.getElementById('aid-btn'); if(!b) return;
-  let p=b.querySelector('.pt');
-  if(!n){ if(p) p.remove(); return; }
-  if(!p){ p=document.createElement('span'); p.className='pt'; b.appendChild(p); }
-  p.textContent=String(n);
-  b.title=n+(n>1?' réponses du support':' réponse du support');
+  /* la pastille se pose sur la ligne « Support technique » du menu */
+  const c=document.getElementById('ct-support'), b=document.getElementById('aid-btn'); if(!c||!b) return;
+  c.textContent=n?String(n):''; c.className=n?'ct pt':'ct';
+  b.title=n?(n+(n>1?' réponses du support':' réponse du support')):'';
 }
 async function aidRegarde(){
   if(!aidPeut()) return;
@@ -843,15 +2170,15 @@ function aidOuvre(){
   if(!ov){
     ov=document.createElement('div'); ov.id='aid-ov'; ov.className='aid-ov';
     ov.innerHTML='<div class="aid-m">'
-      +'<div class="aid-h"><h2>Une question au support</h2><button class="x" id="aid-x">&times;</button></div>'
+      +'<div class="aid-h"><h2>Support technique</h2><button class="x" id="aid-x">&times;</button></div>'
       +'<div class="aid-b2">'
       +'<div><div class="aid-lab">C\'est à quel point gênant ?</div>'
       +'<div class="aid-u" id="aid-u">'
       +'<button data-u="question" class="on">Juste une question</button>'
       +'<button data-u="gene">Ça me gêne</button>'
       +'<button data-u="bloque">Je suis bloqué</button></div></div>'
-      +'<div><div class="aid-lab">Ta question</div>'
-      +'<textarea id="aid-t" placeholder="Dis simplement ce que tu essayais de faire, et ce qui s\'est passé."></textarea></div>'
+      +'<div><div class="aid-lab">Ton message ou ta réclamation</div>'
+      +'<textarea id="aid-t" placeholder="Décris le problème : ce que tu essayais de faire, et ce qui s\'est passé."></textarea></div>'
       +'<div class="aid-ou" id="aid-ou"></div>'
       +'<button class="aid-go" id="aid-go">Envoyer</button>'
       +'<p class="aid-msg" id="aid-msg"></p></div>'
@@ -894,14 +2221,14 @@ async function aidEnvoie(){
   const t=document.getElementById('aid-t'), msg=document.getElementById('aid-msg'),
         go=document.getElementById('aid-go');
   const texte=(t.value||'').trim();
-  if(texte.length<3){ msg.textContent='Écris ta question, même en deux mots.'; msg.className='aid-msg err'; t.focus(); return; }
+  if(texte.length<3){ msg.textContent='Écris ton message, même en deux mots.'; msg.className='aid-msg err'; t.focus(); return; }
   go.disabled=true; msg.textContent='Envoi…'; msg.className='aid-msg';
   try{
     await aidApi('POST',{texte,urgence:AID_URG,page:aidPage()});
     t.value='';
     msg.textContent=AID_URG==='bloque'
       ? 'C\'est parti, et le téléphone d\'Igal sonne. Laisse cet onglet ouvert.'
-      : 'C\'est parti. La réponse reviendra ici même, sur le bouton « Une question ».';
+      : 'C\'est parti. La réponse reviendra ici même, dans « Support technique ».';
     msg.className='aid-msg ok';
     await aidRegarde(); aidHistorique();
   }catch(e){
@@ -914,7 +2241,7 @@ async function aidEnvoie(){
 function aidHistorique(){
   const h=document.getElementById('aid-hist'); if(!h) return;
   if(!AID_LISTE.length){ h.innerHTML=''; return; }
-  const dfr=s=>{ try{ return new Date(s).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } };
+  const dfr=s=>{ try{ return new Date(s).toLocaleString('en-US',{timeZone:'America/New_York',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } };
   const nom={question:'question',gene:'gêne',bloque:'bloqué'};
   h.innerHTML='<div class="aid-lab" style="margin-bottom:9px">Tes questions précédentes</div>'
     +AID_LISTE.slice(0,12).map(q=>'<div class="aid-q"><div class="m">'+dfr(q.cree)+' · '
@@ -932,299 +2259,22 @@ function aidHistorique(){
    sur quinze, et il aurait suffi qu'une autre page fasse pareil demain pour
    qu'il revienne ailleurs. Plutôt que de courir après l'ordre d'exécution, on
    surveille : si le bas de la barre est refait, le bouton revient. */
+/* Depuis le 9 oct. 2026 le bouton n'est plus au pied de la barre : c'est la rubrique
+   « Support technique » du menu (id aid-btn), qui ouvre cette fenêtre. */
 let AID_PREMIER=true;
 function aidBouton(){
-  const p=document.querySelector('.side .sfoot'); if(!p) return;
-  if(!document.getElementById('aid-btn')){
-    const b=document.createElement('button');
-    b.id='aid-btn'; b.className='lnk aid-b'; b.textContent='Une question ?';
-    b.onclick=aidOuvre;
-    p.appendChild(b);
-  }
+  const b=document.getElementById('aid-btn'); if(!b) return;
   if(AID_PREMIER){ AID_PREMIER=false; aidRegarde(); }
-  if(!p.__aidVu){ p.__aidVu=true;
-    try{ new MutationObserver(()=>aidBouton()).observe(p,{childList:true}); }catch(e){}
-  }
 }
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',aidBouton);
 else aidBouton();
-/* et une fois le chargement complet : certaines pages ne dessinent leur barre
-   qu'après avoir lu leurs données */
 window.addEventListener('load',()=>setTimeout(aidBouton,0));
 /* on regarde de temps en temps : une réponse arrivée pendant la journée doit
    se voir sans recharger la page */
 setInterval(aidRegarde,180000);
 
 
-/* ============ TROIS LANGUES ============ */
-const K_LANG='langue-v1';
-/* Le dictionnaire vit dans donnees/langue.js, chargé par chaque page avant son
-   propre code — comme les produits. Avant, il était recopié dans chaque page :
-   700 phrases en deux langues, seize fois. S'il manque, MOTS est vide et la
-   page reste simplement en français. */
-const MOTS=(typeof window!=='undefined'&&window.D_LANGUE)||{};
-const LANGUES={fr:'Français', en:'English', es:'Español'};
-const lgLit=()=>{ try{ const v=localStorage.getItem(K_LANG); return LANGUES[v]?v:'fr'; }catch(e){ return 'fr'; } };
-let LANG=lgLit();
-
-/* i = 0 pour l'anglais, 1 pour l'espagnol */
-/* Les nombres varient, la phrase autour non : « 1 892 références en stock » est
-   la même phrase que « 40 références en stock ». On remplace chaque nombre par
-   {n}, on cherche la phrase à trous dans le dictionnaire, puis on remet les
-   nombres dans l'ordre. Un « [s] » dans la traduction devient « s » si le premier
-   nombre n'est pas 1 : « {n} reference[s] ». Les montants gardent leur forme
-   d'origine (l'espace fine, la virgule) : ce sont des données, pas du texte. */
-const LG_NUM=/\bB0[A-Z0-9]{8}\b|\d(?:[\d\s  .,:/h]*\d)?/g;   /* nombres, et codes ASIN */
-function lgTrous(k,lg){
-  if(!/\d|«/.test(k)) return null;
-  /* les « mots entre guillemets » sont des trous eux aussi : « Facture » ou
-     « Devis » se traduisent à part, et la phrase autour reste une seule entrée */
-  const cit=[]; let gab=k.replace(/«\s*([^»]*?)\s*»/g,(m,q)=>{ cit.push(q); return '{q}'; });
-  const nums=[]; gab=gab.replace(LG_NUM,m=>{ nums.push(m); return '{n}'; });
-  const e=MOTS[gab]; if(!e) return null;
-  let v=e[lg==='en'?0:1]; if(!v||v===gab) return null;
-  const un=String(nums[0]||'').replace(/[\s  ]/g,'')==='1';
-  v=v.replace(/\[s\]/g,un?'':'s').replace(/\[es\]/g,un?'':'es');
-  let i=0; v=v.replace(/\{n\}/g,()=>nums[i++]!==undefined?nums[i-1]:'');
-  let j=0; v=v.replace(/\{q\}/g,()=>{ const q=cit[j++]; if(q===undefined) return '';
-    const t=lgMot(q,lg)||q; return lg==='en'?('“'+t+'”'):('«\u00a0'+t+'\u00a0»'); });
-  return v;
-}
-/* ---- le vocabulaire de la maison, en français ----
-   Sam et son équipe ne disent pas « devis » : ils disent « cote » (la quote de
-   la caisse). Plutôt que de réécrire des centaines de phrases à la main — avec
-   les fautes d'accord que ça sème — le mot est remplacé au moment de l'affichage,
-   avec ses articles et ses participes. Le dictionnaire EN/ES, lui, part toujours
-   du français d'origine : rien ne change pour les autres langues. */
-const LG_VOCAB_EXACT=[
-  ["Un devis ne sort rien du stock. Il pourra être transformé en facture en un clic, quand le client confirme.",
-   "Une cote ne sort rien du stock. Elle pourra être transformée en facture en un clic, quand le client confirme."],
-  ["Le devis est gardé et devient une facture en un clic.","La cote est gardée et devient une facture en un clic."],
-  ["Un fournisseur propose un devis : vaut-il le coup ?","Un fournisseur propose une cote : vaut-elle le coup ?"],
-  ["Un devis de fournisseur, ligne par ligne, comparé à","Une cote de fournisseur, ligne par ligne, comparée à"],
-  ["Dépose le devis ici, ou clique pour le choisir","Dépose la cote ici, ou clique pour la choisir"],
-  ["Un devis se lit s'il porte","Une cote se lit si elle porte"],
-  ["Un devis, c'est une ligne","Une cote, c'est une ligne"],
-  ["Devis restés sans commande","Cotes restées sans commande"],
-  ["Devis proposé","Cote proposée"],
-  ["Devis chargé","Cote chargée"],
-  ["Étudier un autre devis","Étudier une autre cote"],
-  ["Étudier un devis","Étudier une cote"],
-  ["Faire un devis","Faire une cote"],
-  ["Factures et devis","Factures et cotes"]];
-const LG_PART='(enregistré|converti|archivé|désarchivé|gardé|chargé|supprimé|envoyé|ouvert|jeté|corrigé|refermé|émis|payé|transformé|créé|accepté|refusé|mémorisé|déposé|lu|reçu|proposé|effacé|retrouvé|rangé)';
-/* \b ne connaît pas les lettres accentuées en JavaScript : on borne à la main */
-const L_='(?<![A-Za-zÀ-ÿ])', _L='(?![A-Za-zÀ-ÿ])';
-function lgVocab(t){
-  let s=String(t); if(!/devis/i.test(s)) return s;
-  LG_VOCAB_EXACT.forEach(([a,b])=>{ if(s.includes(a)) s=s.split(a).join(b); });
-  /* le pluriel : « les devis », « des devis », « 3 devis », « factures et devis » */
-  s=s.replace(new RegExp(L_+'(tous|certains|nouveaux|derniers|anciens|vieux)\\s+(les\\s+|des\\s+)?devis'+_L,'gi'),(m,a,b)=>{
-    const A={tous:'toutes',certains:'certaines',nouveaux:'nouvelles',derniers:'dernières',anciens:'anciennes',vieux:'vieilles'};
-    let r=A[a.toLowerCase()]||a; if(a[0]===a[0].toUpperCase()) r=r[0].toUpperCase()+r.slice(1); return r+' '+(b||'')+'cotes'; });
-  s=s.replace(new RegExp(L_+'(les|des|ces|mes|tes|ses|nos|vos|leurs|aux|plusieurs|quelques|deux|trois|\\d+)\\s+devis'+_L,'gi'),(m,a)=>a+' cotes');
-  s=s.replace(new RegExp(L_+'devis (clients|restés|gardés|convertis|archivés|créés|en attente)'+_L,'gi'),(m,a)=>'cotes '+a.replace(/és$/,'ées'));
-  s=s.replace(/(Factures?|factures?) et devis/g,(m,a)=>a+' et cotes');
-  /* le singulier avec son article */
-  s=s.replace(new RegExp(L_+'(le|un|ce|du|au|mon|ton|son|nouveau|premier|dernier|seul|quel|tout|aucun|chaque|cet)\\s+devis'+_L,'gi'),(m,a)=>{
-    const A={le:'la',un:'une',ce:'cette',cet:'cette',du:'de la',au:'à la',mon:'ma',ton:'ta',son:'sa',nouveau:'nouvelle',premier:'première',dernier:'dernière',seul:'seule',quel:'quelle',tout:'toute',aucun:'aucune',chaque:'chaque'};
-    const k=a.toLowerCase(); let r=A[k]||a; if(a[0]===a[0].toUpperCase()) r=r[0].toUpperCase()+r.slice(1); return r+' cote'; });
-  /* le mot seul, majuscules respectées */
-  s=s.replace(new RegExp(L_+'DEVIS'+_L,'g'),'COTE').replace(new RegExp(L_+'Devis'+_L,'g'),'Cote').replace(new RegExp(L_+'devis'+_L,'g'),'cote');
-  /* l'accord du participe qui suit : « cote DV-2026-0003 enregistré » → « enregistrée »,
-     « la cote a été enregistré » → « enregistrée », « 1 cotes créées » → « 1 cote créée » */
-  s=s.replace(new RegExp(L_+'([Cc]otes?)((?:\\s+[A-Z]{2}-[\\d-]+)?)((?:\\s+(?:a été|est|sera|ont été|sont|seront))?)\\s+'+LG_PART+'s?'+_L,'g'),(m,c,n,v,p)=>c+n+v+' '+p+(c.endsWith('s')?'es':'e'));
-  s=s.replace(new RegExp(L_+'1 cotes'+_L,'g'),'1 cote').replace(new RegExp(L_+'1 cote ([a-zé]+)es'+_L,'g'),'1 cote $1e');
-  return s;
-}
-/* pour les textes fabriqués en JavaScript (WhatsApp, courrier, fenêtres de confirmation) */
-function vf(t,l){ return ((l||LANG)==='fr')?lgVocab(t):t; }
-function lgMot(t,l){
-  const lg=l||LANG;
-  if(lg==='fr'){ const k=String(t).replace(/\s+/g,' ').trim(); const v=lgVocab(k); return v!==k?v:null; }
-  const k=String(t).replace(/\s+/g,' ').trim();
-  const e=MOTS[k];
-  if(e){ const v=e[lg==='en'?0:1]; return (v&&v!==k)?v:null; }
-  return lgTrous(k,lg);
-}
-/* ---- une zone peut imposer SA langue, quelle que soit celle de l'écran ----
-   Une facture ne part pas chez celui qui la regarde : elle part chez le client.
-   Elle porte donc data-lang="en" et reste en anglais même si Sam travaille en
-   français — et le contraire est vrai aussi. C'est la seule façon d'avoir un
-   outil en français et des documents dans la langue du destinataire. */
-function lgLangDe(n){
-  let e=(n&&n.nodeType===1)?n:(n&&n.parentNode);
-  while(e&&e.nodeType===1){
-    const v=e.getAttribute&&e.getAttribute('data-lang');
-    if(v&&LANGUES[v]) return v;
-    e=e.parentNode;
-  }
-  return LANG;
-}
-/* on garde le français d'origine pour pouvoir revenir en arrière sans recharger */
-function lgTexte(n){
-  /* On repart toujours du français d'origine, jamais de ce qui est affiché :
-     sinon, passer de l'anglais à l'espagnol chercherait « Catalogue » dans un
-     texte qui dit déjà « Catalog », et ne trouverait rien. */
-  const orig=(n.__fr!==undefined)?n.__fr:n.nodeValue;
-  if(!orig||!/[A-Za-zÀ-ÿ]/.test(orig)) return;
-  const v=lgMot(orig,lgLangDe(n));
-  if(v!==null){ if(n.__fr===undefined) n.__fr=orig; n.nodeValue=orig.replace(orig.trim(),v); }
-  else if(n.__fr!==undefined && n.nodeValue!==n.__fr) n.nodeValue=n.__fr;
-}
-const LG_ATTR=['placeholder','title','aria-label'];
-function lgAttrs(el){
-  LG_ATTR.forEach(a=>{
-    if(!el.hasAttribute(a)) return;
-    const cle='__fr_'+a;
-    const src=el[cle]!==undefined?el[cle]:el.getAttribute(a);
-    const v=lgMot(src,lgLangDe(el));
-    if(v!==null){ if(el[cle]===undefined) el[cle]=src; el.setAttribute(a,v); }
-    else if(el[cle]!==undefined) el.setAttribute(a,el[cle]);
-  });
-}
-/* Les zones de saisie ne sont jamais touchées : ce que l'utilisateur a tapé
-   lui appartient. Les données non plus — elles ne sont pas dans le dictionnaire. */
-const LG_SAUT={SCRIPT:1,STYLE:1,TEXTAREA:1,CODE:1,PRE:1,INPUT:1,OPTION:0};
-/* Les noms de parfums, de marques et de clients ne se traduisent jamais.
-   Le dictionnaire ne les contient pas — mais on met en plus une barrière :
-   tout ce qui porte une de ces classes est laissé strictement intact. */
-const LG_DATA='.lnm,.lmq,.nom,.nm,.mq,.marque,.produit,.bc,.lbc,.lid,.pd,td.ref,[data-nolang]';
-function lgDonnee(n){
-  let e=n.parentNode;
-  while(e&&e!==document.body){
-    if(e.nodeType===1&&(e.matches&&e.matches(LG_DATA))) return true;
-    e=e.parentNode;
-  }
-  return false;
-}
-/* ---- les phrases coupées par un mot en gras ----
-   « Compte ce qui porte <b>l'argent</b> » fait trois morceaux de texte, et
-   aucun des trois n'est une phrase du dictionnaire. On regarde donc aussi
-   l'élément entier : si son texte complet est au dictionnaire, on remplace son
-   contenu — la traduction peut porter ses propres <b>. On ne le fait que sur des
-   éléments courts qui contiennent une balise, jamais sur une zone de données. */
-const LG_BLOC='p,li,span,label,small,div,td,th,h1,h2,h3,h4,button,a,em,strong,summary,legend,dt,dd';
-function lgTexteFr(el){
-  /* les morceaux sont joints par une espace : « Sam<br>Patron » se lit
-     « Sam Patron », pas « SamPatron » — la clé du dictionnaire reste lisible */
-  let s=''; const it=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);
-  let n; while((n=it.nextNode())) s+=' '+(n.__fr!==undefined?n.__fr:n.nodeValue);
-  return s.replace(/\s+/g,' ').trim();
-}
-/* La traduction d'un bloc peut désigner les balises d'origine par leur rang :
-   <1>texte</1> reprend la 1re balise du bloc (avec son href, sa classe, son id)
-   et y met ce texte ; <3/> recopie la 3e telle quelle (un <br>, un chiffre, un
-   nom). Les balises écrites en clair (<b>…</b>) passent aussi. Ainsi un lien
-   traduit reste un lien, et un bouton traduit garde son identifiant. */
-function lgRendBloc(el,v){
-  if(!/<\d+\/?>/.test(v)){ el.innerHTML=v; return; }
-  const tpl=document.createElement('template'); tpl.innerHTML=el.__frHTML;
-  const kids=[...tpl.content.querySelectorAll('*')];
-  let html=v.replace(/<(\d+)\/>/g,(m,i)=>{ const k=kids[+i-1]; return k?k.outerHTML:''; });
-  html=html.replace(/<(\d+)>([\s\S]*?)<\/\1>/g,(m,i,txt)=>{ const k=kids[+i-1]; if(!k) return txt;
-    const c=k.cloneNode(false); c.innerHTML=txt; return c.outerHTML; });
-  el.innerHTML=html;
-}
-function lgHtmlFr(el){
-  /* le HTML français d'origine, reconstruit : chaque nœud de texte garde son __fr */
-  const c=el.cloneNode(true);
-  const A=document.createTreeWalker(el,NodeFilter.SHOW_TEXT), B=document.createTreeWalker(c,NodeFilter.SHOW_TEXT);
-  let x,y; while((x=A.nextNode())&&(y=B.nextNode())){ if(x.__fr!==undefined) y.nodeValue=x.__fr; }
-  return c.innerHTML;
-}
-function lgBlocs(r){
-  if(!r.querySelectorAll) return;
-  r.querySelectorAll(LG_BLOC).forEach(el=>{
-    if(LG_SAUT[el.nodeName]||el.children.length===0||el.children.length>12) return;
-    if(el.querySelector('input,textarea,select,table,ul,ol,img,svg,canvas')) return;
-    if(el.textContent.length>1200) return;      /* un conteneur, pas une phrase */
-    if(el.matches(LG_DATA)||lgDonnee(el)) return;
-    const lg=lgLangDe(el);
-    /* « rendu » : le bloc est encore exactement tel que je l'ai laissé. Sinon, la
-       page l'a réécrit (un compteur qui change) : on relit le français dedans. */
-    const rendu = el.__lgRendu!==undefined && el.innerHTML===el.__lgRendu;
-    if(rendu && lg==='fr'){ el.innerHTML=el.__frHTML; el.__lgRendu=undefined; el.__lgLang=undefined; return; }
-    if(lg==='fr') return;
-    const orig=rendu?el.__frTxt:lgTexteFr(el);
-    if(!orig||orig.length>900||!/[A-Za-zÀ-ÿ]/.test(orig)) return;
-    const v=lgMot(orig,lg); if(v===null) return;
-    if(rendu && lg===el.__lgLang) return;
-    if(!rendu){ el.__frHTML=lgHtmlFr(el); el.__frTxt=orig; }
-    lgRendBloc(el,v); el.__lgLang=lg; el.__lgRendu=el.innerHTML;
-  });
-}
-function lgApplique(racine){
-  const r=racine||document.body; if(!r) return;
-  lgBlocs(r);
-  const it=document.createTreeWalker(r,NodeFilter.SHOW_TEXT,{acceptNode:n=>
-    ((n.parentNode&&LG_SAUT[n.parentNode.nodeName])||lgDonnee(n))
-      ?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
-  const L=[]; let n; while((n=it.nextNode())) L.push(n);
-  L.forEach(lgTexte);
-  if(r.querySelectorAll) r.querySelectorAll('[placeholder],[title],[aria-label]').forEach(lgAttrs);
-  if(r.nodeType===1) lgAttrs(r);
-}
-function lgChange(l){
-  if(!LANGUES[l]) return;
-  LANG=l; try{ localStorage.setItem(K_LANG,l); }catch(e){}
-  lgApplique(document.body);
-  document.querySelectorAll('#lgsel button').forEach(b=>b.classList.toggle('on',b.dataset.l===l));
-  document.documentElement.lang=l;
-  try{ const J=lit('crm-journal-v1',[]);
-    J.push({t:new Date().toISOString(),u:(typeof NOM_UTIL!=='undefined'?NOM_UTIL:''),
-            act:'reglage',lib:'langue de l\'écran',ref:'langue',av:null,ap:LANGUES[l]});
-    ecrit('crm-journal-v1',J); }catch(e){}
-}
-/* le choix, au bas de la barre de gauche */
-function lgBouton(){
-  const p=document.querySelector('.side .sfoot'); if(!p||document.getElementById('lgsel')) return;
-  const d=document.createElement('div'); d.id='lgsel';
-  d.style.cssText='display:flex;gap:4px;margin-top:8px';
-  d.innerHTML=Object.keys(LANGUES).map(l=>
-    `<button data-l="${l}" class="${l===LANG?'on':''}" title="${LANGUES[l]}"
-      style="font-family:inherit;font-size:10.5px;font-weight:600;letter-spacing:.06em;
-      padding:3px 7px;border-radius:3px;cursor:pointer;border:1px solid var(--line-2);
-      background:transparent;color:var(--ink-3)">${l.toUpperCase()}</button>`).join('');
-  p.appendChild(d);
-  d.addEventListener('click',e=>{ const b=e.target.closest('[data-l]'); if(b) lgChange(b.dataset.l); });
-  const st=document.createElement('style');
-  st.textContent='#lgsel button.on{background:var(--iris);border-color:var(--iris);color:#fff}';
-  document.head.appendChild(st);
-}
-/* En français, le vocabulaire de la maison (« cote ») demande de parcourir la page
-   aussi. On s'en dispense sur les pages à milliers de lignes (catalogue, stock),
-   où le mot n'apparaît pas et où le parcours coûterait cher à chaque redessin. */
-const LG_FR_PARCOURS=!/catalogue|stock|inventaire/.test(location.pathname);
-(function(){
-  const go=()=>{
-    try{ lgBouton();
-      if(LANG!=='fr'){ document.documentElement.lang=LANG; lgApplique(document.body); }
-      else if(LG_FR_PARCOURS) lgApplique(document.body);
-      else document.querySelectorAll('[data-lang]').forEach(z=>{ try{ lgApplique(z); }catch(e){} });
-    }catch(e){}
-    /* le JavaScript des pages redessine des morceaux en permanence :
-       on repasse dessus, mais groupé, pour ne pas ralentir l'écran */
-    try{
-      let t=null;
-      /* En français, on ne repasse PAS sur toute la page : sur le catalogue, ce
-         serait parcourir des milliers de lignes à chaque redessin. On ne visite
-         alors que les zones qui imposent leur propre langue — un document. */
-      new MutationObserver(()=>{ if(t) return;
-        if(LANG==='fr' && !LG_FR_PARCOURS && !document.querySelector('[data-lang]')) return;
-        t=setTimeout(()=>{ t=null; try{
-          if(LANG==='fr' && !LG_FR_PARCOURS) document.querySelectorAll('[data-lang]').forEach(z=>lgApplique(z));
-          else lgApplique(document.body);
-        }catch(e){} },120); })
-        .observe(document.body,{childList:true,subtree:true});
-    }catch(e){}
-  };
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',go);
-  else setTimeout(go,0);
-})();
-
-
-const VER_URL='202609120126';
+const VER_URL='202611021437';
 /* Les trois boutons de langue de la porte. On ne passe pas par lgChange : il
    écrit une ligne au journal au nom du compte connecté, et ici personne ne l'est
    encore. On change la langue, on l'enregistre, on retraduit l'écran. */
@@ -1254,7 +2304,7 @@ function ecranPremier(){
     <div class="champ"><label class="f" for="i">Identifiant</label>
       <input type="text" id="i" autocomplete="off" placeholder="sam"></div>
     <div class="champ"><label class="f" for="m">Mot de passe</label>
-      <input type="password" id="m" autocomplete="new-password" placeholder="au moins 6 caractères"></div>
+      <input type="password" id="m" autocomplete="new-password" placeholder="au moins 8 caractères"></div>
     <div class="champ"><label class="f" for="m2">Répète le mot de passe</label>
       <input type="password" id="m2" autocomplete="new-password"></div>
     <button class="btn or" id="go">Créer le compte et entrer</button>
@@ -1270,7 +2320,7 @@ function ecranPremier(){
     const dis=t=>{ $('msg').textContent=t; $('msg').className='msg err'; };
     if(n.length<2) return dis('Mets le nom de la personne.');
     if(!/^[a-zA-Z0-9._-]{2,}$/.test(i)) return dis('Identifiant : lettres, chiffres, point ou tiret, sans espace.');
-    if(m.length<6) return dis('Le mot de passe doit faire au moins 6 caractères.');
+    if(m.length<8) return dis('Le mot de passe doit faire au moins 8 caractères.');
     if(m!==m2) return dis('Les deux mots de passe ne sont pas identiques.');
     try{
       /* provisoire:false — cette personne vient de choisir son mot de passe
@@ -1513,13 +2563,58 @@ function retireDemo(){
     document.addEventListener=function(t,f,o){ if(t==='DOMContentLoaded'&&document.readyState!=='loading'){ setTimeout(()=>f.call(document,new Event('DOMContentLoaded')),0); } else ael(t,f,o); };
     window.addEventListener=function(t,f,o){ if((t==='load'&&document.readyState==='complete')||(t==='DOMContentLoaded'&&document.readyState!=='loading')){ setTimeout(()=>f.call(window,new Event(t)),0); } else wael(t,f,o); };
     const src=document.getElementById('page-js'); const s=document.createElement('script');
-    s.textContent=src.textContent; if(src.dataset.module) s.type='module'; src.remove(); document.body.appendChild(s);
+    /* un module ne signale pas sa fin (pas d'événement load sur un script en ligne) : il
+       l'annonce lui-même, en dernière ligne — sinon la page attendait le délai de secours,
+       2,5 s de blanc à chaque ouverture (Igal, 12 sept. 2026 : « les invoices mettent du
+       temps à se charger »). */
+    const montre=()=>{ try{ document.documentElement.classList.remove('pg-attente'); }catch(e){} };
+    window.__pgMontre=()=>setTimeout(montre,0);
+    s.textContent=src.textContent+(src.dataset.module?'\n;try{window.__pgMontre();}catch(e){}':'');
+    if(src.dataset.module) s.type='module'; src.remove(); document.body.appendChild(s);
+    /* La page se montre une fois dessinée, d'un seul coup. Avant, on voyait la coquille
+       (titres, cadres vides), puis une demi-seconde plus tard le vrai contenu prenait sa
+       place : « je vois une page, et d'un coup c'est une autre page » (Igal, 12 sept. 2026).
+       Le setTimeout passe APRÈS les petits délais que le code de la page s'est donnés en
+       démarrant ; un module, lui, ne tourne qu'au tour suivant : on attend qu'il ait tourné. */
+    if(s.type==='module'){ s.addEventListener('error',montre); window.addEventListener('error',montre); setTimeout(montre,2500); }
+    else setTimeout(montre,0);
   }
-  if(!enLigne||!tok){ lance(); return; }
+  /* le grenier (gros magasins en IndexedDB) doit être en mémoire avant tout : voir GRENIER */
+  const grenier=(window.__GRENIER||Promise.resolve(false)).catch(()=>false);
+  if(!enLigne||!tok){ grenier.then(lance); return; }
   let V={}; try{ V=JSON.parse(localStorage.getItem(K_V)||'{}')||{}; }catch(e){ V={}; }
+  /* 30 sept. 2026 — la mémoire du navigateur (5 Mo par site) était PLEINE : une nouvelle
+     version reçue ne pouvait plus être rangée, mais son numéro l'était quand même ; la page
+     croyait être à jour et travaillait sur une copie périmée (les enregistrements de Sam ne
+     partaient plus, une commande Amazon restait invisible). Désormais :
+       - ce qui ne sert qu'au serveur (corbeille, sauvegardes, table des produits de la
+         caisse, annonces Amazon) n'est plus gardé dans le navigateur ;
+       - une version qui n'a pas pu être rangée n'est PAS notée : elle sera redemandée ;
+       - une fois, tout est relu depuis le serveur, pour réparer les copies périmées. */
+  const SEUL_SERVEUR=k=>/^(corbeille-v1|caisse-produits-v1|amazon-annonces-v1|amazon-illisibles)$|^sauvegarde-/.test(k);
+  try{ Object.keys(localStorage).filter(SEUL_SERVEUR).forEach(k=>localStorage.removeItem(k)); }catch(e){}
+  const K_RELU='ck-relu-20260930';
+  try{ if(!localStorage.getItem(K_RELU)) V={}; }catch(e){}
+  /* 13 oct. 2026 (Igal : « 8 secondes à attendre en passant du Catalogue à la Price list ») :
+     ces magasins « serveur seulement » n'étaient jamais notés comme déjà lus, donc une page sur
+     deux retéléchargeait ~4 Mo (dont une sauvegarde de 3 Mo) pour les jeter aussitôt. On note
+     maintenant leur numéro de version à part (ck-versions-srv) et on le joint à la demande :
+     le serveur ne les renvoie plus. Le numéro se met à jour à chaque relève (toutes les 8 s). */
+  const K_VS='ck-versions-srv';
+  let VS={}; try{ VS=JSON.parse(localStorage.getItem(K_VS)||'{}')||{}; }catch(e){ VS={}; }
+  Object.keys(V).filter(SEUL_SERVEUR).forEach(k=>delete V[k]);
   const ctrl=new AbortController(); const tm=setTimeout(()=>ctrl.abort(),12000);
-  fetch(url+'/api/o/'+org+'/donnees/lire',{method:'POST',signal:ctrl.signal,
-    headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify({versions:V})})
+  const H={'Content-Type':'application/json',Authorization:'Bearer '+tok};
+  /* première fois sur ce navigateur : on demande d'abord les numéros (quelques Ko) */
+  /* 20 oct. 2026 : une copie qui a disparu (grenier vidé par le navigateur — Safari le fait —, page d'une
+     ancienne version qui ne savait pas le lire…) ne doit jamais passer pour « à jour » parce que son numéro
+     de version est resté noté : un magasin noté mais absent est redemandé en entier au serveur. */
+  const verifCopies=()=>{ try{ Object.keys(V).forEach(k=>{ if(!SEUL_SERVEUR(k)&&localStorage.getItem(k)===null) delete V[k]; }); }catch(e){} };
+  const avant=grenier.then(()=>{ verifCopies(); return Object.keys(VS).length?null:
+    fetch(url+'/api/o/'+org+'/donnees/versions',{signal:ctrl.signal,headers:{Authorization:'Bearer '+tok}})
+      .then(r=>r.ok?r.json():{}).then(v=>{ for(const k in v) if(SEUL_SERVEUR(k)) VS[k]=v[k]; }).catch(()=>{}); });
+  avant.then(()=>fetch(url+'/api/o/'+org+'/donnees/lire',{method:'POST',signal:ctrl.signal,
+    headers:H,body:JSON.stringify({versions:Object.assign({},V,VS)})}))
   .then(async r=>{
     clearTimeout(tm);
     if(r.status===401){
@@ -1529,10 +2624,23 @@ function retireDemo(){
     }
     if(!r.ok) throw new Error('serveur '+r.status);
     const j=await r.json();
-    for(const k in j.magasins){ try{ localStorage.setItem(k,JSON.stringify(j.magasins[k].val)); }catch(e){} }
+    const vers=Object.assign({},j.versions||{}); let plein=false;
+    { const vs={}; for(const k in vers) if(SEUL_SERVEUR(k)) vs[k]=vers[k]; try{ localStorage.setItem(K_VS,JSON.stringify(vs)); }catch(e){} }
+    for(const k in j.magasins){ if(SEUL_SERVEUR(k)){ delete vers[k]; continue; }
+      try{ localStorage.setItem(k,JSON.stringify(j.magasins[k].val)); }
+      catch(e){ delete vers[k]; plein=true; try{ localStorage.removeItem(k); }catch(_){} } }
+    Object.keys(vers).filter(SEUL_SERVEUR).forEach(k=>delete vers[k]);
+    /* la relecture complète n'a lieu qu'une fois : si la mémoire est pleine, on avertit, mais on ne
+       retélécharge pas tout à chaque page (les magasins non rangés n'ont pas de numéro : ils
+       seront redemandés seuls) */
+    if(plein) window.__CK.plein=true;
+    try{ localStorage.setItem(K_RELU,'1'); }catch(e){}
+    /* le menu de l'équipe a pu changer ailleurs : il avait déjà été posé avec l'ancien
+       réglage de ce navigateur (il se dessine avant tout), on le repose avec le bon */
+    if(j.magasins&&j.magasins['menu-perso-v1']){ try{ if(typeof mnApplique==='function') mnApplique(); }catch(e){} }
     (j.disparus||[]).forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
-    try{ localStorage.setItem(K_V,JSON.stringify(j.versions||{})); }catch(e){}
-    window.__CK.charge=j.versions||{};
+    try{ localStorage.setItem(K_V,JSON.stringify(vers)); }catch(e){}
+    window.__CK.charge=vers;
     lance();
   })
   .catch(e=>{ clearTimeout(tm); window.__CK.hors=true; lance(); });

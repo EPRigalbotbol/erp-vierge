@@ -23,7 +23,7 @@ const K_ROLES='sam-roles-v1';           /* les rôles fabriqués par le patron *
 const _cLit=(k,d)=>{ try{ const t=localStorage.getItem(k); return t==null?d:JSON.parse(t); }catch(e){ return d; } };
 const _cEcr=(k,v)=>{ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} };
 
-/* Les huit droits, une bonne fois. La rubrique Accès s'en sert pour dessiner
+/* Les droits, une bonne fois. La rubrique Accès s'en sert pour dessiner
    les cases à cocher : ajouter un droit ici suffit à le voir apparaître là-bas. */
 const DROITS=[
   ['voirPA',    "Voit les prix d'achat"],
@@ -34,6 +34,7 @@ const DROITS=[
   ['reglages',  'Change les réglages'],
   ['acces',     'Ouvre et ferme les accès'],
   ['annuler',   'Annule une facture enregistrée (le stock et les prix reviennent en arrière)'],
+  ['prixPC',    'Change le prix de Perfume City sur Shopify'],
   ['technique', 'Branche les services extérieurs et leurs clés']];
 
 /* Les quatre rôles d'origine. On ne les touche pas : ils servent de repère,
@@ -49,15 +50,15 @@ const ROLES_BASE={
      Admin peut aussi modifier le compte du Patron : sans ça, un patron qui perd
      son mot de passe n'a plus personne pour le lui rendre. */
   admin:     {lib:'Admin',             aide:'Tout, plus le branchement des services extérieurs et leurs clés',
-              voirPA:1, voirMarge:1, modPrix:1, vendre:1, compter:1, reglages:1, acces:1, annuler:1, technique:1},
+              voirPA:1, voirMarge:1, modPrix:1, vendre:1, compter:1, reglages:1, acces:1, annuler:1, prixPC:1, technique:1},
   patron:    {lib:'Patron',            aide:'Tout sur son entreprise — sauf le branchement des services extérieurs',
-              voirPA:1, voirMarge:1, modPrix:1, vendre:1, compter:1, reglages:1, acces:1, annuler:1, technique:0},
+              voirPA:1, voirMarge:1, modPrix:1, vendre:1, compter:1, reglages:1, acces:1, annuler:1, prixPC:1, technique:0},
   commercial:{lib:'Commercial',        aide:'Vend et voit les prix de vente — pas les prix d\'achat',
-              voirPA:0, voirMarge:0, modPrix:0, vendre:1, compter:0, reglages:0, acces:0, annuler:0},
+              voirPA:0, voirMarge:0, modPrix:0, vendre:1, compter:0, reglages:0, acces:0, annuler:0, prixPC:0},
   entrepot:  {lib:'Entrepôt',          aide:'Compte le stock et ajuste — ne voit aucun prix',
-              voirPA:0, voirMarge:0, modPrix:0, vendre:0, compter:1, reglages:0, acces:0, annuler:0},
+              voirPA:0, voirMarge:0, modPrix:0, vendre:0, compter:1, reglages:0, acces:0, annuler:0, prixPC:0},
   comptable: {lib:'Comptable',         aide:'Lit tout, y compris les prix d\'achat — ne modifie rien',
-              voirPA:1, voirMarge:1, modPrix:0, vendre:0, compter:0, reglages:0, acces:0, annuler:0}};
+              voirPA:1, voirMarge:1, modPrix:0, vendre:0, compter:0, reglages:0, acces:0, annuler:0, prixPC:0}};
 
 /* ROLES = les quatre d'origine + ceux que le patron a fabriqués. Toutes les
    pages lisent ROLES[...] sans savoir d'où vient le rôle : c'est le but. */
@@ -109,6 +110,11 @@ function session(){
 }
 function role(){ const s=session(); return (s&&ROLES[s.role])?ROLES[s.role]:null; }
 function peut(d){ const r=role(); return r?!!r[d]:false; }
+/* Sur les pages dont le code tourne en module (Étude de devis, Factures…), ces fonctions n'étaient pas
+   visibles du menu, qui s'appliquait AVANT : un Commercial y voyait toute la partie Pilotage
+   (Connecteurs, Accès, Réglages…). On les rend visibles, puis on réapplique le menu (19 oct. 2026). */
+try{ window.session=session; window.role=role; window.peut=peut;
+  if(typeof mnApplique==='function') mnApplique(); }catch(e){}
 
 /* empreinte du mot de passe : on ne garde jamais le mot de passe en clair,
    même si ce n'est pas une protection contre quelqu'un de déterminé */
@@ -169,11 +175,13 @@ const ACCUEIL_ROLE={patron:'tableau.html', comptable:'tableau.html',
                     commercial:'ventes.html', entrepot:'stock.html'};
 const DEPARTS=[['tableau.html','Tableau de bord'],['ventes.html','Ventes'],
                ['stock.html','Inventaire'],['catalogue.html','Catalogue'],
-               ['factures.html','Factures'],['clients.html','VIP wholesale']];
+               ['factures.html','Factures'],['clients.html','Clients']];
 /* Le ?v=… collé au bout : le navigateur garde longtemps en mémoire une page
    ouverte depuis un fichier local, et sert alors une version d'avant. Une
    adresse qui change à chaque livraison le force à relire. */
-const versUrl=()=> (typeof VER_URL!=='undefined' && VER_URL) ? ('?v='+VER_URL) : '';
+/* try : appelée avant la ligne qui pose VER_URL (session absente au chargement), le
+   « typeof » ne protège pas d'une const pas encore posée — l'erreur bloquait le renvoi. */
+const versUrl=()=>{ try{ return VER_URL ? ('?v='+VER_URL) : ''; }catch(e){ return ''; } };
 /* pageDeDepart rend le NOM de la page — c'est une identité, comparable.
    urlDepart rend l'adresse où aller, avec le ?v=… qui force la relecture. */
 function pageDeDepart(r){

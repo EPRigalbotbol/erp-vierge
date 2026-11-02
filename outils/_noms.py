@@ -17,7 +17,13 @@ const mNorm=s=>String(s==null?'':s).toLowerCase().normalize('NFD')
   .replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
 /* les mots-outils ne disent rien du parfum : « de » dans « Bleu de Chanel » ne doit
    pas rapprocher « Club de Nuit » — c'est exactement ce qui faisait gagner un clone */
-const M_VIDES=new Set(['de','du','des','la','le','les','l','d','et','en','pour','par','the','of','and','for','by','in','a','au','aux','un','une','with','avec','ml','oz','x']);
+const M_VIDES=new Set(['de','du','des','la','le','les','l','d','et','en','pour','par','the','of','and','for','by','in','a','au','aux','un','une','with','avec','ml','oz','x',
+  /* les mots d'emballage des titres Amazon et des factures (« … PERFUME SPRAY », « … EDP VAPO ») :
+     ils ne disent rien du parfum et diluaient le score jusqu'à ne plus rien proposer */
+  'perfume','spray','vapo','vaporisateur','vaporizer','natural','fragrance','fragrances']);
+/* une marque écrite de deux façons : « Bulgari » sur Amazon, « Bvlgari » au catalogue */
+const M_MARQUES=[[/\bbulgari\b/g,'bvlgari'],[/\bysl\b/g,'yves saint laurent'],[/\bd\s*g\b/g,'dolce gabbana']];
+const mMarques=t=>M_MARQUES.reduce((a,[re,r])=>a.replace(re,r),t);
 
 /* Les contenances du catalogue sont en onces ; les clients écrivent les deux.
    On ramène tout en millilitres : c'est la seule façon de comparer « 100 ml » et
@@ -49,6 +55,35 @@ function mQte(t){
   return null;
 }
 
+/* La quantité d'une ligne de TABLEAU (Excel, CSV, PDF) : le code-barres, le nom, la contenance, la marque, le type,
+   le prix, la quantité, le total — séparés par des blancs doubles. Igal, 13 oct. 2026 : Sam importe la liste d'un client
+   et « Barakkat Rouge 540 Extrait » devient 540 flacons (le « 540 » du NOM était lu comme la quantité) ; « Azzaro Club
+   Women 75 … 24 3 » donnait 24 (le prix) ; « Oud Mood … 13 2 » avait été sauvé par hasard (13 pris pour une contenance).
+   On ne regarde donc que les CASES purement numériques (jamais le texte du nom) ; et si la ligne a un prix et un total,
+   la quantité est la case qui les relie : prix × quantité = total. */
+function mCases(brut){
+  const c=String(brut||'').split(/\s{2,}/).map(x=>x.trim()).filter(Boolean);
+  if(c.length<4) return null;
+  return c.filter(x=>/^\d+(?:[.,]\d+)?$/.test(x)&&x.replace(/\D/g,'').length<8).map(x=>parseFloat(x.replace(',','.')));
+}
+/* prix unitaire × quantité = total : la ligne d'un tableau (devis Lightspeed, Excel) dit elle-même
+   son prix et sa quantité. Renvoie {p,q} ou null. Le prix est celui du FICHIER : le client a reçu
+   une cote à ce prix-là, c'est lui qui compte, pas le prix de l'ERP (Igal, 13 oct. 2026). */
+function mPrixQteTableau(brut){
+  const N=mCases(brut); if(!N) return null;
+  for(let k=N.length-1;k>=2;k--) for(let j=1;j<k;j++){
+    if(!Number.isInteger(N[j])||N[j]<1||N[j]>999) continue;
+    for(let i=j-1;i>=0;i--) if(N[i]>0&&Math.abs(N[i]*N[j]-N[k])<=0.011) return {p:N[i],q:N[j]}; }
+  return null;
+}
+function mQteTableau(brut,taille){
+  const N=mCases(brut); if(!N) return null;
+  const pq=mPrixQteTableau(brut); if(pq) return pq.q;
+  /* pas de total : le premier petit entier des cases numériques, hors contenance */
+  let t=N.join('  '); if(taille&&taille.brut) t=t.replace(taille.brut,' ');
+  const m=t.match(/(?:^|\s)(\d{1,3})(?:\s|$)/); return m?+m[1]:null;
+}
+
 /* Le catalogue préparé une fois : marque, nom et contenance en millilitres. */
 let M_CAT=null;
 function mCatalogue(){
@@ -70,6 +105,7 @@ function mCatalogue(){
         mots:new Set(tout.split(' ').filter(w=>w&&!/^\d+([.,]\d+)?$/.test(w)&&!M_VIDES.has(w))),
         type:mNorm(r[4]),
         ml:isFinite(oz)?mMl(oz):null}); });
+    M_CAT.forEach(p=>{ p.longs=[...p.mots].filter(x=>x.length>=4); });
     return M_CAT;
   }
   /* sans catalogue brut : l'index de Ventes ([bc, nom, marque, oz, …]) */
@@ -80,6 +116,7 @@ function mCatalogue(){
       mots:new Set(tout.split(' ').filter(w=>w&&!/^\d+([.,]\d+)?$/.test(w))),
       ml:isFinite(oz)?mMl(oz):null});
   }
+  M_CAT.forEach(p=>{ p.longs=[...p.mots].filter(x=>x.length>=4); });
   return M_CAT;
 }
 
@@ -96,7 +133,7 @@ function mScore(mots, taille, p){
     const poids = w.length<=2 ? 0.4 : 1;
     tot += poids;
     if(p.mots.has(w)) pts += poids * (p.marque.split(' ').includes(w) ? 1.25 : 1);
-    else if([...p.mots].some(x=>x.length>=4 && (x.startsWith(w)||w.startsWith(x)))) pts += poids*0.6;
+    else if((p.longs||[...p.mots].filter(x=>x.length>=4)).some(x=>x.startsWith(w)||w.startsWith(x))) pts += poids*0.6;
   });
   if(!tot) return 0;
   let sc = pts/(tot*1.05);
@@ -113,17 +150,45 @@ function mScore(mots, taille, p){
   return sc;
 }
 
-function mCherche(texte){
-  const alias=lit(K_ALIASN,{}); const A=(alias&&typeof alias==='object')?alias:{};
+/* l'index des mots du catalogue : mot → produits qui le portent */
+function mIndex(){
+  const C=mCatalogue();
+  if(C._ix&&C._ix.n===C.length) return C._ix;
+  const m=new Map(); C.forEach(p=>p.mots.forEach(w=>{ let a=m.get(w); if(!a) m.set(w,a=[]); a.push(p); }));
+  C._ix={n:C.length,m,vocab:[...m.keys()].filter(x=>x.length>=4)};
+  return C._ix;
+}
+function mCandidats(mots){
+  const ix=mIndex(), S=new Set();
+  mots.forEach(w=>{
+    if(/^(edp|edt)$/.test(w)) return;          /* ne rapporte aucun point (voir mScore) */
+    (ix.m.get(w)||[]).forEach(p=>S.add(p));
+    ix.vocab.forEach(x=>{ if(x.startsWith(w)||w.startsWith(x)) (ix.m.get(x)||[]).forEach(p=>S.add(p)); });
+  });
+  return S;
+}
+/* le texte d'une ligne, prêt à comparer : ses mots, sa contenance, sa quantité */
+function mPrepare(texte){
   const brut=String(texte||'');
-  const cle0=mNorm(brut);
   const taille=mTaille(brut), qte=mQte(brut);
   /* on retire de la recherche ce qui a servi à lire la quantité et la contenance :
      sinon « 2 » et « 100 » comptent comme des mots du nom du parfum */
   let t=brut;
   if(qte) t=t.replace(qte.brut,' ');
   if(taille) t=t.replace(taille.brut,' ');
-  const mots=mNorm(mTypes(t)).split(' ').filter(w=>w && !/^\d+$/.test(w) && w.length>1 && (!M_VIDES.has(w) || /^(edp|edt)$/.test(w)));
+  const mots=[...new Set(mMarques(mNorm(mTypes(t))).split(' ').filter(w=>w && !/^\d+$/.test(w) && w.length>1 && (!M_VIDES.has(w) || /^(edp|edt)$/.test(w))))];
+  return {brut,taille,qte,mots};
+}
+/* le score d'un texte face à UN produit (sans parcourir tout le catalogue) */
+function mScoreCle(texte,cle){
+  const C=mCatalogue(); if(!C._k||C._k.n!==C.length){ C._k={n:C.length,m:new Map(C.map(x=>[x.cle,x]))}; }
+  const p=C._k.m.get(cle); if(!p) return 0;
+  const P=mPrepare(texte); return mScore(P.mots,P.taille,p);
+}
+function mCherche(texte){
+  const alias=lit(K_ALIASN,{}); const A=(alias&&typeof alias==='object')?alias:{};
+  const {brut,taille,qte,mots}=mPrepare(texte);
+  const cle0=mNorm(brut);
 
   if(A[cle0] && IDX[A[cle0]]) return {mots, taille, qte, cands:[{cle:A[cle0], sc:1}], appris:true};
   /* un code-barres dans la ligne (liste Excel, export, etiquette recopiee) : on
@@ -132,15 +197,28 @@ function mCherche(texte){
   const bcTok=(brut.match(/\b\d{8,14}\b/g)||[]).map(x=>cleDeBC(x)).find(Boolean);
   if(bcTok){
     let q=qte?qte.q:null;
+    if(q==null) q=mQteTableau(brut,taille);
+    const pq=mPrixQteTableau(brut);
     if(q==null){ let t2=brut.replace(/\b\d{8,14}\b/g,' '); if(taille) t2=t2.replace(taille.brut,' ');
       const m=t2.match(/(?:^|\s)(\d{1,3})(?:\s|$)/); if(m) q=+m[1]; }
-    return {mots, taille, qte:q!=null?{q}:qte, cands:[{cle:bcTok, sc:1}], appris:true};
+    return {mots, taille, qte:q!=null?{q}:qte, cands:[{cle:bcTok, sc:1}], appris:true, px:pq?pq.p:null};
   }
 
+  /* un code-barres est écrit, mais aucune fiche de l'ERP ne le porte (Sam, 1er oct. 2026 :
+     « si le code-barres n'est pas identique aux références de l'ERP, demander à Sam de confirmer
+     la référence ») : on cherche quand même par le nom, mais on ne choisira pas tout seul */
+  const bcInconnu=(brut.match(/\b\d{8,14}\b/g)||[])[0]||'';
+  let q2=qte;
+  if(bcInconnu&&!q2){ const qt=mQteTableau(brut,taille); if(qt!=null) q2={q:qt}; }
+  if(bcInconnu&&!q2){ let t2=brut.replace(/\b\d{8,14}\b/g,' '); if(taille) t2=t2.replace(taille.brut,' ');
+    const m=t2.match(/(?:^|\s)(\d{1,3})(?:\s|$)/); if(m) q2={q:+m[1]}; }
   const R=[];
-  mCatalogue().forEach(p=>{ const sc=mScore(mots,taille,p); if(sc>0.34) R.push({cle:p.cle, sc}); });
+  /* seuls les produits qui partagent au moins un mot (ou un début de mot) avec la ligne
+     peuvent avoir un score : les autres valent 0. On ne note donc qu'eux (3 oct. 2026 :
+     une price list de 700 lignes inconnues parcourait 700 fois les 3 800 fiches). */
+  mCandidats(mots).forEach(p=>{ const sc=mScore(mots,taille,p); if(sc>0.34) R.push({cle:p.cle, sc}); });
   R.sort((a,b)=>b.sc-a.sc);
-  return {mots, taille, qte, cands:R.slice(0,8), appris:false};
+  return {mots, taille, qte:q2, cands:R.slice(0,8), appris:false, bcInconnu, px:(bcInconnu?(mPrixQteTableau(brut)||{}).p:null)};
 }
 
 '''

@@ -6,15 +6,13 @@ dehors — un client, un fournisseur — et passe par le mail ou WhatsApp. Ici, 
 parle entre comptes de Perfumes Trade : Sam laisse une consigne à Javier, Ana
 signale qu'il manque douze flacons, le comptable réclame une facture.
 
-Ce qu'il faut dire à Sam avant qu'il ne compte dessus. Tant que l'outil tourne
-dans le navigateur, les messages restent dans CE navigateur, sur CET ordinateur.
-C'est donc un cahier de consignes partagé par les gens qui se relaient sur le
-même poste — l'entrepôt, la boutique — et rien d'autre : un message écrit ici
-n'arrivera jamais sur le téléphone de Javier. Le jour où il y a un serveur, le
-même écran devient une vraie messagerie, sans rien changer à ce qui est écrit
-là ; c'est pour ça que ça vaut la peine de le construire maintenant.
+Depuis le cockpit (sept. 2026), les messages vivent sur le serveur (magasin
+messages-v1) : ils arrivent sur l'écran du destinataire où qu'il soit, dès que
+sa page de l'ERP est ouverte (événement ck-maj), avec une pastille dans le menu.
+Ce n'est pas un chat sur le téléphone : sans l'ERP ouvert, on lit à la prochaine
+connexion.
 
-Ce qui est fait pour tenir jusqu'au serveur : un message est immuable une fois
+Ce qui tient : un message est immuable une fois
 envoyé (pas de modification, pas d'effacement — sinon la consigne ne vaut rien),
 il est signé du compte connecté, et il est lu ou non lu par destinataire.
 """
@@ -103,13 +101,13 @@ const autres=()=>comptes().filter(u=>u.ident!==(MOI&&MOI.id));
 let CIBLE=null;
 
 const ini=n=>String(n||'?').trim().split(/\s+/).slice(0,2).map(m=>m[0]||'').join('').toUpperCase()||'?';
-const hm=iso=>{ const d=new Date(iso); return d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); };
-const jourDe=iso=>new Date(iso).toDateString();
+const hm=iso=>{ const d=new Date(iso); return d.toLocaleTimeString('fr-FR',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit'}); };
+const jourDe=iso=>new Date(iso).toLocaleDateString('en-CA',{timeZone:'America/New_York',});
 function libJour(iso){
   const d=new Date(iso), a=new Date(), h=new Date(a.getTime()-86400000);
   if(d.toDateString()===a.toDateString()) return "Aujourd'hui";
   if(d.toDateString()===h.toDateString()) return 'Hier';
-  return d.toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'long'});
+  return d.toLocaleDateString((typeof lgLocale==='function'?lgLocale():'fr-FR'),{weekday:'long',day:'2-digit',month:'long'});
 }
 
 /* Le fil entre moi et une personne : les deux sens, dans l'ordre. */
@@ -124,8 +122,8 @@ function peintGens(){
       <span class="pa">${esc(ini(u.nom))}</span>
       <span class="nn"><b>${esc(u.nom)}</b><span>${esc((ROLES[u.role]||{}).lib||u.role)}${u.actif?'':' · accès fermé'}</span></span>
       <span class="pt ${n?'':'z'}">${n}</span></button>`;
-  }).join('') || '<div style="padding:20px 15px;font-size:13px;color:var(--ink-3);line-height:1.6">'
-    +'Il n\'y a que toi pour l\'instant. Ouvre un accès dans <b>Accès</b> et tu pourras lui écrire.</div>';
+  }).join('') || '<div data-nolang style="padding:20px 15px;font-size:13px;color:var(--ink-3);line-height:1.6">'
+    +L3("Il n'y a que toi pour l'instant. Ouvre un accès dans <b>Accès</b> et tu pourras lui écrire.","It's only you for now. Open an access in <b>Access</b> and you will be able to write to them.","Por ahora solo estás tú. Abre un acceso en <b>Accesos</b> y podrás escribirle.")+'</div>';
   const t=msgs().filter(m=>m.a===MOI.id && !m.lu).length;
   $('src').innerHTML = t ? t+' message'+(t>1?'s':'')+' non lu'+(t>1?'s':'') : 'aucun message non lu';
 }
@@ -197,16 +195,18 @@ $('txt').addEventListener('keydown',e=>{
 window.addEventListener('storage',e=>{
   if(e.key===K_MSG){ peintGens(); if(CIBLE) peintFil(); }
 });
+/* les messages qui arrivent du serveur (les autres postes) : sur place, sans recharger */
+window.addEventListener('ck-maj',e=>{ try{ if((e.detail&&e.detail.cles||[]).includes(K_MSG)){ peintGens(); if(CIBLE) peintFil(); if(typeof mnPastilleMessages==='function') mnPastilleMessages(); } }catch(_){} });
 
 (function(){
   if(!MOI) return;
-  $('ban').innerHTML=`<b>Ce que c'est, et ce que ce n'est pas encore.</b>
-    Ici on écrit aux gens de l'équipe — pas aux clients : pour eux, c'est le bouton
-    <b>Écrire</b> sur leur fiche. Tant que Perfumes Trade tourne sur cet ordinateur et pas
-    sur un serveur, <b>les messages restent sur cet ordinateur</b> : c'est un cahier de
-    consignes pour ceux qui se relaient sur le même poste, pas une messagerie qui arrive
-    sur le téléphone de Javier. Le jour où il y a un serveur, cet écran ne change pas et
-    devient une vraie messagerie — ce qui est écrit maintenant n'est pas perdu.`;
+  /* 4 oct. 2026 : l'ancien texte datait d'avant le serveur (« les messages restent sur cet
+     ordinateur ») — faux depuis que tout passe par le cockpit. Igal : « est-ce que c'est le cas ? » */
+  $('ban').innerHTML=`<b>Ici on écrit aux gens de l'équipe</b> — pas aux clients : pour eux, c'est le bouton
+    <b>Écrire</b> sur leur fiche. Un message arrive sur l'écran de la personne, où qu'elle soit, dès
+    qu'elle a l'ERP ouvert ; une pastille sur « Messages » lui dit qu'il y a du nouveau. Ce n'est pas
+    un chat sur le téléphone : si elle n'a pas l'ERP ouvert, elle le lira à sa prochaine connexion.
+    Un message envoyé ne se modifie pas et ne s'efface pas.`;
   $('tout').hidden=false;
   peintGens();
   /* On ouvre d'abord le fil de celui qui attend une réponse : sinon la page

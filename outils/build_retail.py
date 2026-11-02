@@ -183,7 +183,7 @@ function jlogContact(nom,par,quoi){
 }
 
 const jour=v=>{ if(!v) return null; const d=new Date(v); return isNaN(d)?null:d; };
-const dfr=v=>{ const d=jour(v); return d?d.toLocaleDateString('fr-FR',
+const dfr=v=>{ const d=jour(v); return d?d.toLocaleDateString('en-US',
   {day:'2-digit',month:'2-digit',year:'2-digit'}):'—'; };
 const ini=n=>String(n||'?').trim().split(/\s+/).slice(0,2)
   .map(m=>m[0]||'').join('').toUpperCase()||'?';

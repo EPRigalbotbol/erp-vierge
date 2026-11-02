@@ -17,6 +17,7 @@ const K_MENU='menu-perso-v1';
 /* Identité d'une rubrique : le fichier vers lequel elle mène.
    Pour celles qui n'existent pas encore (« bientôt »), son libellé d'origine. */
 function mnId(a){
+  if(a.dataset&&a.dataset.id) return a.dataset.id;   /* « Support technique » n'a pas de page */
   const h=a.getAttribute('href');
   /* le ?v=… qui force le navigateur à relire la page ne fait pas partie de
      l'identité de la rubrique : sinon le menu réglé serait perdu à chaque
@@ -33,13 +34,18 @@ function mnNomOrigine(a){
 }
 function mnEcritNom(a,nom){
   const t=[...a.childNodes].find(n=>n.nodeType===3&&n.textContent.trim());
-  if(t) t.textContent=nom;
+  if(!t||t.textContent===nom) return;
+  t.textContent=nom;
+  /* un nom choisi par l'utilisateur est son français d'origine : la traduction
+     ne doit pas le ramener au libellé d'usine */
+  if(nom!==a.dataset.nom0) t.__fr=nom;
 }
 const mnNav=()=>document.querySelector('.side nav');
 const mnItems=()=>mnNav()?[...mnNav().querySelectorAll('a.nv')]:[];
 
 function mnLit(){
-  try{ const v=lit(K_MENU,null);
+  try{ /* ce bloc tourne AVANT le code de la page (et donc avant lit) : on lit le stockage tel quel */
+    const v=(typeof lit==='function')?lit(K_MENU,null):JSON.parse(localStorage.getItem(K_MENU)||'null');
     return (v&&typeof v==='object')
       ?{ordre:v.ordre||[],noms:v.noms||{},caches:v.caches||[]}
       :{ordre:[],noms:{},caches:[]}; }
@@ -70,6 +76,20 @@ function mnApplique(){
        reste accessible par son adresse — on cache, on ne casse pas. */
     a.style.display = (c.caches||[]).includes(id) ? 'none' : '';
   });
+  /* une sous-rubrique suit sa rubrique-mère : si « Clients » est retirée du menu, « Clients VIP » aussi */
+  items.forEach(a=>{ if(!a.dataset.sous) return;
+    const m=items.find(x=>mnId(x)===a.dataset.sous);
+    if(m&&m.style.display==='none') a.style.display='none'; });
+  mnSous();
+  mnPilotage();
+  /* la page ouverte porte le nom que l'utilisateur a donné à sa rubrique : dans
+     l'onglet du navigateur et dans le grand titre, pas seulement dans le menu */
+  try{ const ici=(location.pathname.split('/').pop()||'').replace(/[?#].*$/,'');
+    const nom=c.noms[ici]&&String(c.noms[ici]).trim();
+    if(nom){ document.title=nom+' — Perfumes Trade'; document.__titreFr=document.title;
+      const h=document.querySelector('.wrap h1, main h1, h1');
+      if(h){ const t=[...h.childNodes].find(n=>n.nodeType===3&&n.textContent.trim());
+        if(t&&t.textContent.trim()!==nom){ t.textContent=nom; t.__fr=nom; } } } }catch(e){}
   if(c.ordre&&c.ordre.length){
     const par={}; items.forEach(a=>par[mnId(a)]=a);
     /* les titres d'origine s'effacent : ce sont ceux de l'utilisateur qui comptent */
@@ -83,8 +103,11 @@ function mnApplique(){
         nav.appendChild(d);
       } else if(par[e.id]){ nav.appendChild(par[e.id]); vus.push(e.id); }
     });
-    /* une rubrique ajoutée après coup n'est dans aucun ordre : elle va à la fin */
-    items.forEach(a=>{ if(!vus.includes(mnId(a))) nav.appendChild(a); });
+    /* une rubrique ajoutée après coup n'est dans aucun ordre : elle va à la fin —
+       sauf une sous-rubrique (« Clients VIP »), qui reste sous sa rubrique-mère */
+    items.forEach(a=>{ if(vus.includes(mnId(a))) return;
+      const mere=a.dataset.sous&&items.find(m=>mnId(m)===a.dataset.sous);
+      if(mere) mere.insertAdjacentElement('afterend',a); else nav.appendChild(a); });
     /* Un titre dont toutes les rubriques ont été retirées ne sert plus à rien :
        on le cache. Mais un titre volontairement seul, sans aucune rubrique
        derrière lui, est un choix de l'utilisateur — on le laisse. */
@@ -99,6 +122,39 @@ function mnApplique(){
   }
 }
 
+/* « Clients VIP » est allumée (et « Clients » éteinte) quand la liste des favoris est ouverte :
+   adresse en #vip, ou filtre « Favoris (VIP) » choisi dans la page. */
+/* 17 oct. 2026 (Sam) : la partie « Pilotage » du menu (Connecteurs, Journal, Tableau de bord, Accès, Paie, Réglages — « Support technique » reste pour tous)
+   n'existe pas pour un rôle qui n'a ni les marges, ni l'accès aux comptes, ni les réglages : un Commercial, un Entrepôt.
+   Le titre « Pilotage » part avec. On ne fait que RETIRER : un rôle autorisé garde son menu tel que réglé. */
+/* 19 oct. 2026 (guide de Clemencia) : une page qui n'affiche à ce rôle qu'un mur « Cette page n'est pas pour ce rôle »
+   (les pages de prix d'achat, voir _identite.py) ne reste pas dans son menu — il n'y a rien à y faire. */
+const MN_MURS={'etude.html':'voirPA','fournisseurs.html':'voirPA','factures.html':'voirPA'};
+function mnPilotage(){
+  try{
+    if(typeof peut!=='function'||typeof role!=='function'||!role()) return;
+    const nav=mnNav(); if(!nav) return;
+    nav.querySelectorAll('a.nv').forEach(a=>{ const h=(a.getAttribute('href')||'').replace(/[?#].*$/,'').split('/').pop();
+      if(MN_MURS[h]&&!peut(MN_MURS[h])) a.style.display='none'; });
+    if(peut('voirMarge')||peut('acces')||peut('reglages')) return;
+    nav.querySelectorAll('[data-pilotage]').forEach(e=>{ e.style.display='none'; });
+  }catch(e){}
+}
+function mnSous(){
+  try{
+    const nav=mnNav(); if(!nav) return;
+    const ici=(location.pathname.split('/').pop()||'').replace(/[?#].*$/,'');
+    nav.querySelectorAll('a.nv[data-sous]').forEach(a=>{
+      const mere=[...nav.querySelectorAll('a.nv')].find(x=>mnId(x)===a.dataset.sous);
+      const vip = ici===a.dataset.sous && (window.__filtreVip===true || (window.__filtreVip===undefined && /(^|[#&])vip\b/.test(location.hash)));
+      a.classList.toggle('on',!!vip);
+      if(mere&&ici===a.dataset.sous) mere.classList.toggle('on',!vip);
+    });
+  }catch(e){}
+}
+window.addEventListener('hashchange',()=>mnSous());
+window.addEventListener('comptes-maj',()=>mnPilotage());
+
 /* L'ordre enregistré peut être ancien (une simple liste d'identifiants) ou
    nouveau (des rubriques et des titres mêlés). On lit les deux. */
 function mnOrdre(c){
@@ -107,12 +163,14 @@ function mnOrdre(c){
 
 /* ---------- la fenêtre de réglage ---------- */
 function mnOuvre(){
+  try{ if(typeof peut==='function' && typeof session==='function' && session() && !peut('reglages')) return; }catch(e){}
   let ov=document.getElementById('mnov');
   if(!ov){
     ov=document.createElement('div'); ov.className='ov'; ov.id='mnov';
     ov.innerHTML=`<div class="mod" style="max-width:520px;max-height:86vh;display:flex;flex-direction:column">
-      <div class="mh"><h2>Mon menu</h2><button class="x" id="mn-x">&times;</button></div>
+      <div class="mh"><h2>Le menu de l'équipe</h2><button class="x" id="mn-x">&times;</button></div>
       <div class="mb" style="overflow:auto;flex:1;min-height:0">
+        <p class="hint"><b>Ce menu est le même pour tout le monde.</b> Ce que tu changes ici, toute l'équipe le voit.</p>
         <p class="hint">Renomme une rubrique comme tu veux, déplace-la avec les flèches,
         ou décoche-la pour la retirer du menu. Le lien ne change pas : seul le mot affiché change,
         et une rubrique retirée n'est pas supprimée — elle disparaît du menu, c'est tout.</p>
@@ -219,7 +277,7 @@ function mnOuvre(){
   document.getElementById('mn-raz').onclick=()=>{
     mnSauve({ordre:[],noms:{},caches:[]});
     if(typeof jlogMenu==='function') jlogMenu('menu remis par défaut');
-    location.reload();
+    mnApresEnvoi(()=>location.reload());
   };
   document.getElementById('mn-ok').onclick=()=>{
     const noms={};
@@ -230,11 +288,25 @@ function mnOuvre(){
                  .map(x=> x.t==='h' ? {t:'h', x:String(x.x).trim().slice(0,28)} : {t:'nv', id:x.id});
     mnSauve({ordre, noms, caches:L.filter(x=>x.t!=='h'&&!x.vu).map(x=>x.id)});
     if(typeof jlogMenu==='function') jlogMenu('menu réorganisé');
-    location.reload();
+    /* Igal, 27 sept. 2026 : « je n'arrive pas à changer le nom de la rubrique, elle
+       reste à Étude de cote ». On rechargeait la page juste après avoir enregistré :
+       le menu partait vers le serveur au même moment, le navigateur demandait
+       « quitter la page ? », et au rechargement c'était l'ancien menu du serveur qui
+       revenait — sans le nouveau nom. Plus de rechargement : le menu se refait sur
+       place, tout de suite, et part au serveur tranquillement. */
+    ov.classList.remove('on');
+    try{ mnApplique(); }catch(e){ mnApresEnvoi(()=>location.reload()); }
   };
   ov.classList.add('on');
 }
 
+/* attend que ce qui vient d'être écrit soit parti au serveur (6 s au plus) */
+function mnApresEnvoi(fn){
+  const t0=Date.now();
+  const tour=()=>{ const att=(typeof _SY_ATT!=='undefined'&&_SY_ATT.size)||(typeof _SY_ENVOI!=='undefined'&&_SY_ENVOI.size);
+    if(!att||Date.now()-t0>6000) fn(); else setTimeout(tour,120); };
+  setTimeout(tour,150);
+}
 /* trace au journal, comme toute modification du système */
 function jlogMenu(lib){
   try{
@@ -247,9 +319,15 @@ function jlogMenu(lib){
 
 /* le bouton, au bas de la barre de gauche */
 function mnBouton(){
-  const p=document.querySelector('.side .sfoot'); if(!p) return;
+  const p=(document.getElementById('sfline')||document.querySelector('.side .sfoot')); if(!p) return;
   if(document.getElementById('mn-btn')) return;
+  /* le menu est commun à toute l'équipe : seuls ceux qui ont les Réglages le modifient.
+     Ce bloc peut tourner avant le code des comptes : on regarde maintenant, et encore
+     une fois quand la page a démarré. */
+  const refuse=()=>{ try{ return typeof peut==='function' && typeof session==='function' && !!session() && !peut('reglages'); }catch(e){ return false; } };
+  if(refuse()) return;
   const b=document.createElement('button');
+  setTimeout(()=>{ if(refuse()) b.remove(); },0); setTimeout(()=>{ if(refuse()) b.remove(); },1500);
   b.id='mn-btn'; b.className='lnk'; b.textContent='Modifier le menu';
   b.style.cssText='display:block;margin-top:7px';
   b.onclick=mnOuvre;
@@ -267,14 +345,158 @@ function mnPastilleMessages(){
     const L=JSON.parse(localStorage.getItem('messages-v1')||'[]');
     if(s&&Array.isArray(L)) n=L.filter(m=>m.a===s.id && !m.lu).length;
   }catch(e){}
-  if(n){ el.textContent=String(n); el.classList.add('pt');
+  /* 29 sept. (Igal) : une pastille ROUGE quand des messages attendent — et le nombre dans le
+     titre de l'onglet du navigateur, pour le voir même quand l'ERP est derrière une autre fenêtre */
+  if(n){ el.textContent=String(n); el.classList.add('pt'); el.style.background='#E5484D'; el.style.color='#fff';
          el.title=n+(n>1?' messages non lus':' message non lu'); }
-  else { el.textContent='équipe'; el.classList.remove('pt'); el.title=''; }
+  else { el.textContent=''; el.classList.remove('pt'); el.style.background=''; el.style.color=''; el.title=''; }
+  try{ const t=document.title.replace(/^\(\d+\) /,''); const nt=n?'('+n+') '+t:t; if(document.title!==nt) document.title=nt; }catch(e){}
 }
 window.addEventListener('storage',e=>{ if(e.key==='messages-v1'||e.key==='sam-session-v1') mnPastilleMessages(); });
+window.addEventListener('ck-maj',e=>{ try{ if((e.detail&&e.detail.cles||[]).includes('messages-v1')) mnPastilleMessages(); }catch(_){} });
+
+/* La pastille des NOUVELLES VENTES, sur la rubrique Ventes. Igal, 12 sept. 2026 :
+   « à chaque fois qu'une nouvelle vente arrive — Amazon, Shopify, le site, peu
+   importe — une notification dans Ventes, jusqu'au moment où on ouvre la page ».
+   Une vente « nouvelle » : une vente du site ou de la caisse enregistrée toute
+   seule (facture avec `auto`) depuis la dernière fois que CETTE personne a ouvert
+   Ventes sur cet appareil, ou une vente qui attend encore dans la file. */
+const K_VVU='ventes-vues-v1';
+function mnVentesNouvelles(){
+  let sid=''; try{ const s=JSON.parse(localStorage.getItem('sam-session-v1')||'null'); sid=s&&s.id||''; }catch(e){}
+  if(!sid) return 0;
+  let vu=''; try{ vu=(JSON.parse(localStorage.getItem(K_VVU)||'{}')||{})[sid]||''; }catch(e){}
+  let n=0;
+  try{ const F=JSON.parse(localStorage.getItem('factures-v1')||'[]'); if(Array.isArray(F)) n+=F.filter(f=>f&&f.auto&&f.sens==='vente'&&!f.retour&&(f.t||'')>vu).length; }catch(e){}
+  try{ const Q=JSON.parse(localStorage.getItem('caisse-file-v1')||'[]'); if(Array.isArray(Q)) n+=Q.filter(v=>v&&!v.annule).length; }catch(e){}
+  return n;
+}
+function mnVentesVues(){
+  try{ const s=JSON.parse(localStorage.getItem('sam-session-v1')||'null'); if(!s||!s.id) return;
+    const V=JSON.parse(localStorage.getItem(K_VVU)||'{}')||{}; V[s.id]=new Date().toISOString(); localStorage.setItem(K_VVU,JSON.stringify(V)); }catch(e){}
+}
+function mnPastilleVentes(){
+  const el=document.getElementById('ct-ventes'); if(!el) return;
+  const ici=/ventes\.html$/.test(location.pathname);
+  if(ici){ mnVentesVues(); }
+  const n=ici?0:mnVentesNouvelles();
+  if(n){ el.textContent=n+(n>1?' nouvelles':' nouvelle'); el.classList.add('pt'); el.title=n+(n>1?' nouvelles ventes arrivées depuis ta dernière visite':' nouvelle vente arrivée depuis ta dernière visite'); }
+  else { el.textContent=''; el.classList.remove('pt'); el.title=''; }
+}
+window.addEventListener('storage',e=>{ if(e.key==='factures-v1'||e.key==='caisse-file-v1'||e.key===K_VVU) mnPastilleVentes(); });
+
+/* La pastille des commandes À EXPÉDIER, sur la rubrique Expéditions : tant qu'une
+   commande du site ou d'Amazon n'a pas été marquée « expédiée », elle compte. */
+function mnPastilleExpeditions(){
+  const el=document.getElementById('ct-expeditions'); if(!el) return;
+  let n=0;
+  try{ const E=JSON.parse(localStorage.getItem('expeditions-v1')||'[]'); if(Array.isArray(E)) n=E.filter(e=>e&&e.statut==='attente').length; }catch(e){}
+  if(n){ el.textContent=n+' à expédier'; el.classList.add('pt'); el.title=n+(n>1?' commandes attendent d\'être expédiées':' commande attend d\'être expédiée'); }
+  else { el.textContent=''; el.classList.remove('pt'); el.title=''; }
+}
+window.addEventListener('storage',e=>{ if(e.key==='expeditions-v1') mnPastilleExpeditions(); });
+/* dans le même onglet : dès que la page écrit des ventes (enregistrement automatique, file) */
+(function(){ let ok=false; const brancher=()=>{ if(ok) return; if(typeof _apresEcrit!=='undefined'&&Array.isArray(_apresEcrit)){ ok=true; _apresEcrit.push(cle=>{ if(cle==='factures-v1'||cle==='caisse-file-v1') setTimeout(mnPastilleVentes,0); if(cle==='expeditions-v1') setTimeout(mnPastilleExpeditions,0); }); } };
+  setInterval(()=>{ brancher(); mnPastilleVentes(); mnPastilleExpeditions(); },30000); setTimeout(brancher,1500); setTimeout(brancher,6000); })();
+
+/* Les chiffres de Catalogue et d'Inventaire, dans le menu, sur toutes les pages.
+   Igal, 1er oct. 2026 : ils étaient écrits une fois pour toutes à la fabrication, depuis le
+   fichier de septembre (3 830 fiches, 1 892 en stock) — ni les 12 parfums créés depuis le
+   Sheet de Sam, ni le démarrage du 1er octobre, ni les comptages n'y apparaissaient.
+   Maintenant :
+   - Catalogue  = toutes les fiches (le fichier + les parfums créés dans l'ERP) ;
+   - Inventaire = les parfums EN STOCK pas encore vérifiés (choix d'Igal) : il descend à
+     chaque comptage et tombe à 0 quand Sam a tout recompté. Les parfums à zéro ne comptent
+     pas : sinon le chiffre ne descendrait jamais sous ~1 950, personne ne recompte des
+     flacons qu'il n'a pas.
+   Le stock et l'état « vérifiée » se lisent comme la page Inventaire les lit : la fiche
+   corrigée (fiches-modifiees-v1), puis le Sheet importé (stock-externe-v1), puis le fichier. */
+function mnLignesBase(){
+  if(Array.isArray(window.D_INV)) return window.D_INV.map(r=>({bc:r[0],qte:r[5],v:r[8],cle:r[9]}));
+  if(Array.isArray(window.D_PROD)) return window.D_PROD.map(r=>({bc:r[0],qte:r[6],v:r[14],cle:r[15]}));
+  return null;
+}
+function mnCompteProduits(){
+  const B=mnLignesBase(); if(!B) return null;
+  const J=k=>{ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } };
+  let M=J('fiches-modifiees-v1'); if(!M||typeof M!=='object'||Array.isArray(M)) M={};
+  let X=J('stock-externe-v1'); const XQ=(X&&X.q&&typeof X.q==='object')?X.q:{};
+  let A=J('articles-ajoutes-v1'); if(!Array.isArray(A)) A=[];
+  const L=B.slice(); const deja=new Set(B.map(p=>p.cle));
+  A.forEach(o=>{ if(o&&o.id&&!deja.has(o.id)){ deja.add(o.id); L.push({bc:String(o.bc||''),qte:+o.qte||0,v:'non',cle:o.id}); } });
+  const q=p=>{ const m=M[p.cle]; if(m&&m.qte!=null) return +m.qte; const e=XQ[p.bc]; if(e!=null) return +e; return +p.qte||0; };
+  const v=p=>{ const m=M[p.cle]; return (m&&m.verif!==undefined)?m.verif:p.v; };
+  return {total:L.length, aVerifier:L.filter(p=>q(p)>0&&v(p)!=='ok').length};
+}
+function mnCompteurs(){
+  const ec=document.getElementById('ct-catalogue'), ei=document.getElementById('ct-inventaire');
+  if(!ec&&!ei) return;
+  if(ei) ei.title='Parfums en stock pas encore vérifiés';
+  const c=mnCompteProduits();
+  if(!c){
+    /* une page qui n'a pas la liste des produits la charge, une fois, en arrière-plan */
+    if(!mnCompteurs.charge){ mnCompteurs.charge=true;
+      const a=document.querySelector('a.nv[href*="stock.html"]'); const m=a&&/[?&]v=([^&]+)/.exec(a.getAttribute('href')||'');
+      const s=document.createElement('script'); s.src='donnees/inventaire.js'+(m?'?v='+m[1]:''); s.async=true;
+      s.onload=()=>{ try{ mnCompteurs(); }catch(e){} }; (document.head||document.documentElement).appendChild(s); }
+    return;
+  }
+  const nf=n=>n.toLocaleString('fr-FR');
+  if(ec&&ec.textContent!==nf(c.total)) ec.textContent=nf(c.total);
+  /* la page Inventaire compte elle-même, sur la liste qu'elle affiche */
+  if(ei&&!window.__CT_INV_PAGE&&ei.textContent!==nf(c.aVerifier)) ei.textContent=nf(c.aVerifier);
+}
+window.mnCompteurs=mnCompteurs;
+(function(){
+  const K=['fiches-modifiees-v1','stock-externe-v1','articles-ajoutes-v1'];
+  const t=()=>{ clearTimeout(t.h); t.h=setTimeout(()=>{ try{ mnCompteurs(); }catch(e){} },120); };
+  window.addEventListener('storage',e=>{ if(K.includes(e.key)) t(); });
+  window.addEventListener('ck-maj',e=>{ try{ if((e.detail&&e.detail.cles||[]).some(k=>K.includes(k))) t(); }catch(_){} });
+  let ok=false; const brancher=()=>{ if(ok) return; if(typeof _apresEcrit!=='undefined'&&Array.isArray(_apresEcrit)){ ok=true; _apresEcrit.push(cle=>{ if(K.includes(cle)) t(); }); } };
+  setTimeout(brancher,1500); setTimeout(brancher,6000);
+  const go=()=>{ brancher(); t(); };
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',go); else setTimeout(go,0);
+})();
+
+/* ================= LES TABLEAUX TIENNENT DANS LEUR CADRE =================
+   Igal, 24 sept. 2026 : « fais attention que ça ne déborde pas de partout ».
+   Un tableau marqué `af` (sur la boîte qui le contient) retire ses colonnes
+   secondaires une par une — celles marquées o1, puis o2… jusqu'à o5 — tant
+   qu'il dépasse sa boîte. Il ne défile de côté qu'en tout dernier recours.
+   La largeur est surveillée en continu : la traduction, les photos et les
+   polices changent la largeur APRÈS le premier dessin. */
+(function(){
+  try{
+    const st=document.createElement('style');
+    st.textContent='.af.x1 .o1,.af.x2 .o2,.af.x3 .o3,.af.x4 .o4,.af.x5 .o5{display:none!important}.af{overflow-x:auto}';
+    (document.head||document.documentElement).appendChild(st);
+  }catch(e){}
+  const ajuste=(w)=>{ if(!w||w.__afEn) return; const t=w.querySelector('table'); if(!t||!w.clientWidth) return;
+    w.__afEn=true;
+    try{ const trop=()=>t.scrollWidth>w.clientWidth+1;
+      w.classList.remove('x1','x2','x3','x4','x5');
+      for(let i=1;i<=5&&trop();i++) w.classList.add('x'+i);
+    } finally { setTimeout(()=>{ w.__afEn=false; },0); } };
+  let RO=null; try{ RO=new ResizeObserver(es=>es.forEach(e=>{ const w=e.target.closest?e.target.closest('.af'):null; if(w) ajuste(w); })); }catch(e){}
+  const suit=()=>{ document.querySelectorAll('.af').forEach(w=>{ const t=w.querySelector('table');
+      if(RO&&w.__afObs!==t){ w.__afObs=t; try{ RO.observe(w); if(t) RO.observe(t); }catch(e){} }
+      ajuste(w); }); };
+  window.afAjuste=suit;
+  const go=()=>{ suit(); try{ new MutationObserver(()=>{ clearTimeout(go.t); go.t=setTimeout(suit,60); }).observe(document.body,{childList:true,subtree:true}); }catch(e){} };
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',go); else setTimeout(go,0);
+  window.addEventListener('resize',()=>{ clearTimeout(go.r); go.r=setTimeout(suit,80); });
+})();
 
 (function(){
-  const go=()=>{ try{ mnApplique(); mnBouton(); mnPastilleMessages(); }catch(e){} };
+  /* Tout de suite, avant la première peinture : le menu réglé (ordre, noms,
+     rubriques cachées) s'applique pendant que la page se construit. Sinon on
+     voyait le menu d'usine, puis les rubriques sauter à leur place réglée
+     (Igal, 12 sept. 2026 : « les rubriques bougent, ça monte, ça descend »). */
+  if(document.body){ try{ mnApplique(); mnBouton(); mnPastilleMessages(); mnPastilleVentes(); mnPastilleExpeditions(); }catch(e){} }
+  try{ document.documentElement.classList.remove('mn-attente'); }catch(e){}
+  /* et une fois les données du serveur arrivées (un autre appareil a pu régler
+     le menu entre-temps), on réapplique : sans changement, rien ne bouge */
+  const go=()=>{ try{ mnApplique(); mnBouton(); mnPastilleMessages(); mnPastilleVentes(); mnPastilleExpeditions(); }catch(e){} };
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',go);
   else setTimeout(go,0);
 })();

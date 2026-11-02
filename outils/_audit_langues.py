@@ -13,7 +13,7 @@ D = pathlib.Path('/home/claude/catalogue')
 PAGES = ['tableau.html', 'catalogue.html', 'stock.html', 'ventes.html', 'factures.html',
          'etude.html', 'fournisseurs.html', 'clients.html', 'retail.html', 'journal.html',
          'acces.html', 'reglages.html', 'messages.html', 'connecteurs.html',
-         'inventaire_pc.html', 'accueil.html']
+         'inventaire_pc.html', 'accueil.html', 'expeditions.html']
 SESS = ("localStorage.setItem('sam-session-v1', JSON.stringify("
         "{id:'sam',nom:'Sam',role:'patron',depuis:new Date().toISOString()}))")
 

@@ -6,11 +6,12 @@ import json
 C=json.load(open('cat.json'))
 rows=[]
 for r in C:
-    bc,nomSrc,marque,ml,typ,genre,qte,pvr,pvw,img,src,an,pa,nom,verif,cle,rang,part = r
+    bc,nomSrc,marque,ml,typ,genre,qte,pvr,pvw,img,src,an,pa,nom,verif,cle,rang,part = r[:18]
     cap=(qte or 0)*(pa or 0)
     # la feuille de comptage ne connait que trois etats
     v = 'ok' if verif=='ok' else ('doute' if verif=='av' else 'non')
-    rows.append([bc,nom,marque,ml,typ,qte or 0,pa,round(cap,2),v,cle])
+    # 10, 11 : prix de vente ; 12 : codes extraits d'une case collée (voir build_data.py)
+    rows.append([bc,nom,marque,ml,typ,qte or 0,pa,round(cap,2),v,cle,pvr,pvw,(r[19] if len(r)>19 else [])])
 rows.sort(key=lambda x:(-(1 if x[5]>0 else 0), 0 if x[8]!='ok' else 1, -x[7]))
 json.dump(rows,open('stock.json','w'),ensure_ascii=False,separators=(',',':'),allow_nan=False)
 

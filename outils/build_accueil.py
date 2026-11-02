@@ -11,16 +11,20 @@ from _comptes import COMPTES
 from _serveur import enligne
 from _fusion import FUSION
 from _langue import LANGUE
+import _langue
 
 LOGO = base64.b64encode(open('logos/site.png', 'rb').read()).decode()
 FOND = base64.b64encode(open('accueil_web.jpg', 'rb').read()).decode()
 
 TPL = r'''<!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8">
+<!-- l'icône d'onglet : Sam a toujours beaucoup d'onglets ouverts ; le flacon du logo, blanc sur rose vif (choisi par Igal), se repère d'un coup d'œil (27 sept. 2026) -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23FF1F7A'/%3E%3Cg fill='none' stroke='%23fff' stroke-width='4' stroke-linejoin='round'%3E%3Crect x='25' y='7' width='14' height='8' rx='2' fill='%23fff'/%3E%3Crect x='28' y='15' width='8' height='6'/%3E%3Cpath d='M19 21 H45 L51 27 V51 L45 57 H19 L13 51 V27 Z'/%3E%3C/g%3E%3Cpath d='M36 28 Q44 29 45 36' stroke='%23fff' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
+<script>/* en anglais ou en espagnol, l'écran reste caché le temps que la traduction passe (quelques ms) : on ne voit jamais le français d'origine */try{var _l=localStorage.getItem('langue-v1');if(_l&&_l!=='fr'){document.documentElement.style.visibility='hidden';setTimeout(function(){document.documentElement.style.visibility='';},1500);}}catch(e){}</script>
 
 <title>Perfumes Trade — ERP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -166,11 +170,15 @@ input[type=text]:focus,input[type=password]:focus{outline:0;border-color:var(--b
 
 </div>
 
+<script>__VOCAB__</script>
 <script src="donnees/langue.js"></script>
+<script>
+/* la langue de l'écran, AVANT le code de la page : le texte n'est jamais vu dans une autre langue */
+__LANGUE__
+</script>
 <script>
 __FUSION__
 __COMPTES__
-__LANGUE__
 
 const VER_URL='__VER__';
 /* Les trois boutons de langue de la porte. On ne passe pas par lgChange : il
@@ -202,7 +210,7 @@ function ecranPremier(){
     <div class="champ"><label class="f" for="i">Identifiant</label>
       <input type="text" id="i" autocomplete="off" placeholder="sam"></div>
     <div class="champ"><label class="f" for="m">Mot de passe</label>
-      <input type="password" id="m" autocomplete="new-password" placeholder="au moins 6 caractères"></div>
+      <input type="password" id="m" autocomplete="new-password" placeholder="au moins 8 caractères"></div>
     <div class="champ"><label class="f" for="m2">Répète le mot de passe</label>
       <input type="password" id="m2" autocomplete="new-password"></div>
     <button class="btn or" id="go">Créer le compte et entrer</button>
@@ -218,7 +226,7 @@ function ecranPremier(){
     const dis=t=>{ $('msg').textContent=t; $('msg').className='msg err'; };
     if(n.length<2) return dis('Mets le nom de la personne.');
     if(!/^[a-zA-Z0-9._-]{2,}$/.test(i)) return dis('Identifiant : lettres, chiffres, point ou tiret, sans espace.');
-    if(m.length<6) return dis('Le mot de passe doit faire au moins 6 caractères.');
+    if(m.length<8) return dis('Le mot de passe doit faire au moins 8 caractères.');
     if(m!==m2) return dis('Les deux mots de passe ne sont pas identiques.');
     try{
       /* provisoire:false — cette personne vient de choisir son mot de passe
@@ -448,7 +456,7 @@ function retireDemo(){
 
 out = (TPL.replace('__FUSION__', FUSION)
           .replace('__COMPTES__', COMPTES)
-          .replace('__LANGUE__', LANGUE)
+          .replace('__LANGUE__', LANGUE).replace('__VOCAB__', _langue.VOCAB)
           .replace('__LOGO__', LOGO)
           .replace('__FOND__', FOND)
           .replace('__VER__', __import__('datetime').datetime.now().strftime('%Y%m%d%H%M')))

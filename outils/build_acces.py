@@ -61,6 +61,9 @@ table.dr{border-collapse:collapse;font-size:13.5px;min-width:100%}
  font-weight:400;margin-top:3px;line-height:1.35}
 .dr .lab{text-align:left;color:var(--ink-2);white-space:nowrap;font-weight:500}
 .dr thead th:first-child{min-width:210px;text-align:left}
+/* sur un écran plus étroit, la grille des droits se resserre au lieu de déborder */
+@media (max-width:1500px){ .dr th,.dr td{padding:9px 8px} .dr .lab{white-space:normal} .dr thead th:first-child{min-width:150px}
+  .dr td.cli button{width:32px} }
 .dr tbody tr:hover td{background:var(--surface-2)}
 .dr tbody tr:hover td.lab{background:var(--surface-2)}
 .oui{color:var(--good);font-weight:700}
@@ -233,8 +236,8 @@ CORPS = """
 JS = r"""
 const D=DROITS;
 const dfr=iso=>{ if(!iso) return 'jamais'; const d=new Date(iso);
-  return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit'})
-    +' à '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); };
+  return d.toLocaleDateString('en-US',{timeZone:'America/New_York',day:'2-digit',month:'2-digit',year:'2-digit'})
+    +' à '+d.toLocaleTimeString('fr-FR',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit'}); };
 
 function jlog(lib,ref,ap){
   const s=session(); const J=lit('crm-journal-v1',[]);
@@ -414,6 +417,7 @@ function dessine(){
       <td class="qd">${u.actif?dfr(u.dernier):'compte fermé'}</td>
       <td class="qd">${dfr(u.cree)}</td>
       <td class="act">
+        <button data-nom="${i}">renommer</button>
         <button data-mod="${i}">rôle</button>
         <button data-mdp="${i}">mot de passe</button>
         <button data-mail="${i}">${u.email?'envoyer l\'accès':'email'}</button>
@@ -428,6 +432,7 @@ function ouvre(mode,i){
   EDIT={mode,i};
   const u=i!=null?comptes()[i]:null;
   $('ftitre').textContent = mode==='new'?'Ouvrir un accès'
+    : mode==='nom'?('Renommer '+u.nom)
     : mode==='role'?('Rôle de '+u.nom)
     : mode==='mail'?('Email de '+u.nom) : ('Nouveau mot de passe pour '+u.nom);
   $('f-role').innerHTML=Object.entries(ROLES).map(([k,r])=>
@@ -438,7 +443,10 @@ function ouvre(mode,i){
   $('f-mail').value=u?(u.email||''):'';
   $('f-role').value=u?u.role:'commercial'; maj();
   $('f-m').value=''; $('f-m2').value=''; $('fmsg').textContent='';
-  $('f-nom').closest('.fg2').hidden = mode!=='new';
+  $('f-nom').closest('.fg2').hidden = (mode!=='new' && mode!=='nom');
+  /* en mode « renommer », l'identifiant de connexion — lui — ne bouge pas */
+  if(mode==='nom'){ $('f-id').disabled=true; $('f-id').closest('.fld').style.opacity='.55'; }
+  else { $('f-id').disabled=false; $('f-id').closest('.fld').style.opacity=''; }
   $('f-role').closest('.fld').hidden = (mode==='mdp'||mode==='mail');
   $('f-mailbloc').hidden = (mode==='role'||mode==='mdp');
   /* le générateur sert quand il y a un mot de passe à poser ; la case d'envoi
@@ -455,10 +463,10 @@ function ouvre(mode,i){
   }
   $('f-m').closest('.fg2').hidden = (mode==='role'||mode==='mail');
   $('f-m').closest('.fg2').nextElementSibling.hidden = (mode==='role'||mode==='mail');
-  $('fok').textContent = mode==='new'?"Ouvrir l'accès" : mode==='role'?'Changer le rôle'
-    : mode==='mail'?'Enregistrer' : 'Changer le mot de passe';
+  $('fok').textContent = mode==='new'?"Ouvrir l'accès" : mode==='nom'?'Renommer'
+    : mode==='role'?'Changer le rôle' : mode==='mail'?'Enregistrer' : 'Changer le mot de passe';
   $('fov').classList.add('on');
-  setTimeout(()=>$(mode==='new'?'f-nom':(mode==='role'?'f-role':'f-m')).focus(),60);
+  setTimeout(()=>$(mode==='new'||mode==='nom'?'f-nom':(mode==='role'?'f-role':'f-m')).focus(),60);
 }
 $('fx').onclick=$('fc').onclick=()=>$('fov').classList.remove('on');
 $('fov').addEventListener('click',e=>{ if(e.target.id==='fov') $('fov').classList.remove('on'); });
@@ -531,7 +539,7 @@ $('add').onclick=()=>ouvre('new',null);
 
 $('tb').addEventListener('click',async e=>{
   const b=e.target.closest('button'); if(!b) return;
-  const iC = b.dataset.mod ?? b.dataset.mdp ?? b.dataset.off;
+  const iC = b.dataset.nom ?? b.dataset.mod ?? b.dataset.mdp ?? b.dataset.off;
   if(iC!==undefined && iC!==null){
     const cible=comptes()[+iC];
     if(!peutToucher(cible)) return refusToucher(cible);
@@ -553,6 +561,7 @@ $('tb').addEventListener('click',async e=>{
     dessine();
     return envoieAcces(comptes().find(x=>x.ident===u.ident), neuf);
   }
+  if(b.dataset.nom!==undefined) return ouvre('nom',+b.dataset.nom);
   if(b.dataset.mod!==undefined) return ouvre('role',+b.dataset.mod);
   if(b.dataset.mdp!==undefined) return ouvre('mdp',+b.dataset.mdp);
   if(b.dataset.off!==undefined){
@@ -578,7 +587,7 @@ $('fok').onclick=async()=>{
       const nom=$('f-nom').value.trim(), id=$('f-id').value.trim();
       if(nom.length<2) return dis('Mets le nom de la personne.');
       if(!/^[a-zA-Z0-9._-]{2,}$/.test(id)) return dis('Identifiant : lettres, chiffres, point ou tiret, sans espace.');
-      if(m.length<6) return dis('Le mot de passe doit faire au moins 6 caractères.');
+      if(m.length<8) return dis('Le mot de passe doit faire au moins 8 caractères.');
       if(m!==m2) return dis('Les deux mots de passe ne sont pas identiques.');
       const s=session();
       if(($('f-role').value==='admin'||$('f-role').value==='patron') && !peut('technique'))
@@ -597,7 +606,15 @@ $('fok').onclick=async()=>{
       }
     } else {
       const L=comptes(), u=L[EDIT.i];
-      if(EDIT.mode==='role'){
+      if(EDIT.mode==='nom'){
+        const av=u.nom, nv=$('f-nom').value.trim();
+        if(nv.length<2) return dis('Donne un nom.');
+        if(nv===av){ $('fov').classList.remove('on'); return; }
+        u.nom=nv; sauveComptes(L);
+        jlog('compte renommé',u.ident,av+' → '+nv);
+        $('fov').classList.remove('on'); dessine();
+        return;
+      } else if(EDIT.mode==='role'){
         const av=(ROLES[u.role]||{}).lib, nv=$('f-role').value;
         if(nv===u.role){ $('fov').classList.remove('on'); return; }
         const amorce = !ilExisteUnAdmin() && peut('acces');   // voir peutToucher
@@ -631,7 +648,7 @@ $('fok').onclick=async()=>{
            là pour ça, quand Sam le décidera */
         return;
       } else {
-        if(m.length<6) return dis('Le mot de passe doit faire au moins 6 caractères.');
+        if(m.length<8) return dis('Le mot de passe doit faire au moins 8 caractères.');
         if(m!==m2) return dis('Les deux mots de passe ne sont pas identiques.');
         await remetMotDePasse(u.ident,m);
         jlog('mot de passe remis — '+u.nom,u.ident,null);

@@ -46,27 +46,29 @@ RECAP_CSS = r'''
 .rc-tab .nm{font-weight:600;display:flex;align-items:center;gap:8px}
 .rc-tab .nm small{display:block;font-weight:400;color:var(--ink-3);font-size:12px;line-height:1.35}
 .rc-sw{display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--c);flex:none}
-.rc-part{display:inline-flex;align-items:center;gap:8px;justify-content:flex-end;width:100%}
-.rc-part i{display:inline-block;height:8px;border-radius:4px;background:var(--c);width:calc(var(--w)*1px);min-width:2px;max-width:70px}
-.rc-part b{font-weight:600;font-variant-numeric:tabular-nums;color:var(--ink-2);white-space:nowrap}
+.rc-part{display:flex;align-items:center;gap:6px;justify-content:flex-end;margin-top:3px}
+.rc-part i{display:inline-block;height:5px;border-radius:3px;background:var(--c);width:calc(var(--w)*1px);min-width:2px;max-width:60px}
+.rc-part b{font-weight:500;font-size:11.5px;font-variant-numeric:tabular-nums;color:var(--ink-3);white-space:nowrap}
 .rc-tab td.r{white-space:nowrap}
 .rc .neg{color:var(--crit)}
 .rc-met{display:flex;gap:6px;margin:0 0 10px;flex-wrap:wrap}
 .rc-met .rc-chip{font-size:12.5px;padding:5px 11px}
 .rc-pw{display:grid;grid-template-columns:auto 1fr;gap:0 6px}
 .rc-y{display:flex;flex-direction:column;justify-content:space-between;font-size:11px;color:var(--ink-3);text-align:right;font-variant-numeric:tabular-nums;height:230px}
-.rc-plot{position:relative;height:230px;border-left:1px solid var(--line);border-bottom:1px solid var(--line)}
-.rc-gl{position:absolute;left:0;right:0;border-top:1px dashed var(--line-2);height:0}
+.rc-plot{position:relative;height:230px;border-left:0;border-bottom:1px solid var(--line)}
+.rc-gl{position:absolute;left:0;right:0;border-top:1px solid var(--line-2);height:0}
 .rc-gl.zero{border-top:1px solid var(--ink-3)}
 .rc-cols{position:absolute;inset:0;display:flex;align-items:stretch}
 .rc-col{flex:1 1 0;position:relative;min-width:0;cursor:default;outline:none}
-.rc-col:hover .rc-b,.rc-col:focus .rc-b{filter:brightness(.92)}
-.rc-b{position:absolute;left:18%;right:18%;top:0;bottom:0}
+.rc-col:hover .rc-b,.rc-col:focus .rc-b{filter:brightness(.9)}
+.rc-b{position:absolute;left:50%;transform:translateX(-50%);width:62%;max-width:44px;top:0;bottom:0}
 .rc-s{position:absolute;left:0;right:0;background:var(--c);border-top:2px solid var(--surface)}
-.rc-s.top{border-radius:3px 3px 0 0}
-.rc-s.neg{border-top:0;border-bottom:2px solid var(--surface)}
-.rc-x{display:grid;grid-column:2;font-size:11px;color:var(--ink-3);margin-top:4px}
+.rc-s.top{border-radius:4px 4px 0 0}
+.rc-s.neg{border-top:0;border-bottom:2px solid var(--surface);border-radius:0 0 4px 4px}
+.rc-x{display:grid;grid-column:2;font-size:11px;color:var(--ink-3);margin-top:6px}
 .rc-x span{text-align:center;overflow:hidden;white-space:nowrap}
+.rc-x i{font-style:normal;font-variant-numeric:tabular-nums}
+.rc-gl{border-top-style:solid;border-top-color:var(--line-2);opacity:.9}
 .rc-leg{display:flex;flex-wrap:wrap;gap:6px 14px;margin:12px 0 0;font-size:12.5px;color:var(--ink-2)}
 .rc-leg span{display:inline-flex;align-items:center;gap:6px}
 .rc-tip{position:fixed;z-index:50;pointer-events:none;background:var(--ink);color:var(--surface);font-size:12.5px;line-height:1.5;padding:8px 11px;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.18);max-width:260px;display:none}
@@ -223,6 +225,10 @@ function rcBuckets(P,S){
   const j=x=>{ const [Y,M,D]=x.split('-').map(Number); return new Date(Y,M-1,D); };
   let a=P.a, b=P.b;
   if(P.tout){ const ds=S.map(v=>v.d).filter(Boolean).sort(); if(!ds.length) return {K:[],jour:false}; a=ds[0]; b=ds[ds.length-1]; }
+  /* un mois en cours occupe tout le mois (les jours à venir restent vides), une année en cours ses douze mois :
+     deux jours de ventes ne font pas deux colonnes géantes, et le dessin garde la même forme d'un mois à l'autre */
+  if(P.cour&&P.an) b=rcISO(new Date(+a.slice(0,4),11,31));
+  else if(P.cour) b=rcISO(new Date(+a.slice(0,4),+a.slice(5,7),0));
   const A=j(a), B=j(b); const nJ=Math.round((B-A)/86400e3)+1;
   const K=[];
   if(nJ<=92&&!P.tout&&!P.an){ for(let d=new Date(A);d<=B;d.setDate(d.getDate()+1)){ const k=rcISO(d);
@@ -286,27 +292,29 @@ function rcDessine(){
     z.innerHTML=h; rcBranche(); return;
   }
   const pct=(a,b)=>(b==null||Math.abs(b)<0.005)?null:(a-b)/Math.abs(b)*100;
-  const evo=(a,b)=>{ if(!RP) return ''; const p=pct(a,b); const lib=rcLibPrec(RC.sel,Q);
+  const evo=(a,b,fmt)=>{ if(!RP) return ''; const p=pct(a,b); const lib=rcLibPrec(RC.sel,Q); fmt=fmt||money;
     if(p==null) return `<span class="e eq">${L3('rien à comparer','nothing to compare','nada que comparar')} (${esc(lib)})</span>`;
     const s=p>0.5?'up':p<-0.5?'dn':'eq'; const fl=s==='up'?'▲':s==='dn'?'▼':'=';
+    /* un pourcentage à cinq chiffres ne dit rien (« +19 511 % » quand le mois d'avant n'avait presque rien) : on donne le chiffre d'avant */
+    if(Math.abs(p)>500) return `<span class="e ${s}">${fl} <span data-nolang>${esc(lib)}</span> : ${fmt(b)}</span>`;
     return `<span class="e ${s}">${fl} ${nf(Math.round(Math.abs(p)))} % vs <span data-nolang>${esc(lib)}</span></span>`; };
   const T=R.T, TP=RP?RP.T:null;
   const panier=T.n?T.ca/T.n:null, pctMg=T.ca>0?T.mg/T.ca*100:null;
   h+=`<div class="kpis">
     <div class="kpi"><div class="v ${T.ca<0?'neg':''}">${money(T.ca)}</div><div class="k">${L3('Chiffre d\'affaires, remboursements déduits','Revenue, refunds deducted','Facturación, reembolsos deducidos')}</div>${evo(T.ca,TP&&TP.ca)}</div>
     <div class="kpi"><div class="v ${T.mg<0?'neg':''}">${money(T.mg)}</div><div class="k">${L3('Marge nette','Net margin','Margen neto')}${pctMg!=null?' · '+nf(Math.round(pctMg*10)/10)+' %':''}${T.sansPa?' · <span class="neg">'+L3(`${T.sansPa} ligne${T.sansPa>1?'s':''} sans prix d'achat`,`${T.sansPa} line${T.sansPa>1?'s':''} without purchase price`,`${T.sansPa} línea${T.sansPa>1?'s':''} sin precio de compra`)+'</span>':''}</div>${evo(T.mg,TP&&TP.mg)}</div>
-    <div class="kpi"><div class="v">${nf(T.q)}</div><div class="k">${L3('flacons vendus','bottles sold','frascos vendidos')}</div>${evo(T.q,TP&&TP.q)}</div>
-    <div class="kpi"><div class="v">${nf(T.n)}</div><div class="k">${L3('ventes','sales','ventas')}${panier!=null?' · '+L3('panier moyen','average basket','cesta media')+' '+money(panier):''}${T.nR?' · '+nf(T.nR)+' '+L3('remboursement'+(T.nR>1?'s':''),'refund'+(T.nR>1?'s':''),'reembolso'+(T.nR>1?'s':'')):''}</div>${evo(T.n,TP&&TP.n)}</div>
+    <div class="kpi"><div class="v">${nf(T.q)}</div><div class="k">${L3('flacons vendus','bottles sold','frascos vendidos')}</div>${evo(T.q,TP&&TP.q,nf)}</div>
+    <div class="kpi"><div class="v">${nf(T.n)}</div><div class="k">${L3('ventes','sales','ventas')}${panier!=null?' · '+L3('panier moyen','average basket','cesta media')+' '+money(panier):''}${T.nR?' · '+nf(T.nR)+' '+L3('remboursement'+(T.nR>1?'s':''),'refund'+(T.nR>1?'s':''),'reembolso'+(T.nR>1?'s':'')):''}</div>${evo(T.n,TP&&TP.n,nf)}</div>
   </div>`;
   const ordre=Object.values(R.G).sort((a,b)=>b.ca-a.ca||b.q-a.q).map(o=>o.canal);
   const caPos=Object.values(R.G).reduce((a,o)=>a+Math.max(0,o.ca),0)||1;
-  const sous=o=>{ if(rcId(o.canal)!=='pc') return ''; const ks=Object.keys(o.ou).filter(k=>o.ou[k].q||o.ou[k].ca); if(!ks.length) return '';
+  const sous=o=>{ if(rcId(o.canal)!=='pc') return ''; const ks=Object.keys(o.ou).filter(k=>k&&(o.ou[k].q||o.ou[k].ca)); if(!ks.length) return '';
     return `<small>${ks.sort().map(k=>rcOuLib(k)+' <b data-nolang>'+money(o.ou[k].ca)+'</b>').join(' · ')}</small>`; };
   h+=`<div class="rc-grid"><div class="rc-card"><h3>${L3('Par canal','By channel','Por canal')}</h3>
-    <table class="rc-tab" id="rc-tab"><thead><tr><th>${L3('Canal','Channel','Canal')}</th><th class="r">${L3('Ventes','Sales','Ventas')}</th><th class="r">${L3('Flacons','Bottles','Frascos')}</th><th class="r">${L3("Chiffre d'affaires",'Revenue','Facturación')}</th><th class="r">${L3('Marge nette','Net margin','Margen neto')}</th><th class="r">${L3('Part','Share','Parte')}</th></tr></thead><tbody>
+    <table class="rc-tab" id="rc-tab"><thead><tr><th>${L3('Canal','Channel','Canal')}</th><th class="r">${L3('Ventes','Sales','Ventas')}</th><th class="r">${L3('Flacons','Bottles','Frascos')}</th><th class="r">${L3("Chiffre d'affaires",'Revenue','Facturación')}</th><th class="r">${L3('Marge nette','Net margin','Margen neto')}</th></tr></thead><tbody>
     ${ordre.map(n=>{ const o=R.G[n]; const part=Math.max(0,o.ca)/caPos*100;
-      return `<tr data-c="${esc(n)}"><td><div class="nm"><i class="rc-sw" style="--c:${rcCoul(n)}"></i><span data-nolang>${esc(rcNomVu(n))}</span></div>${sous(o)}</td><td class="r">${nf(o.n)}${o.nR?` <small class="neg">−${nf(o.nR)}</small>`:''}</td><td class="r">${nf(o.q)}</td><td class="r ${o.ca<0?'neg':''}"><b>${money(o.ca)}</b></td><td class="r ${o.mg<0?'neg':''}">${money(o.mg)}${o.sansPa?' <small class="neg" title="'+esc(L3('lignes sans prix d\'achat','lines without purchase price','líneas sin precio de compra'))+'">?</small>':''}</td><td class="r"><span class="rc-part"><i style="--c:${rcCoul(n)};--w:${Math.round(part*0.9)}"></i><b>${nf(Math.round(part))} %</b></span></td></tr>`; }).join('')}
-    <tr class="tot"><td>${L3('Total','Total','Total')}</td><td class="r">${nf(T.n)}</td><td class="r">${nf(T.q)}</td><td class="r ${T.ca<0?'neg':''}">${money(T.ca)}</td><td class="r ${T.mg<0?'neg':''}">${money(T.mg)}</td><td></td></tr></tbody></table></div>
+      return `<tr data-c="${esc(n)}"><td><div class="nm"><i class="rc-sw" style="--c:${rcCoul(n)}"></i><span data-nolang>${esc(rcNomVu(n))}</span></div>${sous(o)}</td><td class="r">${nf(o.n)}${o.nR?` <small class="neg">−${nf(o.nR)}</small>`:''}</td><td class="r">${nf(o.q)}</td><td class="r ${o.ca<0?'neg':''}"><b>${money(o.ca)}</b><span class="rc-part" title="${esc(L3('part du chiffre d\'affaires','share of revenue','parte de la facturación'))}"><i style="--c:${rcCoul(n)};--w:${Math.round(part*0.6)}"></i><b>${nf(Math.round(part))} %</b></span></td><td class="r ${o.mg<0?'neg':''}">${money(o.mg)}${o.sansPa?' <small class="neg" title="'+esc(L3('lignes sans prix d\'achat','lines without purchase price','líneas sin precio de compra'))+'">?</small>':''}</td></tr>`; }).join('')}
+    <tr class="tot"><td>${L3('Total','Total','Total')}</td><td class="r">${nf(T.n)}</td><td class="r">${nf(T.q)}</td><td class="r ${T.ca<0?'neg':''}">${money(T.ca)}</td><td class="r ${T.mg<0?'neg':''}">${money(T.mg)}</td></tr></tbody></table></div>
     <div class="rc-card"><h3>${L3('Au fil du temps','Over time','A lo largo del tiempo')}</h3>
       <div class="rc-met">${['ca','mg','q'].map(mt=>`<button type="button" class="rc-chip ${RC.metric===mt?'on':''}" data-rcm="${mt}">${rcMetLib(mt)}</button>`).join('')}</div>
       ${rcChart(P,R,ordre,RC.metric)}</div></div>

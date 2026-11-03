@@ -58,9 +58,23 @@ function glAjoute(role,texte,cls){
   const d=document.createElement('div'); d.className='gl-msg '+(role==='user'?'u':'g')+(cls?' '+cls:''); d.textContent=texte; d.setAttribute('data-nolang','');
   b.appendChild(d); b.scrollTop=b.scrollHeight; return d;
 }
-/* la voix : celle du navigateur pour l'instant (la voix clonée d'Igal remplacera cette fonction, rien d'autre) */
+/* la voix : celle d'Igal (clonée, produite par le cockpit) quand le cockpit la propose ; sinon, ou si elle rate (quota du
+   mois, panne), celle du navigateur. Galou ne se tait jamais. */
+let GL_AUDIO=null, GL_VOIX_IGAL=null;   /* GL_VOIX_IGAL : null = on ne sait pas encore, true/false = réponse du cockpit (etat.voix) */
 function glDit(texte){
-  if(!GL_VOIX||!('speechSynthesis' in window)) return;
+  if(!GL_VOIX) return;
+  try{ if(GL_AUDIO){ GL_AUDIO.pause(); GL_AUDIO=null; } }catch(e){}
+  if(GL_VOIX_IGAL&&glPeut()){
+    fetch(CK_URL+'/api/o/'+CK_ORG+'/galou/voix',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},body:JSON.stringify({texte})})
+      .then(r=>{ if(!r.ok) throw new Error('voix '+r.status); return r.blob(); })
+      .then(b=>{ const u=URL.createObjectURL(b); const a=new Audio(u); GL_AUDIO=a; a.onended=()=>{ URL.revokeObjectURL(u); if(GL_AUDIO===a) GL_AUDIO=null; }; return a.play(); })
+      .catch(()=>glDitNavigateur(texte));
+    return;
+  }
+  glDitNavigateur(texte);
+}
+function glDitNavigateur(texte){
+  if(!('speechSynthesis' in window)) return;
   try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(texte); u.lang=glLang(); u.rate=1.02;
     const V=speechSynthesis.getVoices().filter(v=>v.lang&&v.lang.toLowerCase().startsWith(glLang().slice(0,2)));
     const pref=V.find(v=>/thomas|nicolas|daniel|paul|jorge|diego|male|homme/i.test(v.name))||V.find(v=>!/female|femme|amelie|audrey|marie|monica|paulina|samantha|victoria/i.test(v.name))||V[0];
@@ -96,10 +110,10 @@ function glMicro(){
   r.onresult=ev=>{ let t=''; for(let i=ev.resultIndex;i<ev.results.length;i++){ t+=ev.results[i][0].transcript; if(ev.results[i].isFinal) fin=t; } if(ta) ta.value=t; };
   r.onend=()=>{ GL_REC=null; if(bt) bt.classList.remove('on'); const t=(fin||(ta&&ta.value)||'').trim(); if(t) glEnvoie(t); };
   r.onerror=()=>{ GL_REC=null; if(bt) bt.classList.remove('on'); };
-  try{ speechSynthesis&&speechSynthesis.cancel(); }catch(e){}
+  try{ speechSynthesis&&speechSynthesis.cancel(); if(GL_AUDIO){ GL_AUDIO.pause(); GL_AUDIO=null; } }catch(e){}
   GL_REC=r; if(bt) bt.classList.add('on'); r.start();
 }
-function glFerme(){ const ov=document.getElementById('gl-ov'); if(ov) ov.remove(); try{ speechSynthesis&&speechSynthesis.cancel(); }catch(e){} if(GL_REC){ try{ GL_REC.stop(); }catch(e){} GL_REC=null; } }
+function glFerme(){ const ov=document.getElementById('gl-ov'); if(ov) ov.remove(); try{ speechSynthesis&&speechSynthesis.cancel(); if(GL_AUDIO){ GL_AUDIO.pause(); GL_AUDIO=null; } }catch(e){} if(GL_REC){ try{ GL_REC.stop(); }catch(e){} GL_REC=null; } }
 function galouOuvre(){
   if(document.getElementById('gl-ov')) return;
   glStyle();
@@ -111,7 +125,7 @@ function galouOuvre(){
     +'<div class="gl-raccs"><button data-q="'+glT('Fais-moi le récap de la journée d\'hier.','Give me yesterday\'s recap.','Hazme el resumen de ayer.')+'">'+glT('Récap d\'hier','Yesterday\'s recap','Resumen de ayer')+'</button>'
     +'<button data-q="'+glT('Qu\'est-ce que je dois recommander rapidement ?','What should I reorder quickly?','¿Qué debo volver a pedir rápido?')+'">'+glT('À recommander','To reorder','Para pedir')+'</button>'
     +'<button data-q="'+glT('Est-ce que j\'ai loupé des ventes cette semaine ?','Did I miss any sales this week?','¿Se me escapó alguna venta esta semana?')+'">'+glT('Ventes loupées ?','Missed sales?','¿Ventas perdidas?')+'</button></div>'
-    +'<div class="gl-opts"><label><input type="checkbox" id="gl-voix" '+(GL_VOIX?'checked':'')+'> '+glT('Galou parle à voix haute','Galou speaks out loud','Galou habla en voz alta')+'</label><button class="lnk" id="gl-raz" style="font-size:12px">'+glT('Nouvelle conversation','New conversation','Nueva conversación')+'</button></div>'
+    +'<div class="gl-opts"><label><input type="checkbox" id="gl-voix" '+(GL_VOIX?'checked':'')+'> '+glT('Galou parle à voix haute','Galou speaks out loud','Galou habla en voz alta')+' <span id="gl-sousvoix" data-nolang></span></label><button class="lnk" id="gl-raz" style="font-size:12px">'+glT('Nouvelle conversation','New conversation','Nueva conversación')+'</button></div>'
     +'<div class="gl-f"><textarea id="gl-t" rows="1" placeholder="'+glT('Écris à Galou, ou appuie sur le micro et parle…','Write to Galou, or press the mic and talk…','Escribe a Galou, o pulsa el micro y habla…')+'"></textarea>'
     +'<button class="mic" id="gl-mic" title="'+glT('Parler','Talk','Hablar')+'">🎤</button><button class="pri" id="gl-go">'+glT('Envoyer','Send','Enviar')+'</button></div></div>';
   document.body.appendChild(ov);
@@ -119,7 +133,7 @@ function galouOuvre(){
   document.getElementById('gl-x').onclick=glFerme;
   document.getElementById('gl-go').onclick=()=>glEnvoie(document.getElementById('gl-t').value);
   document.getElementById('gl-mic').onclick=glMicro;
-  document.getElementById('gl-voix').onchange=e=>{ GL_VOIX=e.target.checked; try{ localStorage.setItem('galou-voix-v1',GL_VOIX?'1':'0'); }catch(e2){} if(!GL_VOIX){ try{ speechSynthesis.cancel(); }catch(e3){} } };
+  document.getElementById('gl-voix').onchange=e=>{ GL_VOIX=e.target.checked; try{ localStorage.setItem('galou-voix-v1',GL_VOIX?'1':'0'); }catch(e2){} if(!GL_VOIX){ try{ speechSynthesis.cancel(); if(GL_AUDIO){ GL_AUDIO.pause(); GL_AUDIO=null; } }catch(e3){} } };
   document.getElementById('gl-raz').onclick=()=>{ GL_CONV=[]; glSauve(); document.getElementById('gl-b').innerHTML=''; glAccueil(nom); };
   document.getElementById('gl-t').onkeydown=e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); glEnvoie(e.target.value); } };
   ov.querySelectorAll('.gl-raccs button').forEach(b=>b.onclick=()=>glEnvoie(b.dataset.q));
@@ -127,7 +141,8 @@ function galouOuvre(){
   try{ const R=lit('reglages-v1',{})||{}; if(R.galouPhoto){ document.getElementById('gl-av').innerHTML='<img src="'+R.galouPhoto+'" alt="Igal">'; } }catch(e){}
   if(GL_CONV.length) GL_CONV.forEach(m=>glAjoute(m.role,m.content)); else glAccueil(nom);
   if(!glPeut()){ glAjoute('assistant',glT('Il faut être connecté à l\'ERP en ligne pour parler à Galou.','You need to be signed in to the online ERP to talk to Galou.','Hay que estar conectado al ERP en línea para hablar con Galou.')); return; }
-  if(GL_PRET===null){ fetch(CK_URL+'/api/o/'+CK_ORG+'/galou/etat',{headers:{Authorization:'Bearer '+ckTok()}}).then(r=>r.json()).then(j=>{ GL_PRET=!!(j&&j.pret);
+  if(GL_PRET===null){ fetch(CK_URL+'/api/o/'+CK_ORG+'/galou/etat',{headers:{Authorization:'Bearer '+ckTok()}}).then(r=>r.json()).then(j=>{ GL_PRET=!!(j&&j.pret); GL_VOIX_IGAL=!!(j&&j.voix);
+      const sv=document.getElementById('gl-sousvoix'); if(sv) sv.textContent=GL_VOIX_IGAL?glT('(la voix d\'Igal)','(Igal\'s voice)','(la voz de Igal)'):'';
       if(!GL_PRET) glAjoute('assistant',glT('Galou n\'est pas encore branché : il manque sa clé dans le cockpit (Igal).','Galou is not connected yet: his key is missing in the cockpit (Igal).','Galou aún no está conectado: falta su clave en el cockpit (Igal).')); }).catch(()=>{}); }
   setTimeout(()=>{ const t=document.getElementById('gl-t'); if(t) t.focus(); },50);
 }

@@ -72,6 +72,9 @@ color:var(--iris);line-height:1.4}
 .rest::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
 .chute{color:var(--crit);font-weight:700}
 .wrapx{overflow-x:auto;margin-bottom:8px}
+.tri-ligne{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:12.5px;color:var(--ink-3)}
+.tri-ligne select{font-family:inherit;font-size:13px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.tri-ligne select.on{border-color:var(--iris);color:var(--iris);font-weight:600}
 .vide{border:2px dashed var(--line);border-radius:11px;padding:30px 28px;text-align:center;
 background:var(--surface-2);max-width:64ch;margin:0 auto}
 .vide p{margin:0;font-size:14px;color:var(--ink-2);line-height:1.65}
@@ -325,8 +328,17 @@ const PC_KO=(REG.alerteStockPC===false)?[]:FACT.filter(f=>f&&f.sens==='achat'&&f
        ||(f.pcShopify.etat==='attente'&&Date.now()-new Date(f.t||0).getTime()>180000)))   /* « attente » trop longue : la page a été fermée avant la fin de l'envoi */
   .sort((a,b)=>String(b.t||'').localeCompare(String(a.t||'')));
 const quand=t=>{ if(!t) return ''; try{ return new Date(t).toLocaleString('en-US',{timeZone:'America/New_York',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } };
+/* 3 nov. 2026 (Igal) : Sam choisit l'ordre de la liste — capital en jeu (comme avant), nom, ou reste en stock. Retenu sur le poste. */
+const K_TRI_DIFF='tableau-tri-diff-v1'; let TRI_DIFF=''; try{ TRI_DIFF=localStorage.getItem(K_TRI_DIFF)||''; }catch(e){}
+const TRIS_DIFF=[['','Trier : capital en jeu'],['nom|asc','Nom, de A à Z'],['nom|desc','Nom, de Z à A'],['qte|desc','Reste, du plus grand'],['qte|asc','Reste, du plus petit']];
+function trieDiff(L){
+  const [k,sens]=String(TRI_DIFF||'').split('|'); if(!k) return L;
+  const s=sens==='desc'?-1:1;
+  const nom=p=>((p.marque||'')+' '+(p.nom||'')).trim();
+  return L.slice().sort((a,b)=>k==='nom'?s*nom(a.p).localeCompare(nom(b.p),'fr',{sensitivity:'base'}):(s*((+a.p.qte||0)-(+b.p.qte||0))||cap(b.p)-cap(a.p)));
+}
 function blocDiff(){
-  const L=DIFF.L, n=DIFF.n, tot=L.length;
+  const L=trieDiff(DIFF.L), n=DIFF.n, tot=L.length;
   const lu=CAN_DIFF.filter(([id])=>DIFF.OK[id]);
   let h=`<h2 class="sec">Pas en vente partout <em>en stock, mais absent d'au moins un canal</em>
       <a href="catalogue.html?diff=any">Voir dans le Catalogue</a></h2>`;
@@ -338,6 +350,7 @@ function blocDiff(){
       <p>${CAN_DIFF.map(([id,nom])=>DIFF.OK[id]?`<a href="catalogue.html?diff=${id}" data-nolang><b>${nf(n[id])}</b> ${esc(nom)}</a>`:'').filter(Boolean).join(' · ')}.
       « Mettre en ligne » ouvre la fiche du parfum sur « Mes canaux de vente » : chaque site où il manque a son bouton
       (« Mettre en ligne », ou « Remettre en vente » s'il y est retiré de la vente), avec son prix à côté. La liste se met à jour quand tu fermes la fiche.</p></div>
+    <div class="tri-ligne"><label for="tri-diff">Ordre</label><select id="tri-diff" class="${TRI_DIFF?'on':''}">${TRIS_DIFF.map(([v,l])=>`<option value="${v}" ${TRI_DIFF===v?'selected':''}>${l}</option>`).join('')}</select></div>
     <div class="wrapx"><table class="tbl"><thead><tr><th>Référence</th><th class="r">Reste</th><th class="r">Prix d'achat</th>
       ${CAN_DIFF.map(([id,nom])=>`<th class="c" data-nolang>${esc(nom)}</th>`).join('')}<th></th></tr></thead><tbody>
     ${L.slice(0,vusDiff).map(({p,st})=>`<tr>
@@ -869,6 +882,7 @@ function dessine(){
   try{ caisseBranche(); }catch(e){}
   const b=$('plus'); if(b) b.onclick=()=>{ vus+=25; dessine(); };
   const bd=$('plusDiff'); if(bd) bd.onclick=()=>{ vusDiff+=50; dessine(); };
+  const td=$('tri-diff'); if(td) td.onchange=()=>{ TRI_DIFF=td.value; try{ TRI_DIFF?localStorage.setItem(K_TRI_DIFF,TRI_DIFF):localStorage.removeItem(K_TRI_DIFF); }catch(e){} const y=window.scrollY; dessine(); window.scrollTo(0,y); };
   /* la fiche du Catalogue s'ouvre par-dessus le tableau de bord, la fenêtre « Mettre en ligne » déjà ouverte ; à la fermeture
      le relevé des canaux est relu et la liste redessinée à la même hauteur */
   document.querySelectorAll('[data-mel]').forEach(b=>b.onclick=()=>{

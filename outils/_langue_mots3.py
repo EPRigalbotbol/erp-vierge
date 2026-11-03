@@ -1651,3 +1651,16 @@ MOTS3.update({
          ", así que el margen no se calcula — y esta línea no cuenta en la tasa de margen de arriba. Corrige el precio de compra en la ficha del perfume."],
     "Ouvrir cette vente et saisir le prix d'achat": ["Open this sale and enter the cost", "Abrir esta venta y escribir el precio de compra"],
 })
+
+# ---- Inventaire (les deux) et tableau de bord, 3 nov. 2026 : le menu « Trier » demandé par Igal ----
+MOTS3.update({
+    "Trier : capital en jeu": ["Sort: capital at stake", "Ordenar: capital en juego"],
+    "Nom, de A à Z": ["Name, A to Z", "Nombre, de A a Z"],
+    "Nom, de Z à A": ["Name, Z to A", "Nombre, de Z a A"],
+    "Stock, du plus grand": ["Stock, largest first", "Stock, de mayor a menor"],
+    "Stock, du plus petit": ["Stock, smallest first", "Stock, de menor a mayor"],
+    "Reste, du plus grand": ["Remaining, largest first", "Restante, de mayor a menor"],
+    "Reste, du plus petit": ["Remaining, smallest first", "Restante, de menor a mayor"],
+    "L'ordre de la liste": ["The order of the list", "El orden de la lista"],
+    "Ordre": ["Order", "Orden"],
+})

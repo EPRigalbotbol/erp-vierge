@@ -193,6 +193,7 @@ input[type=search],select{font-family:inherit;font-size:13.5px;color:var(--ink);
 border:1px solid var(--line);border-radius:3px;padding:8px 11px}
 input[type=search]{flex:1;min-width:190px}
 input:focus,select:focus{outline:2px solid var(--iris);outline-offset:1px}
+select#ftri.on{border-color:var(--iris);color:var(--iris);font-weight:600}
 button{font-family:inherit;font-size:13.5px;font-weight:500;color:var(--ink-2);background:var(--surface);
 border:1px solid var(--line);border-radius:3px;padding:8px 14px;cursor:pointer}
 button:hover{border-color:var(--iris);color:var(--iris)}
@@ -364,6 +365,9 @@ __BARRE__
     <select id="fe"><option value="">Tout afficher</option>
       <option value="todo">Reste à compter</option><option value="done">Déjà comptées</option>
       <option value="gap">Avec écart</option></select>
+    <select id="ftri" title="L'ordre de la liste"><option value="">Trier : capital en jeu</option>
+      <option value="nom|asc">Nom, de A à Z</option><option value="nom|desc">Nom, de Z à A</option>
+      <option value="th|desc">Stock, du plus grand</option><option value="th|asc">Stock, du plus petit</option></select>
     <span id="exp"></span>
     <button onclick="window.print()">Imprimer</button>
     <button id="raz">Effacer la saisie</button>
@@ -613,7 +617,13 @@ function peintTri(){
     th.classList.remove('tri-asc','tri-desc');
     if(TRI&&th.dataset.tri===TRI.k) th.classList.add(TRI.sens==='desc'?'tri-desc':'tri-asc');
   });
+  /* 3 nov. 2026 (Igal) : le même tri, visible dans un menu au-dessus de la liste — un clic sur un titre de colonne et le menu
+     disent toujours la même chose ; un tri que le menu ne propose pas (capital, écart…) le remet sur sa première ligne */
+  const m=$('ftri'); if(m){ const v=TRI?TRI.k+'|'+TRI.sens:''; m.value=[...m.options].some(o=>o.value===v)?v:''; m.classList.toggle('on',!!m.value); }
 }
+{ const m=$('ftri'); if(m) m.onchange=()=>{ const [k,sens]=m.value.split('|'); TRI=k?{k,sens:sens||'asc'}:null;
+    try{ TRI?localStorage.setItem(K_TRI,JSON.stringify(TRI)):localStorage.removeItem(K_TRI); }catch(e){}
+    peintTri(); rend(true); }; }
 document.querySelectorAll('thead th[data-tri]').forEach(th=>th.onclick=()=>{
   const k=th.dataset.tri;
   if(!TRI||TRI.k!==k) TRI={k,sens:'asc'};

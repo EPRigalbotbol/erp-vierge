@@ -476,7 +476,7 @@ CSS_QUOTES = r'''
 .lsc-f{padding:10px 4px}.lsc-f h4{margin:0 0 10px}
 .lsc-g{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px}.lsc-g label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--ink-3)}
 .lsc-lg{width:100%;border-collapse:collapse}.lsc-lg td,.lsc-lg th{padding:7px 8px;border-bottom:1px solid var(--line-2);text-align:left}
-.lsc-lg .r{text-align:right}.lsc-x{display:block;color:var(--warn);font-weight:600;margin-bottom:4px}.lsc-ch{width:100%;max-width:520px}
+.lsc-lg .r{text-align:right}.lsc-x{display:block;color:var(--warn);font-weight:600;margin-bottom:4px}.lsc-s{display:block;color:var(--ink-3);font-weight:500}.lsc-ch{width:100%;max-width:520px}
 .lsc-m{color:var(--ink-2);min-height:18px}.lsc-a{display:flex;gap:8px;justify-content:flex-end}
 
 .mdz{position:relative;margin-top:8px;border:2px dashed var(--line);border-radius:10px;padding:12px 14px;text-align:center;color:var(--ink-2);cursor:pointer;background:var(--surface)}
@@ -3242,8 +3242,15 @@ const lsqAArchiver=x=>!!(x&&x.erp&&x.erp.etat==='vendue'&&x.statut!=='ARCHIVED'&
 function lsqLignes(x){
   const C=(typeof faContexte==='function')?faContexte():null;
   return (x.lignes||[]).map((l,j)=>{ const choix=(x.erp&&x.erp.choix&&x.erp.choix[j])||null;
-    const cle=choix||(C&&l.bc?C.cleDe({bc:l.bc,des:l.des}):null)||null; return {j,cle,bc:l.bc||'',des:l.des||'',q:+l.q||0,p:l.p==null?null:+l.p,remise:+l.remise||0}; });
+    const cle=choix||(C&&l.bc?C.cleDe({bc:l.bc,des:l.des}):null)||null;
+    /* 3 nov. 2026 (Sam : « il faut qu'on puisse rajouter les card charge ») : une ligne de la caisse qui n'est pas un parfum
+       (card charge, sac, port…) n'est plus « à identifier » : c'est un frais. Le card charge devient les « Frais carte » de la
+       facture, payée par carte ; les autres frais sont mis de côté comme pour une vente de caisse. */
+    const service=!cle&&typeof faEstService==='function'&&faEstService({bc:l.bc,des:l.des});
+    const carte=service&&/card\s*charge|cc\s*fee|frais\s*(?:de\s*)?carte|credit\s*card/i.test(String(l.des||''));
+    return {j,cle,bc:l.bc||'',des:l.des||'',q:+l.q||0,p:l.p==null?null:+l.p,remise:+l.remise||0,service:!!service,carte:!!carte}; });
 }
+const lsqFraisCarte=LG=>Math.round(LG.filter(l=>l.carte).reduce((a,l)=>a+(+l.q||0)*(+l.p||0),0)*100)/100;
 function lsqMaj(id,fn){ const L=lsqTous(); const x=L.find(z=>z&&z.id===id); if(!x) return null; fn(x); ecrit(KDEV,L); return x; }
 function lscPeint(){
   const el=$('lsc'); if(!el) return;
@@ -3346,26 +3353,28 @@ function lsqAction(a,id){
   else if(a==='print') setTimeout(()=>$('doc-print').click(),150);
 }
 function lsqFiche(x){
-  const LG=lsqLignes(x), inc=LG.filter(l=>!l.cle).length;
+  const LG=lsqLignes(x), inc=LG.filter(l=>!l.cle&&!l.service).length, fc=lsqFraisCarte(LG);
   const auj=(typeof jourMiami==='function'?jourMiami():new Date().toISOString().slice(0,10));
+  const pay=(x.erp&&x.erp.pay)||(fc>0?'carte':'zelle');
   return `<div class="lsc-f" data-c="${esc(x.id)}"><h4>Convertir en vente — devis ${esc(x.num||'')}</h4>
     <div class="lsc-g"><label>Client<input class="sel" id="lsc-cli" value="${esc(x.client||'')}" placeholder="Nom du client"></label>
       <label>Date de la vente<input class="sel" type="date" id="lsc-d" value="${esc(auj)}"></label>
-      <label>Paiement<input class="sel" value="Zelle" disabled></label></div>
+      <label>Paiement<select class="sel" id="lsc-pay"><option value="zelle" ${pay==='zelle'?'selected':''}>Zelle</option><option value="carte" ${pay==='carte'?'selected':''}>Carte bancaire</option></select></label></div>
     <table class="lsc-lg"><thead><tr><th>Parfum</th><th class="r">Qté</th><th class="r">Prix</th><th class="r">Stock</th></tr></thead><tbody>
-    ${LG.map(l=>`<tr><td>${l.cle?`<b>${esc(fNomComplet(l.cle))}</b><small> ${esc(l.bc)}</small>`
-        :`<span class="lsc-x">à identifier — la caisse dit « ${esc(l.des||l.bc||'?')} »</span><input class="sel lsc-ch" list="lsc-cat" data-j="${l.j}" placeholder="Tape le nom ou le code-barres du parfum…" autocomplete="off">`}</td>
+    ${LG.map(l=>`<tr>${l.service?`<td><span class="lsc-s">${l.carte?'Frais carte':'Frais'} — la caisse dit « ${esc(l.des||'?')} »${l.carte?'':' · hors stock, pas sur la facture'}</span></td>`
+        :`<td>${l.cle?`<b>${esc(fNomComplet(l.cle))}</b><small> ${esc(l.bc)}</small>`
+        :`<span class="lsc-x">à identifier — la caisse dit « ${esc(l.des||l.bc||'?')} »</span><input class="sel lsc-ch" list="lsc-cat" data-j="${l.j}" placeholder="Tape le nom ou le code-barres du parfum…" autocomplete="off">`}</td>`}
       <td class="r">${nf(l.q)}</td><td class="r">${l.p!=null?money2(l.p):'—'}</td><td class="r">${l.cle?nf(qteEff(l.cle)):'—'}</td></tr>`).join('')}
     </tbody></table><datalist id="lsc-cat"></datalist>
-    <p class="lsc-m" id="lsc-m">${inc?`<b>${inc} parfum${inc>1?'s':''} à identifier</b> avant de valider.`:''}</p>
-    <div class="lsc-a"><button class="btn" data-lx="1">Annuler</button> <button class="btn pri" id="lsc-ok" ${inc?'disabled':''}>Valider la vente (Zelle) — sortir du stock</button></div></div>`;
+    <p class="lsc-m" id="lsc-m">${inc?`<b>${inc} parfum${inc>1?'s':''} à identifier</b> avant de valider.`:(fc>0?`Le card charge de la caisse (${money2(fc)}) sera porté sur la facture en « Frais carte », ajouté au total.`:'')}</p>
+    <div class="lsc-a"><button class="btn" data-lx="1">Annuler</button> <button class="btn pri" id="lsc-ok" ${inc?'disabled':''}>Valider la vente — sortir du stock</button></div></div>`;
 }
 function lscBranche(f){
   const id=f.dataset.c;
   if(f.querySelector('.lsc-ch')){ const dl=$('lsc-cat'); dl.innerHTML=Object.keys(IDX).map(k=>`<option data-cle="${esc(k)}" value="${esc(fNomComplet(k)+((IDX[k]||[])[0]?' — '+IDX[k][0]:''))}">`).join(''); }
   f.querySelectorAll('.lsc-ch').forEach(inp=>inp.onchange=()=>{ const o=[...$('lsc-cat').options].find(op=>op.value===inp.value); if(!o) return;
-    const cli=$('lsc-cli').value;
-    lsqMaj(id,z=>{ z.erp=Object.assign({},z.erp||{}); z.erp.choix=Object.assign({},z.erp.choix||{},{[inp.dataset.j]:o.dataset.cle}); });
+    const cli=$('lsc-cli').value, pay=$('lsc-pay')?$('lsc-pay').value:'';
+    lsqMaj(id,z=>{ z.erp=Object.assign({},z.erp||{}); z.erp.choix=Object.assign({},z.erp.choix||{},{[inp.dataset.j]:o.dataset.cle}); if(pay) z.erp.pay=pay; });
     lscPeint(); try{ $('lsc-cli').value=cli; }catch(e){} });
   f.querySelector('[data-lx]').onclick=()=>{ LSQ_CONV=''; lscPeint(); };
   $('lsc-ok').onclick=()=>{
@@ -3373,15 +3382,21 @@ function lscBranche(f){
     const nom=$('lsc-cli').value.trim(), d=$('lsc-d').value;
     if(!nom){ $('lsc-m').innerHTML='<b>Le nom du client</b> est nécessaire : la facture est à son nom.'; $('lsc-cli').focus(); return; }
     if(!/^\d{4}-\d{2}-\d{2}$/.test(d)){ $('lsc-m').innerHTML='<b>La date</b> de la vente est nécessaire.'; return; }
-    const LG=lsqLignes(x); if(LG.some(l=>!l.cle)) return;
+    const LG0=lsqLignes(x); if(LG0.some(l=>!l.cle&&!l.service)) return;
+    const LG=LG0.filter(l=>l.cle), fc=lsqFraisCarte(LG0), nh=LG0.filter(l=>l.service&&!l.carte).length;
+    const pay=($('lsc-pay')&&$('lsc-pay').value==='carte')?'carte':'zelle', payLib=pay==='carte'?'carte bancaire':'Zelle';
     const C=faContexte();
-    const v={_i:'lsq|'+x.id,src:'lightspeed',num:'Devis '+x.num,client:nom,d,h:(typeof heureMiami==='function'?heureMiami():''),lieu:'Caisse Lightspeed',taxe:x.taxe,total:x.total,recu:x.recu};
-    const r=faEnregistre([{v,L:LG.map(l=>({cle:l.cle,bc:l.bc,des:l.des,q:l.q,p:l.p}))}],C,{lib:'devis Lightspeed '+(x.num||'')+' converti en vente, payé par Zelle ('+nom+') — facture faite, stock sorti'});
+    const v={_i:'lsq|'+x.id,src:'lightspeed',num:'Devis '+x.num,client:nom,d,h:(typeof heureMiami==='function'?heureMiami():''),lieu:'Caisse Lightspeed',taxe:x.taxe,total:x.total,recu:x.recu,hors:nh};
+    /* payée par carte SANS card charge : Sam supporte les frais de carte (2,6 % retirés de la marge, comme à la caisse) ;
+       AVEC card charge : le client les a payés, ils s'annulent — rien n'est retiré de la marge, le frais n'entre pas dans le chiffre */
+    if(fc>0) v.fraisCarte=fc; else if(pay==='carte'){ const tot=Math.round((LG.reduce((a,l)=>a+(+l.q||0)*(+l.p||0),0)+(+x.taxe||0))*100)/100; v.paie={carte:tot}; }
+    if(pay==='carte') v.mode='carte';
+    const r=faEnregistre([{v,L:LG.map(l=>({cle:l.cle,bc:l.bc,des:l.des,q:l.q,p:l.p}))}],C,{lib:'devis Lightspeed '+(x.num||'')+' converti en vente, payé par '+payLib+' ('+nom+')'+(fc>0?', card charge '+money2(fc)+' en frais carte':'')+' — facture faite, stock sorti'});
     if(!r||!r.ventes){ $('lsc-m').innerHTML="<b>La vente n'a pas pu être enregistrée.</b> Recharge la page et réessaie."; return; }
     const fid=r.ids[0]||'';
     const F=lit('factures-v1',[]); const fa=F.find(z=>z.id===fid);
-    if(fa){ fa.mode='zelle'; fa.devisLS=x.num; if(fa.doc){ fa.doc.pmode='zelle'; fa.doc.note='Devis Lightspeed '+(x.num||'')+' — payé par Zelle'; } ecrit('factures-v1',F); }
-    lsqMaj(id,z=>{ z.erp=Object.assign({},z.erp||{},{etat:'vendue',factId:fid,par:USR||'',t:new Date().toISOString(),d}); });
+    if(fa){ fa.mode=pay; fa.devisLS=x.num; if(fa.doc){ fa.doc.pmode=pay; fa.doc.note='Devis Lightspeed '+(x.num||'')+' — payé par '+payLib; } ecrit('factures-v1',F); }
+    lsqMaj(id,z=>{ z.erp=Object.assign({},z.erp||{},{etat:'vendue',factId:fid,par:USR||'',t:new Date().toISOString(),d,pay,fraisCarte:fc||undefined}); });
     FACT=lit('factures-v1',[]);
     LSQ_CONV=''; LSQ_OUV=''; LSQ_F.etat='converti'; lscPeint();
     try{ construitV(); }catch(e){}

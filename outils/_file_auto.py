@@ -69,10 +69,12 @@ function docAutoPour(f,FACT){
   /* la caisse Lightspeed vend HORS taxe et ajoute la sales tax au ticket (39 $ → 41,73 $) :
      quand la source donne la taxe, la facture la porte, comme le ticket du client */
   const tx=(+f.taxe>0&&base>0)?Math.round(+f.taxe*100)/100:0;
-  const tot=Math.round((base+tx)*100)/100;
-  return {type:'facture',num:pre+String(n+1).padStart(4,'0'),pmode,pstat:'paye',fiscal:'taxable',fref:'',langue:'en',
+  /* le card charge de la caisse (3 nov. 2026) : les « Frais carte » de la facture, au montant encaissé */
+  const fc=(+f.fraisCarte>0)?Math.round(+f.fraisCarte*100)/100:0;
+  const tot=Math.round((base+fc+tx)*100)/100;
+  return {type:'facture',num:pre+String(n+1).padStart(4,'0'),pmode:f.mode==='carte'?'carte':pmode,pstat:'paye',fiscal:'taxable',fref:'',langue:'en',
     emis:new Date().toISOString(),entete:E,auto:true,note:tx?'Prix de la caisse hors taxe, sales tax encaissée au ticket':'Prix du canal, taxes comprises',
-    sousTotal:sous,remType:rem?'montant':'pct',remVal:rem,remise:rem,remPct:rem&&sous?Math.round(rem/sous*1000)/10:0,remLib:'',base,fraisPct:0,frais:0,
+    sousTotal:sous,remType:rem?'montant':'pct',remVal:rem,remise:rem,remPct:rem&&sous?Math.round(rem/sous*1000)/10:0,remLib:'',base,fraisPct:fc&&base?Math.round(fc/base*1000)/10:0,frais:fc,
     taux:tx?Math.round(tx/base*10000)/100:0,taxe:tx,total:tot,regle:tot,reste:0};
 }
 window.docAutoPour=docAutoPour;
@@ -360,6 +362,10 @@ function faEnregistre(A,C,o){
     if(v.commande&&v.commande!==v.d){ const us=x=>String(x||'').replace(/^(\d{4})-(\d{2})-(\d{2}).*$/,'$2/$3/$1');
       fa.commande=v.commande; fa.note=((fa.note||'')+' commandée sur Amazon le '+us(v.commande)+', paiement confirmé le '+us(v.d)).trim(); }
     if(+v.port>0) fa.port=Math.round(+v.port*100)/100;          /* 29 sept. : le port payé par le client (site) */
+    /* 3 nov. 2026 : le « card charge » d'une cote de la caisse, payé par le client — « Frais carte » sur la facture, ajouté au
+       total, hors chiffre d'affaires et hors marge (il couvre les frais de carte, les deux s'annulent) */
+    if(+v.fraisCarte>0) fa.fraisCarte=Math.round(+v.fraisCarte*100)/100;
+    if(v.mode) fa.mode=String(v.mode);
     const nh=faSansService(v).hors+(+v.hors||0);
     if(nh) fa.note=((fa.note||'')+' '+nh+' ligne'+(nh>1?'s':'')+' hors parfum (sac, port…) — pas dans le stock').trim();
     if(remC) fa.note=((fa.note||'')+' remise de '+remC.toFixed(2)+' $ faite à la caisse ('+Math.round(remC/plein*1000)/10+' %)').trim();

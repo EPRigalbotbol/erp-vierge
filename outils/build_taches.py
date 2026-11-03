@@ -34,8 +34,8 @@ h2.sec em{font-style:normal;font-size:12.5px;letter-spacing:0;text-transform:non
 .tk small{display:block;margin-top:4px;font-size:12px;color:var(--ink-3)}
 .tk-a{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
 .tk-a a,.tk-a button,.tk-a select{font-family:inherit;font-size:12.5px;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:8px;padding:6px 10px;cursor:pointer;text-decoration:none;white-space:nowrap}
-.tk-a a.pri{background:var(--iris);border-color:var(--iris);color:#fff}
-.tk-a button:hover,.tk-a a:hover{border-color:var(--iris);color:var(--iris)} .tk-a a.pri:hover{color:#fff;filter:brightness(1.08)}
+.tk-a a.pri,.tk-a button.pri{background:var(--iris);border-color:var(--iris);color:#fff}
+.tk-a button:hover,.tk-a a:hover{border-color:var(--iris);color:var(--iris)} .tk-a a.pri:hover,.tk-a button.pri:hover{color:#fff;filter:brightness(1.08)}
 .tk-a select{color:var(--ink-2)}
 .tk-vide{background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:22px;text-align:center;color:var(--ink-3);font-size:14px}
 .tk-vide b{display:block;color:var(--good);font-size:16px;margin-bottom:4px}
@@ -63,9 +63,13 @@ function tkLigne(t){
   const typ=TYPES[t.type]?tkT(...TYPES[t.type]):t.type;
   const rappel=`<select data-rappel="${esc(t.id)}" title="${tkT('Me le rappeler plus tard','Remind me later','Recordármelo más tarde')}"><option value="">${tkT('Plus tard…','Later…','Más tarde…')}</option>${(TK.rappels||[1,2,5,10]).map(n=>`<option value="${n}">${n===1?tkT('demain','tomorrow','mañana'):tkT(`dans ${n} jours`,`in ${n} days`,`en ${n} días`)}</option>`).join('')}</select>`;
   let actions='';
-  if(t.etat==='a_faire') actions=`<a class="pri" href="${esc(t.lien||'#')}">${tkT('Faire','Do it','Hacerlo')} →</a><button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
-  else if(t.etat==='attente') actions=`<a href="${esc(t.lien||'#')}">${tkT('Ouvrir','Open','Abrir')}</a><button data-etat="a_faire" data-id="${esc(t.id)}">${tkT('Remettre dans la liste','Put back in the list','Volver a la lista')}</button><button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
-  else actions=`<a href="${esc(t.lien||'#')}">${tkT('Ouvrir','Open','Abrir')}</a><button data-etat="a_faire" data-id="${esc(t.id)}">${tkT('Remettre dans la liste','Put back in the list','Volver a la lista')}</button>`;
+  /* 3 nov. 2026 (Igal : « quand j'appuie sur Faire, je veux rester sur la même page ») : un parfum s'ouvre dans sa fiche,
+     par-dessus la liste (ficheFenetre, _fusion.py) ; une page de l'ERP s'ouvre dans un nouvel onglet. La liste est relue à la fermeture. */
+  const ouvre=cls=>t.cle?`<button class="${cls}" data-fiche="${esc(t.cle)}" data-plus="${t.type==='publication'?'&canaux=1':''}">${cls==='pri'?tkT('Faire','Do it','Hacerlo'):tkT('Ouvrir','Open','Abrir')} →</button>`
+                        :`<a class="${cls}" href="${esc(t.lien||'#')}" target="_blank" rel="noopener">${cls==='pri'?tkT('Faire','Do it','Hacerlo'):tkT('Ouvrir','Open','Abrir')} ↗</a>`;
+  if(t.etat==='a_faire') actions=`${ouvre('pri')}<button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
+  else if(t.etat==='attente') actions=`${ouvre('')}<button data-etat="a_faire" data-id="${esc(t.id)}">${tkT('Remettre dans la liste','Put back in the list','Volver a la lista')}</button><button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
+  else actions=`${ouvre('')}<button data-etat="a_faire" data-id="${esc(t.id)}">${tkT('Remettre dans la liste','Put back in the list','Volver a la lista')}</button>`;
   const pt=t.etat==='a_faire'?(t.urgence==='haute'?`<span class="pt">${tkT('urgent','urgent','urgente')}</span>`:'')+(t.revenue?`<span class="pt rev">${tkT('revenue','back','de vuelta')}</span>`:''):'';
   const sous=t.etat==='attente'?`<small>${tkT('Rappel le','Reminder on','Recordatorio el')} <span data-nolang>${tkDate(t.jusqua)}</span></small>`:t.etat==='ignoree'?`<small>${tkT('Ignorée le','Ignored on','Ignorada el')} <span data-nolang>${tkDate(t.depuis)}</span></small>`:'';
   return `<div class="tk ${t.etat==='a_faire'?t.urgence:t.etat}" data-tk="${esc(t.id)}"><div><h3><span data-nolang>${esc(t.titre)}</span>${pt}</h3><p data-nolang>${esc(t.detail||'')}</p>${sous}<small>${typ}</small></div><div class="tk-a" data-titre="${esc(t.titre)}">${actions}</div></div>`;
@@ -83,6 +87,8 @@ function tkPeint(){
   if(TK.ignorees.length) s+=`<details class="tk-ign"><summary>${tkT(`${nf(TK.ignorees.length)} tâche${TK.ignorees.length>1?'s':''} ignorée${TK.ignorees.length>1?'s':''}`,`${nf(TK.ignorees.length)} ignored task${TK.ignorees.length>1?'s':''}`,`${nf(TK.ignorees.length)} tarea${TK.ignorees.length>1?'s':''} ignorada${TK.ignorees.length>1?'s':''}`)}</summary>`+TK.ignorees.map(tkLigne).join('')+'</details>';
   z.innerHTML=s;
   z.querySelectorAll('button[data-etat]').forEach(b=>b.onclick=()=>tkStatue(b.dataset.id,b.dataset.etat,undefined,b.closest('.tk-a').dataset.titre));
+  z.querySelectorAll('button[data-fiche]').forEach(b=>b.onclick=()=>{ if(typeof ficheFenetre!=='function'){ window.open('catalogue.html#cle='+encodeURIComponent(b.dataset.fiche),'_blank'); return; }
+    ficheFenetre(b.dataset.fiche,()=>{ const y=window.scrollY; tkCharge().then(()=>window.scrollTo(0,y)); },b.dataset.plus||''); });
   z.querySelectorAll('select[data-rappel]').forEach(sl=>sl.onchange=()=>{ if(sl.value) tkStatue(sl.dataset.rappel,'attente',+sl.value,sl.closest('.tk-a').dataset.titre); });
   const c=document.getElementById('ct-taches'); if(c){ c.textContent=n?String(n):''; c.className=n?'ct nb':'ct'; }
 }

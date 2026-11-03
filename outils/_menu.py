@@ -92,6 +92,9 @@ function mnApplique(){
         if(t&&t.textContent.trim()!==nom){ t.textContent=nom; t.__fr=nom; } } } }catch(e){}
   if(c.ordre&&c.ordre.length){
     const par={}; items.forEach(a=>par[mnId(a)]=a);
+    /* 3 nov. 2026 (« je ne vois pas la partie Tâches ») : avant de réordonner, chaque rubrique retient celle qui la
+       précède dans le menu d'origine — une rubrique nouvelle ira se placer juste après elle, pas tout en bas */
+    items.forEach((a,i)=>{ a.dataset.apres=i>0?mnId(items[i-1]):''; });
     /* les titres d'origine s'effacent : ce sont ceux de l'utilisateur qui comptent */
     nav.querySelectorAll('.navlab').forEach(l=>{ if(!l.dataset.perso) l.style.display='none'; });
     nav.querySelectorAll('.navlab[data-perso]').forEach(l=>l.remove());
@@ -103,11 +106,13 @@ function mnApplique(){
         nav.appendChild(d);
       } else if(par[e.id]){ nav.appendChild(par[e.id]); vus.push(e.id); }
     });
-    /* une rubrique ajoutée après coup n'est dans aucun ordre : elle va à la fin —
-       sauf une sous-rubrique (« Clients VIP »), qui reste sous sa rubrique-mère */
+    /* une rubrique ajoutée après coup n'est dans aucun ordre : elle se place juste après celle qui la précède dans le
+       menu d'origine (« Tâches » sous « Tableau de bord », quel que soit l'ordre réglé) ; une sous-rubrique
+       (« Clients VIP ») reste sous sa rubrique-mère ; sinon, à la fin */
     items.forEach(a=>{ if(vus.includes(mnId(a))) return;
       const mere=a.dataset.sous&&items.find(m=>mnId(m)===a.dataset.sous);
-      if(mere) mere.insertAdjacentElement('afterend',a); else nav.appendChild(a); });
+      const avant=!mere&&a.dataset.apres&&nav.contains(par[a.dataset.apres]||null)?par[a.dataset.apres]:null;
+      if(mere) mere.insertAdjacentElement('afterend',a); else if(avant) avant.insertAdjacentElement('afterend',a); else nav.appendChild(a); });
     /* Un titre dont toutes les rubriques ont été retirées ne sert plus à rien :
        on le cache. Mais un titre volontairement seul, sans aucune rubrique
        derrière lui, est un choix de l'utilisateur — on le laisse. */

@@ -75,7 +75,8 @@ async function glEnvoie(texte){
     const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/galou/parle',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},body:JSON.stringify({messages:GL_CONV.slice(-12),page:(document.querySelector('.main h1')||{}).textContent||''})});
     const j=await r.json().catch(()=>({}));
     if(!r.ok) throw new Error(j.erreur||('serveur '+r.status));
-    const rep=String(j.texte||'').trim()||glT('(pas de réponse)','(no answer)','(sin respuesta)');
+    /* au cas où le modèle met quand même du gras ou des puces : on les enlève, la réponse est lue à voix haute */
+    const rep=String(j.texte||'').replace(/\*\*|__|^#+\s*/gm,'').replace(/^\s*[-•]\s+/gm,'').trim()||glT('(pas de réponse)','(no answer)','(sin respuesta)');
     GL_CONV.push({role:'assistant',content:rep}); glSauve();
     if(att){ att.textContent=rep; att.classList.remove('att'); }
     glDit(rep);

@@ -2334,7 +2334,8 @@ async function glEnvoie(texte){
     const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/galou/parle',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},body:JSON.stringify({messages:GL_CONV.slice(-12),page:(document.querySelector('.main h1')||{}).textContent||''})});
     const j=await r.json().catch(()=>({}));
     if(!r.ok) throw new Error(j.erreur||('serveur '+r.status));
-    const rep=String(j.texte||'').trim()||glT('(pas de réponse)','(no answer)','(sin respuesta)');
+    /* au cas où le modèle met quand même du gras ou des puces : on les enlève, la réponse est lue à voix haute */
+    const rep=String(j.texte||'').replace(/\*\*|__|^#+\s*/gm,'').replace(/^\s*[-•]\s+/gm,'').trim()||glT('(pas de réponse)','(no answer)','(sin respuesta)');
     GL_CONV.push({role:'assistant',content:rep}); glSauve();
     if(att){ att.textContent=rep; att.classList.remove('att'); }
     glDit(rep);
@@ -2396,7 +2397,7 @@ function glAccueil(nom){
 window.galouOuvre=galouOuvre;
 
 
-const VER_URL='202611031141';
+const VER_URL='202611031158';
 /* Les trois boutons de langue de la porte. On ne passe pas par lgChange : il
    écrit une ligne au journal au nom du compte connecté, et ici personne ne l'est
    encore. On change la langue, on l'enregistre, on retraduit l'écran. */

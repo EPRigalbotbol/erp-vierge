@@ -1664,3 +1664,8 @@ MOTS3.update({
     "L'ordre de la liste": ["The order of the list", "El orden de la lista"],
     "Ordre": ["Order", "Orden"],
 })
+
+# ---- Catalogue, 3 nov. 2026 : le transfert vers Perfume City part aussi sur Shopify ----
+MOTS3.update({
+    "transfert à Perfume City : stock envoyé à Shopify": ["transfer to Perfume City: stock sent to Shopify", "traslado a Perfume City: stock enviado a Shopify"],
+})

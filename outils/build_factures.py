@@ -1126,7 +1126,7 @@ function dessineApercu(){
       ${L3('Rien ne s\'enregistre tant que tu n\'as pas choisi.','Nothing is saved until you choose.','No se guarda nada hasta que elijas.')}
       <div style="margin-top:8px"><button type="button" class="btn pri" id="inv-swap">${L3('Inverser prix et quantités','Swap prices and quantities','Invertir precios y cantidades')}</button>
       <button type="button" class="btn" id="inv-ok" style="margin-left:8px">${L3('Non, c\'est correct','No, it is correct','No, es correcto')}</button></div></div>`:''}
-    ${rep&&A.connues?`<p class="repnote">${L3(`<b>Perfume City :</b> pour chaque parfum, tape combien de flacons vont à Perfume City — le reste reste à Perfumes Trade (les deux cases se complètent). À l'enregistrement, le stock des deux est mis à jour, et Perfume City aussi sur Shopify (les flacons sont <b>ajoutés</b> à son stock actuel).`,`<b>Perfume City:</b> for each perfume, type how many bottles go to Perfume City — the rest stays with Perfumes Trade (the two boxes add up). When you save, both stocks are updated, and Perfume City's on Shopify too (the bottles are <b>added</b> to its current stock).`,`<b>Perfume City:</b> para cada perfume, escribe cuántos frascos van a Perfume City — el resto se queda en Perfumes Trade (las dos casillas se completan). Al guardar, se actualiza el stock de ambos, y el de Perfume City también en Shopify (los frascos se <b>suman</b> a su stock actual).`)}</p>`:''}
+    ${rep&&A.connues?`<p class="repnote">${L3(`<b>Perfume City :</b> pour chaque parfum, tape combien de flacons vont à Perfume City — le reste reste à Perfumes Trade (les deux cases se complètent). À l'enregistrement, le stock des deux est mis à jour, et Perfume City aussi sur Shopify (les flacons sont <b>ajoutés</b> à son stock actuel). Le premier flacon d'une référence que la boutique n'a pas encore part en <b>tester</b> (vitrine) : il n'est pas mis en vente, comme pour un transfert depuis la fiche.`,`<b>Perfume City:</b> for each perfume, type how many bottles go to Perfume City — the rest stays with Perfumes Trade (the two boxes add up). When you save, both stocks are updated, and Perfume City's on Shopify too (the bottles are <b>added</b> to its current stock). The first bottle of a reference the shop does not have yet goes as a <b>tester</b> (display): it is not put on sale, as for a transfer from the record.`,`<b>Perfume City:</b> para cada perfume, escribe cuántos frascos van a Perfume City — el resto se queda en Perfumes Trade (las dos casillas se completan). Al guardar, se actualiza el stock de ambos, y el de Perfume City también en Shopify (los frascos se <b>suman</b> a su stock actual). El primer frasco de una referencia que la tienda aún no tiene va como <b>tester</b> (vitrina): no se pone a la venta, como en un traslado desde la ficha.`)}</p>`:''}
     <div style="overflow-x:auto;margin-top:12px"><table class="tb"><thead><tr>
       ${s?`<th>Référence</th><th class="r">Qté</th>${rep?`<th class="r rep2">${L3('Répartir : Perfumes Trade · Perfume City','Split: Perfumes Trade · Perfume City','Repartir: Perfumes Trade · Perfume City')}</th>`:''}<th>Stock</th><th class="r">${L3('Dernier prix payé','Last price paid','Último precio pagado')}</th><th class="r">Prix de la facture${A.dev==='EUR'?' (€)':''}</th>`:`<th>Référence</th><th class="r">Qté</th><th class="r">Prix</th><th>Stock</th><th class="r">Prix d'achat</th>`}
     </tr></thead><tbody>${li}</tbody></table></div>
@@ -1340,7 +1340,7 @@ $('ok').onclick=()=>{
     if(!confirm(q)) return;
   }
   demandeUser();
-  const s=SENS==='achat', lignes=[], det=[], det_pc=[], pcRate=[];
+  const s=SENS==='achat', lignes=[], det=[], det_pc=[], pcRate=[]; let nTest=0;
   let nCmd=0;
   if(canal){ A.L.forEach(x=>(x.cmds||[]).forEach(c=>{ if(c.cmd){ CMD[c.cleCmd]=d; nCmd++; } })); ecrit(K_CMD,CMD); }
   let nprix=0;
@@ -1351,7 +1351,9 @@ $('ok').onclick=()=>{
                  cmds: canal ? (x.cmds||[]).map(c=>({cmd:c.cmd,q:c.q,p:c.p,d:c.d,h:c.h||undefined,client:c.client})) : undefined});
     if(A.stock&&x.qAp!==x.qAv){ MOD[x.cle]=Object.assign({},MOD[x.cle]||{},{qte:x.qAp}); det.push({bc:v[0],ref,av:x.qAv,ap:x.qAp}); }
     /* la part de Perfume City entre dans SON stock (magasin partagé pc-stock-v1) — jamais dans celui de Perfumes Trade */
-    if(s&&A.stock&&x.pc>0){ const pr=pcAjouteErp(x.cle,x.pc); if(pr){ det_pc.push({bc:v[0],ref,av:pr.av,ap:pr.ap}); lignes[lignes.length-1].pcAv=pr.av; lignes[lignes.length-1].pcAp=pr.ap; } else pcRate.push(ref); }
+    if(s&&A.stock&&x.pc>0){ const pt=pcPartage(v[0],x.pc), L=lignes[lignes.length-1]; L.pcVend=pt.vend; L.pcT=pt.t;
+      const pr=pt.vend>0?pcAjouteErp(x.cle,pt.vend):{av:null,ap:null};
+      if(pr){ if(pt.t) pcTestNote(v[0],ref,+pt.t); if(pt.vend>0) det_pc.push({bc:v[0],ref,av:pr.av,ap:pr.ap}); L.pcAv=pr.av; L.pcAp=pr.ap; if(pt.t) nTest+=pt.t; } else pcRate.push(ref); }
     if(s&&x.par==='devine'){ apprendRef(x.ref,x.cle,tiers); apprendNom(x.des,x.cle); }
     if(s){
       (HIST[x.cle]=HIST[x.cle]||[]).push({d,p:x.cout,f:tiers,q:x.q||null,src:'facture',num,dev:A.dev==='EUR'?'EUR':undefined,pDev:A.dev==='EUR'?x.p:undefined});
@@ -1373,13 +1375,13 @@ $('ok').onclick=()=>{
            commandes: canal ? A.L.flatMap(x=>(x.cmds||[]).map(c=>c.cleCmd)) : undefined};
   /* une vente de canal importée a sa facture, comme celles qui arrivent toutes seules */
   if(f.sens==='vente'&&typeof docAutoPour==='function') f.doc=docAutoPour(f,FACT);
-  if(f.lignes.some(l=>l.pc>0)) f.pcShopify={etat:'attente'};
+  if(f.lignes.some(l=>pcVendDe(l)>0)) f.pcShopify={etat:'attente'};
   FACT.push(f);
   ecrit(K.mod,MOD); ecrit(K.hist,HIST); ecrit(K.vent,VENT); ecrit(K.frn,FRN); ecrit(K.cli,CLI); ecrit(K.fact,FACT);
   log({act:s?'reception':'vente',lib:(s?'réception facture ':(canal?'ventes '+tiers+' — export ':'vente facture '))+num+(canal?'':' — '+tiers),
        n:det.length,impact:Math.round(det.reduce((a,x)=>a+(x.ap-x.av)*(paEff(parBC[x.bc])||0),0)),
        det, note:A.neg?`${A.neg} ligne(s) avec stock insuffisant`:undefined});
-  if(det_pc.length) log({act:'reception',lib:'part de Perfume City, réception facture '+num+' — '+det_pc.reduce((a,x)=>a+(x.ap-x.av),0)+' flacon(s) au stock de Perfume City',n:det_pc.length,impact:0,det:det_pc});
+  if(det_pc.length||nTest) log({act:'reception',lib:'part de Perfume City, réception facture '+num+' — '+det_pc.reduce((a,x)=>a+(x.ap-x.av),0)+' flacon(s) au stock de Perfume City'+(nTest?' + '+nTest+' en tester (vitrine)':''),n:det_pc.length,impact:0,det:det_pc});
   raz(); dessineListe(); dessineKpis();
   $('msg').textContent=(canal?`Ventes ${tiers} importées : ${lignes.length} référence${lignes.length>1?'s':''}${nCmd?` sur ${nf(nCmd)} ligne${nCmd>1?'s':''} de commande`:''}`:`Facture ${num} enregistrée : ${lignes.length} ligne${lignes.length>1?'s':''}`)+(A.stock?`, stock ${s?'+':'−'}${nf(A.unites)} unités`:'')+(nprix?`, ${nprix} prix d'achat mis à jour`:'')+'.';
   $('msg').className='msg ok';
@@ -1394,6 +1396,18 @@ $('ok').onclick=()=>{
    2. sur Shopify, ils sont AJOUTÉS au stock actuel de la boutique (jamais écrasé), une seule fois par réception ;
    3. si l'envoi à Shopify échoue (hors ligne, parfum absent de la boutique…), l'ERP est déjà à jour, la facture le dit,
       et « Renvoyer à Shopify » refait l'envoi sans jamais compter deux fois. */
+/* 3 nov. 2026 (Igal) : la même règle du tester que le transfert depuis la fiche — le premier flacon d'une référence livré à
+   Perfume City part en vitrine, pas en vente ; la boutique n'en a qu'un, les livraisons suivantes entrent en entier. Le vendable
+   entre dans son inventaire et part sur Shopify ; le tester est noté à part (testeurs-pc-v1), pour la feuille de comptage. */
+const K_PC_TEST='testeurs-pc-v1';
+const pcTestClef=bc=>String(bc||'').replace(/^0+/,'');
+function pcTesteurs(){ const t=lit(K_PC_TEST,{}); return (t&&typeof t==='object'&&!Array.isArray(t))?t:{}; }
+function pcPartage(bc,n){ const k=pcTestClef(bc); const deja=+((pcTesteurs()[k]||{}).n||0); const t=(deja>0||!(n>0))?0:1; return {k,t,vend:Math.max(0,n-t)}; }
+function pcTestNote(bc,ref,dt){ try{ const T=pcTesteurs(), k=pcTestClef(bc); const n=Math.max(0,+((T[k]||{}).n||0)+dt);
+    if(n) T[k]=Object.assign({},T[k]||{},{n,bc:String(bc||''),ref:ref||'',t:new Date().toISOString(),u:USR||'(non renseigné)'}); else delete T[k];
+    ecrit(K_PC_TEST,T); }catch(e){} }
+/* ce qui part sur Shopify pour une ligne : le vendable ; une facture d'avant cette règle (sans pcVend) envoie tout, comme à l'époque */
+const pcVendDe=l=>l.pcVend!=null?+l.pcVend:+l.pc;
 function pcAjouteErp(cle,n){
   try{
     const v=IDX[cle]; if(!v||!v[0]||!n||typeof pcsCarte!=='function'||typeof pcsSauve!=='function') return null;
@@ -1408,18 +1422,18 @@ function pcAjouteErp(cle,n){
 const PC_ENVOI_EN_COURS=new Set();
 /* l'appel au cockpit : { hors:true } (pas relié), { erreur } ou { lignes:[…] } ; annule=true retire au lieu d'ajouter */
 async function pcPousse(f,annule){
-  const lg=(f.lignes||[]).filter(l=>l.pc>0&&l.bc);
+  const lg=(f.lignes||[]).filter(l=>pcVendDe(l)>0&&l.bc);
   try{
     if(typeof CK_URL==='undefined'||typeof ckTok!=='function'||!ckTok()) return {hors:true};
     const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/shopify/stock-ajoute',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},
-      body:JSON.stringify({cle:annule?f.id+'-annule':f.id,items:lg.map(l=>({bc:l.bc,ajout:annule?-l.pc:l.pc,nom:l.ref}))})});
+      body:JSON.stringify({cle:annule?f.id+'-annule':f.id,items:lg.map(l=>({bc:l.bc,ajout:annule?-pcVendDe(l):pcVendDe(l),nom:l.ref}))})});
     const j=await r.json().catch(()=>({}));
     return r.ok?j:{erreur:j.erreur||('erreur '+r.status)};
   }catch(e){ return {erreur:L3("le cockpit ne répond pas","the cockpit is not responding","el cockpit no responde")}; }
 }
 async function pcEnvoiFacture(id){
   const f=FACT.find(x=>x.id===id); if(!f) return;
-  const lg=(f.lignes||[]).filter(l=>l.pc>0&&l.bc);
+  const lg=(f.lignes||[]).filter(l=>pcVendDe(l)>0&&l.bc);
   if(!lg.length) return;
   const annule=false;
   if(PC_ENVOI_EN_COURS.has(id)) return; PC_ENVOI_EN_COURS.add(id);
@@ -1466,7 +1480,7 @@ async function annule(id){
   if(!confirm(`Annuler la facture ${f.num} (${f.tiers}) ?\n\nLe stock revient à ce qu'il était, les prix enregistrés par cette facture sont retirés de l'historique. L'opération est inscrite au journal.`)) return;
   /* la part de Perfume City est retirée de SON stock sur Shopify AVANT de toucher l'ERP : si Shopify ne répond pas, on le dit
      et on laisse choisir, plutôt que de défaire l'ERP à moitié sans le dire */
-  if(f.sens==='achat'&&f.stock&&(f.lignes||[]).some(l=>l.pc>0&&l.bc)){
+  if(f.sens==='achat'&&f.stock&&(f.lignes||[]).some(l=>pcVendDe(l)>0&&l.bc)){
     const res=await pcPousse(f,true);
     const mal=(res.hors||res.erreur)?[{raison:res.hors?L3("l'ERP n'est pas relié au cockpit","the ERP is not connected to the cockpit","el ERP no está conectado al cockpit"):res.erreur}]
       :(res.lignes||[]).filter(l=>!['ok','deja','ignore','absent'].includes(l.etat));
@@ -1479,7 +1493,7 @@ async function annule(id){
   f.lignes.forEach(l=>{
     if(f.stock&&l.qAp!==l.qAv){ const cur=qteEff(l.cle), nv=Math.max(0,cur-(l.qAp-l.qAv));
       MOD[l.cle]=Object.assign({},MOD[l.cle]||{},{qte:nv}); det.push({bc:l.bc,ref:l.ref,av:cur,ap:nv}); }
-    if(f.sens==='achat'&&f.stock&&l.pc>0){ const pr=pcAjouteErp(l.cle,-l.pc); if(pr) detPc.push({bc:l.bc,ref:l.ref,av:pr.av,ap:pr.ap}); }
+    if(f.sens==='achat'&&f.stock&&l.pc>0){ const v=pcVendDe(l); const pr=v>0?pcAjouteErp(l.cle,-v):null; if(pr) detPc.push({bc:l.bc,ref:l.ref,av:pr.av,ap:pr.ap}); if(l.pcT) pcTestNote(l.bc,l.ref,-l.pcT); }
     if(f.sens==='achat'){ if(HIST[l.cle]) HIST[l.cle]=HIST[l.cle].filter(x=>x.num!==f.num);
       if(l.paAp!==l.paAv && paEff(l.cle)===l.paAp){ MOD[l.cle]=Object.assign({},MOD[l.cle]||{},{pa:l.paAv});
         log({act:'prix',lib:"prix d'achat rétabli (facture "+f.num+" annulée)",bc:l.bc,ref:l.ref,av:l.paAp,ap:l.paAv}); } }
@@ -1522,7 +1536,7 @@ function detail(id){
       const bouge=(l.qAv!=null&&l.qAp!=null)?`<span class="stk">${nf(l.qAv)} → <b>${nf(l.qAp)}</b></span>`
                  :'<span class="stk">—</span>';
       return `<tr><td><b>${esc(l.ref||l.des||'—')}${tyVu(l)}</b><small>${esc(l.bc||'')}</small>
-          ${l.pc>0?`<small style="color:#c2417f">${L3(`dont ${nf(l.pc)} pour Perfume City`,`of which ${nf(l.pc)} for Perfume City`,`de los cuales ${nf(l.pc)} para Perfume City`)}</small>`:''}
+          ${l.pc>0?`<small style="color:#c2417f">${L3(`dont ${nf(l.pc)} pour Perfume City`,`of which ${nf(l.pc)} for Perfume City`,`de los cuales ${nf(l.pc)} para Perfume City`)}${l.pcT?' ('+L3(`${nf(l.pcT)} en tester`,`${nf(l.pcT)} as tester`,`${nf(l.pcT)} como tester`)+')':''}</small>`:''}
           ${l.manque?`<small style="color:var(--crit)">vendu à découvert : ${nf(l.manque)} de plus que le stock</small>`:''}</td>
         <td class="r">${nf(l.q||0)}</td>
         <td class="r">${l.p!=null?money2(l.p):'—'}</td>

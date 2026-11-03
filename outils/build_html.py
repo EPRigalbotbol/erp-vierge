@@ -645,7 +645,7 @@ border-radius:5px;padding:10px 13px}
 .df{flex:0 0 auto;padding:13px 20px;border-top:1px solid var(--line);background:var(--surface-2);
 display:flex;gap:9px;align-items:center}
 .df .st{font-size:12.5px;color:var(--ink-3);margin-right:auto}
-.df .st.ok{color:var(--good)}
+.df .st.ok{color:var(--good)} .df .st.ko{color:var(--crit)}
 .df .dsup{color:var(--crit);border-color:var(--crit)}
 .df .dsup:hover{background:var(--crit-soft)}
 .df .dsup[hidden]{display:none}
@@ -5300,6 +5300,44 @@ function pcDepose(p,r){
   return true;
 }
 function paEff2(p){ const m=MOD[p.id]||{}; return m.pa!=null?+m.pa:(p.pa!=null?+p.pa:null); }
+/* ---------- 3 nov. 2026 (Igal) : un transfert depuis la fiche va AUSSI sur Shopify ----------
+   La réception d'une facture envoyait déjà la part de Perfume City à Shopify ; le transfert fait depuis « Ajuster le stock »
+   ne mettait à jour que l'ERP, et la boutique en ligne gardait l'ancienne quantité. Même envoi que les factures (route
+   stock-ajoute du cockpit, un identifiant par transfert : rien n'est compté deux fois). Ce qui n'a pas pu partir attend
+   dans une file et repart tout seul à l'ouverture suivante du Catalogue ou au transfert suivant. Seuls les flacons EN VENTE
+   partent : le tester de vitrine n'est pas à vendre. */
+const K_PC_FILE='pc-shopify-attente-v1';
+function pcFile(){ const f=lit(K_PC_FILE,[]); return Array.isArray(f)?f:[]; }
+function pcShopifyAjoute(p,r){
+  if(!(r.vend>0)||!p.bc) return;
+  const f=pcFile(); f.push({cle:'aj|'+p.bc+'|'+Date.now(),items:[{bc:String(p.bc),ajout:r.vend,nom:((p.marque||'')+' '+(p.nom||'')).trim()}],t:new Date().toISOString()});
+  ecrit(K_PC_FILE,f);
+  return pcShopifyVide();
+}
+let _pcVideEnCours=false;
+async function pcShopifyVide(){
+  if(_pcVideEnCours) return {attente:true}; _pcVideEnCours=true;
+  try{
+    if(typeof CK_URL==='undefined'||typeof ckTok!=='function'||!ckTok()) return {hors:true};
+    let f=pcFile(), res=null;
+    while(f.length){
+      const e=f[0];
+      try{
+        const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/shopify/stock-ajoute',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},
+          body:JSON.stringify({cle:e.cle,items:e.items})});
+        const j=await r.json().catch(()=>({}));
+        if(!r.ok){ res={erreur:j.erreur||('erreur '+r.status)}; break; }
+        res=j;
+      }catch(err){ res={erreur:'le cockpit ne répond pas'}; break; }
+      f=f.slice(1); ecrit(K_PC_FILE,f);
+      const ko=(res.lignes||[]).filter(l=>l.etat&&l.etat!=='ok');
+      log({act:'site',lib:'transfert à Perfume City : stock envoyé à Shopify'+(ko.length?' — '+ko.map(l=>(l.nom||l.bc)+' : '+(l.raison||l.etat)).join(' ; '):''),
+           n:e.items.length,impact:0,det:e.items.map(i=>({bc:i.bc,ref:i.nom,q:i.ajout}))});
+    }
+    return res||{ok:true};
+  } finally { _pcVideEnCours=false; }
+}
+setTimeout(()=>{ try{ if(pcFile().length) pcShopifyVide(); }catch(e){} },12000);
 
 let AJC={p:null,motif:null};
 function ouvreAjust(p){
@@ -5396,11 +5434,22 @@ $('ajok').onclick=()=>{
   sauveAJU();
   /* le transfert ne fait pas que sortir du stock d'ici : il entre chez Perfume City */
   let suitePC='';
+  let envoiPC=null;
   if(m.id==='pcity'){
     const r=pcRepartit(p,AJC.n,AJC.pcT);
-    if(pcDepose(p,r)) suitePC=' — Perfume City : '+r.vend+' en vente'+(r.t?', '+r.t+' en tester':'');
+    if(pcDepose(p,r)){ suitePC=' — Perfume City : '+r.vend+' en vente'+(r.t?', '+r.t+' en tester':''); envoiPC=pcShopifyAjoute(p,r); }
     else $('ajmsg').textContent='inventaire Perfume City non mis à jour (mémoire du navigateur pleine)';
   }
+  if(envoiPC&&envoiPC.then) envoiPC.then(res=>{
+    if(!res||res.attente) return;
+    const txt=res.hors||res.erreur
+      ? L3(`Stock de Perfume City à jour dans l'ERP, mais PAS encore sur Shopify (${res.hors?"l'ERP n'est pas relié au cockpit":res.erreur}). L'envoi repartira tout seul à la prochaine ouverture du Catalogue.`,
+           `Perfume City's stock is up to date in the ERP, but NOT yet on Shopify (${res.hors?'the ERP is not connected to the cockpit':res.erreur}). It will be sent again by itself the next time the Catalog opens.`,
+           `Stock de Perfume City al día en el ERP, pero AÚN NO en Shopify (${res.hors?'el ERP no está conectado al cockpit':res.erreur}). Se reenviará solo la próxima vez que se abra el Catálogo.`)
+      : L3('Perfume City : stock envoyé à Shopify','Perfume City: stock sent to Shopify','Perfume City: stock enviado a Shopify');
+    if(res.hors||res.erreur) log({act:'site',lib:'transfert à Perfume City : stock NON envoyé à Shopify ('+(res.hors?'hors ligne':res.erreur)+'), en attente',n:1,impact:0,det:[]});
+    const d=$('dst'); if(d){ d.textContent=txt; d.className='st '+((res.hors||res.erreur)?'ko':'ok'); }
+  });
   log({act:'stock',lib:'ajustement — '+m.lib.toLowerCase()+suitePC+($('aj-note').value.trim()?' ('+$('aj-note').value.trim()+')':''),
        bc:p.bc,ref:(p.marque||'')+' '+(p.nom||''),av,ap});
   $('ajov').classList.remove('on');

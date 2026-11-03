@@ -22,6 +22,7 @@ CSS = r'''
 .tb td.rep input.rp{width:56px;padding:5px 6px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:13px;text-align:right;background:var(--surface);color:var(--ink)}
 .tb td.rep input.rp:focus{border-color:var(--iris);outline:0}
 .tb td.rep input.rp[data-rp="pc"]{border-color:#e8a7c8;background:#fdf1f7}
+.tb td.rep small.pcs{font-size:11px;letter-spacing:0;text-transform:none;font-weight:400;color:var(--ink-3);white-space:nowrap}.tb td.rep small.pcs b{color:var(--ink-2);font-weight:600}
 .repnote{margin:12px 0 0;padding:10px 12px;border-radius:8px;background:#fdf1f7;border-left:3px solid #e8a7c8;font-size:13px;line-height:1.45;color:var(--ink-2)}
 .tb td.pfac{font-size:12px;font-weight:500;color:var(--ink-3)}.tb td.pfac input.ed{width:66px;font-size:12px;padding:4px 6px}
 .tb .mex{display:block;margin-top:3px;font-size:11px;line-height:1.35;color:var(--ink-3);font-weight:400;white-space:normal;max-width:210px;margin-left:auto}.tb .mex b{color:var(--ink-2)}
@@ -1055,7 +1056,14 @@ function dessineApercu(){
   const s=SENS==='achat';
   const rep=s&&A.pcOK;   /* colonne « Répartition » : seulement quand la réception met le stock à jour */
   const edit=(SENS!=='canal');
-  const repCell=x=>`<td class="rep"><label>Perfumes Trade<input class="rp" type="number" min="0" max="${x.q||0}" step="1" data-rp="pt" data-i="${x._i}" value="${(x.q||0)-(x.pc||0)}" aria-label="${L3('Flacons pour Perfumes Trade','Bottles for Perfumes Trade','Frascos para Perfumes Trade')}"></label><label>Perfume City<input class="rp" type="number" min="0" max="${x.q||0}" step="1" data-rp="pc" data-i="${x._i}" value="${x.pc||0}" aria-label="${L3('Flacons pour Perfume City','Bottles for Perfume City','Frascos para Perfume City')}"></label></td>`;
+  /* 3 nov. 2026 (Sam : « quand je reçois une nouvelle commande, j'ai besoin de savoir combien Perfume City a en stock aussi ») :
+     sous la case Perfume City, son stock actuel (et son tester s'il en a un), puis ce qu'il deviendra avec la part tapée */
+  const pcLigne=x=>{ try{ const v=IDX[x.cle]; if(!v||!v[0]||typeof pcsCarte!=='function') return '';
+      const o=pcsCarte()[pcsCle([v[0]])], av=o?Math.max(0,Math.round(+o.q||0)):0, t=+((pcTesteurs()[pcTestClef(v[0])]||{}).n||0);
+      const pt=x.pc>0?pcPartage(v[0],x.pc):null;
+      const enStock=L3('en stock','in stock','en stock'), tester=L3('tester','tester','tester');
+      return `<small class="pcs" data-nolang>${enStock} <b>${nf(av)}</b>${t?' + '+nf(t)+' '+tester:''}${pt?` → <b>${nf(av+pt.vend)}</b>${pt.t?' + 1 '+tester:''}`:''}</small>`; }catch(e){ return ''; } };
+  const repCell=x=>`<td class="rep"><label>Perfumes Trade<input class="rp" type="number" min="0" max="${x.q||0}" step="1" data-rp="pt" data-i="${x._i}" value="${(x.q||0)-(x.pc||0)}" aria-label="${L3('Flacons pour Perfumes Trade','Bottles for Perfumes Trade','Frascos para Perfumes Trade')}"><small class="pcs" data-nolang>${L3('en stock','in stock','en stock')} <b>${nf(x.qAv)}</b></small></label><label>Perfume City<input class="rp" type="number" min="0" max="${x.q||0}" step="1" data-rp="pc" data-i="${x._i}" value="${x.pc||0}" aria-label="${L3('Flacons pour Perfume City','Bottles for Perfume City','Frascos para Perfume City')}">${pcLigne(x)}</label></td>`;
   const cell=(x,k)=>edit?`<input class="ed" type="number" step="${k==='q'?'1':'0.01'}" min="0" data-e="${k}" data-i="${x._i}" value="${x[k]==null?'':x[k]}">`:(k==='q'?(x.q??'—'):money2(x.p));
   const sup=x=>edit?`<button class="lnk sup" data-sup="${x._i}" title="Retirer cette ligne de la facture">✕</button>`:'';
   const li=A.L.map(x=>{

@@ -346,5 +346,6 @@ document.addEventListener('DOMContentLoaded',()=>{
 """
 from _serveur import sync_js
 import _aide
-# _aide vient APRÈS sync_js : il se sert de CK_URL, CK_ORG et ckTok, définis là.
-COMPTES = COMPTES + OEIL + sync_js() + _aide.JS
+import _galou
+# _aide vient APRÈS sync_js : il se sert de CK_URL, CK_ORG et ckTok, définis là. _galou aussi (3 nov. 2026).
+COMPTES = COMPTES + OEIL + sync_js() + _aide.JS + _galou.JS

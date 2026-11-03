@@ -43,6 +43,7 @@ _IC = {
  'connecteurs.html':'<path d="M7 7h10l-3-3M17 17H7l3 3"/>',
  'messages.html':'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
  '#support':'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="m9.5 9.5-4-4M14.5 9.5l4-4M14.5 14.5l4 4M9.5 14.5l-4 4"/>',
+ '#galou':'<path d="M4 5h16v10H9l-5 4z"/><path d="M8 9h8M8 12h5"/>',
  'journal.html':'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
  'tableau.html':'<rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/>',
  'acces.html':'<path d="M12 3 4 6v6c0 4.5 3.3 8 8 9 4.7-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/>',
@@ -68,6 +69,8 @@ def barre(actif):
          ('etude.html','⌕','Étude de devis',''),
          ('clients.html','◉','Clients', '!'+str(NCLI)),
          ('connecteurs.html','⇄','Connecteurs',''),
+         # 3 nov. 2026 (Igal) : Galou, l'assistant d'Igal — une fenêtre pour lui parler, sur n'importe quelle page (_galou.py)
+         ('#galou','✦','Parler à Galou',''),
          # 9 oct. 2026 (Igal) : la messagerie interne est retirée du menu pour tout le monde ; à sa
          # place, « Support technique » ouvre la boîte de dialogue qui envoie une réclamation à Igal
          # (cockpit, table support). La page messages.html existe toujours mais n'est plus liée.
@@ -89,6 +92,8 @@ def barre(actif):
         a=f'<a class="{cls}"{pil}'+((f' href="{href}" target="_blank" rel="noopener" title="Ouvre Gusto dans un nouvel onglet"' if ext else f' href="{href}?v={VER}"') if href else '')+'>'
         if href=='#support':
             a=f'<a class="{cls}"{pil} href="#support" id="aid-btn" data-id="support" onclick="if(typeof aidOuvre===\'function\')aidOuvre();return false">'
+        if href=='#galou':
+            a=f'<a class="{cls}" href="#galou" id="gl-btn" data-id="galou" onclick="if(typeof galouOuvre===\'function\')galouOuvre();return false">'
         cid='ct-'+('pcity' if lab.startswith('Inventaire Perfume') else 'expeditions' if lab in ('Expéditions','Statut shipping') else lab.lower().split()[0].replace('&',''))
         # 8 oct. 2026 (Igal) : plus de petit texte gris à droite des rubriques — seuls restent le
         # nombre de clients et la pastille des nouvelles ventes (et la pastille rouge des messages

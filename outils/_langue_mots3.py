@@ -1669,3 +1669,8 @@ MOTS3.update({
 MOTS3.update({
     "transfert à Perfume City : stock envoyé à Shopify": ["transfer to Perfume City: stock sent to Shopify", "traslado a Perfume City: stock enviado a Shopify"],
 })
+
+# ---- Galou, 3 nov. 2026 ----
+MOTS3.update({
+    "Parler à Galou": ["Talk to Galou", "Hablar con Galou"],
+})

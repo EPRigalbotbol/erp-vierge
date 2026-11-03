@@ -44,6 +44,7 @@ _IC = {
  'messages.html':'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
  '#support':'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="m9.5 9.5-4-4M14.5 9.5l4-4M14.5 14.5l4 4M9.5 14.5l-4 4"/>',
  '#galou':'<path d="M4 5h16v10H9l-5 4z"/><path d="M8 9h8M8 12h5"/>',
+ 'taches.html':'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="m8 12 3 3 5-6"/>',
  'journal.html':'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
  'tableau.html':'<rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/>',
  'acces.html':'<path d="M12 3 4 6v6c0 4.5 3.3 8 8 9 4.7-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/>',
@@ -77,6 +78,8 @@ def barre(actif):
          ('#support','?','Support technique',''),
          ('journal.html','◷','Journal',''),
          ('tableau.html','◧','Tableau de bord',''),
+         # 3 nov. 2026 (Igal) : les tâches que Galou trouve dans l'ERP — « le bras droit de Sam » (build_taches.py)
+         ('taches.html','☑','Tâches',''),
          ('acces.html','⛨','Accès',''),
          ('https://app.gusto.com','$','Paie',''),
          ('reglages.html','⚙','Réglages','')]
@@ -86,7 +89,7 @@ def barre(actif):
         if lab=='Support technique': out.append('<div class="navlab" data-pilotage="1">Pilotage</div>')
         # 17 oct. 2026 (Sam) : « toute la partie Pilotage ne doit pas être vue par un Commercial » —
         # ces rubriques portent data-pilotage ; le menu les retire pour un rôle sans marges, sans accès, sans réglages (_menu.py)
-        pil=' data-pilotage="1"' if lab in ('Connecteurs','Journal','Tableau de bord','Accès','Paie','Réglages') else ''
+        pil=' data-pilotage="1"' if lab in ('Connecteurs','Journal','Tableau de bord','Tâches','Accès','Paie','Réglages') else ''
         cls='nv'+(' on' if lab==actif else '')+('' if href else ' soon')
         ext=bool(href) and href.startswith('http')
         a=f'<a class="{cls}"{pil}'+((f' href="{href}" target="_blank" rel="noopener" title="Ouvre Gusto dans un nouvel onglet"' if ext else f' href="{href}?v={VER}"') if href else '')+'>'
@@ -94,7 +97,7 @@ def barre(actif):
             a=f'<a class="{cls}"{pil} href="#support" id="aid-btn" data-id="support" onclick="if(typeof aidOuvre===\'function\')aidOuvre();return false">'
         if href=='#galou':
             a=f'<a class="{cls}" href="#galou" id="gl-btn" data-id="galou" onclick="if(typeof galouOuvre===\'function\')galouOuvre();return false">'
-        cid='ct-'+('pcity' if lab.startswith('Inventaire Perfume') else 'expeditions' if lab in ('Expéditions','Statut shipping') else lab.lower().split()[0].replace('&',''))
+        cid='ct-'+('pcity' if lab.startswith('Inventaire Perfume') else 'expeditions' if lab in ('Expéditions','Statut shipping') else 'taches' if lab=='Tâches' else lab.lower().split()[0].replace('&',''))
         # 8 oct. 2026 (Igal) : plus de petit texte gris à droite des rubriques — seuls restent le
         # nombre de clients et la pastille des nouvelles ventes (et la pastille rouge des messages
         # non lus, quand il y en a). Les chiffres de Catalogue et d'Inventaire continuent d'être

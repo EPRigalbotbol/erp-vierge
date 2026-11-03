@@ -320,6 +320,16 @@ const calcDiff=()=>(function(){
   return {OK,L,n,prix,retire};
 })();
 let DIFF=calcDiff();
+/* 3 nov. 2026 (Igal : les tâches de Galou) : la liste « pas en vente partout » est publiée pour le cockpit, qui en fait des
+   tâches « Mettre en ligne » (cockpit/galou.js). Publiée seulement si elle a changé, 300 parfums au plus, et sans retenir la page. */
+function diffPublie(){ try{ if(typeof ckTok!=='function'||!ckTok()) return;
+    const L=(DIFF.L||[]).slice(0,300).map(({p,st})=>({cle:p.cle,bc:p.bc||'',nom:((p.marque||'')+' '+(p.nom||'')).trim().slice(0,120),qte:p.qte,
+      manque:CAN_DIFF.map(([id])=>id).filter(id=>st[id]==='non'),retire:CAN_DIFF.map(([id])=>id).filter(id=>st[id]==='non'&&DIFF.retire(p,id))}));
+    const lu=DIFF.OK&&Object.values(DIFF.OK).some(Boolean); if(!lu) return;
+    const avant=lit('diffusion-erp-v1',null); const sig=JSON.stringify(L);
+    if(avant&&JSON.stringify(avant.L||[])===sig) return;
+    ecrit('diffusion-erp-v1',{t:new Date().toISOString(),n:(DIFF.L||[]).length,L}); }catch(e){} }
+setTimeout(diffPublie,1500);
 const PUB_KO=(()=>{ let O={}; try{ O=lit('publications-v1',{})||{}; }catch(e){}
   return Object.keys(O).map(k=>Object.assign({k},O[k])).filter(e=>e&&e.ko&&typeof e.ko==='object'&&Object.keys(e.ko).length)
     .sort((a,b)=>String(b.t||'').localeCompare(String(a.t||''))); })();

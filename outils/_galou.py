@@ -151,4 +151,7 @@ function glAccueil(nom){
   glAjoute('assistant',glT('Salut'+p+' ! Demande-moi le récap d\'hier, ce qu\'il faut recommander, ou n\'importe quoi sur tes ventes et ton stock.','Hi'+p+'! Ask me for yesterday\'s recap, what to reorder, or anything about your sales and stock.','¡Hola'+p+'! Pídeme el resumen de ayer, qué hay que pedir, o cualquier cosa sobre tus ventas y tu stock.'));
 }
 window.galouOuvre=galouOuvre;
+/* la pastille « Tâches » du menu : combien attendent (relue à chaque page, seulement pour qui voit les marges) */
+setTimeout(()=>{ try{ const c=document.getElementById('ct-taches'); if(!c||!glPeut()||typeof peut!=='function'||!peut('voirMarge')) return;
+  fetch(CK_URL+'/api/o/'+CK_ORG+'/galou/taches',{headers:{Authorization:'Bearer '+ckTok()}}).then(r=>r.ok?r.json():null).then(j=>{ if(!j) return; const n=(j.a_faire||[]).length; c.textContent=n?String(n):''; c.className=n?'ct nb':'ct'; }).catch(()=>{}); }catch(e){} },2500);
 """

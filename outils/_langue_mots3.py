@@ -1674,3 +1674,10 @@ MOTS3.update({
 MOTS3.update({
     "Parler à Galou": ["Talk to Galou", "Hablar con Galou"],
 })
+
+# ---- Tâches (Galou), 3 nov. 2026 ----
+MOTS3.update({
+    "Tâches": ["Tasks", "Tareas"],
+    "Ce que Galou te demande de faire aujourd'hui, trouvé dans l'ERP : parfums à recommander, prix à vérifier, mises en ligne, Perfume City, expéditions. Fais, ignore, ou demande un rappel.": ["What Galou asks you to do today, found in the ERP: perfumes to reorder, prices to check, listings, Perfume City, shipments. Do it, ignore it, or ask for a reminder.", "Lo que Galou te pide hacer hoy, encontrado en el ERP: perfumes por pedir, precios por revisar, publicaciones, Perfume City, envíos. Hazlo, ignóralo o pide un recordatorio."],
+    "Galou regarde ce qu'il y a à faire…": ["Galou is looking at what there is to do…", "Galou está mirando qué hay que hacer…"],
+})

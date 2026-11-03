@@ -80,6 +80,7 @@ RECAP_CSS = r'''
 .rc .rc-card details summary{cursor:pointer;color:var(--iris);font-weight:600;font-size:13px;list-style-position:inside}
 .rc details table{margin-top:8px}
 .rc-note{font-size:12.5px;color:var(--ink-3);margin:14px 0 0;line-height:1.5;max-width:90ch}
+.rc .kpis+.rc-inc{margin:-8px 0 18px}
 .rc-vide{background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:22px;color:var(--ink-2);font-size:14px;line-height:1.6}
 :root{--rc-c-site:#0072B2;--rc-c-sitegros:#7B52AB;--rc-c-amazon:#009E73;--rc-c-gros:#E69F00;--rc-c-caisse:#D55E00;--rc-c-pc:#E0457F;--rc-c-detail:#5C6B7A;--rc-c-autre:#8C8C8C}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--rc-c-site:#4DA3E0;--rc-c-sitegros:#A98BD8;--rc-c-amazon:#2EC49B;--rc-c-gros:#F2B641;--rc-c-caisse:#F08A4B;--rc-c-pc:#F06A9C;--rc-c-detail:#9AA7B5;--rc-c-autre:#A6A6A6}}
@@ -151,6 +152,8 @@ function rcLignes(){
   return L;
 }
 const RC_HG="Vente en gros · avant l'ERP";
+/* le premier jour dont les chiffres sont complets sur tous les canaux (mise en service de l'ERP, Amazon compris) */
+const RC_COMPLET='2026-10-01';
 /* ---- les périodes ---- */
 const rcISO=d=>isoJour(d);
 function rcPlage(sel){
@@ -283,7 +286,11 @@ function rcChart(P,R,ordre,metric){
 /* ---- tout dessiner ---- */
 function rcDessine(){
   const z=document.getElementById('recap'); if(!z) return;
-  const L=rcLignes(), P=rcPlage(RC.sel), R=rcAgrege(L,P.a,P.b), Q=rcPrec(RC.sel,P), RP=Q?rcAgrege(L,Q.a,Q.b):null;
+  const L=rcLignes(), P=rcPlage(RC.sel), R=rcAgrege(L,P.a,P.b), Q0=rcPrec(RC.sel,P);
+  /* 3 nov. 2026 (Igal) : pas de comparaison quand la période d'avant commence avant RC_COMPLET, parce que ses chiffres
+     sont incomplets (septembre 2026 n'a pas les ventes Amazon FBA). Dès novembre, octobre sert de référence et la
+     comparaison revient toute seule. Si l'export Amazon de septembre est importé un jour, reculer RC_COMPLET. */
+  const Q=(Q0&&Q0.a<RC_COMPLET)?null:Q0, Qinc=(Q0&&!Q)?Q0:null, RP=Q?rcAgrege(L,Q.a,Q.b):null;
   const auj=new Date(); const y=auj.getFullYear(), m=auj.getMonth();
   /* les mois et les années qui ont des ventes, pour les deux menus */
   const moisVus=new Set(L.map(v=>v.d.slice(0,7)).filter(x=>/^\d{4}-\d{2}$/.test(x))); moisVus.add(rcISO(auj).slice(0,7));
@@ -313,6 +320,8 @@ function rcDessine(){
     <div class="kpi"><div class="v">${nf(T.q)}</div><div class="k">${L3('flacons vendus','bottles sold','frascos vendidos')}</div>${evo(T.q,TP&&TP.q,nf)}</div>
     <div class="kpi"><div class="v">${nf(T.n)}</div><div class="k">${L3('ventes','sales','ventas')}${panier!=null?' · '+L3('panier moyen','average basket','cesta media')+' '+money(panier):''}${T.nR?' · '+nf(T.nR)+' '+L3('remboursement'+(T.nR>1?'s':''),'refund'+(T.nR>1?'s':''),'reembolso'+(T.nR>1?'s':'')):''}</div>${evo(T.n,TP&&TP.n,nf)}</div>
   </div>`;
+  if(Qinc){ const lib=rcLibPrec(RC.sel,Qinc);
+    h+=`<p class="rc-note rc-inc">${L3('Pas de comparaison avec','No comparison with','Sin comparación con')} <span data-nolang>${esc(lib)}</span> : ${L3('les chiffres d\'avant le 1er octobre 2026 sont incomplets (ventes Amazon absentes). La comparaison reviendra d\'elle-même sur les mois suivants.','figures before October 1, 2026 are incomplete (Amazon sales missing). The comparison will come back by itself on the following months.','las cifras anteriores al 1 de octubre de 2026 están incompletas (faltan las ventas de Amazon). La comparación volverá sola en los meses siguientes.')}</p>`; }
   const ordre=Object.values(R.G).sort((a,b)=>b.ca-a.ca||b.q-a.q).map(o=>o.canal);
   const caPos=Object.values(R.G).reduce((a,o)=>a+Math.max(0,o.ca),0)||1;
   const sous=o=>{ if(rcId(o.canal)!=='pc') return ''; const ks=Object.keys(o.ou).filter(k=>k&&(o.ou[k].q||o.ou[k].ca)); if(!ks.length) return '';

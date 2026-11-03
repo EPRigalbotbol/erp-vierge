@@ -907,6 +907,6 @@ const dfr=d=>{ if(!d) return '—'; const [a,m,j]=String(d).slice(0,10).split('-
 html = coquille("Tableau de bord", "Tableau de bord",
   "Ce qui demande une décision aujourd'hui : les références qui s'épuisent, celles qui "
   "n'ont pas de photo, et les prix qui font perdre de l'argent. Les seuils viennent des réglages.",
-  CSS, CORPS, JS.replace('/*__RECAP__*/', RECAP_JS), donnees=('produits',)).replace('__IDX__', 'Object.fromEntries(D_TOUS().map(r=>[r[15],[r[0],r[13],r[2],r[12],r[6],r[8],r[7],r[14],r[4],r[5],r[9]]]))')
+  CSS, CORPS, JS.replace('/*__RECAP__*/', RECAP_JS), donnees=('produits','histgros')).replace('__IDX__', 'Object.fromEntries(D_TOUS().map(r=>[r[15],[r[0],r[13],r[2],r[12],r[6],r[8],r[7],r[14],r[4],r[5],r[9]]]))')
 open('tableau.html','w').write(html)
 print('tableau.html',len(html)//1024,'Ko')

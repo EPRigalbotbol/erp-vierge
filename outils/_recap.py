@@ -143,8 +143,14 @@ function rcLignes(){
   { const vus=new Set(); L.forEach(v=>{ if(String(v.auto||'')!=='lightspeed'||v.ret||!v.paie||!(+v.paie.carte>0)) return;
       const k='f|'+(v.fid||v.num); if(vus.has(k)) return; vus.add(k);
       v.carteMt=Math.round(+v.paie.carte*rcCarteTaux())/100; if(v.mg!=null) v.mg-=v.carteMt; }); }
+  /* 2 nov. 2026 : les ventes en gros d'AVANT l'ERP (tableur de Sam jusqu'au 30 sept. 2026, donnees/histgros.js) comptent
+     comme dans la fiche parfum : chiffre d'affaires et flacons, sans marge (le prix d'achat de l'époque est inconnu).
+     Elles ne sont pas dans Ventes : le test de parité avec Ventes les laisse de côté (hist). */
+  try{ const H=window.D_HG; if(H&&H.l){ Object.keys(H.l).forEach(k=>{ (H.l[k]||[]).forEach(r=>{ if(!r||!r[0]) return;
+      const q=+r[2]||0, p=r[3]==null?0:+r[3]; L.push({canal:RC_HG,num:'',cle:null,pa:null,fid:'hg|'+r[0]+'|'+(r[1]||0),ret:false,auto:'',d:String(r[0]).slice(0,10),cmd:'',q,p,mt:q*p,com:0,comMt:0,net:q*p,mg:null,hist:true,client:(H.c||[])[r[1]]||''}); }); }); } }catch(e){}
   return L;
 }
+const RC_HG="Vente en gros · avant l'ERP";
 /* ---- les périodes ---- */
 const rcISO=d=>isoJour(d);
 function rcPlage(sel){
@@ -197,11 +203,12 @@ function rcId(nom){ const n=String(nom||'').toLowerCase();
   if(n.includes('perfumestrade')) return 'site';
   if(n.includes('amazon')) return 'amazon';
   if(n.includes('lightspeed')||n.includes('caisse')) return 'caisse';
-  if(n==='gros') return 'gros'; if(n==='boutique') return 'detail';
+  if(n==='gros'||n===RC_HG.toLowerCase()) return 'gros'; if(n==='boutique') return 'detail';
   return 'autre'; }
 const rcCoul=n=>`var(--rc-c-${rcId(n)})`;
 function rcNomVu(nom){ const n=String(nom||'').toLowerCase();
   if(n==='gros') return L3('Vente en gros','Wholesale sale','Venta mayorista');
+  if(n===RC_HG.toLowerCase()) return L3("Vente en gros · avant l'ERP",'Wholesale · before the ERP','Mayorista · antes del ERP');
   if(n==='boutique') return L3('Vente au détail','Retail sale','Venta al detalle');
   if(n==='caisse lightspeed') return L3('Caisse Lightspeed','Lightspeed register','Caja Lightspeed');
   if(n==='(non précisé)') return L3('(non précisé)','(not specified)','(sin precisar)');
@@ -213,7 +220,7 @@ function rcAgrege(L,a,b){
   const G={}, T={ca:0,mg:0,q:0,n:0,nR:0,sansPa:0}; const ventes=new Set(), remb=new Set();
   S.forEach(v=>{ const o=G[v.canal]=G[v.canal]||{canal:v.canal,ca:0,mg:0,q:0,n:0,nR:0,sansPa:0,ou:{},vs:new Set(),rs:new Set()};
     o.ca+=v.mt; T.ca+=v.mt; o.q+=v.q||0; T.q+=v.q||0;
-    if(v.mg==null){ if(!v.ret){ o.sansPa++; T.sansPa++; } } else { o.mg+=v.mg; T.mg+=v.mg; }
+    if(v.mg==null){ if(!v.ret&&!v.hist){ o.sansPa++; T.sansPa++; } if(v.hist){ o.hist=1; } } else { o.mg+=v.mg; T.mg+=v.mg; }
     const k=(v.fid||v.num||'')+'|'+(v.cmd||''); if(v.ret){ o.rs.add(k); remb.add(k); } else { o.vs.add(k); ventes.add(k); }
     if(rcId(v.canal)==='pc'){ const ou=v.ou||''; const z=o.ou[ou]=o.ou[ou]||{ca:0,q:0}; z.ca+=v.mt; z.q+=v.q||0; } });
   Object.values(G).forEach(o=>{ o.n=o.vs.size; o.nR=o.rs.size; delete o.vs; delete o.rs; });
@@ -313,12 +320,12 @@ function rcDessine(){
   h+=`<div class="rc-grid"><div class="rc-card"><h3>${L3('Par canal','By channel','Por canal')}</h3>
     <table class="rc-tab" id="rc-tab"><thead><tr><th>${L3('Canal','Channel','Canal')}</th><th class="r">${L3('Ventes','Sales','Ventas')}</th><th class="r">${L3('Flacons','Bottles','Frascos')}</th><th class="r">${L3("Chiffre d'affaires",'Revenue','Facturación')}</th><th class="r">${L3('Marge nette','Net margin','Margen neto')}</th></tr></thead><tbody>
     ${ordre.map(n=>{ const o=R.G[n]; const part=Math.max(0,o.ca)/caPos*100;
-      return `<tr data-c="${esc(n)}"><td><div class="nm"><i class="rc-sw" style="--c:${rcCoul(n)}"></i><span data-nolang>${esc(rcNomVu(n))}</span></div>${sous(o)}</td><td class="r">${nf(o.n)}${o.nR?` <small class="neg">−${nf(o.nR)}</small>`:''}</td><td class="r">${nf(o.q)}</td><td class="r ${o.ca<0?'neg':''}"><b>${money(o.ca)}</b><span class="rc-part" title="${esc(L3('part du chiffre d\'affaires','share of revenue','parte de la facturación'))}"><i style="--c:${rcCoul(n)};--w:${Math.round(part*0.6)}"></i><b>${nf(Math.round(part))} %</b></span></td><td class="r ${o.mg<0?'neg':''}">${money(o.mg)}${o.sansPa?' <small class="neg" title="'+esc(L3('lignes sans prix d\'achat','lines without purchase price','líneas sin precio de compra'))+'">?</small>':''}</td></tr>`; }).join('')}
+      return `<tr data-c="${esc(n)}"><td><div class="nm"><i class="rc-sw" style="--c:${rcCoul(n)}"></i><span data-nolang>${esc(rcNomVu(n))}</span></div>${sous(o)}</td><td class="r">${nf(o.n)}${o.nR?` <small class="neg">−${nf(o.nR)}</small>`:''}</td><td class="r">${nf(o.q)}</td><td class="r ${o.ca<0?'neg':''}"><b>${money(o.ca)}</b><span class="rc-part" title="${esc(L3('part du chiffre d\'affaires','share of revenue','parte de la facturación'))}"><i style="--c:${rcCoul(n)};--w:${Math.round(part*0.6)}"></i><b>${nf(Math.round(part))} %</b></span></td><td class="r ${o.mg<0?'neg':''}">${o.hist?'<span title="'+esc(L3("prix d'achat de l'époque inconnu : pas de marge",'purchase price at the time unknown: no margin','precio de compra de la época desconocido: sin margen'))+'">—</span>':money(o.mg)}${o.sansPa?' <small class="neg" title="'+esc(L3('lignes sans prix d\'achat','lines without purchase price','líneas sin precio de compra'))+'">?</small>':''}</td></tr>`; }).join('')}
     <tr class="tot"><td>${L3('Total','Total','Total')}</td><td class="r">${nf(T.n)}</td><td class="r">${nf(T.q)}</td><td class="r ${T.ca<0?'neg':''}">${money(T.ca)}</td><td class="r ${T.mg<0?'neg':''}">${money(T.mg)}</td></tr></tbody></table></div>
     <div class="rc-card"><h3>${L3('Au fil du temps','Over time','A lo largo del tiempo')}</h3>
       <div class="rc-met">${['ca','mg','q'].map(mt=>`<button type="button" class="rc-chip ${RC.metric===mt?'on':''}" data-rcm="${mt}">${rcMetLib(mt)}</button>`).join('')}</div>
       ${rcChart(P,R,ordre,RC.metric)}</div></div>
-    <p class="rc-note">${L3('La marge est nette : commission du canal, port et frais de carte déduits, comme dans Ventes. Les commandes reçues mais pas encore expédiées ne comptent pas.','The margin is net: channel commission, shipping and card fees deducted, as in Sales. Orders received but not yet shipped do not count.','El margen es neto: comisión del canal, envío y comisiones de tarjeta deducidos, como en Ventas. Los pedidos recibidos pero aún no enviados no cuentan.')}</p>`;
+    <p class="rc-note">${L3('La marge est nette : commission du canal, port et frais de carte déduits, comme dans Ventes. Les commandes reçues mais pas encore expédiées ne comptent pas. Les ventes en gros d\'avant l\'ERP (tableur, jusqu\'au 30 sept. 2026) comptent dans le chiffre d\'affaires, sans marge.','The margin is net: channel commission, shipping and card fees deducted, as in Sales. Orders received but not yet shipped do not count. Wholesale sales from before the ERP (spreadsheet, until Sept 30, 2026) count in revenue, without margin.','El margen es neto: comisión del canal, envío y comisiones de tarjeta deducidos, como en Ventas. Los pedidos recibidos pero aún no enviados no cuentan. Las ventas mayoristas de antes del ERP (hoja de cálculo, hasta el 30 sept. 2026) cuentan en la facturación, sin margen.')}</p>`;
   z.innerHTML=h; rcBranche();
 }
 let _rcTip=null;

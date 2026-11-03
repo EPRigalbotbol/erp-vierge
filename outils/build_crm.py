@@ -71,7 +71,7 @@ def barre(actif):
          ('clients.html','◉','Clients', '!'+str(NCLI)),
          ('connecteurs.html','⇄','Connecteurs',''),
          # 3 nov. 2026 (Igal) : Galou, l'assistant d'Igal — une fenêtre pour lui parler, sur n'importe quelle page (_galou.py)
-         ('#galou','✦','Parler à Galou',''),
+         ('#galou','✦','Parler à Léa',''),
          # 9 oct. 2026 (Igal) : la messagerie interne est retirée du menu pour tout le monde ; à sa
          # place, « Support technique » ouvre la boîte de dialogue qui envoie une réclamation à Igal
          # (cockpit, table support). La page messages.html existe toujours mais n'est plus liée.

@@ -45,7 +45,7 @@ details.tk-ign summary{cursor:pointer;color:var(--ink-3);font-size:13px;font-wei
 
 CORPS = r"""
 <div class="tk-tete" id="tk-tete"></div>
-<div id="tk-corps"><div class="tk-vide" id="tk-att">Galou regarde ce qu'il y a à faire…</div></div>
+<div id="tk-corps"><div class="tk-vide" id="tk-att">Léa regarde ce qu'il y a à faire…</div></div>
 """
 
 JS = r"""
@@ -80,9 +80,9 @@ function tkPeint(){
   h.innerHTML=`<div class="tk-kpi ${TK.urgentes?'hot':''}"><b>${nf(TK.urgentes)}</b><span>${tkT('urgentes','urgent','urgentes')}</span></div>
     <div class="tk-kpi"><b>${nf(n)}</b><span>${tkT('à faire','to do','por hacer')}</span></div>
     <div class="tk-kpi"><b>${nf(TK.attente.length)}</b><span>${tkT('en attente','waiting','en espera')}</span></div>
-    <div class="tk-maj">${tkT('Galou relit l\'ERP à chaque ouverture de cette page.','Galou re-reads the ERP each time this page opens.','Galou relee el ERP cada vez que se abre esta página.')}</div>`;
+    <div class="tk-maj">${tkT('Léa relit l\'ERP à chaque ouverture de cette page.','Léa re-reads the ERP each time this page opens.','Léa relee el ERP cada vez que se abre esta página.')}</div>`;
   let s=`<h2 class="sec">${tkT('À faire','To do','Por hacer')} <em>${tkT('les plus urgentes en premier · une tâche disparaît toute seule quand le problème n\'existe plus','most urgent first · a task goes away by itself once the problem is gone','las más urgentes primero · una tarea desaparece sola cuando el problema ya no existe')}</em></h2>`;
-  s+=n?TK.a_faire.map(tkLigne).join(''):`<div class="tk-vide"><b>${tkT('Rien à faire pour l\'instant','Nothing to do right now','Nada que hacer por ahora')}</b>${tkT('Galou te dira dès qu\'il y a quelque chose.','Galou will tell you as soon as there is something.','Galou te avisará en cuanto haya algo.')}</div>`;
+  s+=n?TK.a_faire.map(tkLigne).join(''):`<div class="tk-vide"><b>${tkT('Rien à faire pour l\'instant','Nothing to do right now','Nada que hacer por ahora')}</b>${tkT('Léa te dira dès qu\'il y a quelque chose.','Léa will tell you as soon as there is something.','Léa te avisará en cuanto haya algo.')}</div>`;
   if(TK.attente.length) s+=`<h2 class="sec">${tkT('En attente','Waiting','En espera')} <em>${tkT('elles reviendront dans la liste à la date du rappel','they will come back to the list on the reminder date','volverán a la lista en la fecha del recordatorio')}</em></h2>`+TK.attente.map(tkLigne).join('');
   if(TK.ignorees.length) s+=`<details class="tk-ign"><summary>${tkT(`${nf(TK.ignorees.length)} tâche${TK.ignorees.length>1?'s':''} ignorée${TK.ignorees.length>1?'s':''}`,`${nf(TK.ignorees.length)} ignored task${TK.ignorees.length>1?'s':''}`,`${nf(TK.ignorees.length)} tarea${TK.ignorees.length>1?'s':''} ignorada${TK.ignorees.length>1?'s':''}`)}</summary>`+TK.ignorees.map(tkLigne).join('')+'</details>';
   z.innerHTML=s;
@@ -100,7 +100,7 @@ async function tkStatue(id,etat,jours,titre){
 }
 async function tkCharge(){
   try{ TK=await tkApi(''); tkPeint(); }
-  catch(e){ $('tk-corps').innerHTML=`<div class="tk-vide">${tkT('Galou ne répond pas : ','Galou is not answering: ','Galou no responde: ')}${esc(e&&e.message||String(e))}</div>`; }
+  catch(e){ $('tk-corps').innerHTML=`<div class="tk-vide">${tkT('Léa ne répond pas : ','Léa is not answering: ','Léa no responde: ')}${esc(e&&e.message||String(e))}</div>`; }
 }
 (function(){
   const s=session(); if(!s) return;
@@ -114,7 +114,7 @@ async function tkCharge(){
 """
 
 html = coquille("Tâches", "Tâches",
-    "Ce que Galou te demande de faire aujourd'hui, trouvé dans l'ERP : parfums à recommander, prix à vérifier, mises en ligne, Perfume City, expéditions. Fais, ignore, ou demande un rappel.",
+    "Ce que Léa te demande de faire aujourd'hui, trouvé dans l'ERP : parfums à recommander, prix à vérifier, mises en ligne, Perfume City, expéditions. Fais, ignore, ou demande un rappel.",
     CSS, CORPS, JS, donnees=('produits',))
 open('taches.html', 'w').write(html)
 print('taches.html', len(html)//1024, 'Ko')

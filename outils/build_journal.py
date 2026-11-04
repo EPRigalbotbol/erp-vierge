@@ -55,6 +55,7 @@ padding:4px 9px;border-radius:20px;white-space:nowrap;line-height:1;letter-spaci
 .a-annulation,.a-suppression{background:var(--crit-soft);color:var(--crit)}
 .a-ajustement{background:var(--warn-soft);color:var(--warn)}
 .a-reglage{background:var(--iris-soft);color:var(--iris)}
+.a-demande{background:#FFF4D6;color:#6B4E00}
 .a-fiche,.a-fournisseur,.a-creation,.a-client,.a-connecteur{background:var(--surface-2);color:var(--ink-2)}
 .chg{font-family:Inter,sans-serif;font-size:12.5px;font-variant-numeric:tabular-nums;
 line-height:1.5}
@@ -129,7 +130,7 @@ Le journal est gardé sur le serveur, avec ses versions précédentes.</div>
     <option value="ajustement">Ajustements (casse, vol, testeur…)</option>
     <option value="reglage">Réglages (commissions, seuils)</option><option value="acces">Accès (comptes, connexions)</option>
     <option value="fournisseur">Fournisseurs</option><option value="client">Clients</option>
-    <option value="connecteur">Connecteurs</option><option value="fiche">Autres champs</option>
+    <option value="connecteur">Connecteurs</option><option value="demande">Transferts interstore</option><option value="fiche">Autres champs</option>
   </select>
   <select id="fu" class="sel"><option value="">Tout le monde</option></select>
   <select id="fp" class="sel">
@@ -164,7 +165,8 @@ let vus=60;
 if(typeof _SY_ON!=='undefined'&&_SY_ON){ $('avert-local').hidden=true; $('avert-ligne').hidden=false; }
 const LIBA={acces:'Accès',prix:'Prix',stock:'Stock',verif:'Comptage',import:'Import',reception:'Réception',vente:'Vente',annulation:'Annulation',suppression:'Suppression',
             fournisseur:'Fournisseur',fiche:'Fiche',creation:'Création',
-            client:'Client',connecteur:'Connecteur',ajustement:'Ajustement',reglage:'Réglage'};
+            client:'Client',connecteur:'Connecteur',ajustement:'Ajustement',reglage:'Réglage',
+            demande:'Transfert interstore'};
 /* un ajustement de stock (casse, vol, testeur…) est écrit avec act:'stock' :
    on le distingue pour qu'il ait sa propre pastille et son propre filtre */
 const acte=e=>(e.act==='stock'&&/^ajustement/.test(e.lib||''))?'ajustement':e.act;

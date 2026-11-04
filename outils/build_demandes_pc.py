@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Rubrique « Demandes Perfume City » (Igal, 4 nov. 2026).
+"""Rubrique « Transfert interstore » (Igal, 4 nov. 2026 ; d'abord « Demandes Perfume City », renommée le jour même).
 
 « Sam m'a expliqué que certaines fois Perfume City ou Perfume Trade se font des appels de parfums : Perfume City dit
 'est-ce que vous pouvez nous envoyer trois références'. Je veux la possibilité sur l'ERP de faire des demandes de parfums
@@ -106,7 +106,7 @@ function dessineForm(){
   const bascule=['pc','pt'].map(c=>`<button type="button" data-de="${c}" class="${DE===c?'on':''}"><span data-nolang>${esc(BOUTIQUE[c])}</span> ${T('demande','asks','pide')} <span data-nolang>→ ${esc(BOUTIQUE[autre(c)])}</span></button>`).join('');
   const lignes=LIG.map((l,i)=>{ const p=PROD.find(x=>x.cle===l.cle)||{cle:l.cle,bc:l.bc,nom:l.nom,qte:0};
     return `<div class="dm-l"><div><b data-nolang>${esc(l.nom)}</b></div><div><input type="number" min="1" step="1" value="${l.q}" data-i="${i}" class="dm-qte" aria-label="${T('Quantité','Quantity','Cantidad')}"></div><div class="dm-x"><button type="button" class="dm-btn" data-ote="${i}">${T('Retirer','Remove','Quitar')}</button></div>${avertit(p,DE)}</div>`; }).join('');
-  z.innerHTML=`<h2 class="sec" style="margin-top:6px">${T('Nouvelle demande','New request','Nueva solicitud')} <em>${T('Qui demande à qui ?','Who is asking whom?','¿Quién pide a quién?')}</em></h2>
+  z.innerHTML=`<h2 class="sec" style="margin-top:6px">${T('Nouveau transfert','New transfer','Nueva transferencia')} <em>${T('Qui demande à qui ?','Who is asking whom?','¿Quién pide a quién?')}</em></h2>
     <div class="dm-bascule">${bascule}</div>
     <div class="dm-carte">
       <h3>${T('Quel parfum ?','Which perfume?','¿Qué perfume?')}</h3>
@@ -184,8 +184,8 @@ window.__rafraichir=()=>{ recharge(); dessineListe(); };
 (function(){ if(!session()) return; recharge(); dessineForm(); dessineListe(); })();
 """
 
-html = coquille("Demandes Perfume City", "Demandes Perfume City",
-    "Perfume City et Perfumes Trade se demandent des parfums : choisis les références et les quantités, l'autre boutique répond. "
+html = coquille("Transfert interstore", "Transfert interstore",
+    "Perfume City et Perfumes Trade se transfèrent des parfums : choisis les références et les quantités, l'autre boutique répond. "
     "Si le demandeur a déjà le parfum en stock, un avertissement le dit.",
     CSS, CORPS, JS, donnees=('produits',)).replace('__IDX__', 'Object.fromEntries(D_TOUS().map(r=>[r[15],[r[0],r[13],r[2],r[12],r[6],r[8],r[7]]]))')
 open('demandes_pc.html', 'w').write(html)

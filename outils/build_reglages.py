@@ -291,6 +291,10 @@ CORPS = r'''
             '<p>Les espèces que Sam laisse toujours dans le tiroir de la caisse. Le tableau de bord compte les espèces encaissées à la caisse '
             'depuis la dernière récolte ; quand Sam récolte, il laisse ce montant et appuie sur « Récolte faite ».</p>'
             + agit('Tableau de bord — case « Espèces en caisse »'), sid='sec-caisse') \
+    + ligne('Fonds de caisse de Perfume City', 'Fonds laissé dans le tiroir de la boutique de Kim', '<input type="number" id="r-fondpc" min="0" max="100000" step="1"><b>$</b>',
+            '<p>Les espèces que Kim laisse toujours dans le tiroir de Perfume City. Le tableau de bord compte les espèces encaissées par la boutique '
+            '(les commandes Shopify payées en « cash ») depuis la dernière récolte, dans un bloc à part de celui de Sam.</p>'
+            + agit('Tableau de bord — case « Espèces en caisse · Perfume City »'), sid='sec-caisse-pc') \
     + ligne('Frais de carte Lightspeed', 'Ce que Lightspeed Payments prend sur un paiement par carte', '<input type="number" id="r-cartels" min="0" max="10" step="0.1"><b>%</b>',
             '<p>Retiré de la marge de chaque vente de la caisse, sur la part payée par carte seulement : les espèces et Zelle ne coûtent rien. '
             'Changer le taux recalcule toutes les ventes enregistrées, passées comprises.</p>'
@@ -345,7 +349,7 @@ const IDX=__IDX__;
 const KREG='reglages-v1', KJOU='crm-journal-v1', KMOD='fiches-modifiees-v1', KEXT='stock-externe-v1';
 const CANAUX_DEF=[{id:'site',nom:'Site perfumestrade.com',maj:0,com:3},
   {id:'sitegros',nom:'Site wholesale.perfumestrade.com',base:'pvw',maj:0,com:3},{id:'amazon',nom:'Amazon',maj:18,com:15},{id:'perfumecity',nom:'Perfume City',maj:0,com:3}];
-const DEF={seuilQte:3,capMin:0,baissePct:30,baisseJours:30,margeMin:10,fondCaisse:200,societe:'DASY LLC',
+const DEF={seuilQte:3,capMin:0,baissePct:30,baisseJours:30,margeMin:10,fondCaisse:200,fondCaissePC:0,societe:'DASY LLC',
   canaux:CANAUX_DEF, signature:'', monMail:'', monTel:'', boite:'defaut',
   fact:{raison:'',enseigne:'Perfumes Trade',adresse:'',tel:'',email:'',taxid:'',taux:7,carte:2.6,zelle:'',prefixe:'PT',conditions:'',exo:'',logo:''},
   factPC:{raison:'',enseigne:'Perfume City',adresse:'',tel:'',email:'',insta:'',taxid:'',zelle:'',prefixe:'PC',logo:''}};
@@ -586,7 +590,7 @@ try{ peintStSites(); }catch(e){}
 { const el=$('r-devisdep'); if(el){ el.value=REG.devisDepuis||'2026-10-01';
   el.addEventListener('change',()=>{ if(!/^\d{4}-\d{2}-\d{2}$/.test(el.value)) return; const av=REG.devisDepuis||'2026-10-01'; REG.devisDepuis=el.value; sauve(); logReg('devisDepuis','devis Lightspeed convertibles à partir du',av,el.value); }); } }
 
-const champs=[['r-qte','seuilQte'],['r-mg','margeMin'],['r-fond','fondCaisse']];
+const champs=[['r-qte','seuilQte'],['r-mg','margeMin'],['r-fond','fondCaisse'],['r-fondpc','fondCaissePC']];
 champs.forEach(([id,k])=>{
   $(id).value=REG[k];
   $(id).addEventListener('input',()=>{
@@ -600,7 +604,7 @@ champs.forEach(([id,k])=>{
     if(k==='margeMin'&&REG[k]!==v) $(id).value=REG[k];
     const LIBS={seuilQte:'seuil de stock faible',capMin:'capital minimum surveillé',
                 baissePct:'baisse de prix signalée',baisseJours:'fenêtre de la baisse (jours)',
-                margeMin:'marge minimum exigée',fondCaisse:'fonds de caisse ($)'};
+                margeMin:'marge minimum exigée',fondCaisse:'fonds de caisse ($)',fondCaissePC:'fonds de caisse de Perfume City ($)'};
     logReg('reg-'+k,LIBS[k]||k,avant,REG[k]);
     sauve(); dessine();
   });

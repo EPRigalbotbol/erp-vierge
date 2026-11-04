@@ -44,6 +44,7 @@ _IC = {
  'messages.html':'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
  '#support':'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="m9.5 9.5-4-4M14.5 9.5l4-4M14.5 14.5l4 4M9.5 14.5l-4 4"/>',
  '#galou':'<path d="M4 5h16v10H9l-5 4z"/><path d="M8 9h8M8 12h5"/>',
+ 'demandes_pc.html':'<path d="M4 8h13l-3-3M20 16H7l3 3"/>',
  'taches.html':'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="m8 12 3 3 5-6"/>',
  'journal.html':'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
  'tableau.html':'<rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/>',
@@ -58,6 +59,8 @@ def barre(actif):
     L = [('catalogue.html','▦','Catalogue', '#'+n(S['total'])),
          ('stock.html','▤','Inventaire', '#'+n(S['enstock'])),
          ('inventaire_pc.html','▥','Inventaire Perfume City',''),
+         # 4 nov. 2026 (Igal) : les demandes de parfums entre Perfume City et Perfumes Trade (build_demandes_pc.py)
+         ('demandes_pc.html','⇆','Demandes Perfume City',''),
          ('quotes.html','◇','Devis',''),
          ('factures.html','▧','Factures',''),
          ('ventes.html','◔','Ventes',''),
@@ -97,7 +100,7 @@ def barre(actif):
             a=f'<a class="{cls}"{pil} href="#support" id="aid-btn" data-id="support" onclick="if(typeof aidOuvre===\'function\')aidOuvre();return false">'
         if href=='#galou':
             a=f'<a class="{cls}" href="#galou" id="gl-btn" data-id="galou" onclick="if(typeof galouOuvre===\'function\')galouOuvre();return false">'
-        cid='ct-'+('pcity' if lab.startswith('Inventaire Perfume') else 'expeditions' if lab in ('Expéditions','Statut shipping') else 'taches' if lab=='Tâches' else lab.lower().split()[0].replace('&',''))
+        cid='ct-'+('pcity' if lab.startswith('Inventaire Perfume') else 'expeditions' if lab in ('Expéditions','Statut shipping') else 'taches' if lab=='Tâches' else 'demandes' if lab=='Demandes Perfume City' else lab.lower().split()[0].replace('&',''))
         # 8 oct. 2026 (Igal) : plus de petit texte gris à droite des rubriques — seuls restent le
         # nombre de clients et la pastille des nouvelles ventes (et la pastille rouge des messages
         # non lus, quand il y en a). Les chiffres de Catalogue et d'Inventaire continuent d'être

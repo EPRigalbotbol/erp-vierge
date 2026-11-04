@@ -480,8 +480,15 @@ function blocPcKo(){
    révèle une vente oubliée ou une erreur de caisse. Point de départ : le 23 oct. 2026 à 23 h (Miami), 200 $ dans le tiroir. */
 const K_CAISSE='caisse-especes-v1', CAISSE_DEBUT='2026-10-24T03:00:00.000Z';
 const cash=v=>(typeof _usd==='function')?_usd(v,2):('$'+Number(v||0).toFixed(2));   /* les espèces se comptent au centime */
-function caisseLit(){ let C=null; try{ C=lit(K_CAISSE,null); }catch(e){} if(!C||typeof C!=='object') C={}; if(!Array.isArray(C.recoltes)) C.recoltes=[]; if(!C.debut) C.debut=CAISSE_DEBUT; return C; }
+/* 4 nov. 2026 (Igal : « le cash de la caisse de Perfume City, on le met dans le dashboard ») : la boutique de Kim a son
+   propre tiroir-caisse. Même bloc que celui de Sam, mêmes règles, mais SES espèces à elle : celles des ventes Shopify de
+   Perfume City dont la passerelle de paiement est « cash » (paie.especes, gardé par le cockpit). Aucun mélange : les
+   espèces de Perfume City ne comptent jamais dans la caisse de Sam, et l'inverse. Point de départ : le 4 nov. 2026, Kim
+   ou Sam note la première récolte comme celle de Sam. */
+const K_CAISSE_PC='caisse-especes-pc-v1', CAISSE_PC_DEBUT='2026-11-04T05:00:00.000Z';
+function caisseLit(cfg){ cfg=cfg||CAISSES.ls; let C=null; try{ C=lit(cfg.cle,null); }catch(e){} if(!C||typeof C!=='object') C={}; if(!Array.isArray(C.recoltes)) C.recoltes=[]; if(!C.debut) C.debut=cfg.debut; return C; }
 const caisseFond=()=>(REG.fondCaisse!=null&&isFinite(+REG.fondCaisse))?+REG.fondCaisse:200;
+const caisseFondPC=()=>(REG.fondCaissePC!=null&&isFinite(+REG.fondCaissePC))?+REG.fondCaissePC:0;
 /* les espèces d'une vente : ce que la caisse a dit (paie), sinon une vente/un retour saisi « espèces » dans l'ERP */
 /* 27 oct. 2026 : le paiement gardé à part par le cockpit (caisse-paie-v1) complète une vente enregistrée sans paiement */
 let _PAIE=null;
@@ -500,28 +507,51 @@ function especesDe(f){
   const tot=(f.doc&&isFinite(+f.doc.total))?+f.doc.total:(+f.montant||0);
   return f.retour?-Math.abs(tot):tot;
 }
-function caisseEtat(){
-  const C=caisseLit(), derniere=C.recoltes.length?C.recoltes[C.recoltes.length-1]:null, depuis=derniere?derniere.t:C.debut;
+/* les espèces d'une vente de Perfume City : ce que Shopify a dit (paie.especes) ; un remboursement vient en moins,
+   dans la limite de ce qui avait été payé en espèces sur la vente d'origine */
+function especesPC(f){
+  if(!f||f.sens!=='vente'||f.annule||String(f.auto||'')!=='shopify-pc') return 0;
+  if(!f.retour){ const p=paieDe(f); return (p&&isFinite(+p.especes))?+p.especes:0; }
   let FA=[]; try{ FA=lit(KFACT,[])||[]; }catch(e){ FA=FACT; }
-  const V=FA.filter(f=>f&&String(f.t||'')>depuis&&especesDe(f)!==0);
-  const entrees=Math.round(V.reduce((a,f)=>a+especesDe(f),0)*100)/100;
-  return {C,derniere,depuis,entrees,nV:V.length,fond:caisseFond(),enCaisse:Math.round((caisseFond()+entrees)*100)/100};
+  const o=FA.find(z=>z&&z.sens==='vente'&&!z.retour&&z.num===String(f.refNum||'')&&z.auto==='shopify-pc'); const p=o?paieDe(o):null;
+  const esp=(p&&isFinite(+p.especes))?+p.especes:0; if(esp<=0) return 0;
+  const tot=Math.abs((f.doc&&isFinite(+f.doc.total))?+f.doc.total:(+f.montant||0));
+  return -Math.min(esp,tot||esp);
 }
-function blocCaisse(){
+const CAISSES={
+  ls:{id:'caisse',cle:K_CAISSE,debut:CAISSE_DEBUT,fond:()=>caisseFond(),esp:f=>especesDe(f),lib:'récolte des espèces',
+      depart:'point de départ (200 $ dans le tiroir)',departEn:'starting point ($200 in the drawer)',departEs:'punto de partida (200 $ en el cajón)',
+      qui:['Sam','Sam','Sam']},
+  pc:{id:'caissepc',cle:K_CAISSE_PC,debut:CAISSE_PC_DEBUT,fond:()=>caisseFondPC(),esp:f=>especesPC(f),lib:'récolte des espèces de Perfume City',
+      depart:'point de départ du suivi',departEn:'tracking start',departEs:'inicio del seguimiento',
+      qui:['Kim ou Sam','Kim or Sam','Kim o Sam']}
+};
+function caisseEtat(cfg){
+  cfg=cfg||CAISSES.ls;
+  const C=caisseLit(cfg), derniere=C.recoltes.length?C.recoltes[C.recoltes.length-1]:null, depuis=derniere?derniere.t:C.debut;
+  let FA=[]; try{ FA=lit(KFACT,[])||[]; }catch(e){ FA=FACT; }
+  const V=FA.filter(f=>f&&String(f.t||'')>depuis&&cfg.esp(f)!==0);
+  const entrees=Math.round(V.reduce((a,f)=>a+cfg.esp(f),0)*100)/100;
+  const fond=cfg.fond();
+  return {C,derniere,depuis,entrees,nV:V.length,fond,enCaisse:Math.round((fond+entrees)*100)/100};
+}
+function blocCaisse(cfg){
+  cfg=cfg||CAISSES.ls; const I=cfg.id, PC=(cfg===CAISSES.pc);
   const s=session(); if(!s||!['patron','admin'].includes(String(s.role||''))) return '';
-  const e=caisseEtat();
+  const e=caisseEtat(cfg);
   const quand=t=>{ try{ const d=new Date(t); return d.toLocaleDateString('en-US',{timeZone:'America/New_York',month:'numeric',day:'numeric',year:'numeric'})+' '+d.toLocaleTimeString('en-US',{timeZone:'America/New_York',hour:'numeric',minute:'2-digit'}); }catch(x){ return String(t).slice(0,16); } };
   const R=e.C.recoltes.slice(-10).reverse(); const nR=e.C.recoltes.length;
-  return `<h2 class="sec">${L3('Espèces en caisse','Cash in the till','Efectivo en caja')} <em>${L3('fonds de caisse','till float','fondo de caja')} <span data-nolang>${cash(e.fond)}</span>, ${L3('réglable dans Réglages','adjustable in Settings','ajustable en Ajustes')}</em></h2>
-    <div class="alerte ok" id="caisse-bloc">
+  const tit=PC?L3('Espèces en caisse · Perfume City','Cash in the till · Perfume City','Efectivo en caja · Perfume City'):L3('Espèces en caisse','Cash in the till','Efectivo en caja');
+  return `<h2 class="sec"${PC?' style="border-bottom-color:#E0457F"':''}>${tit} <em>${L3('fonds de caisse','till float','fondo de caja')} <span data-nolang>${cash(e.fond)}</span>, ${L3('réglable dans Réglages','adjustable in Settings','ajustable en Ajustes')}</em></h2>
+    <div class="alerte ok" id="${I}-bloc">
       <div class="kpis" style="margin:0 0 10px">
         <div class="kpi"><span class="v" data-nolang>${cash(e.entrees)}</span><span class="k">${L3('encaissé en espèces depuis la dernière récolte','cash taken since the last collection','efectivo cobrado desde la última recogida')}${e.nV?' · <span data-nolang>'+nf(e.nV)+'</span> '+L3('vente'+(e.nV>1?'s':''),'sale'+(e.nV>1?'s':''),'venta'+(e.nV>1?'s':'')):''}</span></div>
         <div class="kpi iris"><span class="v" data-nolang>${cash(e.enCaisse)}</span><span class="k">${L3('en caisse maintenant','in the till now','en caja ahora')} (${L3('fonds','float','fondo')} <span data-nolang>${cash(e.fond)}</span> + ${L3('espèces','cash','efectivo')})</span></div>
-        <div class="kpi"><span class="v" style="font-size:18px" data-nolang>${e.derniere?quand(e.derniere.t):quand(e.depuis)}</span><span class="k">${e.derniere?L3('dernière récolte :','last collection:','última recogida:')+' <span data-nolang>'+cash(e.derniere.montant)+'</span> '+L3('par','by','por')+' <span data-nolang>'+esc(e.derniere.u||'')+'</span>'+(e.derniere.ecart?' · '+L3('écart','difference','diferencia')+' <span data-nolang>'+(e.derniere.ecart>0?'+':'')+cash(e.derniere.ecart)+'</span>':''):L3('point de départ (200 $ dans le tiroir)','starting point ($200 in the drawer)','punto de partida (200 $ en el cajón)')}</span></div>
+        <div class="kpi"><span class="v" style="font-size:18px" data-nolang>${e.derniere?quand(e.derniere.t):quand(e.depuis)}</span><span class="k">${e.derniere?L3('dernière récolte :','last collection:','última recogida:')+' <span data-nolang>'+cash(e.derniere.montant)+'</span> '+L3('par','by','por')+' <span data-nolang>'+esc(e.derniere.u||'')+'</span>'+(e.derniere.ecart?' · '+L3('écart','difference','diferencia')+' <span data-nolang>'+(e.derniere.ecart>0?'+':'')+cash(e.derniere.ecart)+'</span>':''):L3(cfg.depart,cfg.departEn,cfg.departEs)}</span></div>
       </div>
-      <div id="caisse-form" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <button class="btn pri" id="caisse-go" style="padding:9px 16px;border-radius:9px;border:0;background:var(--iris);color:#fff;font-weight:700;cursor:pointer">${L3('Récolte faite','Collection done','Recogida hecha')}</button>
-        <span class="rien">${L3('Sam compte ce qu\'il a pris en laissant','Sam counts what he took, leaving','Sam cuenta lo que se llevó dejando')} <span data-nolang>${cash(e.fond)}</span> ${L3('dans le tiroir, et le note ici.','in the drawer, and notes it here.','en el cajón, y lo anota aquí.')}</span>
+      <div id="${I}-form" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn pri" id="${I}-go" style="padding:9px 16px;border-radius:9px;border:0;background:var(--iris);color:#fff;font-weight:700;cursor:pointer">${L3('Récolte faite','Collection done','Recogida hecha')}</button>
+        <span class="rien">${L3(cfg.qui[0]+' compte ce qu\'il a pris en laissant',cfg.qui[1]+' counts what was taken, leaving',cfg.qui[2]+' cuenta lo que se retiró dejando')} <span data-nolang>${cash(e.fond)}</span> ${L3('dans le tiroir, et le note ici.','in the drawer, and notes it here.','en el cajón, y lo anota aquí.')}</span>
       </div>
       ${R.length?`<details style="margin-top:10px"><summary style="cursor:pointer;color:var(--ink-2);font-size:13px"><span data-nolang>${nf(nR)}</span> ${L3('récolte'+(nR>1?'s':'')+' notée'+(nR>1?'s':''),'collection'+(nR>1?'s':'')+' noted','recogida'+(nR>1?'s':'')+' anotada'+(nR>1?'s':''))}</summary>
         <table class="tbl" style="margin-top:8px"><thead><tr><th>${L3('Quand','When','Cuándo')}</th><th>${L3('Qui','Who','Quién')}</th><th class="r">${L3('Pris','Taken','Retirado')}</th><th class="r">${L3('Attendu','Expected','Esperado')}</th><th class="r">${L3('Écart','Difference','Diferencia')}</th></tr></thead><tbody>
@@ -529,24 +559,25 @@ function blocCaisse(){
         </tbody></table></details>`:''}
     </div>`;
 }
-function caisseBranche(){
-  const b=$('caisse-go'); if(!b) return;
+function caisseBranche(cfg){
+  cfg=cfg||CAISSES.ls; const I=cfg.id;
+  const b=$(I+'-go'); if(!b) return;
   b.onclick=()=>{
-    const e=caisseEtat(); const f=$('caisse-form');
+    const e=caisseEtat(cfg); const f=$(I+'-form');
     f.innerHTML=`<label style="display:flex;gap:8px;align-items:center;font-weight:600">${L3('Montant pris','Amount taken','Importe retirado')}
-        <input type="number" id="caisse-mt" min="0" step="0.01" value="${e.entrees.toFixed(2)}" style="width:120px;padding:8px;border:1px solid var(--line);border-radius:8px;font-size:15px;text-align:right"> $</label>
-      <button class="btn pri" id="caisse-ok" style="padding:9px 16px;border-radius:9px;border:0;background:var(--iris);color:#fff;font-weight:700;cursor:pointer">${L3('Noter la récolte','Record the collection','Anotar la recogida')}</button>
-      <button id="caisse-ann" style="padding:9px 14px;border-radius:9px;border:1px solid var(--line);background:var(--surface);cursor:pointer">${L3('Annuler','Cancel','Cancelar')}</button>
+        <input type="number" id="${I}-mt" min="0" step="0.01" value="${e.entrees.toFixed(2)}" style="width:120px;padding:8px;border:1px solid var(--line);border-radius:8px;font-size:15px;text-align:right"> $</label>
+      <button class="btn pri" id="${I}-ok" style="padding:9px 16px;border-radius:9px;border:0;background:var(--iris);color:#fff;font-weight:700;cursor:pointer">${L3('Noter la récolte','Record the collection','Anotar la recogida')}</button>
+      <button id="${I}-ann" style="padding:9px 14px;border-radius:9px;border:1px solid var(--line);background:var(--surface);cursor:pointer">${L3('Annuler','Cancel','Cancelar')}</button>
       <span class="rien">${L3('L\'ERP attendait','The ERP expected','El ERP esperaba')} <span data-nolang>${cash(e.entrees)}</span> ; ${L3('le tiroir garde','the drawer keeps','el cajón conserva')} <span data-nolang>${cash(e.fond)}</span>.</span>`;
-    setTimeout(()=>{ const i=$('caisse-mt'); if(i){ i.focus(); i.select(); } },30);
-    $('caisse-ann').onclick=()=>dessine();
-    $('caisse-ok').onclick=()=>{
-      const v=parseFloat(String($('caisse-mt').value).replace(',','.')); if(!isFinite(v)||v<0){ $('caisse-mt').focus(); return; }
-      const e2=caisseEtat(); const montant=Math.round(v*100)/100, ecart=Math.round((montant-e2.entrees)*100)/100;
+    setTimeout(()=>{ const i=$(I+'-mt'); if(i){ i.focus(); i.select(); } },30);
+    $(I+'-ann').onclick=()=>dessine();
+    $(I+'-ok').onclick=()=>{
+      const v=parseFloat(String($(I+'-mt').value).replace(',','.')); if(!isFinite(v)||v<0){ $(I+'-mt').focus(); return; }
+      const e2=caisseEtat(cfg); const montant=Math.round(v*100)/100, ecart=Math.round((montant-e2.entrees)*100)/100;
       const s=session(); const u=(s&&s.nom)||'(non renseigné)';
-      const C=caisseLit(); C.recoltes.push({t:new Date().toISOString(),u,montant,attendu:e2.entrees,ecart,nV:e2.nV}); if(C.recoltes.length>200) C.recoltes=C.recoltes.slice(-200);
-      ecrit(K_CAISSE,C);
-      try{ const J=lit(KJOU,[])||[]; J.push({t:new Date().toISOString(),u,act:'caisse',lib:'récolte des espèces : '+cash(montant)+' pris'+(ecart?' — écart de '+(ecart>0?'+':'')+cash(ecart)+' avec ce que l\'ERP attendait ('+cash(e2.entrees)+')':' — comme attendu')+', fonds de caisse '+cash(e2.fond)+' laissé',ref:'',av:cash(e2.entrees),ap:cash(montant),n:e2.nV,impact:0,det:[]}); ecrit(KJOU,J); }catch(x){}
+      const C=caisseLit(cfg); C.recoltes.push({t:new Date().toISOString(),u,montant,attendu:e2.entrees,ecart,nV:e2.nV}); if(C.recoltes.length>200) C.recoltes=C.recoltes.slice(-200);
+      ecrit(cfg.cle,C);
+      try{ const J=lit(KJOU,[])||[]; J.push({t:new Date().toISOString(),u,act:'caisse',lib:cfg.lib+' : '+cash(montant)+' pris'+(ecart?' — écart de '+(ecart>0?'+':'')+cash(ecart)+' avec ce que l\'ERP attendait ('+cash(e2.entrees)+')':' — comme attendu')+', fonds de caisse '+cash(e2.fond)+' laissé',ref:'',av:cash(e2.entrees),ap:cash(montant),n:e2.nV,impact:0,det:[]}); ecrit(KJOU,J); }catch(x){}
       dessine();
     };
   };
@@ -728,7 +759,7 @@ function dessine(){
   let h='';
 
   /* --- les espèces en caisse, puis les deux alertes qui ne doivent jamais rester silencieuses --- */
-  h+=blocCaisse()+blocPcKo()+blocStockBloque()+blocDiff()+blocPubKo();
+  h+=blocCaisse()+blocCaisse(CAISSES.pc)+blocPcKo()+blocStockBloque()+blocDiff()+blocPubKo();
 
   /* --- par canal : depuis le 1er nov. 2026, c'est le récap « Ventes par canal » en tête de page (_recap.py),
      avec le choix de la période ; l'ancien bloc « D'où vient l'argent · 30 derniers jours » est retiré. --- */
@@ -890,6 +921,7 @@ function dessine(){
 
   $('corps').innerHTML=h;
   try{ caisseBranche(); }catch(e){}
+  try{ caisseBranche(CAISSES.pc); }catch(e){}
   const b=$('plus'); if(b) b.onclick=()=>{ vus+=25; dessine(); };
   const bd=$('plusDiff'); if(bd) bd.onclick=()=>{ vusDiff+=50; dessine(); };
   const td=$('tri-diff'); if(td) td.onchange=()=>{ TRI_DIFF=td.value; try{ TRI_DIFF?localStorage.setItem(K_TRI_DIFF,TRI_DIFF):localStorage.removeItem(K_TRI_DIFF); }catch(e){} const y=window.scrollY; dessine(); window.scrollTo(0,y); };

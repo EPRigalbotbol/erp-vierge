@@ -53,12 +53,13 @@ const _DATE={'crm-journal-v1':x=>x.t||'','ajustements-v1':x=>x.t||''};
 /* magasins objet dont chaque valeur est elle-meme une liste a fusionner */
 const _IMBR={'ventes-v1'         : x=>x._i||[x.d||'',x.num||'',x.q,x.p,x.c||'',x.k||''].join('|'),
              'prix-achat-hist-v1': x=>[x.d||'',x.p,x.f||'',x.q,x.num||'',x.src||''].join('|'),
-             'caisse-especes-v1' : x=>[x.t||'',x.u||'',x.montant].join('|')};   /* les récoltes d'espèces (24 oct. 2026) */
+             'caisse-especes-v1' : x=>[x.t||'',x.u||'',x.montant].join('|'),
+             'caisse-especes-pc-v1' : x=>[x.t||'',x.u||'',x.montant].join('|')};   /* les récoltes de la caisse de Perfume City (4 nov. 2026) */   /* les récoltes d'espèces (24 oct. 2026) */
 /* magasins dont une sous-clé est elle-même une carte à fusionner clé par clé */
 const _SOUSMAP={'stock-externe-v1':['q']};
 /* magasins ou chaque fiche est un paquet de champs : on fusionne champ par champ,
    pour que deux onglets puissent corriger deux champs differents du meme produit */
-const _CHAMPS={'pc-stock-v1':1,'testeurs-pc-v1':1,'fiches-modifiees-v1':1,'clients-v1':1,'reglements-v1':1,'fournisseurs-v1':1,'marche-v1':1,'photos-perso-v1':1};
+const _CHAMPS={'pc-stock-v1':1,'testeurs-pc-v1':1,'fiches-modifiees-v1':1,'demandes-pc-v1':1,'clients-v1':1,'reglements-v1':1,'fournisseurs-v1':1,'marche-v1':1,'photos-perso-v1':1};
 function fusChamps(dq,ref,cour){
   const o=(dq&&typeof dq==='object'&&!Array.isArray(dq))?Object.assign({},dq):{};
   const r=ref||{};

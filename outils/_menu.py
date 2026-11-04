@@ -400,9 +400,18 @@ function mnPastilleExpeditions(){
   else { el.textContent=''; el.classList.remove('pt'); el.title=''; }
 }
 window.addEventListener('storage',e=>{ if(e.key==='expeditions-v1') mnPastilleExpeditions(); });
+/* 4 nov. 2026 : les demandes de parfums entre Perfume City et Perfumes Trade qui attendent (demandées ou envoyées, pas encore reçues) */
+function mnPastilleDemandes(){
+  const el=document.getElementById('ct-demandes'); if(!el) return;
+  let n=0;
+  try{ const D=JSON.parse(localStorage.getItem('demandes-pc-v1')||'{}')||{}; n=Object.values(D).filter(r=>r&&(r.etat==='demandee'||r.etat==='envoyee')).length; }catch(e){}
+  if(n){ el.textContent=n+' en cours'; el.classList.add('pt'); el.title=n+(n>1?' demandes de parfums en cours':' demande de parfums en cours'); }
+  else { el.textContent=''; el.classList.remove('pt'); el.title=''; }
+}
+window.addEventListener('storage',e=>{ if(e.key==='demandes-pc-v1') mnPastilleDemandes(); });
 /* dans le même onglet : dès que la page écrit des ventes (enregistrement automatique, file) */
-(function(){ let ok=false; const brancher=()=>{ if(ok) return; if(typeof _apresEcrit!=='undefined'&&Array.isArray(_apresEcrit)){ ok=true; _apresEcrit.push(cle=>{ if(cle==='factures-v1'||cle==='caisse-file-v1') setTimeout(mnPastilleVentes,0); if(cle==='expeditions-v1') setTimeout(mnPastilleExpeditions,0); }); } };
-  setInterval(()=>{ brancher(); mnPastilleVentes(); mnPastilleExpeditions(); },30000); setTimeout(brancher,1500); setTimeout(brancher,6000); })();
+(function(){ let ok=false; const brancher=()=>{ if(ok) return; if(typeof _apresEcrit!=='undefined'&&Array.isArray(_apresEcrit)){ ok=true; _apresEcrit.push(cle=>{ if(cle==='factures-v1'||cle==='caisse-file-v1') setTimeout(mnPastilleVentes,0); if(cle==='expeditions-v1') setTimeout(mnPastilleExpeditions,0); if(cle==='demandes-pc-v1') setTimeout(mnPastilleDemandes,0); }); } };
+  setInterval(()=>{ brancher(); mnPastilleVentes(); mnPastilleExpeditions(); mnPastilleDemandes(); },30000); setTimeout(mnPastilleDemandes,2500); setTimeout(brancher,1500); setTimeout(brancher,6000); })();
 
 /* Les chiffres de Catalogue et d'Inventaire, dans le menu, sur toutes les pages.
    Igal, 1er oct. 2026 : ils étaient écrits une fois pour toutes à la fabrication, depuis le

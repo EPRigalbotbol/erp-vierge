@@ -1672,6 +1672,11 @@ MOTS3.update({
 
 # ---- Galou, 3 nov. 2026 ----
 MOTS3.update({
+    "Demandes Perfume City": ["Perfume City requests", "Solicitudes Perfume City"],
+    "{n} en cours": ["{n} in progress", "{n} en curso"],
+    "{n} demandes de parfums en cours": ["{n} perfume requests in progress", "{n} solicitudes de perfumes en curso"],
+    "{n} demande de parfums en cours": ["{n} perfume request in progress", "{n} solicitud de perfumes en curso"],
+    "Perfume City et Perfumes Trade se demandent des parfums : choisis les références et les quantités, l'autre boutique répond. Si le demandeur a déjà le parfum en stock, un avertissement le dit.": ["Perfume City and Perfumes Trade ask each other for perfumes: choose the references and quantities, the other shop answers. If the requester already has the perfume in stock, a warning says so.", "Perfume City y Perfumes Trade se piden perfumes: elige las referencias y las cantidades, la otra tienda responde. Si quien pide ya tiene el perfume en stock, un aviso lo indica."],
     "Parler à Léa": ["Talk to Léa", "Hablar con Léa"],
 })
 

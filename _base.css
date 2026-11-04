@@ -2,15 +2,15 @@
    dès qu'une règle lui donne display:flex ou display:grid (bug vu sur Factures et Étude). */
 [hidden]{display:none !important}
 
-:root{--ground:#F4F4F1;--surface:#FFF;--surface-2:#FAFAF8;--ink:#17171D;--ink-2:#4A4A56;--ink-3:#7C7C88;
+:root{--ground:#F4F4F1;--surface:#FFF;--surface-2:#FAFAF8;--ink:#17171D;--ink-2:#33333D;--ink-3:#5C5C68;
 --line:#E0E0DC;--line-2:#EDEDE9;--iris:#5B4B8A;--iris-soft:#EDE9F6;
 --good:#2C6E4E;--good-soft:#E9F3ED;--warn:#8A5A00;--warn-soft:#FBF3E2;--crit:#A4262C;--crit-soft:#FBECEC;}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
---ground:#121217;--surface:#1A1A21;--surface-2:#202028;--ink:#ECECF1;--ink-2:#B0B0BC;--ink-3:#80808E;
+--ground:#121217;--surface:#1A1A21;--surface-2:#202028;--ink:#ECECF1;--ink-2:#C9C9D3;--ink-3:#A4A4B2;
 --line:#2C2C36;--line-2:#26262F;--iris:#A99AE0;--iris-soft:#272036;
 --good:#77C79C;--good-soft:#152A20;--warn:#D9A94A;--warn-soft:#2E2411;--crit:#E8898D;--crit-soft:#33191B;}}
-:root[data-theme="dark"]{--ground:#121217;--surface:#1A1A21;--surface-2:#202028;--ink:#ECECF1;--ink-2:#B0B0BC;
---ink-3:#80808E;--line:#2C2C36;--line-2:#26262F;--iris:#A99AE0;--iris-soft:#272036;
+:root[data-theme="dark"]{--ground:#121217;--surface:#1A1A21;--surface-2:#202028;--ink:#ECECF1;--ink-2:#C9C9D3;
+--ink-3:#A4A4B2;--line:#2C2C36;--line-2:#26262F;--iris:#A99AE0;--iris-soft:#272036;
 --good:#77C79C;--good-soft:#152A20;--warn:#D9A94A;--warn-soft:#2E2411;--crit:#E8898D;--crit-soft:#33191B;}
 *{box-sizing:border-box}
 body{margin:0;background:var(--ground);color:var(--ink);
@@ -23,29 +23,57 @@ text-transform:uppercase;color:var(--ink-3);font-weight:500}
 .app{display:flex;align-items:flex-start;min-height:100vh}
 .side{width:234px;flex:0 0 234px;position:sticky;top:0;height:100vh;overflow-y:auto;
 background:var(--surface);border-right:1px solid var(--line);
-display:flex;flex-direction:column;padding:20px 0 16px}
-.logo{padding:0 18px 18px;border-bottom:1px solid var(--line-2);margin-bottom:14px}
+display:flex;flex-direction:column;padding:14px 0 10px}
+.logo{padding:0 18px 12px;border-bottom:1px solid var(--line-2);margin-bottom:8px}
 .logo .n{font-size:16px;font-weight:700;letter-spacing:-.02em;line-height:1.2}
 .logo .s{font-family:Inter,sans-serif;font-size:9.5px;letter-spacing:.15em;
 text-transform:uppercase;color:var(--ink-3);margin-top:3px}
 nav{display:flex;flex-direction:column;gap:1px;padding:0 10px}
-.navlab{font-family:Inter,sans-serif;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;
-color:var(--iris);font-weight:800;padding:16px 8px 6px}
-.nv{display:flex;align-items:center;gap:9px;padding:8px 10px;white-space:nowrap;border-radius:4px;font-size:14px;
-color:var(--ink);font-weight:600;text-decoration:none;line-height:1.3;border-left:2px solid transparent}
-.nv .ic{width:15px;text-align:center;flex:0 0 15px;opacity:.75}
-.nv .ct{margin-left:auto;font-family:Inter,sans-serif;font-size:10.5px;font-weight:500;color:var(--ink-3);
-font-variant-numeric:tabular-nums}
-.nv .ct.pt{background:var(--iris-soft);color:var(--iris);font-weight:700;font-size:10.5px;border-radius:10px;padding:2px 7px;min-width:20px;text-align:center;line-height:1.5}
+.navlab{font-family:Inter,sans-serif;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+color:var(--ink-3);font-weight:700;padding:11px 11px 4px}
+/* Compacte : quinze rubriques, trois titres, le pied — tout doit tenir sur un écran de
+   portable sans que la barre ne défile. Une barre qui défile, c'est un menu qui
+   « monte et descend » selon la page (Igal, 12 sept. 2026). */
+.nv{display:flex;align-items:center;gap:10px;padding:0 11px;min-height:30px;white-space:nowrap;border-radius:8px;font-size:13.5px;
+color:var(--ink-2);font-weight:600;text-decoration:none;line-height:1.3;border-left:3px solid transparent;
+transition:background .12s,color .12s}
+.nv .ic{width:16px;height:16px;display:inline-flex;flex:0 0 16px;opacity:.6;transition:opacity .12s,color .12s}
+/* 8 oct. 2026 (Igal) : plus de petit texte gris à droite. Restent deux pastilles : le nombre de
+   clients (neutre) et les nouvelles ventes (couleur). Une ligne garde la même hauteur avec ou sans
+   pastille — sinon le menu « bouge » quand une vente arrive. */
+.nv .ct{margin-left:auto;font-family:Inter,sans-serif;font-size:10.5px;font-weight:600;color:var(--ink-3);
+font-variant-numeric:tabular-nums;line-height:1}
+.nv .ct:empty,.nv .ct.nu{display:none}
+.nv .ct.nb{background:var(--surface-2);border:1px solid var(--line-2);border-radius:10px;padding:3px 8px;min-width:24px;text-align:center}
+.nv .ct.pt{background:var(--iris-soft);color:var(--iris);font-weight:700;font-size:10.5px;border-radius:10px;padding:3px 8px;min-width:22px;text-align:center}
 .nv:hover{background:var(--surface-2);color:var(--ink)}
+.nv:hover .ic{opacity:.95}
 .nv.on{background:var(--iris-soft);color:var(--iris);font-weight:700;border-left-color:var(--iris)}
 .nv.on .ic{opacity:1}
+.nv.sub{padding:3px 10px 3px 36px;font-size:12.5px;font-weight:500}
+@media(max-width:900px){.nv.sub{padding:5px 10px}}
+/* Écran de portable (hauteur ≤ 860 px) : la barre rapetisse d'un cheveu pour que TOUTES les rubriques tiennent sans défiler.
+   Ajouter une ligne au menu (Clients VIP, 13 oct.) avait fait déborder de 6 px sur 816 px de haut — voir _test_cote_flicker. */
+/* 4 nov. 2026 : « Transfert interstore » (et Tâches, Léa) ont encore allongé la barre : 58 px de trop sur 816 px. Elle se resserre
+   d'un cran de plus sur un portable — lignes de 26 px, titres et logo plus serrés. */
+@media(max-height:860px) and (min-width:901px){.nv{min-height:26px}.navlab{padding-top:4px;padding-bottom:3px}.side{padding-top:6px;padding-bottom:5px}.logo{padding-bottom:7px;margin-bottom:4px}}
+.nv.on .ct.nb{background:var(--surface);border-color:transparent;color:var(--iris)}
 .nv.soon{color:var(--ink-3);font-weight:500;cursor:default;pointer-events:none}
 .nv.soon .ct{font-size:9px;letter-spacing:.08em;text-transform:uppercase;opacity:.8}
-.sfoot{margin-top:auto;padding:14px 18px 14px;border-top:1px solid var(--line-2);
-font-family:Inter,sans-serif;font-size:10px;color:var(--ink-3);line-height:1.7}
+.sfoot{margin-top:auto;padding:10px 18px 8px;border-top:1px solid var(--line-2);
+font-family:Inter,sans-serif;font-size:10px;color:var(--ink-3);line-height:1.6}
+/* le pied garde sa place dès le départ : ce qui arrive après (nom, rôle, bouton
+   de sortie, question au support) remplit un cadre déjà réservé, rien ne glisse */
+.sfoot #sfu{min-height:64px}
+.sfoot #sfu:empty{min-height:64px}
+.sfoot .sfline{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.sfoot .sfline #lgsel{margin-top:0!important}
+.sfoot .sfline #mn-btn{display:inline!important;margin-top:0!important}
+.sfoot #aid-slot{min-height:20px}
 .main{flex:1;min-width:0;max-width:100%}   /* sur un téléphone (colonne, align-items:flex-start) : jamais plus large que l'écran, le contenu défile dans ses cadres */
-.wrap{max-width:1400px;margin:0 auto;padding:26px 26px 70px}
+/* une seule largeur de page pour tout l'outil (Igal, 25 sept. 2026 : « certaines pages
+   n'ont pas le même encadrement », les Ventes trop étroites) — la même que le Catalogue */
+.wrap{max-width:1600px;margin:0 auto;padding:26px 26px 70px}
 @media(max-width:900px){
  .app{flex-direction:column}
  .side{width:100%;flex:none;height:auto;position:static;border-right:0;
@@ -72,3 +100,30 @@ header{border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:18px
 flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between}
 h1{margin:0;font-size:clamp(25px,4vw,34px);font-weight:700;letter-spacing:-.028em;line-height:1.05}
 .src{text-align:right;font-family:Inter,sans-serif;font-size:11.5px;color:var(--ink-2);line-height:1.7}
+
+/* Le TYPE du parfum (EDT, EDP, OIL, SET…) et son GENRE, partout où un parfum
+   s'affiche. Deux flacons du même nom ne sont pas le même produit et ne valent
+   pas le même prix : sans le type, on vend l'eau de toilette au prix de l'eau
+   de parfum sans s'en apercevoir. Le type est net — c'est une information de
+   produit ; le genre est discret — c'est une aide au choix. */
+.ty{display:inline-block;font-style:normal;font-family:Inter,sans-serif;font-size:10.5px;font-weight:800;
+ letter-spacing:.05em;padding:1px 6px;margin-left:6px;border-radius:5px;vertical-align:middle;
+ background:var(--iris-soft);color:var(--iris);white-space:nowrap}
+.gn{display:inline-block;font-style:normal;font-family:Inter,sans-serif;font-size:10.5px;font-weight:600;
+ letter-spacing:.03em;padding:1px 6px;margin-left:4px;border-radius:5px;vertical-align:middle;
+ background:var(--line-2);color:var(--ink-3);white-space:nowrap}
+
+/* ---- lisible (Igal, 25 sept. 2026 : « beaucoup d'écritures en gris clair, ça me dérange ;
+   agrandis la police des écritures, pas des titres ») : gris plus foncés (ci-dessus, dans
+   les couleurs), et tout le contenu de la page 8 % plus grand — le grand titre garde sa
+   taille. Les tableaux restent dans leur cadre (colonnes secondaires rangées, voir « af »). */
+.wrap{zoom:1.08}
+.wrap h1{zoom:.926}
+@media (max-width:1300px){.wrap{zoom:1}.wrap h1{zoom:1}}   /* portable : taille normale, sinon les tableaux débordent */
+
+/* rôles : ce qu'un employé ne voit pas (prix d'achat, marges) — 3 oct. 2026 */
+body.sansPA .vpa,body.sansMarge .vmg{display:none!important}
+body.pmur main .wrap>*:not(#pmur),body.pmur main>*:not(.wrap):not(#pmur){display:none!important}
+#pmur.mur{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:34px 32px;max-width:640px;margin:26px auto}
+#pmur.mur h2{margin:0 0 10px;font-size:20px;font-weight:700;letter-spacing:-.015em}
+#pmur.mur p{margin:0;color:var(--ink-2);font-size:14.5px;line-height:1.65}

@@ -86,7 +86,7 @@ font-variant-numeric:tabular-nums}
 .nv.on{background:var(--iris-soft);color:var(--iris);font-weight:700;border-left-color:var(--iris)}
 .nv.on .ic{opacity:1}
 .nv.sub{padding:3px 10px 3px 36px;font-size:12.5px;font-weight:500}
-@media(max-height:860px) and (min-width:901px){.nv{padding-top:3px;padding-bottom:3px}.navlab{padding-top:7px}}  /* portable : voir _base.css */
+@media(max-height:860px) and (min-width:901px){.nv{padding-top:2px;padding-bottom:2px}.navlab{padding-top:4px;padding-bottom:3px}.side{padding-top:6px;padding-bottom:5px}.logo{padding-bottom:7px;margin-bottom:4px}}  /* portable : voir _base.css (4 nov. 2026 : un cran de plus, Transfert interstore) */
 @media(max-width:900px){.nv.sub{padding:5px 10px}}
 .nv.soon{color:var(--ink-3);font-weight:500;cursor:default;pointer-events:none}
 .nv.soon .ct{font-size:9px;letter-spacing:.08em;text-transform:uppercase;opacity:.8}

@@ -54,7 +54,9 @@ font-variant-numeric:tabular-nums;line-height:1}
 @media(max-width:900px){.nv.sub{padding:5px 10px}}
 /* Écran de portable (hauteur ≤ 860 px) : la barre rapetisse d'un cheveu pour que TOUTES les rubriques tiennent sans défiler.
    Ajouter une ligne au menu (Clients VIP, 13 oct.) avait fait déborder de 6 px sur 816 px de haut — voir _test_cote_flicker. */
-@media(max-height:860px) and (min-width:901px){.nv{min-height:28px}.navlab{padding-top:7px}}
+/* 4 nov. 2026 : « Transfert interstore » (et Tâches, Léa) ont encore allongé la barre : 58 px de trop sur 816 px. Elle se resserre
+   d'un cran de plus sur un portable — lignes de 26 px, titres et logo plus serrés. */
+@media(max-height:860px) and (min-width:901px){.nv{min-height:26px}.navlab{padding-top:4px;padding-bottom:3px}.side{padding-top:6px;padding-bottom:5px}.logo{padding-bottom:7px;margin-bottom:4px}}
 .nv.on .ct.nb{background:var(--surface);border-color:transparent;color:var(--iris)}
 .nv.soon{color:var(--ink-3);font-weight:500;cursor:default;pointer-events:none}
 .nv.soon .ct{font-size:9px;letter-spacing:.08em;text-transform:uppercase;opacity:.8}

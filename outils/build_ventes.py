@@ -268,6 +268,9 @@ border-radius:6px;text-align:right;background:var(--surface)}
 .pan .pucs{display:flex;gap:4px;justify-content:flex-end;margin-top:4px;flex-wrap:wrap}
 .pan .puc{font-family:Inter,sans-serif;font-size:11px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:999px;padding:2px 8px;cursor:pointer;white-space:nowrap}
 .pan .puc b{font-weight:700}.pan .puc.on{background:var(--iris);border-color:var(--iris);color:#fff}
+.pan .puc.dp{border-color:#F0D58A;background:#FFF4D6;color:#6B4E00}.pan .puc.dp.on{background:#B8860B;border-color:#B8860B;color:#fff}
+.pan b.vfiche{cursor:pointer}.pan b.vfiche:hover{color:var(--iris);text-decoration:underline}
+#v-q2w{margin-top:12px}
 .pan .del:hover{color:var(--crit)}
 .pan tfoot td{background:var(--surface);font-weight:700;border-top:2px solid var(--line)}
 .pan .vide{padding:18px;text-align:center;color:var(--ink-3);font-size:13px}
@@ -699,6 +702,11 @@ CORPS = r'''
       <div class="res" id="v-res"></div></div>
 
     <div class="pan" id="v-pan"></div>
+    <!-- 4 nov. 2026 (Igal) : « quand il a tapé plusieurs références, il est obligé de remonter vers la barre de recherche » —
+         la même recherche, une seconde fois SOUS les lignes. C'est la même liste de résultats (#v-res) qui vient se placer
+         sous la case qu'on utilise. -->
+    <div class="fld rech" id="v-q2w" hidden><label>Ajouter un autre parfum — sans remonter</label>
+      <input id="v-q2" autocomplete="off" placeholder="Code-barres, marque ou nom du parfum"></div>
     <div class="fld" id="v-note-w" hidden><label>Note</label><input id="v-note" placeholder="facultatif — visible sur le devis et dans la liste" maxlength="200"></div>
 
     <label class="coche"><input type="checkbox" id="v-stock" checked>
@@ -2070,6 +2078,14 @@ function numCourt(n){ const s=String(n||''); return /^[0-9a-f]{8}-[0-9a-f]{4}-[0
   ? `<span title="${esc(s)}" data-nolang>…${esc(s.slice(-8))}</span>` : esc(s); }
 /* ---------------- enregistrer une vente à la main ---------------- */
 let PANIER=[], CANDIDATS=[], SEL=-1;
+/* la case de recherche en cours : celle du haut (v-q) ou celle du bas (v-q2, sous les lignes). La liste des résultats
+   (#v-res) est unique et suit la case active ; ajouter un parfum rend la main à la même case, donc Sam reste en bas. */
+let VQA='v-q';
+const vq=()=>$(VQA)||$('v-q');
+function vqActive(id){
+  if(!$(id)) return; if(VQA!==id){ const a=$(VQA); VQA=id; try{ if(a) a.value=''; CANDIDATS=[]; SEL=-1; peintRes(); }catch(e){} }
+  try{ const r=$('v-res'), w=id==='v-q2'?$('v-q2w'):$('v-q').parentNode; if(r&&w&&r.parentNode!==w) w.appendChild(r); }catch(e){}
+}
 
 /* Le numéro de vente : V + la date + un rang qui repart à 1 chaque jour.
    Deux garde-fous : on part du plus grand rang déjà utilisé ce jour-là (pas du nombre de ventes),
@@ -2195,7 +2211,7 @@ function carnetLie(idInp, idBox, apres){
   box.addEventListener('mousedown',e=>{ const d=e.target.closest('[data-i]'); if(d){ e.preventDefault(); choisit(d.dataset.i); } });
   document.addEventListener('click',e=>{ if(!e.target.closest('#'+idInp+',#'+idBox)) box.classList.remove('on'); });
 }
-carnetLie('v-client','v-cres',()=>$('v-q').focus());
+carnetLie('v-client','v-cres',()=>{ majChipsClient(); vq().focus(); });
 carnetLie('m-client','m-cres',()=>$('m-txt').focus());
 
 /* Un nom nouveau entre dans Retail comme une fiche vide : nom seul, à compléter. */
@@ -2281,7 +2297,7 @@ function ajoute(cle){
   const ex=PANIER.find(l=>l.cle===cle);
   if(ex) ex.q++;
   else PANIER.push({cle,q:1,p:prixSuggere(cle,canalCour())});
-  $('v-q').value=''; CANDIDATS=[]; SEL=-1; peintRes(); peintPanier(); $('v-q').focus();
+  vq().value=''; CANDIDATS=[]; SEL=-1; peintRes(); peintPanier(); vq().focus();
 }
 /* Le prix d'une ligne : retail, gros, ou tapé à la main (Sam, 1er oct. 2026 : « dans Record a
    sale, on ne laisse pas à Sam le choix du prix wholesale et retail ; je veux qu'il puisse
@@ -2289,16 +2305,32 @@ function ajoute(cle){
    case reste libre. La pastille du prix en cours est marquée. */
 const pvrEff=cle=>{ const m=MOD[cle]; if(m&&m.pvr!=null) return +m.pvr; const v=(IDX[cle]||[])[5]; return v==null?null:+v; };
 const pvwEff=cle=>{ const m=MOD[cle]; if(m&&m.pvw!=null) return +m.pvw; const v=(IDX[cle]||[])[6]; return v==null?null:+v; };
+/* 4 nov. 2026 (Igal) : « Sam fait une cote pour Robert et met un parfum que Robert a déjà commandé : je veux qu'il sache
+   exactement le prix que Robert a payé la dernière fois ». On cherche la vente la plus récente de CE parfum à CE client :
+   les factures de l'ERP, les ventes d'avant les factures, et l'historique de gros d'avant l'ERP (tableur de Sam). */
+const clientCour=()=>{ try{ return cNorm($('v-client').value); }catch(e){ return ''; } };
+function dernierPrixClient(cle,cli){
+  if(!cli) return null; let best=null;
+  const prend=(d,h,p,q)=>{ if(p==null||p===''||!(+q>0)) return; const k=String(d||'')+' '+String(h||''); if(!best||k>best.k) best={k,d:d||'',p:+p,q:+q}; };
+  const v=IDX[cle]||[]; const bcs=new Set([String(v[0]||'').replace(/^0+/,'')].concat((bcExtra()[cle]||[]).map(x=>String(x).replace(/^0+/,''))).filter(Boolean));
+  FACT.forEach(f=>{ if(!f||f.sens!=='vente'||f.annule||f.retour||(f.doc&&f.doc.type==='devis')) return; if(cNorm(f.tiers)!==cli) return;
+    (f.lignes||[]).forEach(l=>{ if(l&&(l.cle===cle||(l.bc&&bcs.has(String(l.bc).replace(/^0+/,''))))) prend(f.d,f.h,l.p,l.q); }); });
+  try{ ((lit(KVENT,{})||{})[cle]||[]).forEach(x=>{ if(x&&cNorm(x.c)===cli) prend(x.d,x.h,x.p,x.q); }); }catch(e){}
+  try{ const H=window.D_HG; if(H&&H.l&&H.c) bcs.forEach(b=>(H.l[b]||[]).forEach(r=>{ if(r&&cNorm(H.c[r[1]])===cli) prend(r[0],'',r[3],r[2]); })); }catch(e){}
+  return best;
+}
 function puChips(l,i){
   const r=pvrEff(l.cle), w=pvwEff(l.cle);
-  const ch=(k,lab,v)=>v==null?'':`<button type="button" class="puc${l.p!=null&&Math.abs(l.p-v)<0.005?' on':''}" data-pu="${i}" data-pk="${k}" data-pv="${v}"><span>${lab}</span> <b data-nolang>${money2(v)}</b></button>`;
-  const h=ch('r','retail',r)+ch('w','gros',w);
+  const ch=(k,lab,v,cls,titre)=>v==null?'':`<button type="button" class="puc${cls||''}${l.p!=null&&Math.abs(l.p-v)<0.005?' on':''}" data-pu="${i}" data-pk="${k}" data-pv="${v}"${titre?' title="'+esc(titre)+'"':''}><span>${lab}</span> <b data-nolang>${money2(v)}</b></button>`;
+  let h=ch('r','retail',r)+ch('w','gros',w);
+  try{ const cli=clientCour(), nom=$('v-client').value.trim(); const dp=cli?dernierPrixClient(l.cle,cli):null;
+    if(dp) h+=ch('c',`<span data-nolang>${esc(nom)}</span> ${r3('a payé le','paid on','pagó el')} <span data-nolang>${dfr(dp.d)}</span>`,dp.p,' dp',nom+' '+r3('a payé ce prix la dernière fois','paid this price last time','pagó este precio la última vez')+' ('+dfr(dp.d)+', '+nf(dp.q)+')'); }catch(e){}
   return h?`<span class="pucs">${h}</span>`:'';
 }
 function peintPanier(){
   const c=canalCour();
   if(!PANIER.length){ $('v-pan').innerHTML='<div class="vide">Aucun parfum. Scanne un code-barres ou tape un nom ci-dessus.</div>';
-    $('v-ok').disabled=true; $('v-recap').innerHTML=''; return; }
+    $('v-ok').disabled=true; $('v-recap').innerHTML=''; $('v-q2w').hidden=true; return; }
   const li=PANIER.map((l,i)=>{
     const v=IDX[l.cle]||[], pa=paEff(l.cle), st=stkC(l.cle,c.nom);
     const mt=(l.q||0)*(l.p||0), net=mt*(1-(c.com||0)/100);
@@ -2306,7 +2338,7 @@ function peintPanier(){
     const pct=pa!=null&&mt>0?mg/mt*100:null;
     const cls=pct==null?'na':pct<0?'c':pct<(REG.margeMin||10)?'w':'g';
     return `<tr><td class="r" style="color:var(--ink-3);width:34px">${i+1}</td>
-      <td><b>${esc(v[2]||'')} ${esc(v[1]||'')}${tyBadge(l.cle)}</b><br><span style="font-size:11.5px;color:var(--ink-3)" data-st="${i}">${esc(v[0]||'')} · ${estPC(c.nom)?'stock Perfume City':'stock'} ${nf(st)}${l.q>st?' — <b style="color:var(--crit)">manque '+nf(l.q-st)+'</b>':''}</span></td>
+      <td><b class="vfiche" data-fiche="${esc(l.cle)}" title="${r3('Voir la fiche du parfum','See the perfume sheet','Ver la ficha del perfume')}">${esc(v[2]||'')} ${esc(v[1]||'')}${tyBadge(l.cle)}</b><br><span style="font-size:11.5px;color:var(--ink-3)" data-st="${i}">${esc(v[0]||'')} · ${estPC(c.nom)?'stock Perfume City':'stock'} ${nf(st)}${l.q>st?' — <b style="color:var(--crit)">manque '+nf(l.q-st)+'</b>':''}</span></td>
       <td class="r"><input type="number" min="1" step="1" data-i="${i}" data-f="q" value="${l.q}"></td>
       <td class="r"><input type="number" step="any" data-i="${i}" data-f="p" value="${l.p==null?'':l.p}" placeholder="prix">${puChips(l,i)}</td>
       <td class="r" data-mt="${i}">${money2(mt)}</td>
@@ -2335,12 +2367,25 @@ function peintPanier(){
       inp.value = inp.dataset.f==='q' ? l.q : (l.p==null?'':l.p); };
   });
   $('v-pan').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ PANIER.splice(+b.dataset.del,1); peintPanier(); });
+  /* 4 nov. 2026 (Igal) : « de Cote, qu'il puisse cliquer sur le produit et avoir la fiche produit en latéral, comme s'il était
+     sur le catalogue » — la fiche du Catalogue elle-même, en panneau à droite ; à sa fermeture, les prix qu'elle a pu changer sont relus */
+  $('v-pan').querySelectorAll('[data-fiche]').forEach(b=>b.onclick=()=>{ if(typeof ficheFenetre!=='function') return;
+    ficheFenetre(b.dataset.fiche,()=>{ try{ MOD=lit(KMOD,{})||{}; EXT=Object.assign({q:{}},JSON.parse(localStorage.getItem(KEXT)||'{}')); }catch(e){} peintPanier(); }); });
+  $('v-q2w').hidden=PANIER.length<2;
   $('v-pan').querySelectorAll('[data-pu]').forEach(b=>b.onclick=()=>{
     const i=+b.dataset.pu, l=PANIER[i]; if(!l) return; l.p=+b.dataset.pv;
     const inp=$('v-pan').querySelector(`input[data-i="${i}"][data-f="p"]`); if(inp) inp.value=l.p;
     b.parentNode.querySelectorAll('.puc').forEach(x=>x.classList.toggle('on',x===b));
     majMontants(); recap(); });
   recap();
+}
+/* refait seulement les pastilles de prix (retail, gros, « a payé ») de chaque ligne, sans toucher aux cases de saisie */
+function majChipsClient(){
+  if(!PANIER.length) return;
+  PANIER.forEach((l,i)=>{ const inp=$('v-pan').querySelector(`input[data-i="${i}"][data-f="p"]`); if(!inp) return;
+    const old=inp.parentNode.querySelector('.pucs'); if(old) old.remove(); inp.insertAdjacentHTML('afterend',puChips(l,i));
+    inp.parentNode.querySelectorAll('[data-pu]').forEach(b=>b.onclick=()=>{ const x=PANIER[+b.dataset.pu]; if(!x) return; x.p=+b.dataset.pv; inp.value=x.p;
+      b.parentNode.querySelectorAll('.puc').forEach(y=>y.classList.toggle('on',y===b)); majMontants(); recap(); }); });
 }
 /* met à jour les montants et les totaux du panier sans recréer les champs de saisie */
 function majMontants(){
@@ -2455,13 +2500,13 @@ function ouvreVente(){
   $('v-canal').innerHTML=CV.map(c=>`<option value="${esc(c.nom)}">${esc(nomAff(c.nom))}</option>`).join('');
   if(canalSel && CV.some(c=>c.nom===canalSel)) $('v-canal').value=canalSel;
   $('v-date').value=ajd();
-  $('v-client').value=''; $('v-num').value=numAuto($('v-date').value); $('v-q').value=''; $('v-msg').textContent='';
+  $('v-client').value=''; $('v-num').value=numAuto($('v-date').value); vqActive('v-q'); vq().value=''; $('v-q2').value=''; $('v-msg').textContent='';
   if($('v-note')) $('v-note').value='';
   $('v-msg').className='msg';
   $('v-stock').checked=true;
   majAide(); peintRes(); peintPanier();
   try{ docReset(); }catch(e){}
-  $('vov').classList.add('on'); setTimeout(()=>$('v-q').focus(),60);
+  $('vov').classList.add('on'); setTimeout(()=>vq().focus(),60);
 }
 function majAide(){
   const c=canalCour();
@@ -2663,6 +2708,9 @@ $('v-canal').onchange=()=>{ majAide();
   peintPanier(); };
 $('v-doc').addEventListener('change',()=>{ $('v-doc').dataset.touche='1'; recap(); });
 $('v-client').addEventListener('input',recap);
+/* le client vient de changer : seules les pastilles de prix sont refaites, et un instant après — si Sam clique une pastille
+   juste en quittant la case du client, le clic arrive AVANT que la pastille soit remplacée (sinon il se perdait) */
+$('v-client').addEventListener('change',()=>{ setTimeout(majChipsClient,250); });
 $('v-stock').onchange=recap;
 /* on change la date : le numéro proposé suit, tant qu'il n'a pas été retouché à la main */
 $('v-date').onchange=()=>{ const v=$('v-num').value.trim();
@@ -2672,13 +2720,15 @@ $('v-num').oninput=()=>{ const v=$('v-num').value.trim();
     $('v-msg').textContent='Ce numéro est déjà pris (vente du '+dfr(f.d)+(f.canal?' sur '+f.canal:'')+').';
     $('v-msg').className='msg err'; }
   else { $('v-msg').textContent=''; $('v-msg').className='msg'; } };
-$('v-q').oninput=()=>{ CANDIDATS=chercheProduits($('v-q').value); SEL=-1; peintRes();
-  if(CANDIDATS.length===1 && /^\d{8,14}$/.test($('v-q').value.trim())) ajoute(CANDIDATS[0]); };
-$('v-q').onkeydown=e=>{
+vq().oninput=()=>{ CANDIDATS=chercheProduits(vq().value); SEL=-1; peintRes();
+  if(CANDIDATS.length===1 && /^\d{8,14}$/.test(vq().value.trim())) ajoute(CANDIDATS[0]); };
+vq().onkeydown=e=>{
   if(e.key==='ArrowDown'){ e.preventDefault(); SEL=Math.min(SEL+1,CANDIDATS.length-1); peintRes(); }
   else if(e.key==='ArrowUp'){ e.preventDefault(); SEL=Math.max(SEL-1,0); peintRes(); }
   else if(e.key==='Enter'){ e.preventDefault(); if(CANDIDATS.length) ajoute(CANDIDATS[SEL<0?0:SEL]); }
 };
+{ const h=$('v-q'); $('v-q2').oninput=h.oninput; $('v-q2').onkeydown=h.onkeydown;
+  ['v-q','v-q2'].forEach(id=>$(id).addEventListener('focus',()=>vqActive(id))); }
 $('v-ok').onclick=()=>{
   if(!PANIER.length) return;
   if(!window.__FRAIS_OK) return surStockServeur(()=>{ window.__FRAIS_OK=true; try{ $('v-ok').onclick(); } finally { window.__FRAIS_OK=false; } }, $('v-ok'));
@@ -3541,7 +3591,7 @@ if(MODE_QUOTES) setTimeout(()=>{
   let COCHES=new Set();
   /* la photo du parfum : celle de l'outil (photos/), sinon celle du site, sinon une case vide */
   window.vignette=function(cle){ return photoImg('vig','<span class="vig miss">—</span>',cle,''); };
-  try{ $('v-q').previousElementSibling.textContent='Choisir les parfums — tape une marque ou un nom, coche, ajoute'; $('v-q').placeholder='Marque, nom du parfum ou code-barres'; }catch(e){}
+  try{ vq().previousElementSibling.textContent='Choisir les parfums — tape une marque ou un nom, coche, ajoute'; ['v-q','v-q2'].forEach(id=>{ $(id).placeholder='Marque, nom du parfum ou code-barres'; }); $('v-q2').previousElementSibling.textContent='Ajouter d\'autres parfums — sans remonter'; }catch(e){}
   chercheProduits=function(q){
     q=q.trim().toLowerCase(); if(q.length<2) return [];
     const chiffres=/^\d{6,14}$/.test(q), mots=q.split(/\s+/).filter(Boolean);
@@ -3580,10 +3630,10 @@ if(MODE_QUOTES) setTimeout(()=>{
   function ajouteCoches(){
     const L=CANDIDATS.filter(c=>COCHES.has(c)); if(!L.length) return;
     L.forEach(cle=>{ if(!PANIER.some(l=>l.cle===cle)) PANIER.push({cle,q:1,p:prixSuggere(cle,canalCour())}); });
-    COCHES.clear(); $('v-q').value=''; CANDIDATS=[]; SEL=-1; peintRes(); peintPanier(); $('v-q').focus();
+    COCHES.clear(); vq().value=''; CANDIDATS=[]; SEL=-1; peintRes(); peintPanier(); vq().focus();
   }
   /* Entrée : ce qui est coché part dans le devis ; rien de coché, le parfum surligné y va seul */
-  $('v-q').addEventListener('keydown',e=>{ if(e.key==='Enter'&&COCHES.size){ e.stopImmediatePropagation(); e.preventDefault(); ajouteCoches(); } },true);
+  ['v-q','v-q2'].forEach(id=>$(id).addEventListener('keydown',e=>{ if(e.key==='Enter'&&COCHES.size){ e.stopImmediatePropagation(); e.preventDefault(); ajouteCoches(); } },true));
   /* ---- les lignes du devis : prix d'achat, tarif de gros, et LE prix qu'il propose ---- */
   const _peintPanier=peintPanier;
   peintPanier=function(){
@@ -3733,7 +3783,7 @@ html = coquille("Journal des ventes", "Ventes",
     "Chaque produit vendu, avec le canal d'où vient la vente : Lightspeed, perfumestrade.com, "
     "wholesale.perfumestrade.com, Amazon, vente en gros. Chiffre d'affaires et marge par canal, et la saisie "
     "d'une vente à la main.",
-    CSS + CSS_QUOTES, CORPS.replace('__ACCEPT__', _lire.ACCEPT), JS.replace('__NOMS__', _noms.NOMS).replace('__MODE__', 'ventes'), donnees=('produits','clients','retail'))
+    CSS + CSS_QUOTES, CORPS.replace('__ACCEPT__', _lire.ACCEPT), JS.replace('__NOMS__', _noms.NOMS).replace('__MODE__', 'ventes'), donnees=('produits','clients','retail','histgros'))
 html = html.replace('__IDX__', _IDX)
 open('ventes.html','w').write(html)
 print('ventes.html', len(html)//1024, 'Ko')
@@ -3742,7 +3792,7 @@ print('ventes.html', len(html)//1024, 'Ko')
 html = coquille("Devis", "Devis",
     "Faire un devis (à la main, ou depuis le message WhatsApp du client) et retrouver ceux de la caisse Lightspeed : "
     "convertir en vente (payé Zelle, sort du stock), envoyer par e-mail, imprimer, archiver.",
-    CSS + CSS_QUOTES, CORPS.replace('__ACCEPT__', _lire.ACCEPT), JS.replace('__NOMS__', _noms.NOMS).replace('__MODE__', 'quotes'), donnees=('produits','clients','retail'))
+    CSS + CSS_QUOTES, CORPS.replace('__ACCEPT__', _lire.ACCEPT), JS.replace('__NOMS__', _noms.NOMS).replace('__MODE__', 'quotes'), donnees=('produits','clients','retail','histgros'))
 html = html.replace('__IDX__', _IDX)
 open('quotes.html','w').write(html)
 print('quotes.html', len(html)//1024, 'Ko')

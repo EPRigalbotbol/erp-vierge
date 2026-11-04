@@ -1674,6 +1674,8 @@ MOTS3.update({
 MOTS3.update({
     "Transfert interstore": ["Interstore transfer", "Transferencia entre tiendas"],
     "Transferts interstore": ["Interstore transfers", "Transferencias entre tiendas"],
+    "Ajouter un autre parfum — sans remonter": ["Add another perfume — without scrolling up", "Añadir otro perfume — sin volver arriba"],
+    "Ajouter d'autres parfums — sans remonter": ["Add more perfumes — without scrolling up", "Añadir más perfumes — sin volver arriba"],
     "Transfert interstore — Perfumes Trade": ["Interstore transfer — Perfumes Trade", "Transferencia entre tiendas — Perfumes Trade"],
     "{n} en cours": ["{n} in progress", "{n} en curso"],
     "{n} demandes de parfums en cours": ["{n} perfume requests in progress", "{n} solicitudes de perfumes en curso"],

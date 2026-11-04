@@ -3194,6 +3194,36 @@ function sourcePrix(p,c,man,src){
    exact qui va partir, et le cockpit relit la fiche du site juste avant
    d'écrire (si quelqu'un l'a changée entre-temps, il refuse). */
 const COTE_SITE={site:'d',sitegros:'g'};
+/* 4 nov. 2026 (Sam : « il l'a mis à 81, il est à 81 sur le site, mais sur le Catalogue il reste à 88 ») : le prix tapé dans la
+   case du site partait bien sur le site, et l'outil le gardait comme « prix manuel du canal » (pc), mais le prix RETAIL (ou de GROS)
+   du Catalogue, celui des listes, des marges et des price lists, restait l'ancien. Désormais le prix payé sur le site devient LE prix
+   de l'outil : retail pour perfumestrade.com, gros pour le site de gros (la règle d'Igal du 9 oct. : le prix payé sur le site est
+   celui de l'outil). Les autres canaux (Perfume City) gardent leur prix par canal. */
+function alignePrixOutil(base,cid,v){
+  const id=base.id, m=MOD[id]=MOD[id]||{};
+  const k=cid==='site'?'pvr':cid==='sitegros'?'pvw':null;
+  if(!k||!(+v>0)){ m.pc=Object.assign({},m.pc||{},{[cid]:v}); sauveMOD(); return; }
+  const c=canaux().find(x=>x.id===cid)||{}; const b=r2(+v/(1+(c.maj||0)/100));
+  const av=m[k]!=null?m[k]:base[k];
+  m[k]=b;
+  if(m.pc){ delete m.pc[cid]; if(!Object.keys(m.pc).length) delete m.pc; }
+  sauveMOD();
+  if(av!=null&&Math.abs(+av-b)>=0.005) log({act:'prix',champ:k,lib:LIBCH[k]||k,bc:base.bc,ref:(base.marque||'')+' '+(base.nom||''),av:av,ap:b});
+}
+/* une seule fois, par Sam ou Igal : les prix déjà changés sur les sites avant ce correctif (prix « manuel » du canal site / gros)
+   deviennent le prix retail / gros du Catalogue */
+function alignePrixAnciens(){
+  try{
+    if(!peutPrixSite()||REG.prixAligne) return;
+    let n=0;
+    Object.keys(MOD).forEach(id=>{ const m=MOD[id]; if(!m||!m.pc||typeof m.pc!=='object') return;
+      [['site','pvr'],['sitegros','pvw']].forEach(([cid,k])=>{ const v=m.pc[cid]; if(v==null||v===''||!(+v>0)) return;
+        const c=canaux().find(x=>x.id===cid)||{}; m[k]=r2(+v/(1+(c.maj||0)/100)); delete m.pc[cid]; n++; });
+      if(m.pc&&!Object.keys(m.pc).length) delete m.pc; });
+    REG.prixAligne=1; sauveREG();
+    if(n){ sauveMOD(); log({act:'prix',lib:'prix retail / gros du Catalogue alignés sur les prix payés sur les sites ('+n+')',bc:'',ref:'',av:null,ap:null}); }
+  }catch(e){ try{ console.warn('alignement des prix',e); }catch(_){} }
+}
 const peutPrixSite=()=>{ try{ const s=session(); return !!(s&&['patron','admin'].includes(s.role)); }catch(e){ return false; } };
 function surSite(p,c,v){
   const cote=COTE_SITE[c.id]; if(!cote) return '';
@@ -3292,7 +3322,7 @@ async function remetsPrixSite(cid,mode){
       SITE._retires=Object.assign({},SITE._retires,{[cote]:R});
     }
     ecrit(KSITE,SITE); _FMC=null; _SITE0=null; _RETS=null; oubliBoite(cid);
-    const m=MOD[base.id]=MOD[base.id]||{}; m.pc=Object.assign({},m.pc||{},{[cid]:j.apres.promo!=null?j.apres.promo:j.apres.barre}); sauveMOD();
+    alignePrixOutil(base,cid,j.apres.promo!=null?j.apres.promo:j.apres.barre);
     log({act:'prix',lib:(publie?'fiche remise en vente avec son prix sur ':'prix posé sur une fiche retirée (hors ligne) sur ')+nomSite,bc:base.bc,ref:(base.marque||'')+' '+(base.nom||''),av:'retirée de la vente',ap:cote==='g'?money2(j.apres.barre):'barré '+money2(j.apres.barre)+' · promo '+(j.apres.promo!=null?money2(j.apres.promo):'aucune')});
     render(); const l=cur.findIndex(x=>x.id===base.id); if(l>=0) FICHE.pos=l; dessineFiche();
     $('dst').textContent=vf(publie?`${money2(n)} en ligne sur ${nomSite}`:`${money2(n)} enregistré sur ${nomSite} (reste hors ligne)`); $('dst').className='st ok';
@@ -3367,7 +3397,7 @@ async function envoiePrixSite(cid,mode){
     f.pr=j.apres.barre; f.ps=j.apres.promo; ecrit(KSITE,SITE); oubliBoite(cid);
     /* le prix payé devient le prix du canal dans l'outil */
     const payeF=f.ps!=null?f.ps:f.pr;
-    const m=MOD[base.id]=MOD[base.id]||{}; m.pc=Object.assign({},m.pc||{},{[cid]:payeF}); sauveMOD();
+    alignePrixOutil(base,cid,payeF);
     const b=FICHE.brouillon; if(b.pc){ delete b.pc[cid]; if(!Object.keys(b.pc).length) delete b.pc; }
     const dit=x=>gros?(x.promo!=null?money2(x.promo):x.barre!=null?money2(x.barre):'—'):'barré '+(x.barre!=null?money2(x.barre):'—')+' · promo '+(x.promo!=null?money2(x.promo):'aucune');
     log({act:'prix',lib:'prix changés sur le site '+nomSite,bc:base.bc,ref:(base.marque||'')+' '+(base.nom||''),av:dit(j.avant||{}),ap:dit(j.apres)});
@@ -6775,6 +6805,7 @@ $('fseuil').addEventListener('input',()=>{
   REG.seuilQte=SEUIL; sauveREG();
   paint(); majSeuil();
 });
+alignePrixAnciens();
 render();
 majSeuil();
 /* catalogue.html?q=… (lien depuis une autre page) et, depuis le 25 oct. 2026, catalogue.html?photo=0 (le tableau

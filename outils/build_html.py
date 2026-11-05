@@ -2105,7 +2105,8 @@ function candidatsMel(liste,ids){
     const c=(REG.canaux||[]).find(x=>x.id===id)||{id,base:id==='sitegros'?'pvw':'pvr',maj:0};
     res[id]=[]; skip[id]={sansPrix:0,perte:0,existe:0};
     liste.forEach(p=>{
-      if(!(p.qte>0)||!p.bc||statutDiff(p,id)!=='non') return;
+      /* Perfume City : la fiche y est créée aussi, avec le stock de SON inventaire (0 tant que Sam ne lui a rien donné) */
+      if(!(p.qte>0||(id==='perfumecity'&&qtePCde(p)>0))||!p.bc||statutDiff(p,id)!=='non') return;
       if(existeCanal(p,id)){ skip[id].existe++; return; }
       const v=prixCanal(p,c).v;
       if(!(v>0)){ skip[id].sansPrix++; return; }
@@ -2223,20 +2224,47 @@ function ouvreMel(liste,ids){
    en stock, code-barres, prix au-dessus du prix d'achat, jamais recréé s'il existe), mais sans case à cocher : les deux sites
    perfumestrade.com sont créés EN VENTE, Perfume City aussi si Sam a donné le droit de poser le stock (sinon brouillon, et on le dit).
    Ce qui n'a pas pu partir est expliqué ligne par ligne, avec le geste pour le faire ensuite. */
+function enLigneSansDroit(id){
+  /* un compte qui ne peut pas publier crée le produit : le Patron doit le savoir, le tableau de bord le lui dira */
+  try{ const p0=cur.find(z=>z.id===id)||tousLesArticles().find(z=>z.id===id);
+    if(p0) ['site','sitegros','perfumecity'].forEach(i=>{ if(!horsCanal(p0,i)) pubNote(p0,i,"créé par un compte qui ne peut pas le publier : le Patron doit cliquer « Mettre en ligne » sur la fiche"); }); }catch(e){}
+  return '<div class="mrep bad">Pas mis en ligne : seul le dirigeant (rôle Patron), relié au cockpit, peut créer le produit sur les sites. Il le fera depuis la fiche (bouton « Mettre en ligne »).</div>';
+}
 async function enLigneAuto(id){
   const v=document.createElement('div'); v.className='mvoile';
   const rep=(h,fin)=>{ v.innerHTML=`<div class="mfen" role="dialog" aria-modal="true" data-nolang><h3>Mise en ligne automatique</h3><div id="eaR">${h}</div><div class="mbtn">${fin?'<button class="btn pri" id="eaF">Fermer</button>':''}</div></div>`;
     const b=v.querySelector('#eaF'); if(b) b.onclick=()=>{ v.remove(); try{ render(); }catch(e){} }; };
-  if(!melOk()){
-    /* un compte qui ne peut pas publier crée le produit : le Patron doit le savoir, le tableau de bord le lui dira */
-    try{ const p0=cur.find(z=>z.id===id)||tousLesArticles().find(z=>z.id===id);
-      if(p0) ['site','sitegros','perfumecity'].forEach(i=>{ if(!horsCanal(p0,i)) pubNote(p0,i,"créé par un compte qui ne peut pas le publier : le Patron doit cliquer « Mettre en ligne » sur la fiche"); }); }catch(e){}
-    document.body.appendChild(v); rep('<div class="mrep bad">Pas mis en ligne : seul le dirigeant (rôle Patron), relié au cockpit, peut créer le produit sur les sites. Il le fera depuis la fiche (bouton « Mettre en ligne »).</div>',1); return; }
+  if(!melOk()){ document.body.appendChild(v); rep(enLigneSansDroit(id),1); return; }
   if(!demandeUser(false,'mettre le produit en ligne',()=>{ enLigneAuto(id); })) return;
   document.body.appendChild(v); rep('<div class="mrep">Préparation…</div>');
+  rep(await enLigneUn(id,h=>rep(h)),1);
+}
+/* 5 nov. 2026 (Igal) : « quand Sam crée une nouvelle référence dans une facture, qu'il puisse la mettre en ligne à la validation, sans
+   aller la chercher dans le Catalogue une par une ». La page Factures ouvre le Catalogue en mode cadre (#enligne=id1,id2&cadre=1) : la même
+   mise en ligne automatique, produit après produit, dans une seule fenêtre. */
+async function enLigneAutoListe(ids){
+  const cadre=document.documentElement.classList.contains('cadre');
+  const v=document.createElement('div'); v.className='mvoile';
+  const noms=id=>{ const p=cur.find(z=>z.id===id)||tousLesArticles().find(z=>z.id===id); return p?esc(((p.marque||'')+' '+(p.nom||'')).trim()):esc(id); };
+  const rep=(h,fin)=>{ v.innerHTML=`<div class="mfen" role="dialog" aria-modal="true" data-nolang style="max-height:90vh;overflow:auto"><h3>Mise en ligne des nouvelles références (${ids.length})</h3><div id="eaR">${h}</div><div class="mbtn">${fin?'<button class="btn pri" id="eaF">Fermer</button>':''}</div></div>`;
+    const b=v.querySelector('#eaF'); if(b) b.onclick=()=>{ v.remove(); try{ render(); }catch(e){} if(cadre){ try{ window.parent.postMessage({fiche:'fermee'},location.origin); }catch(e){} } }; };
+  document.body.appendChild(v);
+  if(!melOk()){ rep(ids.map(id=>`<p><b>${noms(id)}</b></p>`+enLigneSansDroit(id)).join(''),1); return; }
+  if(!demandeUser(false,'mettre les produits en ligne',()=>{ v.remove(); enLigneAutoListe(ids); })) return;
+  const faits=[];
+  for(const id of ids){
+    const avant=faits.join('');
+    const r=await enLigneUn(id,h=>rep(avant+`<p><b>${noms(id)}</b></p>`+h));
+    faits.push(`<div style="margin:0 0 12px;padding:0 0 10px;border-bottom:1px solid var(--line,#ddd)"><p style="margin:0 0 4px"><b>${noms(id)}</b></p>${r}</div>`);
+    rep(faits.join(''));
+  }
+  rep(faits.join(''),1);
+}
+/* la mise en ligne d'UN produit : rend le compte rendu (html) ; `rep` montre l'avancement */
+async function enLigneUn(id,rep){
   try{
     let p=cur.find(z=>z.id===id)||tousLesArticles().find(z=>z.id===id);
-    if(!p){ rep('<div class="mrep bad">Produit introuvable.</div>',1); return; }
+    if(!p){ return '<div class="mrep bad">Produit introuvable.</div>'; }
     const ids=['site','sitegros','perfumecity'];
     const {res,skip}=candidatsMel([p],ids);
     const pq=[];
@@ -2257,8 +2285,8 @@ async function enLigneAuto(id){
     if(sel.length) R=await lanceMel(sel,res,'publie',t=>rep('<div class="mrep">'+t+'</div>'),()=>false);
     const nb=sel.includes('perfumecity')&&!window.__melPcStock?`<li><b>Perfume City</b> : créé en BROUILLON — l'application Shopify n'a pas encore le droit de poser le stock (write_inventory). Une fois le droit donné : bouton « Mettre en vente » sur la fiche.</li>`:'';
     const fin=(manque||nb)?`<ul style="margin:10px 0 0 18px;padding:0;font-size:13px;line-height:1.5">${nb}${manque}</ul>`:'';
-    rep((R||'<div class="mrep bad">Rien n\'a pu être mis en ligne.</div>')+fin+(pq.length?`<p style="font-size:12.5px;color:var(--ink-3,#777);margin-top:10px">Dès que ce sera réglé, ouvre la fiche : « Mettre en ligne » le fait en un clic.</p>`:''),1);
-  }catch(e){ rep('<div class="mrep bad">La mise en ligne a échoué : '+esc((e&&e.message)||'erreur')+'. Rien n\'est perdu : la fiche est dans le Catalogue, « Mettre en ligne » réessaie.</div>',1); }
+    return (R||'<div class="mrep bad">Rien n\'a pu être mis en ligne.</div>')+fin+(pq.length?`<p style="font-size:12.5px;color:var(--ink-3,#777);margin-top:10px">Dès que ce sera réglé, ouvre la fiche : « Mettre en ligne » le fait en un clic.</p>`:'');
+  }catch(e){ return '<div class="mrep bad">La mise en ligne a échoué : '+esc((e&&e.message)||'erreur')+'. Rien n\'est perdu : la fiche est dans le Catalogue, « Mettre en ligne » réessaie.</div>'; }
 }
 async function photoPourSite(p){
   if(p.imgPerso&&/^data:image\/(jpeg|png|webp);base64,/.test(p.img||'')) return {data:p.img};
@@ -2298,7 +2326,9 @@ async function lanceMel(sel,res,mode,prog,arret){
       if(arret()) break;
       const lot=items.slice(i,i+MEL_LOT);
       prog(MEL_CANAL[id].nom+' : '+i+' / '+items.length+'…');
-      const corps={items:await Promise.all(lot.map(async x=>{ const it={bc:x.p.bc,nom:melNom(x.p),marque:x.p.marque||'',barre:x.barre||x.v,qte:x.p.qte}; if(x.barre) it.promo=x.v;
+      /* 5 nov. 2026 (le Mont Blanc : « Sam en a envoyé 6 à Perfume City, Shopify a reçu 14 ») : chez Perfume City, le stock posé est celui
+         de SON inventaire (pc-stock-v1), jamais le stock de Perfumes Trade */
+      const corps={items:await Promise.all(lot.map(async x=>{ const it={bc:x.p.bc,nom:melNom(x.p),marque:x.p.marque||'',type:x.p.type||'',barre:x.barre||x.v,qte:id==='perfumecity'?qtePCde(x.p):x.p.qte}; if(x.barre) it.promo=x.v;   /* type : la catégorie Shopify (5 nov. 2026) */
         /* la photo : celle choisie dans l'ERP (sans adresse : le cockpit la prête au site), sinon l'adresse https connue, sinon la photo de l'ERP si elle existe */
         const ph=await photoPourSite(x.p); if(ph.data) it.imageData=ph.data; else if(ph.url) it.image=ph.url; return it; }))};
       if(id==='sitegros') corps.quel='gros';
@@ -2377,12 +2407,14 @@ function melRange(id,cote,l,p){
    le cockpit pose d'abord le stock de l'ERP, puis passe le produit en actif. */
 document.addEventListener('click',async e=>{ const b=e.target.closest&&e.target.closest('[data-pcpub]'); if(!b) return;
   const p=(typeof FICHE!=='undefined'&&FICHE&&cur[FICHE.pos])||null; if(!p||!melOk()) return;
-  if(!confirm('Mettre « '+((p.marque||'')+' '+(p.nom||'')).trim()+' » en vente chez Perfume City, avec '+nf(p.qte)+' en stock ?')) return;
+  const qpc=qtePCde(p);
+  if(!(qpc>0)){ alert(vf('Perfume City n\'a pas ce parfum dans son inventaire (0) : donne-lui d\'abord des flacons (facture d\'achat ou transfert), puis mets-le en vente.')); return; }
+  if(!confirm('Mettre « '+((p.marque||'')+' '+(p.nom||'')).trim()+' » en vente chez Perfume City, avec '+nf(qpc)+' en stock (son inventaire) ?')) return;
   if(!demandeUser(false,'mettre un produit en vente chez Perfume City',()=>{})) return;
   b.disabled=true; b.textContent='Envoi…';
   const dit=(t,cls)=>{ const d=$('dst'); if(d){ d.textContent=t; d.className='st'+(cls?' '+cls:''); } };
   try{
-    const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/shopify/publie',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},body:JSON.stringify({bc:p.bc,qte:p.qte})});
+    const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/shopify/publie',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},body:JSON.stringify({bc:p.bc,qte:qpc})});
     const j=await r.json().catch(()=>({}));
     if(!r.ok||!j.ok) throw new Error(j.erreur||('erreur '+r.status));
     try{ const S=lit('shopify-pc-prix-v1',{}); const k=String(p.bc||'').replace(/[^0-9A-Za-z]/g,'').replace(/^0+/,''); if(Array.isArray(S[k])){ S[k][4]=1; ecrit('shopify-pc-prix-v1',S); DIFF_S=S; } }catch(e){}
@@ -4422,7 +4454,7 @@ function dessineFiche0(){
         else if(c.id==='perfumecity'){ const sh=prixShopifyDe(p);
           paie = !sh ? `<div class="azp"><span class="sbt">sur Shopify</span><small>${L3('pas trouvé : le code-barres n\'est pas sur Shopify','not found: the barcode is not on Shopify','no encontrado: el código de barras no está en Shopify')}</small>${peutPrixSite()&&p.qte>0&&melOk()?`<button class="lnk" data-mel1="perfumecity">${L3('Mettre en ligne','Put online','Poner en línea')}</button>`:''}</div>`
             : sh.amb ? `<div class="azp"><span class="sbt">sur Shopify</span><small class="sbw">⚠ ${L3('ce code-barres est sur plusieurs produits de Shopify : à corriger là-bas','this barcode is on several Shopify products: fix it there','este código está en varios productos de Shopify: corrígelo allí')}</small></div>`
-            : `<div class="azp"><span class="sbt">sur Shopify</span><b data-nolang>${money2(sh.prix)}</b>${sh.actif?(peutPrixSite()&&p.qte>0&&melOk()?`<button class="lnk" data-pcpub="${esc(p.bc||'')}" title="${L3('Repose le stock de l\'ERP et publie le produit sur les canaux de vente de la boutique','Re-posts the ERP stock and publishes the product on the shop\'s sales channels','Vuelve a poner el stock y publica el producto en los canales de la tienda')}">${L3('Publier / stock '+nf(p.qte),'Publish / stock '+nf(p.qte),'Publicar / stock '+nf(p.qte))}</button>`:''):`<small>${L3('brouillon','draft','borrador')}</small>${peutPrixSite()&&p.qte>0&&melOk()?`<button class="lnk" data-pcpub="${esc(p.bc||'')}">${L3('Mettre en vente (stock : '+nf(p.qte)+')','Put on sale (stock: '+nf(p.qte)+')','Poner en venta (stock: '+nf(p.qte)+')')}</button>`:''}`}${sh.barre?`<small>${L3('barré','was','tachado')} ${money2(sh.barre)}</small>`:''}
+            : `<div class="azp"><span class="sbt">sur Shopify</span><b data-nolang>${money2(sh.prix)}</b>${sh.actif?(peutPrixSite()&&(qtePCde(p)>0||p.qte>0)&&melOk()?`<button class="lnk" data-pcpub="${esc(p.bc||'')}" title="${L3('Repose le stock de l\'inventaire Perfume City et publie le produit sur les canaux de vente de la boutique','Re-posts the Perfume City inventory stock and publishes the product on the shop\'s sales channels','Vuelve a poner el stock del inventario Perfume City y publica el producto en los canales de la tienda')}">${L3('Publier / stock '+nf(qtePCde(p)),'Publish / stock '+nf(qtePCde(p)),'Publicar / stock '+nf(qtePCde(p)))}</button>`:''):`<small>${L3('brouillon','draft','borrador')}</small>${peutPrixSite()&&(qtePCde(p)>0||p.qte>0)&&melOk()?`<button class="lnk" data-pcpub="${esc(p.bc||'')}">${L3('Mettre en vente (stock Perfume City : '+nf(qtePCde(p))+')','Put on sale (Perfume City stock: '+nf(qtePCde(p))+')','Poner en venta (stock Perfume City: '+nf(qtePCde(p))+')')}</button>`:''}`}${sh.barre?`<small>${L3('barré','was','tachado')} ${money2(sh.barre)}</small>`:''}
               ${v!=null&&Math.abs(v-sh.prix)>=0.005?`<div class="sbw">⚠ ${L3('Shopify vend à','Shopify sells at','Shopify vende a')} <b>${money2(sh.prix)}</b>, ${L3('pas','not','no')} <b>${money2(v)}</b>. ${prixPCOk()?`<span>${L3('Enregistrer envoie le nouveau prix à Shopify.','Save sends the new price to Shopify.','Guardar envía el nuevo precio a Shopify.')}</span> `:''}<button class="lnk" data-prend="perfumecity" data-pv="${sh.prix}">${L3('prendre le prix Shopify','use the Shopify price','usar el precio de Shopify')}</button></div>`:''}</div>`; }
         else paie=`<div class="azp"><small>${L3('ventes non reliées','sales not connected','ventas no conectadas')}</small></div>`;
         if(uni) return `<div class="cn uni" data-cn="${c.id}">
@@ -5289,6 +5321,8 @@ function pcClef(p){ return p.bc ? String(p.bc).replace(/^0+/,'') : 'n-'+((p.marq
 function pcTesteurs(){ const t=lit(K_TEST,{}); return (t&&typeof t==='object'&&!Array.isArray(t))?t:{}; }
 function pcLignes(){ return pcsRows(); }
 /* le stock de Perfume City d'une fiche : son code-barres, ou un de ses autres codes (fiches-modifiees-v1 › bcs) ; null si absent */
+/* la quantité de ce parfum dans l'inventaire Perfume City (0 s'il n'y est pas) */
+function qtePCde(p){ const r=pcStockFiche(p); return r?r.q:0; }
 function pcStockFiche(p){
   try{ const m=pcsCarte(); const s0=x=>String(x||'').replace(/[^0-9A-Za-z]/g,'').replace(/^0+/,'');
     const ks=[p.bc].concat(String((MOD[p.id]||{}).bcs||p.bcs||'').split(/[\s,;]+/)).map(s0).filter(Boolean);
@@ -6852,6 +6886,9 @@ if(/[#&]cadre=1/.test(location.hash) && window.parent!==window){
 }
 (function(){ const cadre=document.documentElement.classList.contains('cadre');
   const pret=()=>{ if(cadre) document.documentElement.classList.add('cp'); };
+  /* 5 nov. 2026 : depuis une facture d'achat, les nouvelles références à mettre en ligne (#enligne=id1,id2&cadre=1) */
+  const me=location.hash.match(/enligne=([^&]+)/);
+  if(me){ const ids=decodeURIComponent(me[1]).split(',').filter(Boolean); pret(); setTimeout(()=>{ try{ enLigneAutoListe(ids); }catch(e){ console.error(e); } },80); return; }
   const m=location.hash.match(/cle=([^&]+)/); if(!m){ pret(); return; }
   const id=decodeURIComponent(m[1]); const p=tousLesArticles().find(x=>x.id===id); if(!p){ pret(); return; }
   $('fs').value=''; $('q').value=p.bc||p.nom; render(); setTimeout(()=>{ ouvreFiche(id); pret();

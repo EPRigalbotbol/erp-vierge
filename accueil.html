@@ -899,6 +899,25 @@ function ficheFenetre(cle,apres,plus){
   window.addEventListener('message',onMsg);
   ov.addEventListener('click',e=>{ if(e.target===ov) ferme(); });
 }
+/* LA MISE EN LIGNE DES NOUVELLES RÉFÉRENCES, par-dessus la page en cours (Igal, 5 nov. 2026 : « à la validation d'une facture,
+   proposer de mettre en ligne les nouveaux produits sans aller les chercher dans le Catalogue »). Même fenêtre que la fiche :
+   c'est le Catalogue en mode cadre (catalogue.html#enligne=id1,id2&cadre=1) qui fait le travail, avec ses garde-fous. */
+function enLigneFenetre(ids,apres){
+  const L=(ids||[]).filter(Boolean); if(!L.length||document.getElementById('fv-ov')) return;
+  if(!document.getElementById('fv-css')){
+    const st=document.createElement('style'); st.id='fv-css';
+    st.textContent='.fv-ov{position:fixed;inset:0;z-index:95;background:rgba(23,23,29,.45);backdrop-filter:blur(2px);display:flex;justify-content:flex-end}'
+      +'.fv-ov iframe{border:0;width:min(940px,100%);height:100%;background:var(--surface,#fff);box-shadow:-8px 0 30px rgba(0,0,0,.18)}';
+    document.head.appendChild(st);
+  }
+  const ov=document.createElement('div'); ov.id='fv-ov'; ov.className='fv-ov';
+  const fr=document.createElement('iframe'); fr.title='Mise en ligne'; fr.src='catalogue.html#enligne='+encodeURIComponent(L.join(','))+'&cadre=1';
+  ov.appendChild(fr); document.body.appendChild(ov);
+  const ferme=()=>{ window.removeEventListener('message',onMsg); ov.remove(); try{ if(apres) apres(); }catch(e){} };
+  const onMsg=e=>{ if(e.origin===location.origin&&e.data&&e.data.fiche==='fermee') ferme(); };
+  window.addEventListener('message',onMsg);
+  ov.addEventListener('click',e=>{ if(e.target===ov) ferme(); });
+}
 /* CHERCHER LA PHOTO SUR INTERNET (Igal, 17 oct. 2026 : « chercher la photo sur Internet, proposer un choix à Sam,
    qu'il puisse cliquer sur la photo et l'intégrer »). Une fenêtre : une case de recherche (préremplie), des miniatures ;
    un clic prend la photo, la réduit comme les autres et la rend. C'est le cockpit qui cherche et qui rapporte l'image
@@ -2539,7 +2558,7 @@ setTimeout(()=>{ try{ const c=document.getElementById('ct-taches'); if(!c||!glPe
   fetch(CK_URL+'/api/o/'+CK_ORG+'/galou/taches',{headers:{Authorization:'Bearer '+ckTok()}}).then(r=>r.ok?r.json():null).then(j=>{ if(!j) return; const n=(j.a_faire||[]).length; c.textContent=n?String(n):''; c.className=n?'ct nb':'ct'; }).catch(()=>{}); }catch(e){} },2500);
 
 
-const VER_URL='202611042256';
+const VER_URL='202611052121';
 /* Les trois boutons de langue de la porte. On ne passe pas par lgChange : il
    écrit une ligne au journal au nom du compte connecté, et ici personne ne l'est
    encore. On change la langue, on l'enregistre, on retraduit l'écran. */

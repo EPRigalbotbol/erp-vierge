@@ -1298,6 +1298,7 @@ function creeDepuisLigne(i){
     const AJ=lit('articles-ajoutes-v1',[]); const L=Array.isArray(AJ)?AJ:[];
     const o={id:'a'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),bc:bc,nom:nom,marque:marque,ml:g('ft-ml').value.trim().replace(',','.'),type:g('ft-type').value.trim().toUpperCase(),genre:g('ft-genre').value,qte:0,pa:pa,pvr:pvr,pvw:pvw};
     L.push(o); ecrit('articles-ajoutes-v1',L);
+    try{ (window.__NOUVEAUX=window.__NOUVEAUX||new Set()).add(o.id); }catch(e){}   /* 5 nov. 2026 : à proposer en ligne quand la facture sera enregistrée */
     Object.keys(pc).forEach(k=>{ if(pc[k]==null) delete pc[k]; });
     if(Object.keys(pc).length){ MOD[o.id]=Object.assign({},MOD[o.id]||{},{pc}); ecrit(K.mod,MOD); }
     if(photo){ try{ const H=lit('photos-perso-v1',{}); const HH=(H&&typeof H==='object'&&!Array.isArray(H))?H:{}; HH[o.id]=photo; ecrit('photos-perso-v1',HH); }catch(e){} }
@@ -1395,7 +1396,26 @@ $('ok').onclick=()=>{
   $('msg').className='msg ok';
   if(pcRate.length){ $('msg').className='msg'; $('msg').textContent+=' '+L3(`ATTENTION : le stock de Perfume City n'a pas pu être mis à jour dans l'ERP pour ${pcRate.length} parfum${pcRate.length>1?'s':''} (${pcRate.slice(0,3).join(', ')}${pcRate.length>3?'…':''}). Préviens Igal.`,`WARNING: Perfume City's stock could not be updated in the ERP for ${pcRate.length} perfume${pcRate.length>1?'s':''}. Tell Igal.`,`ATENCIÓN: no se pudo actualizar el stock de Perfume City en el ERP para ${pcRate.length} perfume${pcRate.length>1?'s':''}. Avisa a Igal.`); }
   if(f.pcShopify) pcEnvoiFacture(f.id);
+  /* 5 nov. 2026 (Igal) : « lorsque c'est une nouvelle référence, Sam crée le produit mais il est obligé d'aller sur le Catalogue pour
+     mettre en ligne les références une par une » — les références créées ici et reçues par cette facture (elles ont maintenant du
+     stock) sont proposées en ligne tout de suite, en une fois. */
+  if(SENS==='achat'&&!canal) proposeEnLigne(lignes);
 };
+function proposeEnLigne(lignes){
+  const N=window.__NOUVEAUX; if(!N||!N.size) return;
+  const ids=[...new Set((lignes||[]).map(l=>l&&l.cle).filter(c=>c&&N.has(c)))]; if(!ids.length) return;
+  ids.forEach(c=>N.delete(c));
+  const noms=ids.map(c=>{ const v=IDX[c]||[]; return ((v[2]||'')+' '+(v[1]||'')).trim(); });
+  const v=document.createElement('div'); v.className='ft-voile'; v.style.cssText='position:fixed;inset:0;z-index:90;background:rgba(20,16,30,.45);display:flex;align-items:center;justify-content:center;padding:16px';
+  v.innerHTML=`<div role="dialog" aria-modal="true" style="background:var(--surface,#fff);color:var(--ink,#17171d);border-radius:14px;width:min(560px,100%);padding:20px 22px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <h2 style="margin:0 0 8px;font-size:18px">${L3('Nouvelles références reçues','New references received','Nuevas referencias recibidas')} (${ids.length})</h2>
+    <p style="margin:0 0 10px;color:var(--ink-3,#777);font-size:13.5px">${L3('Elles ne sont pas encore sur les sites ni chez Perfume City. Les mettre en ligne maintenant ?','They are not on the websites or at Perfume City yet. Put them online now?','Todavía no están en los sitios ni en Perfume City. ¿Ponerlas en línea ahora?')}</p>
+    <ul style="margin:0 0 14px 18px;padding:0;font-size:14px;line-height:1.6" data-nolang>${noms.map(n=>'<li>'+esc(n)+'</li>').join('')}</ul>
+    <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" id="pel-non">${L3('Plus tard','Later','Más tarde')}</button><button class="btn pri" id="pel-oui">${L3('Mettre en ligne maintenant','Put online now','Poner en línea ahora')}</button></div></div>`;
+  document.body.appendChild(v);
+  v.querySelector('#pel-non').onclick=()=>v.remove();
+  v.querySelector('#pel-oui').onclick=()=>{ v.remove(); if(typeof enLigneFenetre==='function') enLigneFenetre(ids,()=>{ try{ refaitIndex(); }catch(e){} }); };
+}
 
 /* ---------------- PERFUME CITY : la part d'une réception (Igal, 20 oct. 2026) ----------------
    « Quand Sam rentre une new order, il doit pouvoir dispatcher le stock sur la boutique Perfume City : sur 16 parfums,

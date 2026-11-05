@@ -267,10 +267,10 @@ border-radius:6px;text-align:right;background:var(--surface)}
 .pan .del{background:none;border:0;color:var(--ink-3);font-size:16px;cursor:pointer;padding:0 4px}
 .pan .pucs{display:flex;gap:4px;justify-content:flex-end;margin-top:4px;flex-wrap:wrap}
 .pan .puc{font-family:Inter,sans-serif;font-size:11px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:999px;padding:2px 8px;cursor:pointer;white-space:nowrap}
-.pan .puc b{font-weight:700}.pan .puc.on{background:var(--iris);border-color:var(--iris);color:#fff}
-/* 5 nov. 2026 (Igal : « pourquoi plusieurs couleurs ? ») : UNE règle par couleur — violet = le prix qui est dans la case, jaune = ce que ce client a payé la dernière fois. Une pastille choisie est toujours violette. */
-.pan .puc.dp{border-color:#F0D58A;background:#FFF4D6;color:#6B4E00}.pan .puc.dp.on{background:var(--iris);border-color:var(--iris);color:#fff}
-.pan .legende{font-family:Inter,sans-serif;font-size:11.5px;color:var(--ink-3);margin:6px 0 0;text-align:right}.pan .legende i{display:inline-block;width:10px;height:10px;border-radius:99px;vertical-align:-1px;margin:0 3px 0 10px}.pan .legende i.v{background:var(--iris)}.pan .legende i.j{background:#FFF4D6;border:1px solid #F0D58A}
+.pan .puc b{font-weight:700}
+/* 5 nov. 2026 (Igal : « enlève-moi les couleurs, je comprends rien ») : toutes les pastilles de prix ont le même aspect, aucune ne s'allume */
+.pan .puc.on{background:var(--surface);border-color:var(--line);color:var(--ink-2)}
+.pan .puc.dp,.pan .puc.dp.on{background:var(--surface);border-color:var(--line);color:var(--ink-2)}
 .pan b.vfiche{cursor:pointer}.pan b.vfiche:hover{color:var(--iris);text-decoration:underline}
 #v-q2w{margin-top:12px}
 .pan .del:hover{color:var(--crit)}
@@ -2353,8 +2353,7 @@ function peintPanier(){
   $('v-pan').innerHTML=`<table><thead><tr><th class="r"></th><th>Parfum</th><th class="r">Qté</th>
     <th class="r">Prix unit.</th><th class="r">Montant</th><th class="r vmg">Marge nette</th><th></th></tr></thead>
     <tbody>${li}</tbody><tfoot><tr><td></td><td>${PANIER.length} parfum${PANIER.length>1?'s':''}</td>
-    <td class="r" data-tu>${nf(u)}</td><td></td><td class="r" data-tmt>${money2(tot)}</td><td class="r vmg" data-tmg>${money2(totMg)}</td><td></td></tr></tfoot></table>
-    <p class="legende"><i class="v"></i>${r3('le prix dans la case','the price in the box','el precio en la casilla')}<i class="j"></i>${r3('ce que ce client a payé la dernière fois','what this customer paid last time','lo que este cliente pagó la última vez')}</p>`;
+    <td class="r" data-tu>${nf(u)}</td><td></td><td class="r" data-tmt>${money2(tot)}</td><td class="r vmg" data-tmg>${money2(totMg)}</td><td></td></tr></tfoot></table>`;
   $('v-pan').querySelectorAll('input').forEach(inp=>{
     inp.oninput=()=>{
       const l=PANIER[+inp.dataset.i]; if(!l) return;

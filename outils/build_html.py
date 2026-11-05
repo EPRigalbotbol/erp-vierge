@@ -3237,10 +3237,11 @@ function surSite(p,c,v){
       if(!ecritR) return `<span class="ss no">retirée de la vente (aucun prix sur le site)</span>`;
       /* 12 oct. 2026 (Igal : « quand je reviens sur un produit modifié avec Sam, il ne tient pas compte des modifs ») : Sam règle le
          prix de gros dans l'outil (v), mais le site n'en a aucun : la case restait VIDE. Elle propose maintenant le prix de l'outil. */
-      const pv=rf.f.pr!=null?Number(rf.f.pr).toFixed(2):(v>0?Number(v).toFixed(2):'');
+      /* 5 nov. 2026 (Igal) : sur le détail, le client paie le prix retail de l'outil ; la seule case est le prix barré (facultatif) */
+      const pv=cote==='g'?(rf.f.pr!=null?Number(rf.f.pr).toFixed(2):(v>0?Number(v).toFixed(2):'')):(rf.f.ps!=null&&rf.f.pr!=null?Number(rf.f.pr).toFixed(2):'');
       return `<div class="sb" data-sbr="${c.id}"><span class="sbt">${vf(rf.f.pr>0?'retirée de la vente : prix enregistré, hors ligne':'retirée de la vente : aucun prix sur le site')}</span>
-    <label><span>${vf(cote==='g'?'prix de vente':'prix barré')}</span><input data-sr="${c.id}" type="number" step="0.01" min="0" inputmode="decimal" value="${pv}" placeholder="0.00"><em>$</em></label>
-    ${cote==='g'?'':`<label><span>${vf('promo')}</span><input data-srp="${c.id}" type="number" step="0.01" min="0" inputmode="decimal" value="${rf.f.ps!=null?Number(rf.f.ps).toFixed(2):''}" placeholder="—"><em>$</em></label>`}
+    <label><span>${vf(cote==='g'?'prix de vente':'prix barré')}</span><input data-sr="${c.id}" type="number" step="0.01" min="0" inputmode="decimal" value="${pv}" placeholder="${cote==='g'?'0.00':'—'}"><em>$</em></label>
+    ${cote==='g'?'':`<small class="sbh">${vf('Le client paiera le prix retail de la fiche. Un prix barré plus haut affiche une promo sur le site ; vide = pas de promo.')}</small>`}
     <button class="btn pri" type="button" data-sbr-go="${c.id}" style="margin-top:8px">${vf('Remettre en vente')}</button>
     <small class="sbh">${vf('Vérifie le prix, puis « Remettre en vente » : la fiche repasse en ligne tout de suite avec ce prix (une seule validation).')}</small>
     </div>`;
@@ -3253,19 +3254,20 @@ function surSite(p,c,v){
      2026 : « qu'on puisse gérer les deux sans aller dans WooCommerce »). */
   const promo=f.ps!=null, paye=promo?f.ps:f.pr;
   const ecrit=peutPrixSite()&&typeof CK_URL!=='undefined'&&typeof ckTok==='function'&&ckTok();
-  const autre=v!=null&&paye!=null&&Math.abs(v-paye)>=0.005;
-  /* 9 oct. 2026 (Igal : « illogique ») : quand le client paie autre chose que le prix de l'outil, on le dit en clair */
-  const alerte=autre?`<div class="sbw">⚠ ${L3(`Le client paie <b>${money2(paye)}</b> sur le site, pas <b>${money2(v)}</b> (le prix de l'outil).`,`The customer pays <b>${money2(paye)}</b> on the website, not <b>${money2(v)}</b> (the tool's price).`,`El cliente paga <b>${money2(paye)}</b> en el sitio, no <b>${money2(v)}</b> (el precio de la herramienta).`)}</div>`:'';
-  if(!ecrit) return `<span class="ss">sur le site : <b>${paye!=null?money2(paye):'sans prix'}</b>${promo&&f.pr!=null&&cote!=='g'?`<small>prix barré ${money2(f.pr)}</small>`:''}</span>${alerte}`;
+  /* 5 nov. 2026 (Igal : « je ne veux plus que cette case rouge existe… la seule chose que je veux qui existe, c'est prix barré ») :
+     sur perfumestrade.com, le client paie LE PRIX RETAIL de la fiche (la case de gauche), point. Ici une seule case, le prix barré,
+     facultatif : plus haut que le retail, le site affiche une promo ; vide, pas de promo. Plus d'avertissement « le client paie X pas Y »,
+     plus de lien « mettre le prix de l'outil » : l'Enregistrer du bas met le site au niveau de la fiche. */
   const n=x=>x==null?'':Number(x).toFixed(2);
-  return `<div class="sb" data-sbx="${c.id}"><span class="sbt">sur le site</span>${alerte}
+  if(!ecrit) return cote==='g'?`<span class="ss">sur le site : <b>${paye!=null?money2(paye):'sans prix'}</b></span>`
+    :`<span class="ss">${promo&&f.pr!=null?`${vf('prix barré')} <b>${money2(f.pr)}</b>`:vf('pas de promo')}</span>`;
+  return `<div class="sb" data-sbx="${c.id}"><span class="sbt">sur le site</span>
     ${cote==='g'
       /* 12 oct. 2026 (Igal : « ça fait dix fois que je te dis que je ne veux pas de cross price pour le wholesale ») : le gros n'a qu'UN prix, celui que le client paie */
       ?`<label><span>prix de vente</span><input data-sb="${c.id}" type="number" step="0.01" min="0" inputmode="decimal" value="${n(paye)}"><em>$</em></label>`
-      :`<label><span>prix barré</span><input data-sb="${c.id}" type="number" step="0.01" min="0" inputmode="decimal" value="${n(f.pr)}"><em>$</em></label>
-    <label><span>promo</span><input data-sp="${c.id}" type="number" step="0.01" min="0" inputmode="decimal" value="${n(f.ps)}" placeholder="—"><em>$</em></label>`}
-    ${autre?`<button class="lnk" data-prend="${c.id}" data-pv="${v}">mettre ${money2(v)} (le prix de l'outil)</button>`:''}
-    </div>`;   /* 12 oct. 2026 : pas de bouton d'envoi — l'Enregistrer du bas envoie ces deux prix */
+      :`<label><span>prix barré</span><input data-sb="${c.id}" type="number" step="0.01" min="0" inputmode="decimal" value="${promo?n(f.pr):''}" placeholder="—"><em>$</em></label>
+    <small class="sbh">${vf('Le client paie le prix retail (à gauche). Un prix barré plus haut affiche une promo ; vide = pas de promo.')}</small>`}
+    </div>`;   /* 12 oct. 2026 : pas de bouton d'envoi — l'Enregistrer du bas envoie ces prix */
 }
 /* la fiche retirée de la vente de ce côté (brouillon), ou null — le code peut avoir perdu son 0 du début */
 function retireCote(p,cote){
@@ -3286,17 +3288,20 @@ async function remetsPrixSite(cid,mode){
   const p=Object.assign({},base,FICHE.brouillon);
   const cote=COTE_SITE[cid]; const rf=retireCote(p,cote); if(!cote||!rf) return true;
   const box=document.querySelector(`[data-sbr="${cid}"]`); if(!box) return true;
-  const n=Math.round(+box.querySelector('[data-sr]').value*100)/100;
+  const txt=box.querySelector('[data-sr]').value.trim(); let n=txt===''?null:Math.round(+txt*100)/100, nP=null;
   const publie=true;   /* enregistrer le prix d'une fiche retirée = la remettre en ligne (Igal, 12 oct.) */
-  /* 12 oct. 2026 (Sam : « il change les prix mais ne met plus les prix barrés ») : comme sur une fiche en ligne, DEUX prix —
-     le prix barré et, s'il y a une promo, ce que le client paie. Avant, seul un prix partait et la promo était vidée. */
-  const spR=box.querySelector('[data-srp]'), prTxt=spR?spR.value:'', nP=prTxt===''?null:Math.round(+prTxt*100)/100;
-  if(nP!=null && !(nP>0 && nP<n)){ alert(vf('La promo doit être plus basse que le prix barré (ou vide).')); return false; }
   const nomSite=cote==='g'?'wholesale.perfumestrade.com':'perfumestrade.com';
-  if(!(n>0)){ alert(vf('Il faut un prix de vente.')); return false; }
+  if(cote==='g'){ if(n==null||!(n>0)){ alert(vf('Il faut un prix de vente.')); return false; } }
+  else{
+    /* 5 nov. 2026 (Igal) : le client paie le prix retail de la fiche ; le prix barré, plus haut, fait la promo */
+    const v=retailFiche();
+    if(v==null||!(v>0)){ alert(vf('Il faut un prix retail sur la fiche.')); return false; }
+    if(n!=null&&!(n>v)) n=null;   /* un prix barré pas plus haut que le retail : pas de promo */
+    if(n!=null) nP=Math.round(v*100)/100; else n=Math.round(v*100)/100;
+  }
   const sousPA=(p.pa!=null&&(nP!=null?nP:n)<p.pa);
   const voitPA=typeof peut!=='function'||peut('voirPA');   /* qui ne voit pas les prix d'achat ne l'apprend pas par ce message (cette constante manquait ici : le message plantait quand on vendait à perte) */
-  const msg=`« ${(p.marque||'')+' '+(p.nom||'')} » sur ${nomSite} :\n\n${cote==='g'?`prix de vente : ${money2(n)}`:`prix barré : ${money2(n)}\npromo : ${nP!=null?money2(nP):'aucune'}`}\n\n`
+  const msg=`« ${(p.marque||'')+' '+(p.nom||'')} » sur ${nomSite} :\n\n${cote==='g'?`prix de vente : ${money2(n)}`:(nP!=null?`prix barré (promo) : ${money2(n)}\nle client paiera : ${money2(nP)} (le prix retail)`:`le client paiera : ${money2(n)} (le prix retail), pas de promo`)}\n\n`
     +(publie?`La fiche est retirée de la vente aujourd'hui. Elle repasse EN VENTE avec ce prix.`:`Le prix est enregistré sur le site. La fiche reste HORS LIGNE (retirée de la vente) : personne ne peut l'acheter.`)
     +(sousPA?`\n\nAttention : c'est moins que le prix d'achat${voitPA?' ('+money2(p.pa)+')':''}. Tu vends à perte.`:'')+`\n\nContinuer ?`;
   if(mode==='resume') return msg;   /* la fenêtre unique de l'Enregistrer montre ce texte ; rien n'est envoyé */
@@ -3340,17 +3345,27 @@ function boitesEnAttente(){
   const dif=(x,y)=>{ const a=x===''||x==null?null:+x; return (a==null)!==(y==null)||(a!=null&&Math.abs(a-y)>=0.005); };
   document.querySelectorAll('[data-sbx]').forEach(box=>{
     const cid=box.dataset.sbx, f=(siteDe(base)||{})[COTE_SITE[cid]]; if(!f) return;
-    const spI=box.querySelector('[data-sp]');
-    if(!spI){ if(dif(box.querySelector('[data-sb]').value,f.ps!=null?f.ps:f.pr)) L.push({cid,retire:false}); return; }   /* le gros : un seul prix, celui que le client paie */
-    if(dif(box.querySelector('[data-sb]').value,f.pr)||dif(spI.value,f.ps)) L.push({cid,retire:false});
+    if(cid==='sitegros'){ if(dif(box.querySelector('[data-sb]').value,f.ps!=null?f.ps:f.pr)) L.push({cid,retire:false}); return; }   /* le gros : un seul prix, celui que le client paie */
+    /* le détail (5 nov. 2026) : le client doit payer le prix retail de la fiche ; la case est le prix barré (vide = pas de promo) */
+    const v=retailFiche(), paye=f.ps!=null?f.ps:f.pr, barre=f.ps!=null?f.pr:null;
+    if((v!=null&&dif(v,paye))||dif(box.querySelector('[data-sb]').value,barre)) L.push({cid,retire:false});
   });
   document.querySelectorAll('[data-sbr]').forEach(box=>{
     const cid=box.dataset.sbr, rf=retireCote(base,COTE_SITE[cid]); if(!rf) return;
-    const v=box.querySelector('[data-sr]').value, sp=box.querySelector('[data-srp]'), p=sp?sp.value:'';
+    const v=box.querySelector('[data-sr]').value;
     const force=!!(FICHE.repForce&&FICHE.repForce[base.id+'|'+cid]);   /* « Remettre en ligne » : le prix est déjà bon, on republie quand même */
-    if(+v>0&&(force||dif(v,rf.f.pr)||dif(p,rf.f.ps))) L.push({cid,retire:true});
+    if(cid==='sitegros'){ if(+v>0&&(force||dif(v,rf.f.pr)||rf.f.ps!=null)) L.push({cid,retire:true}); return; }
+    /* le détail (5 nov. 2026) : le client paiera le prix retail ; la case est le prix barré (vide = pas de promo) */
+    const r=retailFiche(), paye=rf.f.ps!=null?rf.f.ps:rf.f.pr, barre=rf.f.ps!=null?rf.f.pr:null;
+    if(r!=null&&r>0&&(force||dif(r,paye)||dif(v,barre))) L.push({cid,retire:true});
   });
   return L;
+}
+/* le prix retail de la fiche telle qu'elle est en train d'être modifiée (brouillon compris) */
+function retailFiche(){
+  const base=cur[FICHE.pos]; if(!base) return null;
+  const p=Object.assign({},base,FICHE.brouillon); const c=canaux().find(x=>x.id==='site'); if(!c) return p.pvr==null?null:+p.pvr;
+  const r=prixCanal(p,c); return r&&r.v!=null?+r.v:null;
 }
 /* envoie ces cases une à une (chacune demande sa confirmation) ; faux = on s'arrête, la fiche n'est pas enregistrée */
 async function envoieBoitesSite(mode){
@@ -3367,12 +3382,19 @@ async function envoiePrixSite(cid,mode){
   const p=Object.assign({},base,FICHE.brouillon);
   const cote=COTE_SITE[cid]; const cle=siteCle(p), f=(siteDe(p)||{})[cote]; if(!cote||!f) return true;
   const box=document.querySelector(`[data-sbx="${cid}"]`); if(!box) return true;
-  const spI=box.querySelector('[data-sp]'), gros=!spI;
-  const sB=box.querySelector('[data-sb]').value.trim(), sP=spI?spI.value.trim():'';
-  const nB=sB===''?null:Math.round(+sB*100)/100, nP=sP===''?null:Math.round(+sP*100)/100;
-  const nomSite=cote==='g'?'wholesale.perfumestrade.com':'perfumestrade.com';
-  if(nB==null||!(nB>0)){ alert(vf(gros?'Il faut un prix de vente.':'Il faut un prix barré (le prix normal du site).')); return false; }
-  if(nP!=null&&!(nP>0&&nP<nB)){ alert(vf(`Le prix promo (${money2(nP)}) doit être plus bas que le prix barré (${money2(nB)}). Rien n'est envoyé.`)); return false; }
+  const gros=cote==='g';
+  const sB=box.querySelector('[data-sb]').value.trim();
+  const nomSite=gros?'wholesale.perfumestrade.com':'perfumestrade.com';
+  let nB=sB===''?null:Math.round(+sB*100)/100, nP=null, barreBas=null;
+  if(gros){ if(nB==null||!(nB>0)){ alert(vf('Il faut un prix de vente.')); return false; } }
+  else{
+    /* 5 nov. 2026 (Igal) : le client paie le prix retail de la fiche ; le prix barré, plus haut, fait la promo */
+    const v=retailFiche();
+    if(v==null||!(v>0)){ alert(vf('Il faut un prix retail sur la fiche.')); return false; }
+    /* un prix barré qui n'est pas plus haut que le retail ne veut rien dire : pas de promo, le client paie le retail (dit dans la fenêtre) */
+    if(nB!=null&&!(nB>v)){ barreBas=nB; nB=null; }
+    if(nB!=null){ nP=Math.round(v*100)/100; } else { nB=Math.round(v*100)/100; }
+  }
   const paye=nP!=null?nP:nB;
   /* la faute de frappe (6,3 au lieu de 63) : avant, l'envoi était refusé sous le prix d'achat.
      9 oct. 2026 (Igal : « ne refuse jamais, pour Sam et moi ») : on prévient dans la
@@ -3381,7 +3403,7 @@ async function envoiePrixSite(cid,mode){
   const voitPA=typeof peut!=='function'||peut('voirPA');   /* qui ne voit pas les prix d'achat ne l'apprend pas par ce message (cette constante manquait ici : le message plantait quand on vendait à perte) */
   const ancien=f.ps!=null?f.ps:f.pr, ec=ancien?Math.abs(paye-ancien)/ancien*100:0;
   const ligne=(x,y)=>`${y!=null?money2(y):'aucune'} → ${x!=null?money2(x):'aucune'}`;
-  const msg=`« ${(p.marque||'')+' '+(p.nom||'')} » sur ${nomSite} :\n\n`+(gros?`prix de vente : ${ligne(nB,f.ps!=null?f.ps:f.pr)}`:`prix barré : ${ligne(nB,f.pr)}\npromo : ${ligne(nP,f.ps)}`)+`\n\nLe client paiera ${money2(paye)}.`
+  const msg=`« ${(p.marque||'')+' '+(p.nom||'')} » sur ${nomSite} :\n\n`+(gros?`prix de vente : ${ligne(nB,f.ps!=null?f.ps:f.pr)}`:(nP!=null?`prix barré (promo) : ${ligne(nB,f.ps!=null?f.pr:null)}`:`pas de promo (prix barré : ${f.ps!=null&&f.pr!=null?money2(f.pr)+' → aucun':'aucun'})${barreBas!=null?` — le prix barré tapé (${money2(barreBas)}) n'est pas plus haut que le retail, il ne compte pas`:''}`))+`\n\nLe client paiera ${money2(paye)}${gros?'':' (le prix retail de la fiche)'}.`
     +(sousPA?`\n\nAttention : c'est moins que le prix d'achat${voitPA?' ('+money2(p.pa)+')':''}. Tu vends à perte.`:'')+(ec>20?`\n\nAttention : ${Math.round(ec)} % d'écart avec le prix payé aujourd'hui.`:'')+`\n\nLe prix change tout de suite sur le site. Continuer ?`;
   if(mode==='resume') return msg;   /* la fenêtre unique de l'Enregistrer montre ce texte ; rien n'est envoyé */
   if(mode!=='envoie'&&!confirm(vf(msg))) return false;
@@ -4375,7 +4397,8 @@ function dessineFiche0(){
            intérêt de laisser les prix sur deux cases différentes. » Donc : le site de détail aussi n'a qu'UNE case tant qu'il n'a pas de promo ;
            avec une promo (prix barré + prix payé), il garde ses deux cases. Le gros n'a jamais qu'un prix. */
         const fG=COTE_SITE[c.id]?((siteDe(p)||{})[COTE_SITE[c.id]]):null;
-        const uni=!!(fG&&fG.pr!==undefined&&(fG.ps!=null?fG.ps:fG.pr)!=null&&(c.id==='sitegros'||(fG.ps==null&&!(FICHE.promoOuv&&FICHE.promoOuv[c.id]))));
+        /* 5 nov. 2026 (Igal) : le détail a toujours la même ligne — prix retail à gauche, case « prix barré » à droite ; le mode une-case reste au gros */
+        const uni=!!(fG&&fG.pr!==undefined&&(fG.ps!=null?fG.ps:fG.pr)!=null&&c.id==='sitegros');
         let {v,man,src}=prixCanal(p,c); if(uni){ v=fG.ps!=null?fG.ps:fG.pr; }
         const t=margeNette(p,c,v), chg=FICHE.brouillon.pc&&FICHE.brouillon.pc[c.id]!==undefined;
         const frais=v!=null?r2(v*(c.com||0)/100):null, reste=(v!=null&&p.pa!=null)?r2(v-(frais||0)-p.pa):null;
@@ -4387,12 +4410,11 @@ function dessineFiche0(){
         let paie='';
         if(c.id==='site'||c.id==='sitegros'){
           /* une seule ligne : ce que le client paie ; les cases (prix barré, promo, envoyer) sous « régler » */
-          const e=siteDe(p), f=e&&e[COTE_SITE[c.id]], paye=f?(f.ps!=null?f.ps:f.pr):null;
-          const autre=v!=null&&paye!=null&&Math.abs(v-paye)>=0.005;
+          const e=siteDe(p), f=e&&e[COTE_SITE[c.id]];
           const box=surSite(p,c,v);
           paie = !f ? (retireCote(p,COTE_SITE[c.id])&&peutPrixSite() ? `<div class="sbd">${box}</div>` : `<div class="azp"><small>${L3(retireCote(p,COTE_SITE[c.id])?'retirée de la vente':'pas sur ce site',retireCote(p,COTE_SITE[c.id])?'taken off sale':'not on this site',retireCote(p,COTE_SITE[c.id])?'retirada de la venta':'no está en este sitio')}</small>${!retireCote(p,COTE_SITE[c.id])&&peutPrixSite()&&p.qte>0&&melOk()?`<button class="lnk" data-mel1="${c.id}">Mettre en ligne</button>`:''}</div>`)
             /* Igal, 11 oct. 2026 : « je veux que tu me les laisses ouvertes » — les cases restent visibles */
-            : `<div class="sbd${autre?' autre':''}"><div class="sbs"><b data-nolang>${paye!=null?money2(paye):L3('sans prix','no price','sin precio')}</b><small>${L3('payé par le client','paid by the customer','pagado por el cliente')}</small></div>${peutPrixSite()?box:''}</div>`; }
+            : `<div class="sbd">${box}</div>`; }
         else if(c.id==='amazon'){ const az=prixAmazonDe(p);
           paie = az ? `<div class="azp"><span class="sbt">sur Amazon</span><b data-nolang>${money2(az.prix)}</b>${az.qte!=null?`<small>${nf(az.qte)} ${L3('en vente','on sale','en venta')}</small>`:''}<small>${L3('annonce du','listing of','anuncio del')} ${az.le?jourFr(String(az.le).slice(0,10)):'—'}</small>
               ${v!=null&&Math.abs(v-az.prix)>=0.005?`<div class="sbw">⚠ ${L3('Amazon vend à','Amazon sells at','Amazon vende a')} <b>${money2(az.prix)}</b>, ${L3('pas','not','no')} <b>${money2(v)}</b>. <button class="lnk" data-prend="amazon" data-pv="${az.prix}">${L3('prendre le prix Amazon','use the Amazon price','usar el precio de Amazon')}</button></div>`:''}</div>`
@@ -4409,7 +4431,7 @@ function dessineFiche0(){
             ? `<div class="in"><input data-sb="${c.id}" type="number" step="0.01" min="0" inputmode="decimal" value="${Number(v).toFixed(2)}"><em>$</em></div>`
             : `<div class="in"><b data-nolang style="font-size:24px">${money2(v)}</b></div>`}
             <span class="rl">${L3('prix de vente','selling price','precio de venta')}</span></div>
-            ${c.id==='site'&&peutPrixSite()?`<button class="lnk" data-promo-ouvre="${c.id}">${L3('+ ajouter un prix promo (prix barré)','+ add a promo price (crossed-out price)','+ añadir un precio promo (precio tachado)')}</button>`:''}</div>
+            </div>
           <div class="c3"></div>
           <div class="c4">${calc}</div>
           <div class="c5"><button class="offb" data-off="${c.id}" title="Ce parfum n'est pas vendu sur ${esc(c.nom)}">ne pas vendre ici</button></div>
@@ -4593,15 +4615,11 @@ $('ddb').addEventListener('click',e=>{
     else FICHE.brouillon.pcOff=L;
     dessineFiche(); return;
   }
-  const po=e.target.closest('[data-promo-ouvre]');
-  if(po){ /* « + ajouter un prix promo » : la ligne passe en deux cases (prix barré + promo), avec le prix actuel comme prix barré */
-    FICHE.promoOuv=Object.assign({},FICHE.promoOuv||{},{[po.dataset.promoOuvre]:true}); dessineFiche(); return; }
   const pd=e.target.closest('[data-prend]');
   if(pd&&(pd.dataset.prend==='amazon'||pd.dataset.prend==='perfumecity')){ /* « prendre le prix Amazon / Shopify » : le prix de l'outil pour ce canal devient celui de l'annonce */
     const pc=Object.assign({},FICHE.brouillon.pc||{}); pc[pd.dataset.prend]=+pd.dataset.pv; FICHE.brouillon.pc=pc; dessineFiche(); return; }
   if(pd){ const box=document.querySelector(`[data-sbx="${pd.dataset.prend}"]`); if(box){
-      const sp=box.querySelector('[data-sp]'), sb=box.querySelector('[data-sb]');
-      if(sp&&sp.value!=='') sp.value=(+pd.dataset.pv).toFixed(2); else sb.value=(+pd.dataset.pv).toFixed(2);
+      const sb=box.querySelector('[data-sb]'); if(sb) sb.value=(+pd.dataset.pv).toFixed(2);
       majEnvoi(pd.dataset.prend); } return; }
   const pr=e.target.closest('[data-pcr]');
   if(pr){ const id=pr.dataset.pcr, base=cur[FICHE.pos];

@@ -268,7 +268,9 @@ border-radius:6px;text-align:right;background:var(--surface)}
 .pan .pucs{display:flex;gap:4px;justify-content:flex-end;margin-top:4px;flex-wrap:wrap}
 .pan .puc{font-family:Inter,sans-serif;font-size:11px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:999px;padding:2px 8px;cursor:pointer;white-space:nowrap}
 .pan .puc b{font-weight:700}.pan .puc.on{background:var(--iris);border-color:var(--iris);color:#fff}
-.pan .puc.dp{border-color:#F0D58A;background:#FFF4D6;color:#6B4E00}.pan .puc.dp.on{background:#B8860B;border-color:#B8860B;color:#fff}
+/* 5 nov. 2026 (Igal : « pourquoi plusieurs couleurs ? ») : UNE règle par couleur — violet = le prix qui est dans la case, jaune = ce que ce client a payé la dernière fois. Une pastille choisie est toujours violette. */
+.pan .puc.dp{border-color:#F0D58A;background:#FFF4D6;color:#6B4E00}.pan .puc.dp.on{background:var(--iris);border-color:var(--iris);color:#fff}
+.pan .legende{font-family:Inter,sans-serif;font-size:11.5px;color:var(--ink-3);margin:6px 0 0;text-align:right}.pan .legende i{display:inline-block;width:10px;height:10px;border-radius:99px;vertical-align:-1px;margin:0 3px 0 10px}.pan .legende i.v{background:var(--iris)}.pan .legende i.j{background:#FFF4D6;border:1px solid #F0D58A}
 .pan b.vfiche{cursor:pointer}.pan b.vfiche:hover{color:var(--iris);text-decoration:underline}
 #v-q2w{margin-top:12px}
 .pan .del:hover{color:var(--crit)}
@@ -2351,7 +2353,8 @@ function peintPanier(){
   $('v-pan').innerHTML=`<table><thead><tr><th class="r"></th><th>Parfum</th><th class="r">Qté</th>
     <th class="r">Prix unit.</th><th class="r">Montant</th><th class="r vmg">Marge nette</th><th></th></tr></thead>
     <tbody>${li}</tbody><tfoot><tr><td></td><td>${PANIER.length} parfum${PANIER.length>1?'s':''}</td>
-    <td class="r" data-tu>${nf(u)}</td><td></td><td class="r" data-tmt>${money2(tot)}</td><td class="r vmg" data-tmg>${money2(totMg)}</td><td></td></tr></tfoot></table>`;
+    <td class="r" data-tu>${nf(u)}</td><td></td><td class="r" data-tmt>${money2(tot)}</td><td class="r vmg" data-tmg>${money2(totMg)}</td><td></td></tr></tfoot></table>
+    <p class="legende"><i class="v"></i>${r3('le prix dans la case','the price in the box','el precio en la casilla')}<i class="j"></i>${r3('ce que ce client a payé la dernière fois','what this customer paid last time','lo que este cliente pagó la última vez')}</p>`;
   $('v-pan').querySelectorAll('input').forEach(inp=>{
     inp.oninput=()=>{
       const l=PANIER[+inp.dataset.i]; if(!l) return;
@@ -3102,13 +3105,13 @@ function vcCanal(k,c){
   if(!c) return '';
   if(c.absent) return `<div class="pl"><span data-nolang>${esc(nom)}</span><b class="hint">${L3('non relié','not connected','no conectado')}</b></div>`;
   if(c.err) return `<div class="pl"><span data-nolang>${esc(nom)}</span><b style="color:var(--crit)">${L3('panne','failure','fallo')} — ${esc(c.err)}</b></div>`;
-  const aj=(c.ajoutees||[]).length, pe=(c.perdues||[]).length, pause=(c.enPause||[]).length;
+  const aj=(c.ajoutees||[]).length, pe=(c.perdues||[]).length, pause=(c.enCours||c.enPause||[]).length;   /* 5 nov. 2026 : payées mais pas encore expédiées (processing, on-hold) */
   const nonP=+c.autres||0;
-  let d=`<b>${nf(c.lues)}</b> ${L3('commandes lues','orders read','pedidos leídos')} : <b>${nf(c.connues+aj)}</b> ${L3('vente'+(c.connues+aj>1?'s':'')+' payée'+(c.connues+aj>1?'s':''),'paid sale(s)','venta(s) pagada(s)')}`;
+  let d=`<b>${nf(c.lues)}</b> ${L3('commandes lues','orders read','pedidos leídos')} : <b>${nf(c.connues+aj)}</b> ${L3('vente'+(c.connues+aj>1?'s':'')+' terminée'+(c.connues+aj>1?'s':'')+' (completed)','completed sale(s)','venta(s) terminada(s) (completed)')}`;
   d+=aj?` ${L3('dont','including','de las cuales')} <b style="color:var(--crit)">${nf(aj)} ${L3('qui manquai'+(aj>1?'ent':'t')+', ajoutée'+(aj>1?'s':''),'missing, now added','que faltaba(n), añadida(s)')}</b> (<span data-nolang>${esc(c.ajoutees.join(', '))}</span>)`:` ${L3('toutes dans l\'ERP','all in the ERP','todas en el ERP')} — <b style="color:var(--ok)">${L3('rien ne manque','nothing missing','no falta nada')}</b>`;
   if(nonP) d+=`, ${nf(nonP)} ${L3('non payée'+(nonP>1?'s':'')+' ou annulée'+(nonP>1?'s':'')+' (ne compte'+(nonP>1?'nt':'')+' pas)','unpaid or cancelled (not counted)','sin pagar o anulada(s) (no cuentan)')}`;
   if(pe) d+=` — ${L3('dont','including','de los cuales')} ${nf(pe)} ${L3('perdue'+(pe>1?'s':'')+' après dépôt','lost after deposit','perdido'+(pe>1?'s':'')+' tras el depósito')}`;
-  if(pause) d+=` — ${nf(pause)} ${L3('en pause (paiement à confirmer, voir « Vérifier les commandes du site »)','on hold (payment to confirm, see "Check the site orders")','en pausa (pago por confirmar, ver «Verificar los pedidos del sitio»)')}`;
+  if(pause) d+=` — ${nf(pause)} ${L3('en cours sur le site (payée'+(pause>1?'s':'')+', pas encore expédiée'+(pause>1?'s':'')+' : elle'+(pause>1?'s':'')+' entrera'+(pause>1?'ont':'')+' une fois « completed »)','in progress on the site (paid, not shipped yet: it enters once "completed")','en curso en el sitio (pagada, aún no enviada: entrará al pasar a «completed»)')}`;
   if((c.refus||[]).length) d+=` — <span style="color:var(--crit)">${esc(c.refus.join(' / '))}</span>`;
   return `<div class="pl" style="align-items:flex-start"><span data-nolang style="min-width:200px">${esc(nom)}</span><span>${d}</span></div>`;
 }

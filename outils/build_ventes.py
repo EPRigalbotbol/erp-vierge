@@ -358,7 +358,8 @@ border:1px solid var(--line);border-radius:6px;padding:5px 10px;cursor:pointer}
 .tv2 td.go,.tv2 th.go{width:22px;padding-left:0;color:var(--ink-3);font-size:20px;text-align:center}
 .tv2 tbody tr:hover td.go{color:var(--iris)}
 .jm .jpa{font:inherit;background:none;border:0;padding:0;color:var(--crit);text-decoration:underline;cursor:pointer}
-.tv2 td.mt small.pay{display:inline-block;margin-top:3px;font-size:10.5px;font-weight:700;letter-spacing:.03em;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line);border-radius:99px;padding:1px 8px;white-space:nowrap}
+/* 7 nov. 2026 (Igal : « des fois "carte · en boutique" est à côté du montant, des fois en dessous ») : toujours EN DESSOUS, aligné à droite */
+.tv2 td.mt small.pay{display:block;width:max-content;margin:3px 0 0 auto;font-size:10.5px;font-weight:700;letter-spacing:.03em;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line);border-radius:99px;padding:1px 8px;white-space:nowrap}
 .jm .jpa:hover{color:var(--iris)}
 .pafix{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .tv2 tr.att td,.tv2 tr.ret td{background:transparent}

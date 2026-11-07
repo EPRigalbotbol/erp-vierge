@@ -46,6 +46,10 @@ h2.sec em{font-style:normal;font-size:12.5px;letter-spacing:0;text-transform:non
 .tk-px textarea{flex-basis:100%;font:inherit;font-size:13px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);min-height:54px}
 .tk-px button{font-family:inherit;font-size:12.5px;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:8px;padding:6px 10px;cursor:pointer}
 .tk-px button.pri{background:var(--iris);border-color:var(--iris);color:#fff}
+.tk-px button:disabled{opacity:.5;cursor:default}
+.tk-el{flex-basis:100%;display:grid;grid-template-columns:auto 1fr auto;gap:4px 10px;align-items:center;font-size:13px;max-height:260px;overflow:auto;padding-right:4px}
+.tk-el label{display:contents;cursor:pointer}.tk-el .nm b{display:block}.tk-el .nm span{font-size:11.5px;color:var(--ink-3)}
+.tk-el .st{font-size:12px;color:var(--ink-3);white-space:nowrap}.tk-el .st.ret{color:var(--warn)}
 .tk-a button:hover,.tk-a a:hover{border-color:var(--iris);color:var(--iris)} .tk-a a.pri:hover,.tk-a button.pri:hover{color:#fff;filter:brightness(1.08)}
 .tk-a select{color:var(--ink-2)}
 .tk-vide{background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:22px;text-align:center;color:var(--ink-3);font-size:14px}
@@ -74,6 +78,8 @@ const tkMod=()=>{ try{ const M=lit(KMOD,{}); return (M&&typeof M==='object')?M:{
 const tkPrix=cle=>{ const v=IDX[cle]||[], m=tkMod()[cle]||{}; const n=x=>(x==null||x==='')?null:+x;
   return {pa:m.pa!=null&&m.pa!==''?+m.pa:n(v[3]), pvw:m.pvw!=null&&m.pvw!==''?+m.pvw:n(v[5]), pvr:m.pvr!=null&&m.pvr!==''?+m.pvr:n(v[6]), bc:v[0]||'', ref:((v[2]||'')+' '+(v[1]||'')).trim()}; };
 const m2=v=>v==null?'—':Number(v).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+'\u00a0$';
+const tkFile=()=>{ try{ const F=lit('caisse-file-v1',[]); return Array.isArray(F)?F.filter(v=>v&&!v.annule&&v._i):[]; }catch(e){ return []; } };
+const tkSrc=s=>({woocommerce:'perfumestrade.com','woocommerce-gros':'wholesale.perfumestrade.com',lightspeed:'Lightspeed',shopify:'Shopify','shopify-pc':'Perfume City',amazon:'Amazon',message:'message'})[s]||s||'';
 const tkDate=iso=>{ if(!iso) return ''; const [Y,M,D]=String(iso).slice(0,10).split('-'); return `${M}/${D}/${String(Y).slice(2)}`; };
 const TYPES={rupture:['Réassort','Restock','Reposición'],manque:['Réassort','Restock','Reposición'],prix:['Prix','Price','Precio'],enligne:['Mise en ligne','Listing','Publicación'],pcshopify:['Perfume City','Perfume City','Perfume City'],publication:['Mise en ligne','Listing','Publicación'],expedier:['Expédition','Shipping','Envío'],completer:['Ventes','Sales','Ventas']};
 function tkLigne(t){
@@ -88,7 +94,19 @@ function tkLigne(t){
      bord), la tâche est faite, on reste ici. La fiche reste ouvrable à côté. */
   const rach=(t.type==='rupture'||t.type==='manque')&&t.cle&&typeof rachAjoute==='function';
   const px=t.type==='prix'&&t.cle&&IDX[t.cle];
-  if(t.etat==='a_faire'&&px) actions=`${ouvre('')}<button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-pxign="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
+  /* 7 nov. 2026 : « Mettre en ligne N parfums sur un site » se fait sur place (la liste, des cases, un bouton) ; « Reprendre la mise
+     en ligne » aussi (les raisons du refus, un bouton Réessayer). C'est le Catalogue en cadre qui fait le travail, canal par canal. */
+  const pcs=t.type==='pcshopify'&&typeof pcRenvoiFacture==='function';
+  const exp=t.type==='expedier'&&typeof faExpedier==='function'&&typeof faLitExp==='function'&&faLitExp().some(x=>x&&x._i===String(t.id).split('|')[1]&&x.statut==='attente');
+  const el=t.type==='enligne'&&t.canal&&Array.isArray(t.parfums)&&t.parfums.length&&typeof enLigneFenetre==='function';
+  const pub=t.type==='publication'&&(t.cle||t.bc)&&typeof enLigneFenetre==='function';
+  const cpl=t.type==='completer'&&typeof attenteFenetre==='function'&&tkFile().length;
+  if(t.etat==='a_faire'&&cpl) actions=`${ouvre('')}<button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
+  else if(t.etat==='a_faire'&&pcs) actions=`<button class="pri" data-pcs="${esc(String(t.id).split('|')[1]||'')}" data-id="${esc(t.id)}">${tkT('Renvoyer à Shopify','Send again to Shopify','Reenviar a Shopify')} →</button>${ouvre('')}<button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
+  else if(t.etat==='a_faire'&&exp) actions=`${ouvre('')}<button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
+  else if(t.etat==='a_faire'&&el) actions=`${ouvre('')}<button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
+  else if(t.etat==='a_faire'&&pub) actions=`<button class="pri" data-pub="${esc(t.cle||'')}" data-bc="${esc(t.bc||'')}" data-id="${esc(t.id)}" data-canaux="${esc((t.canaux||[]).join(','))}">${tkT('Réessayer la mise en ligne','Retry the listing','Reintentar la publicación')} →</button>${t.cle?ouvre(''):''}<button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
+  else if(t.etat==='a_faire'&&px) actions=`${ouvre('')}<button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-pxign="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
   else if(t.etat==='a_faire'&&rach) actions=`<button class="pri" data-rach="${esc(t.cle)}" data-id="${esc(t.id)}" data-bc="${esc(t.bc||'')}" data-ref="${esc(t.ref||'')}">${tkT('Mettre dans Parfums à racheter','Add to Perfumes to reorder','Poner en Perfumes por recomprar')} →</button>${ouvre('')}<button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
   else if(t.etat==='a_faire') actions=`${ouvre('pri')}<button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
   else if(t.etat==='attente') actions=`${ouvre('')}<button data-etat="a_faire" data-id="${esc(t.id)}">${tkT('Remettre dans la liste','Put back in the list','Volver a la lista')}</button><button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
@@ -104,6 +122,25 @@ function tkLigne(t){
       <label>${tkT('Prix de gros','Wholesale price','Precio mayorista')}<input type="number" step="0.01" min="0" data-pxw value="${P.pvw==null?'':P.pvw}"></label>
       <label>${tkT('Prix retail','Retail price','Precio retail')}<input type="number" step="0.01" min="0" data-pxr value="${P.pvr==null?'':P.pvr}"></label>
       <button class="pri" data-pxok>${tkT('Enregistrer les prix','Save the prices','Guardar los precios')}</button><div class="tk-msg" data-pxmsg></div></div>`; }
+  if(t.etat==='a_faire'&&el){ const n=t.parfums.length;
+    bloc=`<div class="tk-px" data-el="${esc(t.canal)}" data-id="${esc(t.id)}" data-titre="${esc(t.titre)}">
+      <div class="tk-msg">${tkT('Coche les parfums à mettre en ligne sur ce site','Check the perfumes to list on this website','Marca los perfumes para publicar en esta web')}${t.poids>n?` <span data-nolang>(${nf(n)} / ${nf(t.poids)})</span>`:''} — <label style="display:inline-flex;flex-direction:row;gap:5px;font-weight:600"><input type="checkbox" data-eltout> ${tkT('tout cocher','check all','marcar todo')}</label></div>
+      <div class="tk-el">${t.parfums.map(p=>`<label><input type="checkbox" data-elc="${esc(p.cle)}"><span class="nm" data-nolang><b>${esc(p.nom||p.bc||'')}</b><span>${esc(p.bc||'')}</span></span><span class="st ${p.retire?'ret':''}">${p.retire?tkT('retiré faute de prix','withdrawn for lack of price','retirado por falta de precio'):tkT('en stock','in stock','en stock')+' : '+nf(p.qte)}</span></label>`).join('')}</div>
+      <button class="pri" data-elgo disabled>${tkT('Mettre en ligne la sélection','List the selection','Publicar la selección')}</button><div class="tk-msg" data-pxmsg></div></div>`; }
+  if(t.etat==='a_faire'&&exp){ const e=faLitExp().find(x=>x&&x._i===String(t.id).split('|')[1]); const auj=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
+    bloc=`<div class="tk-px" data-exp="${esc(e._i)}" data-id="${esc(t.id)}" data-titre="${esc(t.titre)}">
+      <div class="tk-vente" data-nolang>${(e.lignes||[]).map(l=>`${esc(l.ref||l.des||l.bc||'')} × ${nf(l.q||0)}`).join(' · ')}${e.ville||e.pays?` — ${esc([e.ville,e.pays].filter(Boolean).join(', '))}`:''}</div>
+      <label>${tkT('Partie le','Shipped on','Enviado el')}<input type="date" data-xd value="${auj}" max="${auj}"></label>
+      <label>${tkT('Transporteur','Carrier','Transportista')}<input data-xtr list="tk-trs" placeholder="USPS, UPS, FedEx…"><datalist id="tk-trs"><option>USPS</option><option>UPS</option><option>FedEx</option><option>DHL</option></datalist></label>
+      <label>${tkT('N° de suivi (facultatif)','Tracking no. (optional)','N.º de seguimiento (opcional)')}<input data-xsv autocomplete="off" style="width:180px"></label>
+      <button class="pri" data-xgo>${tkT('Expédiée','Shipped','Enviada')} ✓</button>
+      <div class="tk-msg">${tkT('Marquer la commande expédiée fait sa facture et sort les flacons du stock — pas avant.','Marking the order shipped makes its invoice and takes the bottles out of stock — not before.','Marcar el pedido como enviado hace su factura y saca los frascos del stock — no antes.')}</div><div class="tk-msg" data-pxmsg></div></div>`; }
+  if(t.etat==='a_faire'&&pcs&&t.detail) bloc=`<div class="tk-px"><div class="tk-msg" data-pxmsg-pc="${esc(t.id)}">${tkT('Le cockpit ajoute les quantités reçues sur Shopify ; rien n\'est compté deux fois.','The cockpit adds the received quantities on Shopify; nothing is counted twice.','El cockpit añade las cantidades recibidas en Shopify; nada se cuenta dos veces.')}</div></div>`;
+  if(t.etat==='a_faire'&&cpl){ const F=tkFile();
+    bloc=`<div class="tk-px" data-cpl="1" data-id="${esc(t.id)}"><div class="tk-msg">${tkT('Chaque vente attend qu\'on lui dise quel parfum c\'est : clique, choisis-le, elle s\'enregistre.','Each sale is waiting to be told which perfume it is: click, pick it, it gets recorded.','Cada venta espera que le digan qué perfume es: pulsa, elígelo, se registra.')}</div>
+      <div class="tk-el" style="grid-template-columns:1fr auto auto">${F.slice(0,40).map(v=>`<span class="nm" data-nolang><b>${esc((v.num?v.num+' · ':'')+(tkSrc(v.src)))}${v.client?' — '+esc(typeof faNomClient==='function'?faNomClient(v.client):String(v.client&&v.client.nom||v.client||'')):''}</b><span>${esc((v.lignes||[]).map(l=>(l.des||l.bc||'?')+' ×'+(l.q||1)).join(', ').slice(0,140))}</span></span><span class="st" data-nolang>${esc(tkDate(v.d||''))}</span><button data-cplv="${esc(v._i)}">${tkT('Compléter','Complete','Completar')} →</button>`).join('')}</div>
+      ${F.length>40?`<div class="tk-msg" data-nolang>… +${nf(F.length-40)}</div>`:''}</div>`; }
+  if(t.etat==='a_faire'&&pub&&t.raisons&&t.raisons.length) bloc=`<div class="tk-px"><div class="tk-msg">${t.raisons.map(r=>`<div data-nolang><b>${esc(r.nom||r.canal)}</b> : ${esc(r.r)}</div>`).join('')}<div>${tkT('Règle ce qui manque (la photo, le prix : « Ouvrir » la fiche), puis réessaie.','Fix what is missing (the photo, the price: “Open” the sheet), then retry.','Arregla lo que falta (la foto, el precio: «Abrir» la ficha) y vuelve a intentar.')}</div></div></div>`;
   return `<div class="tk ${t.etat==='a_faire'?t.urgence:t.etat}" data-tk="${esc(t.id)}"><div><h3><span data-nolang>${esc(t.titre)}</span>${pt}</h3><p data-nolang>${esc(t.detail||'')}</p>${sous}${raison}<small>${typ}</small></div><div class="tk-a" data-titre="${esc(t.titre)}">${actions}</div>${bloc}</div>`;
 }
 function tkPeint(){
@@ -127,6 +164,19 @@ function tkPeint(){
     await tkStatue(b.dataset.id,'faite',undefined,b.closest('.tk-a')?b.closest('.tk-a').dataset.titre:''); });
   z.querySelectorAll('.tk-px').forEach(b=>tkPrixBranche(b));
   z.querySelectorAll('button[data-pxign]').forEach(b=>b.onclick=()=>tkIgnorePrix(b));
+  z.querySelectorAll('.tk-px[data-el]').forEach(b=>tkEnLigneBranche(b));
+  z.querySelectorAll('.tk-px[data-exp]').forEach(b=>tkExpBranche(b));
+  z.querySelectorAll('button[data-cplv]').forEach(b=>b.onclick=()=>{ if(TK_ENV) return; attenteFenetre(b.dataset.cplv,()=>{ const y=window.scrollY; tkCharge().then(()=>window.scrollTo(0,y)); }); });
+  z.querySelectorAll('button[data-pcs]').forEach(b=>b.onclick=async()=>{ if(TK_ENV) return; const id=b.dataset.id, titre=(b.closest('.tk-a')||{dataset:{}}).dataset.titre;
+    const m=z.querySelector(`[data-pxmsg-pc="${CSS.escape(id)}"]`); b.disabled=true; if(m) m.textContent=tkT('Envoi à Shopify…','Sending to Shopify…','Enviando a Shopify…');
+    const r=await pcRenvoiFacture(b.dataset.pcs);
+    if(r.ok){ if(m) m.innerHTML=`<b>${tkT('Stock de Perfume City mis à jour sur Shopify','Perfume City stock updated on Shopify','Stock de Perfume City actualizado en Shopify')} (${nf(r.bon)})</b>`; await tkStatue(id,'faite',undefined,titre); }
+    else { b.disabled=false; if(m) m.innerHTML=`<b style="color:var(--crit)">${tkT('Pas envoyé','Not sent','No enviado')}</b> — <span data-nolang>${esc(r.raison||(r.mal||[]).join(' ; '))}</span>`; } });
+  z.querySelectorAll('button[data-pub]').forEach(b=>b.onclick=()=>{ if(TK_ENV) return;
+    let cle=b.dataset.pub; if(!cle&&b.dataset.bc){ const bc=String(b.dataset.bc).replace(/^0+/,''); cle=Object.keys(IDX).find(k=>String((IDX[k]||[])[0]||'').replace(/^0+/,'')===bc)||''; }
+    if(!cle){ alert(tkT('Ce parfum n\'est plus au Catalogue.','This perfume is no longer in the Catalog.','Este perfume ya no está en el Catálogo.')); return; }
+    const cs=String(b.dataset.canaux||'').split(',').filter(Boolean), id=b.dataset.id, titre=(b.closest('.tk-a')||{dataset:{}}).dataset.titre;
+    enLigneFenetre([cle],()=>{ const y=window.scrollY; tkCharge().then(()=>window.scrollTo(0,y)); },cs); });
   z.querySelectorAll('select[data-rappel]').forEach(sl=>sl.onchange=()=>{ if(sl.value) tkStatue(sl.dataset.rappel,'attente',+sl.value,sl.closest('.tk-a').dataset.titre); });
   const c=document.getElementById('ct-taches'); if(c){ c.textContent=n?String(n):''; c.className=n?'ct nb':'ct'; }
 }
@@ -163,6 +213,25 @@ function tkPrixBranche(b){
       if(typeof prixCanauxFenetre!=='function'){ window.open('catalogue.html#cle='+encodeURIComponent(cle),'_blank'); tkStatue(id,'faite',undefined,titre); return; }
       prixCanauxFenetre(cle,cs,()=>tkStatue(id,'faite',undefined,titre)); };
   };
+}
+function tkEnLigneBranche(b){
+  const canal=b.dataset.el, id=b.dataset.id, titre=b.dataset.titre, go=b.querySelector('[data-elgo]'), tout=b.querySelector('[data-eltout]');
+  const cases=()=>[...b.querySelectorAll('[data-elc]')], maj=()=>{ const n=cases().filter(c=>c.checked).length; go.disabled=!n;
+    go.textContent=tkT('Mettre en ligne la sélection','List the selection','Publicar la selección')+(n?' ('+n+')':''); };
+  cases().forEach(c=>c.onchange=maj); tout.onchange=()=>{ cases().forEach(c=>c.checked=tout.checked); maj(); };
+  go.onclick=()=>{ const ids=cases().filter(c=>c.checked).map(c=>c.dataset.elc); if(!ids.length) return;
+    enLigneFenetre(ids,()=>{ const y=window.scrollY; tkCharge().then(()=>window.scrollTo(0,y)); },[canal]); };
+}
+function tkExpBranche(b){
+  const eid=b.dataset.exp, id=b.dataset.id, titre=b.dataset.titre, go=b.querySelector('[data-xgo]'), msg=t=>{ const e=b.querySelector('[data-pxmsg]'); if(e) e.innerHTML=t; };
+  go.onclick=async()=>{ if(TK_ENV) return;
+    const auj=b.querySelector('[data-xd]').max, d=b.querySelector('[data-xd]').value||auj; if(d>auj){ b.querySelector('[data-xd]').focus(); return; }
+    if(typeof signe==='function'&&!signe('expédier cette commande',()=>{})) return;
+    const r=faExpedier(eid,{d,transporteur:b.querySelector('[data-xtr]').value,suivi:b.querySelector('[data-xsv]').value});
+    if(!r){ msg(`<b style="color:var(--crit)">${tkT('La commande n\'a pas pu être expédiée : une référence n\'existe plus au catalogue.','The order could not be shipped: a reference no longer exists in the catalog.','El pedido no se pudo enviar: una referencia ya no existe en el catálogo.')}</b>`); return; }
+    b.querySelectorAll('input,button').forEach(e=>e.disabled=true);
+    msg(`<b>${tkT('Expédiée — facture faite, le stock a été mis à jour.','Shipped — invoice made, the stock has been updated.','Enviada — factura hecha, el stock se actualizó.')}</b>`+(r.ecarts&&r.ecarts.length?` <span data-nolang>${tkT('Vendu à découvert','Sold short','Vendido en descubierto')} : ${r.ecarts.map(x=>esc(x.ref)+' ('+x.vendu+' / '+x.stock+')').join(', ')}</span>`:''));
+    await tkStatue(id,'faite',undefined,titre); };
 }
 /* Ignorer un prix se justifie (Igal, 7 nov. 2026 : « pourquoi ignorer ? — parfum acheté trop cher ») : la raison est obligatoire,
    gardée avec la tâche et au journal du cockpit */

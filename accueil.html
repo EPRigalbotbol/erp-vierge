@@ -895,6 +895,29 @@ function rachQuantite(cle,q){ const R=rachLit(); if(!R[cle]) return false; R[cle
 function rachRetire(cle){ const R=rachLit(); if(!R[cle]) return false; R[cle]=Object.assign({},R[cle],{etat:'retire',tr:new Date().toISOString()}); ecrit(K_RACH,R); return true; }
 function rachRecu(cles){ const R=rachLit(); let n=0; (cles||[]).forEach(c=>{ if(c&&R[c]&&R[c].etat==='liste'){ delete R[c]; n++; } }); if(n) ecrit(K_RACH,R); return n; }
 const rachListe=()=>Object.entries(rachLit()).filter(([,o])=>o&&o.etat==='liste').map(([cle,o])=>Object.assign({cle},o));
+/* RENVOYER À SHOPIFY LE STOCK D'UNE RÉCEPTION PERFUME CITY, depuis Tâches (Igal, 7 nov. 2026 : chaque tâche se règle sur place).
+   Le même envoi que Factures (pcEnvoiFacture) : le cockpit ajoute les quantités sur Shopify, la facture note le résultat
+   (pcShopify), le journal aussi. Rend {ok, bon, mal, raison} ; rien n'est compté deux fois (le cockpit reconnaît la clé). */
+async function pcRenvoiFacture(fid){
+  let F=[]; try{ F=lit('factures-v1',[])||[]; }catch(e){ F=[]; } if(!Array.isArray(F)) F=[];
+  const f=F.find(x=>x&&x.id===fid); if(!f) return {ok:false,raison:'facture introuvable'};
+  const vend=l=>l.pcVend!=null?+l.pcVend:+l.pc;
+  const lg=(f.lignes||[]).filter(l=>l&&vend(l)>0&&l.bc); if(!lg.length) return {ok:false,raison:'rien pour Perfume City sur cette facture'};
+  const par=(typeof NOM_UTIL==='string'&&NOM_UTIL)?NOM_UTIL:'(non renseigné)';
+  const maj=o=>{ f.pcShopify=Object.assign({},o,{t:new Date().toISOString()}); try{ ecrit('factures-v1',F); }catch(e){} };
+  const jou=lib=>{ try{ const J=lit('crm-journal-v1',[])||[]; J.push({t:new Date().toISOString(),u:par,act:'site',lib,n:lg.length,impact:0,det:[]}); ecrit('crm-journal-v1',J); }catch(e){} };
+  let j;
+  try{
+    if(typeof CK_URL==='undefined'||typeof ckTok!=='function'||!ckTok()) throw new Error('hors ligne');
+    const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/shopify/stock-ajoute',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},
+      body:JSON.stringify({cle:f.id,items:lg.map(l=>({bc:l.bc,ajout:vend(l),nom:l.ref}))})});
+    j=await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.erreur||('erreur '+r.status));
+  }catch(e){ const raison=(e&&e.message)||'erreur'; maj({etat:'echec',raison}); jou('réception '+(f.num||'')+' : stock de Perfume City NON envoyé à Shopify ('+raison+') — depuis Tâches'); return {ok:false,raison}; }
+  const L=j.lignes||[], bon=L.filter(l=>l.etat==='ok'||l.etat==='deja'), mal=L.filter(l=>!(l.etat==='ok'||l.etat==='deja'||l.etat==='ignore'));
+  maj({etat:mal.length?'partiel':'ok',lignes:L.map(l=>({bc:l.bc,nom:l.nom,etat:l.etat,raison:l.raison,avant:l.avant,apres:l.apres}))});
+  jou('réception '+(f.num||'')+' : stock de Perfume City envoyé à Shopify ('+bon.length+' ok'+(mal.length?', '+mal.length+' non':'')+') — depuis Tâches');
+  return {ok:!mal.length,bon:bon.length,mal:mal.map(l=>(l.nom||l.bc)+' — '+(l.raison||l.etat))};
+}
 /* LA FICHE DU PARFUM DANS UNE FENÊTRE, par-dessus la page en cours (Igal, 17 oct. 2026 : depuis une facture, puis
    depuis le détail d'une vente — « sans avoir à passer par le catalogue pour voir le produit »). C'est la fiche du
    Catalogue elle-même, ouverte en « mode cadre » (catalogue.html#cle=…&cadre=1) : mêmes champs, mêmes droits, même
@@ -918,16 +941,19 @@ function ficheFenetre(cle,apres,plus){
 /* LA MISE EN LIGNE DES NOUVELLES RÉFÉRENCES, par-dessus la page en cours (Igal, 5 nov. 2026 : « à la validation d'une facture,
    proposer de mettre en ligne les nouveaux produits sans aller les chercher dans le Catalogue »). Même fenêtre que la fiche :
    c'est le Catalogue en mode cadre (catalogue.html#enligne=id1,id2&cadre=1) qui fait le travail, avec ses garde-fous. */
-function enLigneFenetre(ids,apres){
+function enLigneFenetre(ids,apres,canaux){
   const L=(ids||[]).filter(Boolean); if(!L.length) return;
-  cadreFenetre('#enligne='+encodeURIComponent(L.join(','))+'&cadre=1',apres,'Mise en ligne');
+  const cs=(canaux||[]).filter(Boolean);
+  cadreFenetre('#enligne='+encodeURIComponent(L.join(','))+(cs.length?'&canaux='+encodeURIComponent(cs.join(',')):'')+'&cadre=1',apres,'Mise en ligne');
 }
 /* 7 nov. 2026 : la même fenêtre pour poser des prix sur les canaux depuis Tâches (catalogue.html#prix=id&canaux=…&cadre=1) */
 function prixCanauxFenetre(id,canaux,apres){
   if(!id) return;
   cadreFenetre('#prix='+encodeURIComponent(id)+'&canaux='+encodeURIComponent((canaux||[]).join(','))+'&cadre=1',apres,'Prix sur les canaux');
 }
-function cadreFenetre(hash,apres,titre){
+/* 7 nov. 2026 : une vente en attente à compléter, dans la même fenêtre (ventes.html#attente=<id>&cadre=1) */
+function attenteFenetre(id,apres){ if(id) cadreFenetre('#attente='+encodeURIComponent(id)+'&cadre=1',apres,'Vente à compléter','ventes.html'); }
+function cadreFenetre(hash,apres,titre,page){
   if(document.getElementById('fv-ov')) return;
   if(!document.getElementById('fv-css')){
     const st=document.createElement('style'); st.id='fv-css';
@@ -936,7 +962,7 @@ function cadreFenetre(hash,apres,titre){
     document.head.appendChild(st);
   }
   const ov=document.createElement('div'); ov.id='fv-ov'; ov.className='fv-ov';
-  const fr=document.createElement('iframe'); fr.title=titre||'Catalogue'; fr.src='catalogue.html'+hash;
+  const fr=document.createElement('iframe'); fr.title=titre||'Catalogue'; fr.src=(page||'catalogue.html')+hash;
   ov.appendChild(fr); document.body.appendChild(ov);
   const ferme=()=>{ window.removeEventListener('message',onMsg); ov.remove(); try{ if(apres) apres(); }catch(e){} };
   const onMsg=e=>{ if(e.origin===location.origin&&e.data&&e.data.fiche==='fermee') ferme(); };
@@ -2583,7 +2609,7 @@ setTimeout(()=>{ try{ const c=document.getElementById('ct-taches'); if(!c||!glPe
   fetch(CK_URL+'/api/o/'+CK_ORG+'/galou/taches',{headers:{Authorization:'Bearer '+ckTok()}}).then(r=>r.ok?r.json():null).then(j=>{ if(!j) return; const n=(j.a_faire||[]).length; c.textContent=n?String(n):''; c.className=n?'ct nb':'ct'; }).catch(()=>{}); }catch(e){} },2500);
 
 
-const VER_URL='202611071000';
+const VER_URL='202611071040';
 /* Les trois boutons de langue de la porte. On ne passe pas par lgChange : il
    écrit une ligne au journal au nom du compte connecté, et ici personne ne l'est
    encore. On change la langue, on l'enregistre, on retraduit l'écran. */

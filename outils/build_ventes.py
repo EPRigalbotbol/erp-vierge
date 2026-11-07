@@ -161,6 +161,14 @@ padding:11px 14px;font-size:13.5px;color:var(--ink-2);line-height:1.6}
 .fl-choix small{color:var(--ink-3)}
 #fj[hidden]{display:none!important}
 .dov{position:fixed;inset:0;background:rgba(23,23,29,.42);z-index:85;display:none}
+/* 7 nov. 2026 : la fiche d'une vente en attente ouverte DANS UNE FENÊTRE depuis Tâches (ventes.html#attente=<id>&cadre=1) :
+   on ne montre que le panneau, sans le menu ni le journal, comme la fiche du Catalogue en cadre */
+html.cadre .side,html.cadre .legend{display:none!important}
+html.cadre:not(.cp) body{visibility:hidden}
+html.cadre .main{visibility:hidden}
+html.cadre .dov{visibility:visible;background:transparent;backdrop-filter:none}
+html.cadre .dt{width:100%;box-shadow:none}
+html.cadre,html.cadre body{background:transparent}
 /* le rappel de sauvegarde (en bas à droite) passait devant les boutons d'une fiche ouverte */
 body:has(.dov.on) #svtem{display:none!important}
 .dov.on{display:block}
@@ -1459,7 +1467,8 @@ const nbVentes=(L)=>new Set(L.map(v=>v.fid+'|'+(v.cmd||''))).size;
    parce qu'un tableau de douze colonnes ne se lit pas sur un téléphone. */
 let AFF=[], DETAIL=null;
 
-function fermeDetail(){ $('dov').classList.remove('on'); DETAIL=null; }
+function fermeDetail(){ $('dov').classList.remove('on'); DETAIL=null;
+  if(document.documentElement.classList.contains('cadre')){ try{ window.parent.postMessage({fiche:'fermee'},location.origin); }catch(e){} } }
 /* ANNULER UNE VENTE (Igal, 31 oct. 2026 : « un bouton pour annuler une vente, avec la raison de l'annulation, et une double
    validation »). Patron et Admin seulement (droit « annuler »). Étape 1 : la raison (obligatoire) et l'argent rendu ; étape 2 : ce
    qui va se passer, en rouge, et « Oui, annuler la vente ». Rien n'est effacé : c'est un remboursement de TOUTE la vente (mêmes
@@ -3801,6 +3810,10 @@ if(MODE_QUOTES) setTimeout(()=>{
 $('sfoot').innerHTML=`${nf(V.length)} lignes de vente<br>${CANAUX.filter(c=>c!==NP).length} canaux`;
 dessine();
 peintFile();
+/* 7 nov. 2026 : depuis Tâches, une vente en attente à compléter, dans une fenêtre (ventes.html#attente=<id>&cadre=1) */
+try{ const ma=location.hash.match(/[#&]attente=([^&]+)/); if(ma&&document.documentElement.classList.contains('cadre')){
+  document.addEventListener('click',e=>{ const a=e.target.closest&&e.target.closest('a[href]'); if(a&&!a.target&&!/^#/.test(a.getAttribute('href')||'')){ a.target='_blank'; a.rel='noopener'; } },true);
+  setTimeout(()=>{ try{ ouvreAttente(decodeURIComponent(ma[1])); }catch(e){} document.documentElement.classList.add('cp'); },60); } }catch(e){}
 /* une facture demandée par l'adresse (depuis la rubrique Factures) : ventes.html#doc=<id> */
 try{ const m=location.hash.match(/doc=([^&]+)/); if(m){ const f=FACT.find(x=>x.id===decodeURIComponent(m[1])); if(f&&f.doc) setTimeout(()=>{ dessineDoc(f); if(/edit=1/.test(location.hash)) setTimeout(()=>{ const b=$('doc-edit'); if(b) b.click(); },200); },300); } }catch(e){}
 /* tout ce qui est arrivé est maintenant sous les yeux : la pastille « nouvelles ventes » s'éteint */
@@ -3823,12 +3836,13 @@ for _f in sorted(_glob.glob('logos/*.png')) + sorted(_glob.glob('logos/*.svg')):
     if _id in _logos: continue
     _logos[_id] = 'data:' + ('image/png' if _f.endswith('.png') else 'image/svg+xml') + ';base64,' + _b64.b64encode(open(_f, 'rb').read()).decode()
 JS = JS.replace('__LOGOS_V__', _json.dumps(_logos))
+CADRE_TETE='<script>/* 7 nov. 2026 : ouverte dans une fenêtre depuis Tâches (#attente=…&cadre=1) : le corps reste caché jusqu\'à ce que la fiche soit ouverte (classe « cp »), avec une sécurité de 4 s */try{if(/[#&]cadre=1/.test(location.hash)&&window.parent!==window){document.documentElement.classList.add(\'cadre\');setTimeout(function(){document.documentElement.classList.add(\'cp\');},4000);}}catch(e){}</script>'
 html = coquille("Journal des ventes", "Ventes",
     "Chaque produit vendu, avec le canal d'où vient la vente : Lightspeed, perfumestrade.com, "
     "wholesale.perfumestrade.com, Amazon, vente en gros. Chiffre d'affaires et marge par canal, et la saisie "
     "d'une vente à la main.",
     CSS + CSS_QUOTES, CORPS.replace('__ACCEPT__', _lire.ACCEPT), JS.replace('__NOMS__', _noms.NOMS).replace('__MODE__', 'ventes'), donnees=('produits','clients','retail','histgros'))
-html = html.replace('__IDX__', _IDX)
+html = html.replace('__IDX__', _IDX).replace('<head><meta charset="utf-8">', '<head><meta charset="utf-8">' + CADRE_TETE, 1)
 open('ventes.html','w').write(html)
 print('ventes.html', len(html)//1024, 'Ko')
 

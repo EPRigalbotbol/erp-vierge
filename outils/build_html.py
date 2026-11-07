@@ -2242,8 +2242,10 @@ async function enLigneAuto(id){
 /* 5 nov. 2026 (Igal) : « quand Sam crée une nouvelle référence dans une facture, qu'il puisse la mettre en ligne à la validation, sans
    aller la chercher dans le Catalogue une par une ». La page Factures ouvre le Catalogue en mode cadre (#enligne=id1,id2&cadre=1) : la même
    mise en ligne automatique, produit après produit, dans une seule fenêtre. */
-async function enLigneAutoListe(ids){
+async function enLigneAutoListe(ids,canauxIds){
   const cadre=document.documentElement.classList.contains('cadre');
+  /* 7 nov. 2026 (depuis Tâches) : seulement les canaux demandés (sinon les trois) */
+  const seuls=(canauxIds||[]).filter(c=>['site','sitegros','perfumecity'].includes(c));
   const v=document.createElement('div'); v.className='mvoile';
   const noms=id=>{ const p=cur.find(z=>z.id===id)||tousLesArticles().find(z=>z.id===id); return p?esc(((p.marque||'')+' '+(p.nom||'')).trim()):esc(id); };
   const rep=(h,fin)=>{ v.innerHTML=`<div class="mfen" role="dialog" aria-modal="true" data-nolang style="max-height:90vh;overflow:auto"><h3>Mise en ligne des nouvelles références (${ids.length})</h3><div id="eaR">${h}</div><div class="mbtn">${fin?'<button class="btn pri" id="eaF">Fermer</button>':''}</div></div>`;
@@ -2254,18 +2256,25 @@ async function enLigneAutoListe(ids){
   const faits=[];
   for(const id of ids){
     const avant=faits.join('');
-    const r=await enLigneUn(id,h=>rep(avant+`<p><b>${noms(id)}</b></p>`+h));
+    const r=await enLigneUn(id,h=>rep(avant+`<p><b>${noms(id)}</b></p>`+h),seuls.length?seuls:null);
     faits.push(`<div style="margin:0 0 12px;padding:0 0 10px;border-bottom:1px solid var(--line,#ddd)"><p style="margin:0 0 4px"><b>${noms(id)}</b></p>${r}</div>`);
     rep(faits.join(''));
   }
+  /* la liste « pas en vente partout » publiée pour les tâches (diffusion-erp-v1, tableau de bord) est mise à jour tout de suite :
+     ce qui est maintenant en vente n'y manque plus — sinon la tâche « Mettre en ligne N parfums » gardait son chiffre jusqu'à la
+     prochaine ouverture du tableau de bord */
+  try{ const DIF=lit('diffusion-erp-v1',null); if(DIF&&Array.isArray(DIF.L)){ let ch=false;
+    DIF.L.forEach(x=>{ if(!ids.includes(x.cle)) return; const p=cur.find(z=>z.id===x.cle)||tousLesArticles().find(z=>z.id===x.cle); if(!p) return;
+      const m=(x.manque||[]).filter(c=>statutDiff(p,c)!=='oui'); if(m.length!==(x.manque||[]).length){ x.manque=m; x.retire=(x.retire||[]).filter(c=>m.includes(c)); ch=true; } });
+    if(ch){ DIF.L=DIF.L.filter(x=>(x.manque||[]).length); DIF.n=DIF.L.length; ecrit('diffusion-erp-v1',DIF); } } }catch(e){}
   rep(faits.join(''),1);
 }
 /* la mise en ligne d'UN produit : rend le compte rendu (html) ; `rep` montre l'avancement */
-async function enLigneUn(id,rep){
+async function enLigneUn(id,rep,seuls){
   try{
     let p=cur.find(z=>z.id===id)||tousLesArticles().find(z=>z.id===id);
     if(!p){ return '<div class="mrep bad">Produit introuvable.</div>'; }
-    const ids=['site','sitegros','perfumecity'];
+    const ids=(seuls&&seuls.length)?seuls:['site','sitegros','perfumecity'];
     const {res,skip}=candidatsMel([p],ids);
     const pq=[];
     if(!(p.qte>0)) pq.push("il n'est pas en stock");
@@ -6942,7 +6951,8 @@ if(/[#&]cadre=1/.test(location.hash) && window.parent!==window){
   const pret=()=>{ if(cadre) document.documentElement.classList.add('cp'); };
   /* 5 nov. 2026 : depuis une facture d'achat, les nouvelles références à mettre en ligne (#enligne=id1,id2&cadre=1) */
   const me=location.hash.match(/enligne=([^&]+)/);
-  if(me){ const ids=decodeURIComponent(me[1]).split(',').filter(Boolean); pret(); setTimeout(()=>{ try{ enLigneAutoListe(ids); }catch(e){ console.error(e); } },80); return; }
+  if(me){ const ids=decodeURIComponent(me[1]).split(',').filter(Boolean); const mc=location.hash.match(/[#&]canaux=([^&]+)/); const cs=(mc&&mc[1]!=='1')?decodeURIComponent(mc[1]).split(',').filter(Boolean):[];
+    pret(); setTimeout(()=>{ try{ enLigneAutoListe(ids,cs); }catch(e){ console.error(e); } },80); return; }
   /* 7 nov. 2026 : depuis Tâches, poser les prix corrigés sur les canaux cochés (#prix=id&canaux=site,sitegros,perfumecity&cadre=1) */
   const mp=location.hash.match(/[#&]prix=([^&]+)/);
   if(mp){ const id=decodeURIComponent(mp[1]); const mc=location.hash.match(/[#&]canaux=([^&]+)/); const cs=mc?decodeURIComponent(mc[1]).split(',').filter(Boolean):[];

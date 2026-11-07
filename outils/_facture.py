@@ -133,6 +133,27 @@ font-size:11px;line-height:1.7;letter-spacing:.02em}
 color:#2c6e4e;font-family:"Cormorant Garamond",Garamond,serif;font-size:15px;font-weight:600;
 letter-spacing:.22em;text-transform:uppercase}
 .doc .tampon.devis{border-color:#5a5470;color:#5a5470}
+/* ---- LES PAGES (5 nov. 2026, Sam : « pas assez de marge en haut, trop en bas ; si deux pages, bien découpées ») ----
+   La feuille continue (#doc-corps) sert de source ; ce qui se voit, s'imprime et part en PDF, ce sont des PAGES Letter
+   (816 × 1056 px à 96 dpi) : mêmes marges partout, aucune ligne coupée en deux, l'en-tête du tableau répété, les totaux
+   jamais séparés, et le pied de page — avec « Page 1 / 2 » — toujours en bas de chaque page. */
+.pages{display:flex;flex-direction:column;align-items:center;gap:22px}
+.doc.pg{position:relative;width:816px;height:1056px;box-sizing:border-box;padding:58px 58px 46px;margin:0;border-radius:0;overflow:hidden;font-size:12.5px;line-height:1.55}
+.doc.pg .tete{padding-bottom:18px}
+.doc.pg .parties{margin:10px 0 8px}
+.doc.pg table{margin-top:4px}
+.doc.pg td{padding:9px 8px;font-size:12.5px}
+.doc.pg .totaux{margin-top:16px}
+.doc.pg .pay{margin-top:20px}
+.doc.pg .pied{position:absolute;left:58px;right:58px;bottom:30px;margin:0;padding-top:10px;display:flex;justify-content:space-between;gap:16px;align-items:flex-end}
+.doc.pg .pied .pgnum{flex:none;white-space:nowrap;color:#55525c;font-weight:600;letter-spacing:.08em}
+.doc.pg .suite{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding-bottom:12px;margin-bottom:6px;border-bottom:1px solid #16151a}
+.doc.pg .suite b{font-family:"Cormorant Garamond",Garamond,serif;font-size:22px;font-weight:600;letter-spacing:.04em}
+.doc.pg .suite span{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8a8590;font-weight:700}
+.doc.pgmes{position:absolute;left:-20000px;top:0;visibility:hidden;width:816px;box-sizing:border-box;padding:58px 58px 46px;font-size:12.5px;line-height:1.55;box-shadow:none}
+.doc.pgmes .tete{padding-bottom:18px} .doc.pgmes .parties{margin:10px 0 8px} .doc.pgmes table{margin-top:4px} .doc.pgmes td{padding:9px 8px;font-size:12.5px} .doc.pgmes .totaux{margin-top:16px} .doc.pgmes .pay{margin-top:20px}
+#doc-corps.src{position:absolute;left:-20000px;top:0;width:816px;opacity:0;pointer-events:none}  /* hors écran mais rendue : les tests et les copies de texte la lisent */
+@media(max-width:900px){ .pages{transform-origin:top center;transform:scale(.72)} }
 @media(max-width:640px){ .doc{padding:30px 22px} .doc .logo{max-width:150px;max-height:100px}
   .doc .tete{flex-direction:column;gap:18px} .doc .titre{text-align:left}
   .doc .parties{grid-template-columns:1fr;gap:20px} .doc .totaux{width:100%} }
@@ -176,12 +197,13 @@ padding:4px 11px;font:600 12px Inter,sans-serif;color:var(--ink-2);cursor:pointe
   body.impr-doc .doctb{display:none !important}
   /* une page Letter : le document fait la largeur du papier moins les marges, jamais plus */
   body.impr-doc .docw{max-width:none;width:100%}
-  body.impr-doc .doc{box-shadow:none;border-radius:0;padding:0;width:100%;max-width:184mm;margin:0 auto;font-size:12.5px}
-  body.impr-doc .doc .tete{gap:20px}
-  body.impr-doc .doc table{width:100%;table-layout:auto}
-  body.impr-doc .doc .totaux{page-break-inside:avoid}
+  /* chaque page de l'écran = une page de papier, sans marge d'imprimante par-dessus (les marges sont dans la page) */
+  body.impr-doc .pages{display:block;gap:0;transform:none}
+  body.impr-doc .doc.pg{box-shadow:none;margin:0;page-break-after:always;break-after:page}
+  body.impr-doc .doc.pg:last-child{page-break-after:auto;break-after:auto}
+  body.impr-doc #doc-corps{display:none !important}
   html,body{width:auto !important;min-width:0 !important;zoom:1 !important}
-  @page{size:letter;margin:14mm 12mm}
+  @page{size:letter;margin:0}
 }
 """
 
@@ -244,7 +266,8 @@ OVERLAY = r"""
     <button class="btn" id="doc-conv" style="display:none">Transformer en facture</button>
     <button class="btn" id="doc-x">Fermer</button>
   </div>
-  <div class="doc" id="doc-corps"></div>
+  <div class="doc src" id="doc-corps"></div>
+  <div class="pages" id="doc-pages"></div>
 </div></div>
 <div id="edov" class="ov"><div class="mod" style="max-width:560px">
   <div class="mh"><h3>Modifier le document</h3><button class="x" id="ed-x" title="Fermer">&times;</button></div>
@@ -579,7 +602,7 @@ function dessineDoc(f){
    </div>
    <div class="parties">
      <div><h4>${devis?'Adressé à':'Facturé à'}</h4>
-       <div data-nolang><b>${esc(cl.raison||cl.nom||'')}</b>${cl.raison&&cl.nom!==cl.raison?`<br>${esc(cl.nom)}`:''}${cl.adresse?`<br>${esc(cl.adresse)}`:''}${cl.tel?`<br>${esc(cl.tel)}`:''}${cl.email?`<br>${esc(cl.email)}`:''}</div></div>
+       <div data-nolang><b>${esc(cl.raison||cl.nom||'')}</b>${[cl.raison&&cl.nom!==cl.raison?cl.nom:'',cl.adresse,cl.tel,cl.email].filter(Boolean).map(esc).join('<br>')}</div></div>
      <div><h4>Conditions</h4><div><span class="lbl">Paiement</span> : <b class="inl">${esc(FMODES[D.pmode]||D.pmode)}</b>${D.fiscal!=='taxable'&&D.fref?`<br><span class="lbl">${D.fiscal==='etranger'?'Passeport':'Resale certificate'}</span> : <span data-nolang>${esc(D.fref)}</span>`:''}${D.note?`<br><span class="lbl">Note</span> : <span data-nolang>${esc(D.note)}</span>`:''}</div></div>
    </div>
    <table><thead><tr><th>#</th><th>Article</th><th class="r">Qté</th><th class="r">Prix unit.</th><th class="r">Montant</th></tr></thead>
@@ -631,10 +654,63 @@ function dessineDoc(f){
   $('doc-conv').style.display=(devis&&!D.converti)?'':'none';
   { const bl=$('doc-lignes'); if(bl) bl.style.display=(devis&&typeof peutModifierDevis==='function'&&peutModifierDevis(f))?'':'none'; }
   $('docov').classList.add('on');
+  docPagine();   /* la fenêtre doit être visible pour mesurer */
   /* la feuille se photographie tout de suite, en arrière-plan : quand on clique
      WhatsApp, Email ou Partager, le PDF est déjà prêt — et « Partager » DOIT
      répondre au clic sans attendre, sinon le téléphone refuse le partage */
   docPrepare(f);
+}
+/* ---------- LA MISE EN PAGES ----------
+   5 nov. 2026 (Sam : « pas assez de marge en haut, trop de marge en bas ; si c'est sur deux pages il faut que ce soit bien
+   découpé »). La feuille continue (#doc-corps) est mesurée hors écran à la largeur exacte d'une page Letter, puis découpée
+   en pages : l'en-tête (société, client) sur la première ; les lignes du tableau l'une après l'autre, jamais coupées, avec
+   l'en-tête du tableau répété en haut de chaque page ; les totaux, le paiement et le tampon ensemble, jamais séparés ;
+   le pied de page en bas de CHAQUE page, avec « Page 1 / 2 ». Une page de suite porte un rappel « Facture PT-… — suite ». */
+const PG_H=1056, PG_PAD_H=58, PG_PAD_B=46, PG_PIED_H=56;   /* px à 96 dpi : Letter = 816 × 1056 */
+function docPagine(){
+  const src=$('doc-corps'), out=$('doc-pages'); if(!src||!out) return;
+  out.innerHTML='';
+  /* 1. mesurer : une copie de la feuille, hors écran, à la largeur d'une page */
+  const mes=document.createElement('div'); mes.className='doc pgmes'; mes.innerHTML=src.innerHTML; src.parentNode.appendChild(mes);
+  const tete=mes.querySelector('.tete'), parties=mes.querySelector('.parties'), table=mes.querySelector('table'), thead=table&&table.querySelector('thead');
+  const rows=table?[...table.querySelectorAll('tbody tr')]:[];
+  const fin=['.totaux','.pay','.tampon'].map(k=>mes.querySelector(k)).filter(Boolean);
+  const pied=mes.querySelector('.pied');
+  const h=el=>el?el.getBoundingClientRect().height:0;
+  const hTete=h(tete)+h(parties), hThead=h(thead)+4, hRows=rows.map(h), hFin=fin.reduce((a,e)=>a+h(e),0)+20+(fin.length-1)*8;
+  const H=PG_H-PG_PAD_H-PG_PAD_B-PG_PIED_H;            /* la hauteur utile d'une page */
+  const hSuite=52;
+  /* 2. répartir */
+  const pages=[]; let cur={items:[],y:0,rows:[]}; const neuve=()=>{ pages.push(cur); cur={items:[],y:hSuite,rows:[],suite:true}; };
+  cur.y=hTete; cur.items.push('tete');
+  let ouvert=false;
+  rows.forEach((tr,i)=>{
+    if(!ouvert){ if(cur.y+hThead+hRows[i]>H&&cur.rows.length===0&&cur.items.length&&cur.y>hSuite){ neuve(); } cur.y+=hThead; ouvert=true; }
+    if(cur.y+hRows[i]>H&&cur.rows.length){ neuve(); cur.y+=hThead; }
+    cur.rows.push(i); cur.y+=hRows[i];
+  });
+  if(cur.y+hFin>H&&(cur.rows.length||cur.items.length)){
+    /* les totaux passent à la page suivante : la dernière ligne les accompagne, pour qu'une page ne porte jamais les totaux tout seuls */
+    const der=cur.rows.length>1?cur.rows.pop():null; neuve();
+    if(der!=null){ cur.y+=hThead+hRows[der]; cur.rows.push(der); } }
+  cur.items.push('fin'); pages.push(cur);
+  /* 3. dessiner les pages */
+  const N=pages.length;
+  const lbl=mes.querySelector('.titre h2'), num=mes.querySelector('.titre .num'), soc=mes.querySelector('.soc b');
+  pages.forEach((pg,k)=>{
+    const d=document.createElement('div'); d.className='doc pg'; d.setAttribute('data-lang',src.getAttribute('data-lang')||'fr');
+    if(pg.suite){ const su=document.createElement('div'); su.className='suite';
+      su.innerHTML=`<b data-nolang>${soc?soc.textContent:''}</b><span><span class="lbl">${lbl?lbl.textContent:''}</span> <span data-nolang>${num?num.textContent:''}</span> — <span class="lbl">suite</span></span>`; d.appendChild(su); }
+    if(pg.items.includes('tete')){ if(tete) d.appendChild(tete.cloneNode(true)); if(parties) d.appendChild(parties.cloneNode(true)); }
+    if(pg.rows.length&&table){ const t=document.createElement('table'); if(thead) t.appendChild(thead.cloneNode(true)); const tb=document.createElement('tbody'); pg.rows.forEach(i=>tb.appendChild(rows[i].cloneNode(true))); t.appendChild(tb); d.appendChild(t); }
+    if(pg.items.includes('fin')) fin.forEach(e=>d.appendChild(e.cloneNode(true)));
+    const p=pied?pied.cloneNode(true):document.createElement('div'); p.className='pied';
+    const texte=document.createElement('div'); while(p.firstChild) texte.appendChild(p.firstChild); p.appendChild(texte);
+    const n=document.createElement('span'); n.className='pgnum'; n.innerHTML=`<span class="lbl">Page</span> <span data-nolang>${k+1} / ${N}</span>`; p.appendChild(n);
+    d.appendChild(p); out.appendChild(d);
+  });
+  mes.remove();
+  try{ if(typeof lgApplique==='function') lgApplique(out); }catch(e){}
 }
 var _PREP=null;   /* {f, html, canvas, pdf} du document ouvert */
 function docPrepare(f){
@@ -719,28 +795,26 @@ async function _pdfLibs(){
   if(!window.jspdf) await charge('lib/pdf/jspdf.umd.min.js');
 }
 /* la feuille photographiée une fois ; le PDF et l'aperçu en sortent tous les deux */
+/* 5 nov. 2026 : chaque page de l'écran est photographiée entière — plus de découpe au ciseau dans une feuille continue */
 async function docCanvas(){
   await _pdfLibs();
-  const el=$('doc-corps');
-  return await window.html2canvas(el,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,windowWidth:Math.max(860,el.scrollWidth)});
+  let pages=[...document.querySelectorAll('#doc-pages .doc.pg')];
+  if(!pages.length){ docPagine(); pages=[...document.querySelectorAll('#doc-pages .doc.pg')]; }
+  const out=[];
+  for(const el of pages) out.push(await window.html2canvas(el,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,width:816,height:1056,windowWidth:900}));
+  return out;
 }
-function canvasPDF(c){
+function canvasPDF(cs){
   const {jsPDF}=window.jspdf;
   const pdf=new jsPDF({unit:'pt',format:'letter',orientation:'portrait',compress:true});
-  const W=pdf.internal.pageSize.getWidth(), H=pdf.internal.pageSize.getHeight(), m=28;
-  const w=W-2*m, ratio=w/c.width, hPage=(H-2*m)/ratio;   /* hauteur d'une page en pixels du canevas */
-  for(let y=0, n=0; y<c.height; y+=hPage, n++){
-    const h=Math.min(hPage,c.height-y);
-    const part=document.createElement('canvas'); part.width=c.width; part.height=Math.ceil(h);
-    part.getContext('2d').drawImage(c,0,y,c.width,h,0,0,c.width,h);
-    if(n) pdf.addPage();
-    pdf.addImage(part.toDataURL('image/jpeg',0.92),'JPEG',m,m,w,h*ratio);
-  }
+  const W=pdf.internal.pageSize.getWidth(), H=pdf.internal.pageSize.getHeight();
+  (Array.isArray(cs)?cs:[cs]).forEach((c,n)=>{ if(n) pdf.addPage(); pdf.addImage(c.toDataURL('image/jpeg',0.92),'JPEG',0,0,W,H); });
   return pdf.output('blob');
 }
 /* l'aperçu : la première page, réduite à 1000 px de large — assez pour être lue
    sur un téléphone, assez léger pour la carte WhatsApp */
-function canvasPNG(c){
+function canvasPNG(cs){
+  const c=Array.isArray(cs)?cs[0]:cs;
   const w=1000, ratio=w/c.width, h=Math.min(c.height*ratio, 1300);
   const p=document.createElement('canvas'); p.width=w; p.height=Math.round(h);
   p.getContext('2d').drawImage(c,0,0,c.width,h/ratio,0,0,w,h);

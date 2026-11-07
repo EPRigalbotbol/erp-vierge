@@ -975,6 +975,27 @@ font-size:11px;line-height:1.7;letter-spacing:.02em}
 color:#2c6e4e;font-family:"Cormorant Garamond",Garamond,serif;font-size:15px;font-weight:600;
 letter-spacing:.22em;text-transform:uppercase}
 .doc .tampon.devis{border-color:#5a5470;color:#5a5470}
+/* ---- LES PAGES (5 nov. 2026, Sam : « pas assez de marge en haut, trop en bas ; si deux pages, bien découpées ») ----
+   La feuille continue (#doc-corps) sert de source ; ce qui se voit, s'imprime et part en PDF, ce sont des PAGES Letter
+   (816 × 1056 px à 96 dpi) : mêmes marges partout, aucune ligne coupée en deux, l'en-tête du tableau répété, les totaux
+   jamais séparés, et le pied de page — avec « Page 1 / 2 » — toujours en bas de chaque page. */
+.pages{display:flex;flex-direction:column;align-items:center;gap:22px}
+.doc.pg{position:relative;width:816px;height:1056px;box-sizing:border-box;padding:58px 58px 46px;margin:0;border-radius:0;overflow:hidden;font-size:12.5px;line-height:1.55}
+.doc.pg .tete{padding-bottom:18px}
+.doc.pg .parties{margin:10px 0 8px}
+.doc.pg table{margin-top:4px}
+.doc.pg td{padding:9px 8px;font-size:12.5px}
+.doc.pg .totaux{margin-top:16px}
+.doc.pg .pay{margin-top:20px}
+.doc.pg .pied{position:absolute;left:58px;right:58px;bottom:30px;margin:0;padding-top:10px;display:flex;justify-content:space-between;gap:16px;align-items:flex-end}
+.doc.pg .pied .pgnum{flex:none;white-space:nowrap;color:#55525c;font-weight:600;letter-spacing:.08em}
+.doc.pg .suite{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding-bottom:12px;margin-bottom:6px;border-bottom:1px solid #16151a}
+.doc.pg .suite b{font-family:"Cormorant Garamond",Garamond,serif;font-size:22px;font-weight:600;letter-spacing:.04em}
+.doc.pg .suite span{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8a8590;font-weight:700}
+.doc.pgmes{position:absolute;left:-20000px;top:0;visibility:hidden;width:816px;box-sizing:border-box;padding:58px 58px 46px;font-size:12.5px;line-height:1.55;box-shadow:none}
+.doc.pgmes .tete{padding-bottom:18px} .doc.pgmes .parties{margin:10px 0 8px} .doc.pgmes table{margin-top:4px} .doc.pgmes td{padding:9px 8px;font-size:12.5px} .doc.pgmes .totaux{margin-top:16px} .doc.pgmes .pay{margin-top:20px}
+#doc-corps.src{position:absolute;left:-20000px;top:0;width:816px;opacity:0;pointer-events:none}  /* hors écran mais rendue : les tests et les copies de texte la lisent */
+@media(max-width:900px){ .pages{transform-origin:top center;transform:scale(.72)} }
 @media(max-width:640px){ .doc{padding:30px 22px} .doc .logo{max-width:150px;max-height:100px}
   .doc .tete{flex-direction:column;gap:18px} .doc .titre{text-align:left}
   .doc .parties{grid-template-columns:1fr;gap:20px} .doc .totaux{width:100%} }
@@ -1018,12 +1039,13 @@ padding:4px 11px;font:600 12px Inter,sans-serif;color:var(--ink-2);cursor:pointe
   body.impr-doc .doctb{display:none !important}
   /* une page Letter : le document fait la largeur du papier moins les marges, jamais plus */
   body.impr-doc .docw{max-width:none;width:100%}
-  body.impr-doc .doc{box-shadow:none;border-radius:0;padding:0;width:100%;max-width:184mm;margin:0 auto;font-size:12.5px}
-  body.impr-doc .doc .tete{gap:20px}
-  body.impr-doc .doc table{width:100%;table-layout:auto}
-  body.impr-doc .doc .totaux{page-break-inside:avoid}
+  /* chaque page de l'écran = une page de papier, sans marge d'imprimante par-dessus (les marges sont dans la page) */
+  body.impr-doc .pages{display:block;gap:0;transform:none}
+  body.impr-doc .doc.pg{box-shadow:none;margin:0;page-break-after:always;break-after:page}
+  body.impr-doc .doc.pg:last-child{page-break-after:auto;break-after:auto}
+  body.impr-doc #doc-corps{display:none !important}
   html,body{width:auto !important;min-width:0 !important;zoom:1 !important}
-  @page{size:letter;margin:14mm 12mm}
+  @page{size:letter;margin:0}
 }
 
 .lsc{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:0 0 22px}
@@ -1131,31 +1153,31 @@ body.quotes #docs-chips{display:none}
   <div class="logo"><div class="n">Perfumes Trade</div><div class="s">ERP</div></div>
   <nav>
     <div class="navlab">Produits</div>
-    <a class="nv" href="catalogue.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>Catalogue<span class="ct nu" id="ct-catalogue">0</span></a>
-    <a class="nv" href="stock.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg></span>Inventaire<span class="ct nu" id="ct-inventaire">0</span></a>
-    <a class="nv" href="inventaire_pc.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h16l-1-5H5z"/><path d="M5 9v11h14V9"/><path d="M10 20v-5h4v5"/></svg></span>Inventaire Perfume City<span class="ct" id="ct-pcity"></span></a>
-    <a class="nv" href="demandes_pc.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></span>Transfert interstore<span class="ct" id="ct-demandes"></span></a>
+    <a class="nv" href="catalogue.html?v=202611070834"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>Catalogue<span class="ct nu" id="ct-catalogue">0</span></a>
+    <a class="nv" href="stock.html?v=202611070834"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg></span>Inventaire<span class="ct nu" id="ct-inventaire">0</span></a>
+    <a class="nv" href="inventaire_pc.html?v=202611070834"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h16l-1-5H5z"/><path d="M5 9v11h14V9"/><path d="M10 20v-5h4v5"/></svg></span>Inventaire Perfume City<span class="ct" id="ct-pcity"></span></a>
+    <a class="nv" href="demandes_pc.html?v=202611070834"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></span>Transfert interstore<span class="ct" id="ct-demandes"></span></a>
     <div class="navlab">Commerce</div>
-    <a class="nv" href="quotes.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>Cote<span class="ct" id="ct-devis"></span></a>
-    <a class="nv" href="factures.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span>Factures<span class="ct" id="ct-factures"></span></a>
-    <a class="nv on" href="ventes.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/></svg></span>Ventes<span class="ct" id="ct-ventes"></span></a>
-    <a class="nv" href="fournisseurs.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></svg></span>Fournisseurs<span class="ct" id="ct-fournisseurs"></span></a>
-    <a class="nv" href="etude.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg></span>Étude de cote<span class="ct" id="ct-étude"></span></a>
-    <a class="nv" href="clients.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></span>Clients<span class="ct nb" id="ct-clients">0</span></a>
-    <a class="nv sub" href="clients.html?v=202611052121#vip" data-id="clients-vip" data-sous="clients.html">Clients VIP</a>
-    <a class="nv" data-pilotage="1" href="connecteurs.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10l-3-3M17 17H7l3 3"/></svg></span>Connecteurs<span class="ct" id="ct-connecteurs"></span></a>
+    <a class="nv" href="quotes.html?v=202611070834"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>Cote<span class="ct" id="ct-devis"></span></a>
+    <a class="nv" href="factures.html?v=202611070834"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span>Factures<span class="ct" id="ct-factures"></span></a>
+    <a class="nv on" href="ventes.html?v=202611070834"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/></svg></span>Ventes<span class="ct" id="ct-ventes"></span></a>
+    <a class="nv" href="fournisseurs.html?v=202611070834"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></svg></span>Fournisseurs<span class="ct" id="ct-fournisseurs"></span></a>
+    <a class="nv" href="etude.html?v=202611070834"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg></span>Étude de cote<span class="ct" id="ct-étude"></span></a>
+    <a class="nv" href="clients.html?v=202611070834"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></span>Clients<span class="ct nb" id="ct-clients">0</span></a>
+    <a class="nv sub" href="clients.html?v=202611070834#vip" data-id="clients-vip" data-sous="clients.html">Clients VIP</a>
+    <a class="nv" data-pilotage="1" href="connecteurs.html?v=202611070834"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10l-3-3M17 17H7l3 3"/></svg></span>Connecteurs<span class="ct" id="ct-connecteurs"></span></a>
     <a class="nv" href="#galou" id="gl-btn" data-id="galou" onclick="if(typeof galouOuvre==='function')galouOuvre();return false"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v10H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg></span>Parler à Léa<span class="ct" id="ct-parler"></span></a>
     <div class="navlab" data-pilotage="1">Pilotage</div>
     <a class="nv" href="#support" id="aid-btn" data-id="support" onclick="if(typeof aidOuvre==='function')aidOuvre();return false"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="m9.5 9.5-4-4M14.5 9.5l4-4M14.5 14.5l4 4M9.5 14.5l-4 4"/></svg></span>Support technique<span class="ct" id="ct-support"></span></a>
-    <a class="nv" data-pilotage="1" href="journal.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Journal<span class="ct" id="ct-journal"></span></a>
-    <a class="nv" data-pilotage="1" href="tableau.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/></svg></span>Tableau de bord<span class="ct" id="ct-tableau"></span></a>
-    <a class="nv" data-pilotage="1" href="taches.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m8 12 3 3 5-6"/></svg></span>Tâches<span class="ct" id="ct-taches"></span></a>
-    <a class="nv" data-pilotage="1" href="acces.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.3 8 8 9 4.7-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></span>Accès<span class="ct" id="ct-accès"></span></a>
+    <a class="nv" data-pilotage="1" href="journal.html?v=202611070834"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Journal<span class="ct" id="ct-journal"></span></a>
+    <a class="nv" data-pilotage="1" href="tableau.html?v=202611070834"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/></svg></span>Tableau de bord<span class="ct" id="ct-tableau"></span></a>
+    <a class="nv" data-pilotage="1" href="taches.html?v=202611070834"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m8 12 3 3 5-6"/></svg></span>Tâches<span class="ct" id="ct-taches"></span></a>
+    <a class="nv" data-pilotage="1" href="acces.html?v=202611070834"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.3 8 8 9 4.7-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></span>Accès<span class="ct" id="ct-accès"></span></a>
     <a class="nv" data-pilotage="1" href="https://app.gusto.com" target="_blank" rel="noopener" title="Ouvre Gusto dans un nouvel onglet"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M14.5 9a2.5 2 0 0 0-2.5-1.5c-1.4 0-2.5.8-2.5 2s1 1.7 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2A2.7 2 0 0 1 9.5 15M12 6v1.5M12 16.5V18"/></svg></span>Paie<span class="ct" id="ct-paie"></span></a>
-    <a class="nv" data-pilotage="1" href="reglages.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg></span>Réglages<span class="ct" id="ct-réglages"></span></a>
+    <a class="nv" data-pilotage="1" href="reglages.html?v=202611070834"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg></span>Réglages<span class="ct" id="ct-réglages"></span></a>
   </nav>
   <div class="sfoot"><div id="sfu" class="sfu"></div><span id="sfoot"></span>
-    <div class="ver" title="Si cette date n'est pas la derni&egrave;re, recharge avec Cmd+Option+R">version du 11/05/2026 à 21h21</div>
+    <div class="ver" title="Si cette date n'est pas la derni&egrave;re, recharge avec Cmd+Option+R">version du 11/07/2026 à 08h34</div>
     <div class="sfline" id="sfline"></div></div>
 </aside>
 <main class="main"><div class="wrap">
@@ -1376,7 +1398,8 @@ body.quotes #docs-chips{display:none}
     <button class="btn" id="doc-conv" style="display:none">Transformer en facture</button>
     <button class="btn" id="doc-x">Fermer</button>
   </div>
-  <div class="doc" id="doc-corps"></div>
+  <div class="doc src" id="doc-corps"></div>
+  <div class="pages" id="doc-pages"></div>
 </div></div>
 <div id="edov" class="ov"><div class="mod" style="max-width:560px">
   <div class="mh"><h3>Modifier le document</h3><button class="x" id="ed-x" title="Fermer">&times;</button></div>
@@ -1506,7 +1529,7 @@ try{
 }catch(e){}
 })();
 </script>
-<script src="donnees/langue.js?v=202611052121"></script>
+<script src="donnees/langue.js?v=202611070834"></script>
 <script>
 /* le menu réglé et la langue de l'écran, AVANT le code de la page : rien ne saute, rien n'est vu dans une autre langue */
 
@@ -2407,7 +2430,7 @@ const LG_FR_PARCOURS=!/catalogue|stock|inventaire/.test(location.pathname);
 })();
 
 </script>
-<script src="donnees/produits.js?v=202611052121"></script><script src="donnees/clients.js?v=202611052121"></script><script src="donnees/retail.js?v=202611052121"></script><script src="donnees/histgros.js?v=202611052121"></script>
+<script src="donnees/produits.js?v=202611070834"></script><script src="donnees/clients.js?v=202611070834"></script><script src="donnees/retail.js?v=202611070834"></script><script src="donnees/histgros.js?v=202611070834"></script>
 <script>
 if (typeof window.D_PROD==='undefined' || typeof window.D_CLI==='undefined' || typeof window.D_RETAIL==='undefined') {
   /* Le code de la page est lancé plus tard par l'amorce (voir _serveur.py) : ce drapeau
@@ -2429,7 +2452,7 @@ if (typeof window.D_PROD==='undefined' || typeof window.D_CLI==='undefined' || t
 }
 </script>
 <script type="text/plain" id="page-js">
-const VER_URL='202611052121';
+const VER_URL='202611070834';
 const $=i=>document.getElementById(i);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const nf=v=>Number(v||0).toLocaleString('fr-FR');
@@ -8171,6 +8194,39 @@ function recap(){
    se modifient : une vente venue d'Amazon, du site ou de la caisse se corrige à la source,
    et une vente déjà remboursée ne bouge plus. */
 let EDIT=null;
+/* 6 nov. 2026 (Igal pour Sam : « fusionner les cotes qu'il a faites pour le même client ») : la cote dans laquelle on réunit
+   les autres, et les autres (qui seront archivées « fusionnée dans … » une fois la cote réunie enregistrée). */
+let FUSION=null;
+/* les autres cotes « créées » (ni converties, ni archivées, ni Lightspeed) du même client */
+function cotesAFusionner(f){
+  if(!f||!f.doc||f.doc.type!=='devis'||f.doc.converti||f.doc.archive||f.lsq) return [];
+  const k=cNorm(f.tiers); if(!k) return [];
+  return FACT.filter(x=>x&&x.id!==f.id&&x.doc&&x.doc.type==='devis'&&!x.doc.converti&&!x.doc.archive&&!x.lsq&&cNorm(x.tiers)===k)
+    .sort((a,b)=>String(a.t||a.d||'').localeCompare(String(b.t||b.d||'')));
+}
+/* réunir les lignes : un même parfum au même prix additionne ses quantités ; sinon la ligne reste à part */
+function fusionneLignes(cotes){
+  const out=[];
+  cotes.forEach(c=>(c.lignes||[]).filter(l=>l.cle&&l.q).forEach(l=>{ const p=(l.remise&&l.pAv!=null)?+l.pAv:(l.p==null?null:+l.p);
+    const m=out.find(x=>x.cle===l.cle&&x.p===p); if(m) m.q+=+l.q||0; else out.push({cle:l.cle,q:+l.q||0,p}); }));
+  return out;
+}
+function fusionneCotes(f){
+  f=FACT.find(z=>z.id===f.id)||f; const A=cotesAFusionner(f); if(!A.length||!peutModifierDevis(f)) return;
+  const nums=A.map(x=>x.doc.num);
+  const msg=r3(`Fusionner ${A.length+1} cotes de ${f.tiers} dans ${f.doc.num} ?\n\nLes parfums de ${nums.join(', ')} sont ajoutés à ${f.doc.num} (un même parfum au même prix : les quantités s'additionnent). Tu vérifies, puis « Enregistrer ». À ce moment-là, ${nums.join(' et ')} ${A.length>1?'seront archivées':'sera archivée'} avec la mention « fusionnée dans ${f.doc.num} ».`,
+    `Merge ${A.length+1} quotes of ${f.tiers} into ${f.doc.num}?\n\nThe perfumes of ${nums.join(', ')} are added to ${f.doc.num} (same perfume at the same price: quantities add up). Check, then "Save". At that point, ${nums.join(' and ')} will be archived as "merged into ${f.doc.num}".`,
+    `¿Fusionar ${A.length+1} cotizaciones de ${f.tiers} en ${f.doc.num}?\n\nLos perfumes de ${nums.join(', ')} se añaden a ${f.doc.num} (mismo perfume al mismo precio: las cantidades se suman). Revisa y luego «Guardar». En ese momento ${nums.join(' y ')} se archivará(n) como «fusionada en ${f.doc.num}».`);
+  if(!confirm(msg)) return;
+  ouvreModif(f);
+  PANIER=fusionneLignes([f].concat(A));
+  FUSION={into:f.id,autres:A.map(x=>x.id)};
+  const h=document.querySelector('#vov .mh h3'); if(h) h.textContent=r3('Fusion des cotes','Merging quotes','Fusión de cotizaciones')+' '+[f.doc.num].concat(nums).join(' + ');
+  peintPanier(); recap();
+  $('v-msg').textContent=r3(`${A.length+1} cotes réunies : vérifie les parfums et les prix, puis Enregistrer. ${nums.join(', ')} ${A.length>1?'seront archivées':'sera archivée'}.`,
+    `${A.length+1} quotes combined: check the perfumes and prices, then Save. ${nums.join(', ')} will be archived.`,
+    `${A.length+1} cotizaciones reunidas: revisa los perfumes y los precios y luego Guardar. ${nums.join(', ')} se archivará(n).`); $('v-msg').className='msg';
+}
 function peutModifierVente(f){
   if(!f||MODE_QUOTES) return false;
   if(typeof peut==='function'&&!peut('vendre')) return false;
@@ -8223,7 +8279,7 @@ function ouvreModif(f){
 }
 function ouvreVente(){
   _PCI=null;
-  PANIER=[]; CANDIDATS=[]; SEL=-1; EDIT=null;
+  PANIER=[]; CANDIDATS=[]; SEL=-1; EDIT=null; FUSION=null;
   { const h=document.querySelector('#vov .mh h3'); if(h) h.textContent=vf('Enregistrer une vente'); $('v-ok').textContent=vf('Enregistrer la vente'); }
   const CV=CANAUX_VENTE();
   $('v-canal').innerHTML=CV.map(c=>`<option value="${esc(c.nom)}">${esc(nomAff(c.nom))}</option>`).join('');
@@ -8537,6 +8593,13 @@ $('v-ok').onclick=()=>{
       lib:(devis?'devis '+doc.num:(doc?'facture '+doc.num+' — ':'vente saisie à la main — ')+canal)+(client?' — '+client:'')+(devis?'':' — '+num)+(doc&&!devis?' — '+(FMODES[doc.pmode]||doc.pmode)+(doc.reste>0?', reste dû '+money2(doc.reste):', payée'):'')+(pcVente&&sortis?" — flacons sortis de l'inventaire Perfume City":''),
       n:det.length,impact:devis?0:-Math.round(montant),det});
   }
+  /* la fusion (6 nov. 2026) : la cote réunie est enregistrée, les autres s'archivent avec la mention, le journal le dit */
+  if(FUSION&&old&&FUSION.into===old.id&&devis){
+    const arch=[];
+    FUSION.autres.forEach(id=>{ const x=FACT.find(z=>z.id===id); if(!x||!x.doc) return; x.doc.archive=true; x.doc.fusion=doc.num; arch.push(x.doc.num); });
+    if(arch.length){ ecrit(KFACT,FACT); JOU.push({t:new Date().toISOString(),u:USR||'(non renseigné)',act:'vente',lib:'cotes '+arch.join(', ')+' fusionnées dans '+doc.num+(client?' — '+client:''),n:0,impact:0,det:[]}); }
+  }
+  FUSION=null;
   ecrit(KJOU,JOU);
   const etaitModif=!!old; EDIT=null;
   construitV();
@@ -9640,7 +9703,7 @@ if(MODE_QUOTES) setTimeout(()=>{
         const ligne=`<tr class="qr ${on?'on':''}" data-q="${esc(f.id)}"><td class="chev">${on?'⌄':'›'}</td>
           <td class="num"><b>${esc(f.doc.num)}</b><small>${dfr(f.d)}${heure?', '+esc(heure):''}</small></td>
           <td><div class="cli">${f.tiers?`<i style="background:${couleur(f.tiers)}">${esc(initiales(f.tiers))}</i>`:''}<span><b>${esc(f.tiers||'—')}</b>${co.email||co.tel?`<small>${esc([co.email,co.tel].filter(Boolean).join(' · '))}</small>`:''}</span></div></td>
-          <td>${esc(f.par||'—')}</td><td>${esc(f.doc.note||'')}</td>
+          <td>${esc(f.par||'—')}</td><td>${f.doc.fusion?`<span class="lbl">fusionnée dans</span> <span data-nolang>${esc(f.doc.fusion)}</span>${f.doc.note?' · ':''}`:''}${esc(f.doc.note||'')}</td>
           <td class="r"><b>${money2(f.doc.total)}</b></td><td><span class="et ${e}">${LIB_ET[e]}</span></td></tr>`;
         if(!on) return ligne;
         const D=f.doc, lignes=(f.lignes||[]).filter(l=>l.q);
@@ -9657,6 +9720,7 @@ if(MODE_QUOTES) setTimeout(()=>{
           </div><div class="btns">
             ${e==='devis'?`<button class="btn pri" data-qa="conv" data-q="${esc(f.id)}">Convertir en facture</button>`:''}
             ${!D.converti?`<button class="btn" data-qa="modif" data-q="${esc(f.id)}" title="Changer les parfums, les quantités, les prix, le client ou la note">Modifier</button>`:''}
+            ${(()=>{ const A=e==='devis'?cotesAFusionner(f):[]; return A.length?`<button class="btn" data-qa="fus" data-q="${esc(f.id)}" data-nolang title="${esc(r3('Réunir dans cette cote les autres cotes créées pour ce client : '+A.map(x=>x.doc.num).join(', '),'Combine into this quote the other created quotes of this customer: '+A.map(x=>x.doc.num).join(', '),'Reunir en esta cotización las otras cotizaciones creadas para este cliente: '+A.map(x=>x.doc.num).join(', ')))}">${esc(r3(`Fusionner les ${A.length+1} cotes de ${f.tiers}`,`Merge the ${A.length+1} quotes of ${f.tiers}`,`Fusionar las ${A.length+1} cotizaciones de ${f.tiers}`))}</button>`:''; })()}
             <button class="btn" data-qa="wa" data-q="${esc(f.id)}">Envoyer par WhatsApp</button>
             <button class="btn" data-qa="mail" data-q="${esc(f.id)}">Envoyer par e-mail</button>
             <button class="btn" data-qa="voir" data-q="${esc(f.id)}">Voir / imprimer le devis</button>
@@ -9681,6 +9745,7 @@ if(MODE_QUOTES) setTimeout(()=>{
         try{ const J=lit(KJOU,[]); J.push({t:new Date().toISOString(),u:USR||'(non renseigné)',act:'vente',lib:'devis '+f.doc.num+(a==='arch'?' archivé':' désarchivé')+(f.tiers?' — '+f.tiers:''),n:0,impact:0,det:[]}); ecrit(KJOU,J); }catch(e){}
         peintDocs(); return; }
       if(a==='modif'){ ouvreModif(f); return; }
+      if(a==='fus'){ fusionneCotes(f); return; }
       dessineDoc(FACT.find(x=>x.id===f.id)||f);
       if(a==='conv') setTimeout(()=>$('doc-conv').click(),150);
       else if(a==='wa') setTimeout(()=>$('doc-wa').click(),150);
@@ -9974,7 +10039,7 @@ function dessineDoc(f){
    </div>
    <div class="parties">
      <div><h4>${devis?'Adressé à':'Facturé à'}</h4>
-       <div data-nolang><b>${esc(cl.raison||cl.nom||'')}</b>${cl.raison&&cl.nom!==cl.raison?`<br>${esc(cl.nom)}`:''}${cl.adresse?`<br>${esc(cl.adresse)}`:''}${cl.tel?`<br>${esc(cl.tel)}`:''}${cl.email?`<br>${esc(cl.email)}`:''}</div></div>
+       <div data-nolang><b>${esc(cl.raison||cl.nom||'')}</b>${[cl.raison&&cl.nom!==cl.raison?cl.nom:'',cl.adresse,cl.tel,cl.email].filter(Boolean).map(esc).join('<br>')}</div></div>
      <div><h4>Conditions</h4><div><span class="lbl">Paiement</span> : <b class="inl">${esc(FMODES[D.pmode]||D.pmode)}</b>${D.fiscal!=='taxable'&&D.fref?`<br><span class="lbl">${D.fiscal==='etranger'?'Passeport':'Resale certificate'}</span> : <span data-nolang>${esc(D.fref)}</span>`:''}${D.note?`<br><span class="lbl">Note</span> : <span data-nolang>${esc(D.note)}</span>`:''}</div></div>
    </div>
    <table><thead><tr><th>#</th><th>Article</th><th class="r">Qté</th><th class="r">Prix unit.</th><th class="r">Montant</th></tr></thead>
@@ -10026,10 +10091,63 @@ function dessineDoc(f){
   $('doc-conv').style.display=(devis&&!D.converti)?'':'none';
   { const bl=$('doc-lignes'); if(bl) bl.style.display=(devis&&typeof peutModifierDevis==='function'&&peutModifierDevis(f))?'':'none'; }
   $('docov').classList.add('on');
+  docPagine();   /* la fenêtre doit être visible pour mesurer */
   /* la feuille se photographie tout de suite, en arrière-plan : quand on clique
      WhatsApp, Email ou Partager, le PDF est déjà prêt — et « Partager » DOIT
      répondre au clic sans attendre, sinon le téléphone refuse le partage */
   docPrepare(f);
+}
+/* ---------- LA MISE EN PAGES ----------
+   5 nov. 2026 (Sam : « pas assez de marge en haut, trop de marge en bas ; si c'est sur deux pages il faut que ce soit bien
+   découpé »). La feuille continue (#doc-corps) est mesurée hors écran à la largeur exacte d'une page Letter, puis découpée
+   en pages : l'en-tête (société, client) sur la première ; les lignes du tableau l'une après l'autre, jamais coupées, avec
+   l'en-tête du tableau répété en haut de chaque page ; les totaux, le paiement et le tampon ensemble, jamais séparés ;
+   le pied de page en bas de CHAQUE page, avec « Page 1 / 2 ». Une page de suite porte un rappel « Facture PT-… — suite ». */
+const PG_H=1056, PG_PAD_H=58, PG_PAD_B=46, PG_PIED_H=56;   /* px à 96 dpi : Letter = 816 × 1056 */
+function docPagine(){
+  const src=$('doc-corps'), out=$('doc-pages'); if(!src||!out) return;
+  out.innerHTML='';
+  /* 1. mesurer : une copie de la feuille, hors écran, à la largeur d'une page */
+  const mes=document.createElement('div'); mes.className='doc pgmes'; mes.innerHTML=src.innerHTML; src.parentNode.appendChild(mes);
+  const tete=mes.querySelector('.tete'), parties=mes.querySelector('.parties'), table=mes.querySelector('table'), thead=table&&table.querySelector('thead');
+  const rows=table?[...table.querySelectorAll('tbody tr')]:[];
+  const fin=['.totaux','.pay','.tampon'].map(k=>mes.querySelector(k)).filter(Boolean);
+  const pied=mes.querySelector('.pied');
+  const h=el=>el?el.getBoundingClientRect().height:0;
+  const hTete=h(tete)+h(parties), hThead=h(thead)+4, hRows=rows.map(h), hFin=fin.reduce((a,e)=>a+h(e),0)+20+(fin.length-1)*8;
+  const H=PG_H-PG_PAD_H-PG_PAD_B-PG_PIED_H;            /* la hauteur utile d'une page */
+  const hSuite=52;
+  /* 2. répartir */
+  const pages=[]; let cur={items:[],y:0,rows:[]}; const neuve=()=>{ pages.push(cur); cur={items:[],y:hSuite,rows:[],suite:true}; };
+  cur.y=hTete; cur.items.push('tete');
+  let ouvert=false;
+  rows.forEach((tr,i)=>{
+    if(!ouvert){ if(cur.y+hThead+hRows[i]>H&&cur.rows.length===0&&cur.items.length&&cur.y>hSuite){ neuve(); } cur.y+=hThead; ouvert=true; }
+    if(cur.y+hRows[i]>H&&cur.rows.length){ neuve(); cur.y+=hThead; }
+    cur.rows.push(i); cur.y+=hRows[i];
+  });
+  if(cur.y+hFin>H&&(cur.rows.length||cur.items.length)){
+    /* les totaux passent à la page suivante : la dernière ligne les accompagne, pour qu'une page ne porte jamais les totaux tout seuls */
+    const der=cur.rows.length>1?cur.rows.pop():null; neuve();
+    if(der!=null){ cur.y+=hThead+hRows[der]; cur.rows.push(der); } }
+  cur.items.push('fin'); pages.push(cur);
+  /* 3. dessiner les pages */
+  const N=pages.length;
+  const lbl=mes.querySelector('.titre h2'), num=mes.querySelector('.titre .num'), soc=mes.querySelector('.soc b');
+  pages.forEach((pg,k)=>{
+    const d=document.createElement('div'); d.className='doc pg'; d.setAttribute('data-lang',src.getAttribute('data-lang')||'fr');
+    if(pg.suite){ const su=document.createElement('div'); su.className='suite';
+      su.innerHTML=`<b data-nolang>${soc?soc.textContent:''}</b><span><span class="lbl">${lbl?lbl.textContent:''}</span> <span data-nolang>${num?num.textContent:''}</span> — <span class="lbl">suite</span></span>`; d.appendChild(su); }
+    if(pg.items.includes('tete')){ if(tete) d.appendChild(tete.cloneNode(true)); if(parties) d.appendChild(parties.cloneNode(true)); }
+    if(pg.rows.length&&table){ const t=document.createElement('table'); if(thead) t.appendChild(thead.cloneNode(true)); const tb=document.createElement('tbody'); pg.rows.forEach(i=>tb.appendChild(rows[i].cloneNode(true))); t.appendChild(tb); d.appendChild(t); }
+    if(pg.items.includes('fin')) fin.forEach(e=>d.appendChild(e.cloneNode(true)));
+    const p=pied?pied.cloneNode(true):document.createElement('div'); p.className='pied';
+    const texte=document.createElement('div'); while(p.firstChild) texte.appendChild(p.firstChild); p.appendChild(texte);
+    const n=document.createElement('span'); n.className='pgnum'; n.innerHTML=`<span class="lbl">Page</span> <span data-nolang>${k+1} / ${N}</span>`; p.appendChild(n);
+    d.appendChild(p); out.appendChild(d);
+  });
+  mes.remove();
+  try{ if(typeof lgApplique==='function') lgApplique(out); }catch(e){}
 }
 var _PREP=null;   /* {f, html, canvas, pdf} du document ouvert */
 function docPrepare(f){
@@ -10114,28 +10232,26 @@ async function _pdfLibs(){
   if(!window.jspdf) await charge('lib/pdf/jspdf.umd.min.js');
 }
 /* la feuille photographiée une fois ; le PDF et l'aperçu en sortent tous les deux */
+/* 5 nov. 2026 : chaque page de l'écran est photographiée entière — plus de découpe au ciseau dans une feuille continue */
 async function docCanvas(){
   await _pdfLibs();
-  const el=$('doc-corps');
-  return await window.html2canvas(el,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,windowWidth:Math.max(860,el.scrollWidth)});
+  let pages=[...document.querySelectorAll('#doc-pages .doc.pg')];
+  if(!pages.length){ docPagine(); pages=[...document.querySelectorAll('#doc-pages .doc.pg')]; }
+  const out=[];
+  for(const el of pages) out.push(await window.html2canvas(el,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,width:816,height:1056,windowWidth:900}));
+  return out;
 }
-function canvasPDF(c){
+function canvasPDF(cs){
   const {jsPDF}=window.jspdf;
   const pdf=new jsPDF({unit:'pt',format:'letter',orientation:'portrait',compress:true});
-  const W=pdf.internal.pageSize.getWidth(), H=pdf.internal.pageSize.getHeight(), m=28;
-  const w=W-2*m, ratio=w/c.width, hPage=(H-2*m)/ratio;   /* hauteur d'une page en pixels du canevas */
-  for(let y=0, n=0; y<c.height; y+=hPage, n++){
-    const h=Math.min(hPage,c.height-y);
-    const part=document.createElement('canvas'); part.width=c.width; part.height=Math.ceil(h);
-    part.getContext('2d').drawImage(c,0,y,c.width,h,0,0,c.width,h);
-    if(n) pdf.addPage();
-    pdf.addImage(part.toDataURL('image/jpeg',0.92),'JPEG',m,m,w,h*ratio);
-  }
+  const W=pdf.internal.pageSize.getWidth(), H=pdf.internal.pageSize.getHeight();
+  (Array.isArray(cs)?cs:[cs]).forEach((c,n)=>{ if(n) pdf.addPage(); pdf.addImage(c.toDataURL('image/jpeg',0.92),'JPEG',0,0,W,H); });
   return pdf.output('blob');
 }
 /* l'aperçu : la première page, réduite à 1000 px de large — assez pour être lue
    sur un téléphone, assez léger pour la carte WhatsApp */
-function canvasPNG(c){
+function canvasPNG(cs){
+  const c=Array.isArray(cs)?cs[0]:cs;
   const w=1000, ratio=w/c.width, h=Math.min(c.height*ratio, 1300);
   const p=document.createElement('canvas'); p.width=w; p.height=Math.round(h);
   p.getContext('2d').drawImage(c,0,0,c.width,h/ratio,0,0,w,h);

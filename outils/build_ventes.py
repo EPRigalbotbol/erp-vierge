@@ -2444,6 +2444,39 @@ function recap(){
    se modifient : une vente venue d'Amazon, du site ou de la caisse se corrige à la source,
    et une vente déjà remboursée ne bouge plus. */
 let EDIT=null;
+/* 6 nov. 2026 (Igal pour Sam : « fusionner les cotes qu'il a faites pour le même client ») : la cote dans laquelle on réunit
+   les autres, et les autres (qui seront archivées « fusionnée dans … » une fois la cote réunie enregistrée). */
+let FUSION=null;
+/* les autres cotes « créées » (ni converties, ni archivées, ni Lightspeed) du même client */
+function cotesAFusionner(f){
+  if(!f||!f.doc||f.doc.type!=='devis'||f.doc.converti||f.doc.archive||f.lsq) return [];
+  const k=cNorm(f.tiers); if(!k) return [];
+  return FACT.filter(x=>x&&x.id!==f.id&&x.doc&&x.doc.type==='devis'&&!x.doc.converti&&!x.doc.archive&&!x.lsq&&cNorm(x.tiers)===k)
+    .sort((a,b)=>String(a.t||a.d||'').localeCompare(String(b.t||b.d||'')));
+}
+/* réunir les lignes : un même parfum au même prix additionne ses quantités ; sinon la ligne reste à part */
+function fusionneLignes(cotes){
+  const out=[];
+  cotes.forEach(c=>(c.lignes||[]).filter(l=>l.cle&&l.q).forEach(l=>{ const p=(l.remise&&l.pAv!=null)?+l.pAv:(l.p==null?null:+l.p);
+    const m=out.find(x=>x.cle===l.cle&&x.p===p); if(m) m.q+=+l.q||0; else out.push({cle:l.cle,q:+l.q||0,p}); }));
+  return out;
+}
+function fusionneCotes(f){
+  f=FACT.find(z=>z.id===f.id)||f; const A=cotesAFusionner(f); if(!A.length||!peutModifierDevis(f)) return;
+  const nums=A.map(x=>x.doc.num);
+  const msg=r3(`Fusionner ${A.length+1} cotes de ${f.tiers} dans ${f.doc.num} ?\n\nLes parfums de ${nums.join(', ')} sont ajoutés à ${f.doc.num} (un même parfum au même prix : les quantités s'additionnent). Tu vérifies, puis « Enregistrer ». À ce moment-là, ${nums.join(' et ')} ${A.length>1?'seront archivées':'sera archivée'} avec la mention « fusionnée dans ${f.doc.num} ».`,
+    `Merge ${A.length+1} quotes of ${f.tiers} into ${f.doc.num}?\n\nThe perfumes of ${nums.join(', ')} are added to ${f.doc.num} (same perfume at the same price: quantities add up). Check, then "Save". At that point, ${nums.join(' and ')} will be archived as "merged into ${f.doc.num}".`,
+    `¿Fusionar ${A.length+1} cotizaciones de ${f.tiers} en ${f.doc.num}?\n\nLos perfumes de ${nums.join(', ')} se añaden a ${f.doc.num} (mismo perfume al mismo precio: las cantidades se suman). Revisa y luego «Guardar». En ese momento ${nums.join(' y ')} se archivará(n) como «fusionada en ${f.doc.num}».`);
+  if(!confirm(msg)) return;
+  ouvreModif(f);
+  PANIER=fusionneLignes([f].concat(A));
+  FUSION={into:f.id,autres:A.map(x=>x.id)};
+  const h=document.querySelector('#vov .mh h3'); if(h) h.textContent=r3('Fusion des cotes','Merging quotes','Fusión de cotizaciones')+' '+[f.doc.num].concat(nums).join(' + ');
+  peintPanier(); recap();
+  $('v-msg').textContent=r3(`${A.length+1} cotes réunies : vérifie les parfums et les prix, puis Enregistrer. ${nums.join(', ')} ${A.length>1?'seront archivées':'sera archivée'}.`,
+    `${A.length+1} quotes combined: check the perfumes and prices, then Save. ${nums.join(', ')} will be archived.`,
+    `${A.length+1} cotizaciones reunidas: revisa los perfumes y los precios y luego Guardar. ${nums.join(', ')} se archivará(n).`); $('v-msg').className='msg';
+}
 function peutModifierVente(f){
   if(!f||MODE_QUOTES) return false;
   if(typeof peut==='function'&&!peut('vendre')) return false;
@@ -2496,7 +2529,7 @@ function ouvreModif(f){
 }
 function ouvreVente(){
   _PCI=null;
-  PANIER=[]; CANDIDATS=[]; SEL=-1; EDIT=null;
+  PANIER=[]; CANDIDATS=[]; SEL=-1; EDIT=null; FUSION=null;
   { const h=document.querySelector('#vov .mh h3'); if(h) h.textContent=vf('Enregistrer une vente'); $('v-ok').textContent=vf('Enregistrer la vente'); }
   const CV=CANAUX_VENTE();
   $('v-canal').innerHTML=CV.map(c=>`<option value="${esc(c.nom)}">${esc(nomAff(c.nom))}</option>`).join('');
@@ -2810,6 +2843,13 @@ $('v-ok').onclick=()=>{
       lib:(devis?'devis '+doc.num:(doc?'facture '+doc.num+' — ':'vente saisie à la main — ')+canal)+(client?' — '+client:'')+(devis?'':' — '+num)+(doc&&!devis?' — '+(FMODES[doc.pmode]||doc.pmode)+(doc.reste>0?', reste dû '+money2(doc.reste):', payée'):'')+(pcVente&&sortis?" — flacons sortis de l'inventaire Perfume City":''),
       n:det.length,impact:devis?0:-Math.round(montant),det});
   }
+  /* la fusion (6 nov. 2026) : la cote réunie est enregistrée, les autres s'archivent avec la mention, le journal le dit */
+  if(FUSION&&old&&FUSION.into===old.id&&devis){
+    const arch=[];
+    FUSION.autres.forEach(id=>{ const x=FACT.find(z=>z.id===id); if(!x||!x.doc) return; x.doc.archive=true; x.doc.fusion=doc.num; arch.push(x.doc.num); });
+    if(arch.length){ ecrit(KFACT,FACT); JOU.push({t:new Date().toISOString(),u:USR||'(non renseigné)',act:'vente',lib:'cotes '+arch.join(', ')+' fusionnées dans '+doc.num+(client?' — '+client:''),n:0,impact:0,det:[]}); }
+  }
+  FUSION=null;
   ecrit(KJOU,JOU);
   const etaitModif=!!old; EDIT=null;
   construitV();
@@ -3702,7 +3742,7 @@ if(MODE_QUOTES) setTimeout(()=>{
         const ligne=`<tr class="qr ${on?'on':''}" data-q="${esc(f.id)}"><td class="chev">${on?'⌄':'›'}</td>
           <td class="num"><b>${esc(f.doc.num)}</b><small>${dfr(f.d)}${heure?', '+esc(heure):''}</small></td>
           <td><div class="cli">${f.tiers?`<i style="background:${couleur(f.tiers)}">${esc(initiales(f.tiers))}</i>`:''}<span><b>${esc(f.tiers||'—')}</b>${co.email||co.tel?`<small>${esc([co.email,co.tel].filter(Boolean).join(' · '))}</small>`:''}</span></div></td>
-          <td>${esc(f.par||'—')}</td><td>${esc(f.doc.note||'')}</td>
+          <td>${esc(f.par||'—')}</td><td>${f.doc.fusion?`<span class="lbl">fusionnée dans</span> <span data-nolang>${esc(f.doc.fusion)}</span>${f.doc.note?' · ':''}`:''}${esc(f.doc.note||'')}</td>
           <td class="r"><b>${money2(f.doc.total)}</b></td><td><span class="et ${e}">${LIB_ET[e]}</span></td></tr>`;
         if(!on) return ligne;
         const D=f.doc, lignes=(f.lignes||[]).filter(l=>l.q);
@@ -3719,6 +3759,7 @@ if(MODE_QUOTES) setTimeout(()=>{
           </div><div class="btns">
             ${e==='devis'?`<button class="btn pri" data-qa="conv" data-q="${esc(f.id)}">Convertir en facture</button>`:''}
             ${!D.converti?`<button class="btn" data-qa="modif" data-q="${esc(f.id)}" title="Changer les parfums, les quantités, les prix, le client ou la note">Modifier</button>`:''}
+            ${(()=>{ const A=e==='devis'?cotesAFusionner(f):[]; return A.length?`<button class="btn" data-qa="fus" data-q="${esc(f.id)}" data-nolang title="${esc(r3('Réunir dans cette cote les autres cotes créées pour ce client : '+A.map(x=>x.doc.num).join(', '),'Combine into this quote the other created quotes of this customer: '+A.map(x=>x.doc.num).join(', '),'Reunir en esta cotización las otras cotizaciones creadas para este cliente: '+A.map(x=>x.doc.num).join(', ')))}">${esc(r3(`Fusionner les ${A.length+1} cotes de ${f.tiers}`,`Merge the ${A.length+1} quotes of ${f.tiers}`,`Fusionar las ${A.length+1} cotizaciones de ${f.tiers}`))}</button>`:''; })()}
             <button class="btn" data-qa="wa" data-q="${esc(f.id)}">Envoyer par WhatsApp</button>
             <button class="btn" data-qa="mail" data-q="${esc(f.id)}">Envoyer par e-mail</button>
             <button class="btn" data-qa="voir" data-q="${esc(f.id)}">Voir / imprimer le devis</button>
@@ -3743,6 +3784,7 @@ if(MODE_QUOTES) setTimeout(()=>{
         try{ const J=lit(KJOU,[]); J.push({t:new Date().toISOString(),u:USR||'(non renseigné)',act:'vente',lib:'devis '+f.doc.num+(a==='arch'?' archivé':' désarchivé')+(f.tiers?' — '+f.tiers:''),n:0,impact:0,det:[]}); ecrit(KJOU,J); }catch(e){}
         peintDocs(); return; }
       if(a==='modif'){ ouvreModif(f); return; }
+      if(a==='fus'){ fusionneCotes(f); return; }
       dessineDoc(FACT.find(x=>x.id===f.id)||f);
       if(a==='conv') setTimeout(()=>$('doc-conv').click(),150);
       else if(a==='wa') setTimeout(()=>$('doc-wa').click(),150);

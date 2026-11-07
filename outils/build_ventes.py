@@ -1249,7 +1249,12 @@ const canauxReg=()=>{ let L=(REG.canaux&&REG.canaux.length?REG.canaux:CANAUX_DEF
   if((REG.canauxV||0)<3) L=L.filter(c=>c.id!=='boutique');
   /* 17 oct. 2026 (Igal) : Shopify prend 3 % comme WooCommerce → Perfume City à 3 % (lecture seule ; Catalogue/Réglages l'écrivent une fois) */
   if(!REG.pcCom3) L=L.map(c=>(c.id==='perfumecity'&&!(+c.com))?Object.assign({},c,{com:3}):c);
+  /* 7 nov. 2026 (Igal) : les commissions réelles (sites 2,9 % + 0,30 $ ; Perfume City 2,5 % + 0,10 $ boutique, 2,7 % + 0,30 $ en ligne), lues tant que Réglages ne les a pas écrites */
+  if(!REG.comV4) L=L.map((c=>{ if(!c) return c; if(c.id==='site'||c.id==='sitegros') return Object.assign({},c,{com:2.9,fixe:0.3}); if(c.id==='perfumecity') return Object.assign({},c,{com:2.5,fixe:0.1,comLigne:2.7,fixeLigne:0.3}); return c; }));
   return L; };
+/* la part FIXE par transaction (0,30 $, 0,10 $…), retirée une fois par commande et répartie entre ses lignes */
+function fixeDe(v){ const c=canauxReg().find(x=>String(x.nom).toLowerCase()===String(v.canal||'').toLowerCase()); if(!c) return 0;
+  const pcL=String(v.auto||'')==='shopify-pc'&&v.ou==='en ligne'; const f=pcL?(c.fixeLigne!=null&&c.fixeLigne!==''?c.fixeLigne:c.fixe):c.fixe; return (f==null||f===''||isNaN(+f))?0:Math.max(0,+f); }
 /* la vente en gros et la caisse ne sont pas des canaux de prix : ce sont des façons de vendre */
 const CANAUX_VENTE=()=>[...canauxReg().map(c=>({id:c.id,nom:c.nom,com:c.com||0,maj:c.maj||0,base:c.base||''})),
   {id:'gros',nom:'Gros',com:0,maj:0},{id:'caisse',nom:'Caisse Lightspeed',com:0,maj:0},{id:'autre',nom:'Autre',com:0,maj:0}];
@@ -1281,7 +1286,7 @@ function identCanal(nom){
 /* 7 nov. 2026 (Igal : « Perfume City a deux types de vente sur Shopify, boutique et en ligne ») : commission et envoi propres
    à la vente EN LIGNE de Perfume City (Réglages, ligne « Perfume City — en ligne ») ; la boutique garde ceux du canal. */
 function comPcLigne(){ const c=canauxReg().find(x=>x.id==='perfumecity'); if(c&&c.comLigne!=null&&c.comLigne!==''&&!isNaN(+c.comLigne)) return Math.max(0,+c.comLigne); return comCanal(c?c.nom:'Perfume City'); }
-function envoiPc(){ const E=(REG&&REG.envois)||{}; const v=E['shopify-pc']; return (v==null||v===''||isNaN(+v))?0:Math.max(0,+v); }
+function envoiPc(){ const E=(REG&&REG.envois)||{}; const v=E['shopify-pc']; return (v==null||v===''||isNaN(+v))?(REG.comV4?0:8):Math.max(0,+v); }
 function comCanal(nom){
   if(!nom||nom===NP) return 0;
   const L=CANAUX_VENTE();
@@ -1415,6 +1420,9 @@ vRepartit(V, v=>{ const src=String(v.auto||''); if(!/^(amazon|woocommerce|woocom
    commission. Taux dans Réglages (REG.carteLS, 2,6 % par défaut), appliqué à l'affichage : changer le taux recalcule
    toutes les ventes, passées comprises. Une seule fois par vente, répartie entre ses lignes au prorata du montant (7 nov. 2026 : avant, tout tombait sur
    la première ligne, et un parfum pouvait passer « vendu à perte » à cause du panier des autres). */
+vRepartit(V, v=>(!v.ret&&fixeDe(v)>0)?(v.fid?'f|'+v.fid+'|'+(v.cmd||''):'a|'+(v.aid||String(v.auto||'')+'|'+v.num)):null,
+  v=>({fixeMt:fixeDe(v)}),
+  (v,x)=>{ v.fixeMt=x.fixeMt; v.comMt=Math.round((v.comMt+x.fixeMt)*100)/100; v.net=v.mt-v.comMt; if(v.mg!=null){ v.mg-=x.fixeMt; v.pct=v.mt!==0?v.mg/Math.abs(v.mt)*100:null; } });
 vRepartit(V, v=>(String(v.auto||'')==='shopify-pc'&&v.ou==='en ligne'&&!v.ret&&envoiPc()>0)?'f|'+(v.fid||v.num):null,
   v=>({portMt:0, envoiMt:envoiPc()}),
   (v,x)=>{ v.portMt=x.portMt; v.envoiMt=x.envoiMt; if(v.mg!=null){ v.mg+=x.portMt-x.envoiMt; v.pct=v.mt!==0?v.mg/Math.abs(v.mt)*100:null; } });
@@ -1606,10 +1614,10 @@ function blocsVente(grp,x,enAttente){
   const carte=grp.reduce((a,z)=>a+(z.carteMt||0),0), gc=grp.find(z=>z.carteBase)||{};
   const sansPa=grp.filter(z=>z.pa==null), achat=grp.filter(z=>z.pa!=null).reduce((a,z)=>a+z.pa*(z.q||0),0);
   const mg=sansPa.length?null:(vente-com+port-envoi-carte-achat), pct=(mg!=null&&vente)?mg/Math.abs(vente)*100:null;
-  const pctCom=grp.find(z=>z.com)?.com;
+  const pctCom=grp.find(z=>z.com)?.com, fixeCom=grp.reduce((a,z)=>a+(z.fixeMt||0),0);
   const calc=`<div class="fv-calc">
     <div class="pl"><span>${T('Prix de vente','Selling price','Precio de venta')} · ${nf(q)} ${T('flacon(s)','bottle(s)','frasco(s)')}</span><b>${money2(vente)}</b></div>
-    ${com?`<div class="pl"><span>${T('Commission','Fee','Comisión')} ${esc(canal)}${pctCom?' · '+pctCom+' %':''}</span><b>${fvM(-com,true)}</b></div>`:''}
+    ${com?`<div class="pl"><span>${T('Commission','Fee','Comisión')} ${esc(canal)}${pctCom?' · '+pctCom+' %':''}${fixeCom?' + '+money2(fixeCom)+' '+T('par transaction','per transaction','por transacción'):''}</span><b>${fvM(-com,true)}</b></div>`:''}
     ${port?`<div class="pl"><span>${T('Port payé par le client','Shipping paid by the customer','Envío pagado por el cliente')}</span><b>${fvM(port,true)}</b></div>`:''}
     ${envoi?`<div class="pl"><span>${T("Coût de l'envoi (une fois par commande, réglé dans Réglages)",'Shipping cost (once per order, set in Settings)','Coste del envío (una vez por pedido, en Ajustes)')}</span><b>${fvM(-envoi,true)}</b></div>`:''}
     ${carte?`<div class="pl"><span>${T('Frais de carte Lightspeed','Lightspeed card fees','Comisión de tarjeta Lightspeed')} · ${carteTaux()} % ${T('de','of','de')} ${money2(gc.carteBase||0)} ${T('payés par carte (réglé dans Réglages)','paid by card (set in Settings)','pagados con tarjeta (en Ajustes)')}</span><b>${fvM(-carte,true)}</b></div>`:''}

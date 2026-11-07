@@ -1726,3 +1726,20 @@ MOTS3.update({
     "Coche les parfums à racheter : ils rejoignent la liste « Parfums à racheter », plus haut.": ["Check the perfumes to reorder: they join the “Perfumes to reorder” list, above.", "Marca los perfumes por recomprar: se añaden a la lista «Perfumes por recomprar», más arriba."],
     "Excel impossible : {q}": ["Excel failed: {q}", "Excel imposible: {q}"],
 })
+
+# ---- Réglages › Canaux, 7 nov. 2026 : part fixe par transaction, Perfume City boutique / en ligne ----
+MOTS3.update({
+    "Fixe par transaction": ["Fixed per transaction", "Fijo por transacción"],
+    "— boutique (caisse Shopify POS)": ["— store (Shopify POS till)", "— tienda (caja Shopify POS)"],
+    "en ligne (perfumeinthecity.com)": ["<1>online</1> (perfumeinthecity.com)", "<1>en línea</1> (perfumeinthecity.com)"],
+    "Fixe par transaction : ce que la plateforme prend en plus sur chaque commande (0,30 $ sur les sites, par exemple), quel que soit le nombre de parfums ; retiré une fois par commande et réparti entre ses parfums.":
+        ["<1>Fixed per transaction</1>: what the platform takes on top of each order ($0.30 on the websites, for example), whatever the number of perfumes; taken once per order and spread across its perfumes.",
+         "<1>Fijo por transacción</1>: lo que la plataforma cobra además en cada pedido (0,30 $ en las webs, por ejemplo), sea cual sea el número de perfumes; se resta una vez por pedido y se reparte entre sus perfumes."],
+    "Perfume City : deux lignes. La première, c'est la boutique (la caisse Shopify POS, pas d'envoi) ; la seconde, « en ligne », c'est perfumeinthecity.com, avec sa propre commission et son coût d'envoi par commande (vide = 0). L'ERP sait d'où vient chaque commande Shopify et applique la bonne ligne ; changer une commission recalcule toutes les ventes, passées comprises.":
+        ["<1>Perfume City</1>: two lines. The first is the store (the Shopify POS till, no shipping); the second, “online”, is perfumeinthecity.com, with its own commission and shipping cost per order (empty = 0). The ERP knows where each Shopify order comes from and applies the right line; changing a commission recalculates every sale, past ones included.",
+         "<1>Perfume City</1>: dos líneas. La primera es la tienda (la caja Shopify POS, sin envío); la segunda, «en línea», es perfumeinthecity.com, con su propia comisión y su coste de envío por pedido (vacío = 0). El ERP sabe de dónde viene cada pedido Shopify y aplica la línea correcta; cambiar una comisión recalcula todas las ventas, pasadas incluidas."],
+    "part fixe par transaction": ["fixed part per transaction", "parte fija por transacción"],
+    "part fixe par transaction (vente en ligne)": ["fixed part per transaction (online sale)", "parte fija por transacción (venta en línea)"],
+    "commission prélevée par le canal (vente en ligne)": ["commission taken by the channel (online sale)", "comisión que cobra el canal (venta en línea)"],
+    "coût d'un envoi — {q} (en ligne)": ["cost of one shipment — {q} (online)", "coste de un envío — {q} (en línea)"],
+})

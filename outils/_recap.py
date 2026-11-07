@@ -102,7 +102,14 @@ function rcCanauxReg(){ let L=(REG.canaux&&REG.canaux.length?REG.canaux:RC_CANAU
   if((REG.canauxV||0)<2){ L=L.filter(c=>c.id!=='shopify'); if(!L.some(c=>c.id==='sitegros')){ const i=L.findIndex(c=>c.id==='site'); L=L.slice(); L.splice(i>=0?i+1:L.length,0,RC_CANAUX_DEF[1]); } }
   if((REG.canauxV||0)<3) L=L.filter(c=>c.id!=='boutique');
   if(!REG.pcCom3) L=L.map(c=>(c.id==='perfumecity'&&!(+c.com))?Object.assign({},c,{com:3}):c);
+  /* 7 nov. 2026 (Igal) : les commissions réelles — sites WooCommerce 2,9 % + 0,30 $ par transaction ; Perfume City boutique 2,5 % + 0,10 $,
+     en ligne 2,7 % + 0,30 $ (et 8 $ d'envoi). Valables depuis le début de l'ERP : lues ici tant que Réglages ne les a pas écrites (comV4). */
+  if(!REG.comV4) L=L.map(RC_COM_V4);
   return L; }
+const RC_COM_V4=(c=>{ if(!c) return c; if(c.id==='site'||c.id==='sitegros') return Object.assign({},c,{com:2.9,fixe:0.3}); if(c.id==='perfumecity') return Object.assign({},c,{com:2.5,fixe:0.1,comLigne:2.7,fixeLigne:0.3}); return c; });
+/* la part FIXE par transaction (0,30 $, 0,10 $…), retirée une fois par commande et répartie entre ses lignes */
+function rcFixeDe(v){ const c=rcCanauxReg().find(x=>String(x.nom).toLowerCase()===String(v.canal||'').toLowerCase()); if(!c) return 0;
+  const f=rcPcEnLigne(v)?(c.fixeLigne!=null&&c.fixeLigne!==''?c.fixeLigne:c.fixe):c.fixe; return (f==null||f===''||isNaN(+f))?0:Math.max(0,+f); }
 function rcCom(nom){
   const n=String(nom||'').toLowerCase(); if(!n||n==='(non précisé)') return 0;
   const c=rcCanauxReg().find(x=>String(x.nom).toLowerCase()===n); if(c) return +c.com||0;
@@ -115,7 +122,7 @@ function rcCom(nom){
 const rcPcCanal=()=>rcCanauxReg().find(c=>c.id==='perfumecity');
 const rcPcEnLigne=v=>!!(v&&String(v.auto||'')==='shopify-pc'&&v.ou==='en ligne');
 function rcComDe(v){ if(rcPcEnLigne(v)){ const c=rcPcCanal(); if(c&&c.comLigne!=null&&c.comLigne!==''&&!isNaN(+c.comLigne)) return Math.max(0,+c.comLigne); } return rcCom(v.canal); }
-const rcEnvoiPc=()=>{ const E=(REG&&REG.envois)||{}; const v=E['shopify-pc']; return (v==null||v===''||isNaN(+v))?0:Math.max(0,+v); };
+const rcEnvoiPc=()=>{ const E=(REG&&REG.envois)||{}; const v=E['shopify-pc']; return (v==null||v===''||isNaN(+v))?(REG.comV4?0:8):Math.max(0,+v); };
 const rcPaAct=cle=>{ const m=MOD[cle]; if(m&&m.pa!=null) return +m.pa; const v=(IDX[cle]||[])[3]; return v==null?null:+v; };
 const rcCarteTaux=()=>{ const v=REG&&REG.carteLS; return (v==null||v===''||isNaN(+v))?2.6:Math.max(0,+v); };
 const rcEnvoi=src=>{ const E=(REG&&REG.envois)||{}; const v=E[src]; return (v==null||v===''||isNaN(+v))?8:Math.max(0,+v); };
@@ -152,6 +159,10 @@ function rcLignes(){
     v=>{ const src=String(v.auto||''); let port=v.portF; if(port==null&&/^woocommerce/.test(src)&&typeof faStatutSite==='function'){ const st=faStatutSite(src,v.num); if(st&&+st.port>0) port=+st.port; }
       return {portMt:+port>0?+port:0, envoiMt:rcEnvoi(src)}; },
     (v,x)=>{ v.portMt=x.portMt; v.envoiMt=x.envoiMt; if(v.mg!=null) v.mg+=x.portMt-x.envoiMt; });
+  /* la part fixe de la commission, une fois par transaction (commande), répartie entre ses lignes ; comptée dans la commission */
+  rcRepartit(L, v=>(!v.ret&&rcFixeDe(v)>0)?(v.fid?'f|'+v.fid+'|'+(v.cmd||''):'a|'+String(v.auto||'')+'|'+v.num):null,
+    v=>({fixeMt:rcFixeDe(v)}),
+    (v,x)=>{ v.fixeMt=x.fixeMt; v.comMt=Math.round((v.comMt+x.fixeMt)*100)/100; v.net=v.mt-v.comMt; if(v.mg!=null) v.mg-=x.fixeMt; });
   rcRepartit(L, v=>(rcPcEnLigne(v)&&!v.ret&&rcEnvoiPc()>0)?'f|'+(v.fid||v.num):null,
     v=>({portMt:0, envoiMt:rcEnvoiPc()}),
     (v,x)=>{ v.portMt=x.portMt; v.envoiMt=x.envoiMt; if(v.mg!=null) v.mg+=x.portMt-x.envoiMt; });

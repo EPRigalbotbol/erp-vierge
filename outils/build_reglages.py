@@ -142,6 +142,8 @@ P_CANAUX = ('<p><b>Commission</b> : ce que la plateforme garde sur chaque vente.
   '(prix d\'achat + seuil de marge, commission comprise).</p>'
   '<p><b>Envoi</b> : ce qu\'un colis coûte à Sam, par commande, sur chaque canal qui expédie. Il est retiré de la '
   'marge de la commande ; le port payé par le client sur le site, lui, y est ajouté. Vide = 8 $.</p>'
+  '<p><b>Fixe par transaction</b> : ce que la plateforme prend en plus sur chaque commande (0,30 $ sur les sites, par exemple), '
+  'quel que soit le nombre de parfums ; retiré une fois par commande et réparti entre ses parfums.</p>'
   '<p><b>Perfume City</b> : deux lignes. La première, c\'est la boutique (la caisse Shopify POS, pas d\'envoi) ; la seconde, « en ligne », '
   'c\'est perfumeinthecity.com, avec sa propre commission et son coût d\'envoi par commande (vide = 0). L\'ERP sait d\'où vient chaque '
   'commande Shopify et applique la bonne ligne ; changer une commission recalcule toutes les ventes, passées comprises.</p>'
@@ -251,10 +253,8 @@ CORPS = r'''
 <section class="rg" id="sec-envois">
   <h3>Canaux de vente et règle de prix <button class="q" type="button" aria-expanded="false" title="Explications">?</button></h3>
   <div class="plus" hidden>''' + P_CANAUX + r'''</div>
-  <table class="can"><thead><tr><th>Canal</th><th class="r">Commission</th><th class="r">Envoi par commande</th>
-    <th class="r">Prix</th><th class="r">Marge nette</th><th class="r">Plancher</th><th></th></tr></thead>
-    <tbody id="canaux"></tbody>
-    <caption>Prix, marge nette et plancher : un exemple, pas tes chiffres — un parfum acheté 50 $, vendu seul dans sa commande, 89 $ au retail, 62 $ en gros.</caption></table>
+  <table class="can"><thead><tr><th>Canal</th><th class="r">Commission</th><th class="r">Fixe par transaction</th><th class="r">Envoi par commande</th><th></th></tr></thead>
+    <tbody id="canaux"></tbody></table>
   <div style="padding:2px 0 12px"><button class="btn" id="can-add">+ Ajouter un canal</button></div>
 </section>
 
@@ -491,35 +491,35 @@ const envDe=k=>{ const E=REG.envois||{}; return (E[k]==null||E[k]==='')?8:+E[k];
 /* 25 oct. 2026 : la majoration ne s'affiche plus et passe à 0, une seule fois (repère majOff). */
 (function(){ try{ if(REG.majOff) return; if(Array.isArray(REG.canaux)) REG.canaux=REG.canaux.map(c=>c?Object.assign({},c,{maj:0}):c);
   REG.majOff=1; ecrit(KREG,REG); }catch(e){} })();
+/* 7 nov. 2026 (Igal) : les commissions RÉELLES des plateformes, posées une fois (repère comV4) et valables depuis le début de l'ERP
+   (les marges se recalculent à l'affichage) : sites WooCommerce 2,9 % + 0,30 $ par transaction ; Perfume City = deux canaux,
+   vente en boutique 2,5 % + 0,10 $ par transaction sans envoi, vente en ligne 2,7 % + 0,30 $ par transaction et 8 $ d'envoi. */
+(function(){ try{ if(REG.comV4) return; if(!Array.isArray(REG.canaux)||!REG.canaux.length) REG.canaux=JSON.parse(JSON.stringify(CANAUX_DEF));
+  REG.canaux=REG.canaux.map(c=>{ if(!c) return c; if(c.id==='site'||c.id==='sitegros') return Object.assign({},c,{com:2.9,fixe:0.3}); if(c.id==='perfumecity') return Object.assign({},c,{com:2.5,fixe:0.1,comLigne:2.7,fixeLigne:0.3}); return c; });
+  REG.envois=Object.assign({},REG.envois||{},{'shopify-pc':8}); REG.comV4=1; ecrit(KREG,REG);
+  logReg('comV4','commissions réelles des canaux — sites 2,9 % + 0,30 $ ; Perfume City boutique 2,5 % + 0,10 $, en ligne 2,7 % + 0,30 $ et 8 $ d\'envoi','(avant)','(posées)'); }catch(e){} })();
+const fx=v=>(v==null||v===''||isNaN(+v))?0:Math.max(0,+v);
 function dessineCanaux(){
   if(!Array.isArray(REG.canaux)||!REG.canaux.length) REG.canaux=JSON.parse(JSON.stringify(CANAUX_DEF));
-  const pa=50, pvr=89, pvw=62;
   $('canaux').innerHTML=REG.canaux.map((c,i)=>{
-    const ek=ENV_DE(c), env=ek?envDe(ek):0;
-    const v=r2(c.base==='pvw'?pvw:pvr), net=(v*(1-(c.com||0)/100)-pa-env)/v*100;
-    const den=1-(c.com||0)/100-REG.margeMin/100, pl=den>0?r2(pa/den):null;
+    const ek=ENV_DE(c), env=ek?envDe(ek):0, fixe=fx(c.fixe);
     return `<tr data-i="${i}">
-      <td><input type="text" data-k="nom" value="${esc(c.nom)}"></td>
+      <td><input type="text" data-k="nom" value="${esc(c.nom)}">${c.id==='perfumecity'?' <span class="bs">— boutique (caisse Shopify POS)</span>':''}</td>
       <td class="r"><input type="number" data-k="com" min="0" max="60" step="0.1" value="${c.com||0}"> %</td>
+      <td class="r"><input type="number" data-k="fixe" min="0" max="60" step="0.01" value="${fixe}"> $</td>
       <td class="r">${ek?`<input type="number" data-k="env" id="env-${ek}" min="0" step="0.5" value="${env}"> $`:'<span class="bs">n\'expédie pas</span>'}</td>
-      <td class="r ex"><b>${v.toFixed(2).replace('.',',')} $</b> <span class="bs">${c.base==='pvw'?'gros':'retail'}</span></td>
-      <td class="r ex" style="color:${net<REG.margeMin?'var(--crit)':'var(--good)'}"><b>${net.toFixed(1).replace('.',',')} %</b></td>
-      <td class="r ex">${pl!=null?pl.toFixed(2).replace('.',',')+' $':'—'}</td>
       <td class="r">${REG.canaux.length>1?`<button class="x" data-del="${i}" title="Retirer ce canal">&times;</button>`:''}</td></tr>`
     /* 7 nov. 2026 (Igal : « Perfume City a deux types de vente sur Shopify, boutique et en ligne ») : la ligne du canal, c'est la
        BOUTIQUE (caisse POS, n'expédie pas) ; une seconde ligne règle la vente EN LIGNE (perfumeinthecity.com) : sa commission
        et son coût d'envoi par commande (0 tant que rien n'est réglé). L'ERP reconnaît l'origine de chaque commande Shopify. */
-    +(c.id==='perfumecity'?(()=>{ const comL=(c.comLigne==null||c.comLigne==='')?(c.com||0):+c.comLigne, envL=envPc();
-        const netL=(v*(1-comL/100)-pa-envL)/v*100, denL=1-comL/100-REG.margeMin/100, plL=denL>0?r2(pa/denL):null;
-        return `<tr data-i="${i}" class="sous"><td><span class="bs">${esc(c.nom)} — </span><b>en ligne</b> <span class="bs">(perfumeinthecity.com)</span></td>
+    +(c.id==='perfumecity'?(()=>{ const comL=(c.comLigne==null||c.comLigne==='')?(c.com||0):+c.comLigne, envL=envPc(), fixeL=(c.fixeLigne==null||c.fixeLigne==='')?fixe:fx(c.fixeLigne);
+        return `<tr data-i="${i}" class="sous"><td><b>en ligne</b> <span class="bs">(perfumeinthecity.com)</span></td>
       <td class="r"><input type="number" data-k="comLigne" min="0" max="60" step="0.1" value="${comL}"> %</td>
-      <td class="r"><input type="number" data-k="env" data-ek="shopify-pc" id="env-shopify-pc" min="0" step="0.5" value="${envL}"> $</td>
-      <td class="r ex"><b>${v.toFixed(2).replace('.',',')} $</b> <span class="bs">retail</span></td>
-      <td class="r ex" style="color:${netL<REG.margeMin?'var(--crit)':'var(--good)'}"><b>${netL.toFixed(1).replace('.',',')} %</b></td>
-      <td class="r ex">${plL!=null?plL.toFixed(2).replace('.',',')+' $':'—'}</td><td></td></tr>`; })():'');
+      <td class="r"><input type="number" data-k="fixeLigne" min="0" max="60" step="0.01" value="${fixeL}"> $</td>
+      <td class="r"><input type="number" data-k="env" data-ek="shopify-pc" id="env-shopify-pc" min="0" step="0.5" value="${envL}"> $</td><td></td></tr>`; })():'');
   }).join('');
 }
-const envPc=()=>{ const E=REG.envois||{}; const v=E['shopify-pc']; return (v==null||v===''||isNaN(+v))?0:Math.max(0,+v); };
+const envPc=()=>{ const E=REG.envois||{}; const v=E['shopify-pc']; return (v==null||v===''||isNaN(+v))?(REG.comV4?0:8):Math.max(0,+v); };
 /* On ne redessine JAMAIS le tableau pendant qu'une case a le focus : le champ serait recréé,
    le curseur repartirait au début et les chiffres s'écriraient à l'envers (taper « 15.5 »
    donnait « 50.51 »). Le tableau se recalcule quand on quitte la case. */
@@ -543,10 +543,11 @@ $('canaux').addEventListener('input',e=>{
          const v=parseFloat(t);
          if(t==='' || t==='-' || /[.,]$/.test(t)) return;   /* saisie en cours : on ne fige rien */
          c[k]=isNaN(v)?0:Math.max(0,Math.min(60,v)); }
-  const LIBK={nom:'nom du canal',maj:'majoration',com:'commission prélevée par le canal',comLigne:'commission prélevée par le canal (vente en ligne)'};
+  const LIBK={nom:'nom du canal',maj:'majoration',com:'commission prélevée par le canal',comLigne:'commission prélevée par le canal (vente en ligne)',fixe:'part fixe par transaction',fixeLigne:'part fixe par transaction (vente en ligne)'};
+  const u=(k==='fixe'||k==='fixeLigne')?' $':' %';
   logReg('can-'+(c.id||tr.dataset.i)+'-'+k,
          (LIBK[k]||k)+' — '+(k==='nom'?'canal':c.nom),
-         k==='nom'?avant:(avant+' %'), k==='nom'?c[k]:(c[k]+' %'));
+         k==='nom'?avant:((avant==null?0:avant)+u), k==='nom'?c[k]:(c[k]+u));
   sauve();
   if(k!=='nom') recalculeCanaux();
 });

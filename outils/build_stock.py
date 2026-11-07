@@ -531,7 +531,10 @@ function chiffres(){
   const qn=x=>{ try{ return qteTh(x); }catch(e){ return x.qte; } };
   const enstock=P.filter(x=>qn(x)>0).length, zero=P.length-enstock;
   const ok=P.filter(x=>x.v==='ok').length;
-  const capnon=P.filter(x=>x.v!=='ok'&&qn(x)>0).reduce((s,x)=>s+(x.cap||0),0);
+  /* 6 nov. 2026 (Igal : « tout doit être fixé par rapport au prix du catalogue ») : le capital à
+     recompter se calcule avec le prix d'achat de la fiche Catalogue, plus avec celui du fichier de départ */
+  const capx=x=>{ try{ return capEff(x); }catch(e){ return x.cap||0; } };
+  const capnon=P.filter(x=>x.v!=='ok'&&qn(x)>0).reduce((s,x)=>s+capx(x),0);
   const znon=P.filter(x=>qn(x)===0&&x.v!=='ok').length;
   const set=(id,v)=>{ const e=$(id); if(e) e.textContent=v; };
   set('s-enstock',nf(enstock)); set('s-zero',nf(zero));
@@ -706,6 +709,9 @@ P.forEach(p=>{ const m=MOD[p.cle]; if(m&&m.verif!==undefined) p.v=m.verif; });
 /* 30 oct. 2026 : le nom, la marque, la contenance et le type changés dans la fiche du Catalogue se voient ici aussi
    (avant, l'Inventaire gardait « Nom (Clone de…) » quand le Catalogue disait « Nom ») */
 P.forEach(p=>{ const m=MOD[p.cle]; if(!m) return; ['nom','marque','ml','type'].forEach(k=>{ if(m[k]!=null&&m[k]!=='') p[k]=(k==='type')?String(m[k]).toUpperCase():String(m[k]); }); });
+/* 6 nov. 2026 (Sam : Asad à 18,50 $ de gros au Catalogue, 18 $ dans l'Inventaire) : c'est le Catalogue qui fixe les prix.
+   Le prix retail et le prix de gros changés dans la fiche se voient ici aussi — l'Inventaire ne garde plus ceux du fichier. */
+if('__CIBLE__'==='pt') P.forEach(p=>{ const m=MOD[p.cle]; if(!m) return; if(m.pvr!=null&&m.pvr!=='') p.pvr=+m.pvr; if(m.pvw!=null&&m.pvw!=='') p.pvw=+m.pvw; });
 /* une fiche retirée du catalogue (« Retirer du catalogue », Patron/admin) disparaît aussi de l'Inventaire : Sam,
    30 oct. 2026, « supprime-les définitivement du stock ». Elle reste dans l'historique (ventes, achats, journal). */
 if('__CIBLE__'==='pt') P=P.filter(p=>!(MOD[p.cle]&&MOD[p.cle].masque));
@@ -735,6 +741,9 @@ window.__rafraichir=()=>{ const y=window.scrollY;
   try{ EXT=Object.assign({q:{}},JSON.parse(localStorage.getItem('stock-externe-v1')||'{}')); }catch(e){}
   P.forEach(p=>{ const m=MOD[p.cle]; if(m&&m.verif!==undefined) p.v=m.verif; });
   P.forEach(p=>{ const m=MOD[p.cle]; if(!m) return; ['nom','marque','ml','type'].forEach(k=>{ if(m[k]!=null&&m[k]!=='') p[k]=(k==='type')?String(m[k]).toUpperCase():String(m[k]); }); });
+/* 6 nov. 2026 (Sam : Asad à 18,50 $ de gros au Catalogue, 18 $ dans l'Inventaire) : c'est le Catalogue qui fixe les prix.
+   Le prix retail et le prix de gros changés dans la fiche se voient ici aussi — l'Inventaire ne garde plus ceux du fichier. */
+if('__CIBLE__'==='pt') P.forEach(p=>{ const m=MOD[p.cle]; if(!m) return; if(m.pvr!=null&&m.pvr!=='') p.pvr=+m.pvr; if(m.pvw!=null&&m.pvw!=='') p.pvw=+m.pvw; });
   if('__CIBLE__'==='pt') P=P.filter(p=>!(MOD[p.cle]&&MOD[p.cle].masque));
   { const s=lit(KEY,{}); if(s&&typeof s==='object') saisie=s; }
   { const j=lit(KJOU,[]); if(Array.isArray(j)) JOU=j; }

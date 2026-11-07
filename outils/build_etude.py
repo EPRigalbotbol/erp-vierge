@@ -885,7 +885,7 @@ function dessineListe(){
   dessineListe();
 });
 }
-window.__E={lit,qteEff,paEff,trouve,IDX,etude:()=>ETUDE,nouveauDevis,VENTES_CONNUES,refAlias,apprendRef,devineFrn,frnConnus,
+window.__E={lit,qteEff,paEff,pvwEff,pvrEff,trouve,IDX,etude:()=>ETUDE,nouveauDevis,VENTES_CONNUES,refAlias,apprendRef,devineFrn,frnConnus,
   litBrouillon,oublieBrouillon,sauveBrouillon,charge,apprendNom,dessine,texte:()=>TEXTE};
 dessineListe();
 repriseBrouillon();

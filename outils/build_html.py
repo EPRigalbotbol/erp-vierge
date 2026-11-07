@@ -2288,6 +2288,60 @@ async function enLigneUn(id,rep){
     return (R||'<div class="mrep bad">Rien n\'a pu être mis en ligne.</div>')+fin+(pq.length?`<p style="font-size:12.5px;color:var(--ink-3,#777);margin-top:10px">Dès que ce sera réglé, ouvre la fiche : « Mettre en ligne » le fait en un clic.</p>`:'');
   }catch(e){ return '<div class="mrep bad">La mise en ligne a échoué : '+esc((e&&e.message)||'erreur')+'. Rien n\'est perdu : la fiche est dans le Catalogue, « Mettre en ligne » réessaie.</div>'; }
 }
+/* 7 nov. 2026 (Igal : « Prix à vérifier » se règle depuis Tâches : il corrige les prix sur place, puis l'ERP demande sur quels
+   canaux les poser). La page Tâches ouvre catalogue.html#prix=<id>&canaux=site,sitegros,perfumecity&cadre=1 : on pose les prix de
+   l'outil sur les canaux cochés, avec les mêmes règles que la fiche (promo gardée, prix retail = prix payé, Patron seulement),
+   et on rend compte canal par canal dans une seule fenêtre. */
+async function prixAutoCanaux(id,canauxIds){
+  const cadre=document.documentElement.classList.contains('cadre');
+  const p0=cur.find(z=>z.id===id)||tousLesArticles().find(z=>z.id===id), p=p0?applique(p0):null;
+  const v=document.createElement('div'); v.className='mvoile';
+  const nom=p?esc(((p.marque||'')+' '+(p.nom||'')).trim()):esc(id);
+  const NOMS={site:'perfumestrade.com',sitegros:'wholesale.perfumestrade.com',perfumecity:'Perfume City (Shopify)'};
+  const rep=(h,fin)=>{ v.innerHTML=`<div class="mfen" role="dialog" aria-modal="true" data-nolang style="max-height:90vh;overflow:auto"><h3>${esc(L3('Prix sur les canaux de vente','Prices on the sales channels','Precios en los canales de venta'))} — ${nom}</h3><div id="pxR">${h}</div><div class="mbtn">${fin?'<button class="btn pri" id="pxF">'+esc(L3('Fermer','Close','Cerrar'))+'</button>':''}</div></div>`;
+    const b=v.querySelector('#pxF'); if(b) b.onclick=()=>{ v.remove(); try{ render(); }catch(e){} if(cadre){ try{ window.parent.postMessage({fiche:'fermee',prix:'fait'},location.origin); }catch(e){} } }; };
+  document.body.appendChild(v);
+  if(!p){ rep('<div class="mrep bad">'+esc(L3('Produit introuvable.','Product not found.','Producto no encontrado.'))+'</div>',1); return; }
+  const ids=(canauxIds||[]).filter(c=>NOMS[c]);
+  if(!ids.length){ rep('<div class="mrep">'+esc(L3('Aucun canal choisi.','No channel chosen.','Ningún canal elegido.'))+'</div>',1); return; }
+  if(!prixSitesOk()&&!prixPCOk()){ rep('<div class="mrep bad">'+esc(L3('Seul le Patron, relié au cockpit, peut changer un prix sur un site.','Only the Owner, linked to the cockpit, can change a price on a website.','Solo el Jefe, conectado al cockpit, puede cambiar un precio en una web.'))+'</div>',1); return; }
+  if(!demandeUser(false,'changer un prix sur les sites',()=>{ v.remove(); prixAutoCanaux(id,canauxIds); })) return;
+  const L=[]; const ligne=(c,t)=>L.push(`<li><b>${esc(NOMS[c])}</b> : ${t}</li>`); const montre=fin=>rep('<ul style="margin:0;padding-left:18px;line-height:1.7">'+L.join('')+'</ul>',fin);
+  montre();
+  for(const c of ids){
+    try{
+      if(COTE_SITE[c]){
+        const cote=COTE_SITE[c], e=siteDe(p), f=e&&e[cote];
+        if(!f||f.pr===undefined){ ligne(c,esc(L3('pas en vente sur ce site — rien à changer','not for sale on this website — nothing to change','no está a la venta en esta web — nada que cambiar'))); montre(); continue; }
+        const x=planPrixSites(p).plan.find(y=>y.cid===c);
+        if(!x){ ligne(c,esc(L3('déjà au bon prix','already at the right price','ya tiene el precio correcto'))+' ('+money2(f.ps!=null?f.ps:f.pr)+')'); montre(); continue; }
+        const r=await envoiePrixFiche(id,cote,true);
+        if(r&&r.ok) ligne(c,esc(L3('prix changé','price changed','precio cambiado'))+' → <b>'+money2(x.v)+'</b>'); else ligne(c,esc(L3('pas changé','not changed','sin cambio'))+' — '+esc((r&&r.ko&&r.ko.join(' ; '))||L3('refusé','refused','rechazado')));
+      } else {
+        const ch=canaux().find(y=>y.id==='perfumecity'), sh=prixShopifyDe(p);
+        if(!ch||!sh||sh.amb||!(sh.prix>0)){ ligne(c,esc(L3('pas en vente chez Perfume City — rien à changer','not for sale at Perfume City — nothing to change','no está a la venta en Perfume City — nada que cambiar'))); montre(); continue; }
+        /* le prix de l'outil pour Perfume City, c'est d'habitude celui de Shopify : ici on veut y POSER le prix de la fiche
+           (manuel du canal s'il y en a un, sinon retail ou gros selon la règle du canal) */
+        const pm=(p.pc||{})[ch.id], bse=ch.base==='pvw'?p.pvw:p.pvr;
+        const n=(pm!=null&&pm!=='')?+pm:((bse!=null&&bse>0)?r2(bse*(1+(ch.maj||0)/100)):null);
+        if(n==null||!(n>0)){ ligne(c,esc(L3('pas de prix pour ce canal','no price for this channel','sin precio para este canal'))); montre(); continue; }
+        const nn=Math.round(n*100)/100;
+        if(Math.abs(nn-sh.prix)<0.005){ ligne(c,esc(L3('déjà au bon prix','already at the right price','ya tiene el precio correcto'))+' ('+money2(sh.prix)+')'); montre(); continue; }
+        if(!prixPCOk()){ ligne(c,esc(L3('seul le Patron peut changer ce prix','only the Owner can change this price','solo el Jefe puede cambiar este precio'))); montre(); continue; }
+        const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/shopify/prix',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},
+          body:JSON.stringify({bc:p.bc,prix:nn,attendu:sh.prix})});
+        const j=await r.json().catch(()=>({}));
+        if(j&&j.avant!=null&&!j.ok) PCSHOP_OVR[sh.k]=j.avant;
+        if(!r.ok) throw new Error(j.erreur||('erreur '+r.status));
+        PCSHOP_OVR[sh.k]=j.apres;
+        if(!j.inchange) log({act:'prix',lib:'prix changé chez Perfume City (Shopify)',bc:p.bc,ref:(p.marque||'')+' '+(p.nom||''),av:money2(j.avant),ap:money2(j.apres)});
+        ligne(c,esc(L3('prix changé','price changed','precio cambiado'))+' → <b>'+money2(j.apres)+'</b>');
+      }
+    }catch(err){ ligne(c,esc(L3('pas changé','not changed','sin cambio'))+' — '+esc((err&&err.message)||'erreur')); }
+    montre();
+  }
+  montre(1);
+}
 async function photoPourSite(p){
   if(p.imgPerso&&/^data:image\/(jpeg|png|webp);base64,/.test(p.img||'')) return {data:p.img};
   if(/^https:\/\//.test(p.img||'')) return {url:p.img};
@@ -6889,6 +6943,10 @@ if(/[#&]cadre=1/.test(location.hash) && window.parent!==window){
   /* 5 nov. 2026 : depuis une facture d'achat, les nouvelles références à mettre en ligne (#enligne=id1,id2&cadre=1) */
   const me=location.hash.match(/enligne=([^&]+)/);
   if(me){ const ids=decodeURIComponent(me[1]).split(',').filter(Boolean); pret(); setTimeout(()=>{ try{ enLigneAutoListe(ids); }catch(e){ console.error(e); } },80); return; }
+  /* 7 nov. 2026 : depuis Tâches, poser les prix corrigés sur les canaux cochés (#prix=id&canaux=site,sitegros,perfumecity&cadre=1) */
+  const mp=location.hash.match(/[#&]prix=([^&]+)/);
+  if(mp){ const id=decodeURIComponent(mp[1]); const mc=location.hash.match(/[#&]canaux=([^&]+)/); const cs=mc?decodeURIComponent(mc[1]).split(',').filter(Boolean):[];
+    pret(); setTimeout(()=>{ try{ prixAutoCanaux(id,cs); }catch(e){ console.error(e); } },80); return; }
   const m=location.hash.match(/cle=([^&]+)/); if(!m){ pret(); return; }
   const id=decodeURIComponent(m[1]); const p=tousLesArticles().find(x=>x.id===id); if(!p){ pret(); return; }
   $('fs').value=''; $('q').value=p.bc||p.nom; render(); setTimeout(()=>{ ouvreFiche(id); pret();

@@ -274,7 +274,16 @@ function ficheFenetre(cle,apres,plus){
    proposer de mettre en ligne les nouveaux produits sans aller les chercher dans le Catalogue »). Même fenêtre que la fiche :
    c'est le Catalogue en mode cadre (catalogue.html#enligne=id1,id2&cadre=1) qui fait le travail, avec ses garde-fous. */
 function enLigneFenetre(ids,apres){
-  const L=(ids||[]).filter(Boolean); if(!L.length||document.getElementById('fv-ov')) return;
+  const L=(ids||[]).filter(Boolean); if(!L.length) return;
+  cadreFenetre('#enligne='+encodeURIComponent(L.join(','))+'&cadre=1',apres,'Mise en ligne');
+}
+/* 7 nov. 2026 : la même fenêtre pour poser des prix sur les canaux depuis Tâches (catalogue.html#prix=id&canaux=…&cadre=1) */
+function prixCanauxFenetre(id,canaux,apres){
+  if(!id) return;
+  cadreFenetre('#prix='+encodeURIComponent(id)+'&canaux='+encodeURIComponent((canaux||[]).join(','))+'&cadre=1',apres,'Prix sur les canaux');
+}
+function cadreFenetre(hash,apres,titre){
+  if(document.getElementById('fv-ov')) return;
   if(!document.getElementById('fv-css')){
     const st=document.createElement('style'); st.id='fv-css';
     st.textContent='.fv-ov{position:fixed;inset:0;z-index:95;background:rgba(23,23,29,.45);backdrop-filter:blur(2px);display:flex;justify-content:flex-end}'
@@ -282,7 +291,7 @@ function enLigneFenetre(ids,apres){
     document.head.appendChild(st);
   }
   const ov=document.createElement('div'); ov.id='fv-ov'; ov.className='fv-ov';
-  const fr=document.createElement('iframe'); fr.title='Mise en ligne'; fr.src='catalogue.html#enligne='+encodeURIComponent(L.join(','))+'&cadre=1';
+  const fr=document.createElement('iframe'); fr.title=titre||'Catalogue'; fr.src='catalogue.html'+hash;
   ov.appendChild(fr); document.body.appendChild(ov);
   const ferme=()=>{ window.removeEventListener('message',onMsg); ov.remove(); try{ if(apres) apres(); }catch(e){} };
   const onMsg=e=>{ if(e.origin===location.origin&&e.data&&e.data.fiche==='fermee') ferme(); };

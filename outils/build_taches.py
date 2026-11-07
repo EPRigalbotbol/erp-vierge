@@ -36,6 +36,16 @@ h2.sec em{font-style:normal;font-size:12.5px;letter-spacing:0;text-transform:non
 .tk-a a,.tk-a button,.tk-a select{font-family:inherit;font-size:12.5px;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:8px;padding:6px 10px;cursor:pointer;text-decoration:none;white-space:nowrap}
 .tk-a a.pri,.tk-a button.pri{background:var(--iris);border-color:var(--iris);color:#fff}
 .tk-ok{font-size:12.5px;font-weight:600;color:var(--good)}.tk-ok a{color:var(--iris);margin-left:4px}
+.tk-px{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end;margin-top:8px;padding:10px 12px;background:var(--surface-2);border-radius:10px}
+.tk-px label{display:flex;flex-direction:column;gap:3px;font-size:11.5px;color:var(--ink-3);font-weight:600}
+.tk-px input{width:92px;font:inherit;font-size:14px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.tk-px .tk-vente{flex-basis:100%;font-size:12.5px;color:var(--ink-2)}.tk-px .tk-vente b{color:var(--crit)}
+.tk-px .tk-msg{flex-basis:100%;font-size:12.5px;color:var(--ink-2)}
+.tk-px .tk-can{flex-basis:100%;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;font-size:13px}
+.tk-px .tk-can label{flex-direction:row;align-items:center;gap:6px;font-size:13px;color:var(--ink);font-weight:500}
+.tk-px textarea{flex-basis:100%;font:inherit;font-size:13px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);min-height:54px}
+.tk-px button{font-family:inherit;font-size:12.5px;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:8px;padding:6px 10px;cursor:pointer}
+.tk-px button.pri{background:var(--iris);border-color:var(--iris);color:#fff}
 .tk-a button:hover,.tk-a a:hover{border-color:var(--iris);color:var(--iris)} .tk-a a.pri:hover,.tk-a button.pri:hover{color:#fff;filter:brightness(1.08)}
 .tk-a select{color:var(--ink-2)}
 .tk-vide{background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:22px;text-align:center;color:var(--ink-3);font-size:14px}
@@ -58,6 +68,12 @@ async function tkApi(chemin,corps){
   const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/galou/taches'+chemin,{method:corps===undefined?'GET':'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},body:corps===undefined?undefined:JSON.stringify(corps)});
   const j=await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.erreur||('serveur '+r.status)); return j;
 }
+/* 7 nov. 2026 (Igal : « Prix à vérifier » se règle sur place) : les prix de la fiche, lus comme partout (la fiche corrigée l'emporte) */
+const IDX=__IDX__; const KMOD='fiches-modifiees-v1';
+const tkMod=()=>{ try{ const M=lit(KMOD,{}); return (M&&typeof M==='object')?M:{}; }catch(e){ return {}; } };
+const tkPrix=cle=>{ const v=IDX[cle]||[], m=tkMod()[cle]||{}; const n=x=>(x==null||x==='')?null:+x;
+  return {pa:m.pa!=null&&m.pa!==''?+m.pa:n(v[3]), pvw:m.pvw!=null&&m.pvw!==''?+m.pvw:n(v[5]), pvr:m.pvr!=null&&m.pvr!==''?+m.pvr:n(v[6]), bc:v[0]||'', ref:((v[2]||'')+' '+(v[1]||'')).trim()}; };
+const m2=v=>v==null?'—':Number(v).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+'\u00a0$';
 const tkDate=iso=>{ if(!iso) return ''; const [Y,M,D]=String(iso).slice(0,10).split('-'); return `${M}/${D}/${String(Y).slice(2)}`; };
 const TYPES={rupture:['Réassort','Restock','Reposición'],manque:['Réassort','Restock','Reposición'],prix:['Prix','Price','Precio'],enligne:['Mise en ligne','Listing','Publicación'],pcshopify:['Perfume City','Perfume City','Perfume City'],publication:['Mise en ligne','Listing','Publicación'],expedier:['Expédition','Shipping','Envío'],completer:['Ventes','Sales','Ventas']};
 function tkLigne(t){
@@ -71,13 +87,24 @@ function tkLigne(t){
   /* 7 nov. 2026 (Igal) : « Recommander » se règle sur place — un clic met le parfum dans « Parfums à racheter » (tableau de
      bord), la tâche est faite, on reste ici. La fiche reste ouvrable à côté. */
   const rach=(t.type==='rupture'||t.type==='manque')&&t.cle&&typeof rachAjoute==='function';
-  if(t.etat==='a_faire'&&rach) actions=`<button class="pri" data-rach="${esc(t.cle)}" data-id="${esc(t.id)}" data-bc="${esc(t.bc||'')}" data-ref="${esc(t.ref||'')}">${tkT('Mettre dans Parfums à racheter','Add to Perfumes to reorder','Poner en Perfumes por recomprar')} →</button>${ouvre('')}<button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
+  const px=t.type==='prix'&&t.cle&&IDX[t.cle];
+  if(t.etat==='a_faire'&&px) actions=`${ouvre('')}<button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-pxign="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
+  else if(t.etat==='a_faire'&&rach) actions=`<button class="pri" data-rach="${esc(t.cle)}" data-id="${esc(t.id)}" data-bc="${esc(t.bc||'')}" data-ref="${esc(t.ref||'')}">${tkT('Mettre dans Parfums à racheter','Add to Perfumes to reorder','Poner en Perfumes por recomprar')} →</button>${ouvre('')}<button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
   else if(t.etat==='a_faire') actions=`${ouvre('pri')}<button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
   else if(t.etat==='attente') actions=`${ouvre('')}<button data-etat="a_faire" data-id="${esc(t.id)}">${tkT('Remettre dans la liste','Put back in the list','Volver a la lista')}</button><button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
   else actions=`${ouvre('')}<button data-etat="a_faire" data-id="${esc(t.id)}">${tkT('Remettre dans la liste','Put back in the list','Volver a la lista')}</button>`;
   const pt=t.etat==='a_faire'?(t.urgence==='haute'?`<span class="pt">${tkT('urgent','urgent','urgente')}</span>`:'')+(t.revenue?`<span class="pt rev">${tkT('revenue','back','de vuelta')}</span>`:''):'';
   const sous=t.etat==='attente'?`<small>${tkT('Rappel le','Reminder on','Recordatorio el')} <span data-nolang>${tkDate(t.jusqua)}</span></small>`:t.etat==='ignoree'?`<small>${tkT('Ignorée le','Ignored on','Ignorada el')} <span data-nolang>${tkDate(t.depuis)}</span></small>`:'';
-  return `<div class="tk ${t.etat==='a_faire'?t.urgence:t.etat}" data-tk="${esc(t.id)}"><div><h3><span data-nolang>${esc(t.titre)}</span>${pt}</h3><p data-nolang>${esc(t.detail||'')}</p>${sous}<small>${typ}</small></div><div class="tk-a" data-titre="${esc(t.titre)}">${actions}</div></div>`;
+  const raison=t.etat==='ignoree'&&t.raison?`<small class="tk-raison">${tkT('Raison','Reason','Motivo')} : <span data-nolang>${esc(t.raison)}</span></small>`:'';
+  let bloc='';
+  if(t.etat==='a_faire'&&px){ const P=tkPrix(t.cle), w=t.vente||{};
+    const vente=w.d?`<div class="tk-vente" data-nolang>${esc(tkDate(w.d))} · ${esc(w.canal||'')} : ${tkT('vendu','sold','vendido')} ${m2(w.p)}, ${tkT('acheté','bought','comprado')} ${m2(w.pa)} → ${w.perte?`<b>${tkT('perte de','loss of','pérdida de')} ${m2(-w.mg)}</b>`:`<b>${w.pct!=null?w.pct+' %':''}</b> ${tkT('de marge','margin','de margen')}`}${w.n>1?`, ${w.n} ${tkT('ventes cette semaine','sales this week','ventas esta semana')}`:''}</div>`:'';
+    bloc=`<div class="tk-px" data-px="${esc(t.cle)}" data-id="${esc(t.id)}" data-titre="${esc(t.titre)}">${vente}
+      <label>${tkT("Prix d'achat","Purchase price","Precio de compra")}<input type="number" step="0.01" min="0" data-pxa value="${P.pa==null?'':P.pa}"></label>
+      <label>${tkT('Prix de gros','Wholesale price','Precio mayorista')}<input type="number" step="0.01" min="0" data-pxw value="${P.pvw==null?'':P.pvw}"></label>
+      <label>${tkT('Prix retail','Retail price','Precio retail')}<input type="number" step="0.01" min="0" data-pxr value="${P.pvr==null?'':P.pvr}"></label>
+      <button class="pri" data-pxok>${tkT('Enregistrer les prix','Save the prices','Guardar los precios')}</button><div class="tk-msg" data-pxmsg></div></div>`; }
+  return `<div class="tk ${t.etat==='a_faire'?t.urgence:t.etat}" data-tk="${esc(t.id)}"><div><h3><span data-nolang>${esc(t.titre)}</span>${pt}</h3><p data-nolang>${esc(t.detail||'')}</p>${sous}${raison}<small>${typ}</small></div><div class="tk-a" data-titre="${esc(t.titre)}">${actions}</div>${bloc}</div>`;
 }
 function tkPeint(){
   const z=$('tk-corps'), h=$('tk-tete'); if(!TK) return;
@@ -98,14 +125,57 @@ function tkPeint(){
     try{ rachAjoute(b.dataset.rach,{bc:b.dataset.bc,ref:b.dataset.ref}); }catch(e){ alert(tkT('Pas enregistré : ','Not saved: ','No guardado: ')+(e&&e.message||e)); return; }
     const z2=b.closest('.tk'); if(z2) z2.querySelector('.tk-a').innerHTML=`<span class="tk-ok">${tkT('Dans Parfums à racheter','In Perfumes to reorder','En Perfumes por recomprar')} ✓ <a href="tableau.html#racheter">${tkT('voir le tableau de bord','see the dashboard','ver el panel')}</a></span>`;
     await tkStatue(b.dataset.id,'faite',undefined,b.closest('.tk-a')?b.closest('.tk-a').dataset.titre:''); });
+  z.querySelectorAll('.tk-px').forEach(b=>tkPrixBranche(b));
+  z.querySelectorAll('button[data-pxign]').forEach(b=>b.onclick=()=>tkIgnorePrix(b));
   z.querySelectorAll('select[data-rappel]').forEach(sl=>sl.onchange=()=>{ if(sl.value) tkStatue(sl.dataset.rappel,'attente',+sl.value,sl.closest('.tk-a').dataset.titre); });
   const c=document.getElementById('ct-taches'); if(c){ c.textContent=n?String(n):''; c.className=n?'ct nb':'ct'; }
 }
-async function tkStatue(id,etat,jours,titre){
+async function tkStatue(id,etat,jours,titre,raison){
   if(TK_ENV) return; TK_ENV=true;
-  try{ await tkApi('/etat',{id,etat,jours,titre}); await tkCharge(); }
+  try{ await tkApi('/etat',{id,etat,jours,titre,raison}); await tkCharge(); }
   catch(e){ alert(tkT('Pas enregistré : ','Not saved: ','No guardado: ')+(e&&e.message||e)); }
   TK_ENV=false;
+}
+/* « Enregistrer les prix » : les prix tapés deviennent ceux de la fiche du Catalogue (fiches-modifiees-v1, donc tout l'ERP),
+   avec une ligne de journal par prix changé ; puis l'ERP demande sur quels canaux de vente les poser (cases cochées), et c'est le
+   Catalogue en cadre qui les pose, avec ses règles. La tâche est faite. */
+function tkPrixBranche(b){
+  const cle=b.dataset.px, id=b.dataset.id, titre=b.dataset.titre, msg=t=>{ const e=b.querySelector('[data-pxmsg]'); if(e) e.innerHTML=t; };
+  const bt=b.querySelector('[data-pxok]'); if(!bt) return;
+  bt.onclick=()=>{
+    const P=tkPrix(cle), M=tkMod(), m=Object.assign({},M[cle]||{}), lu=k=>{ const v=b.querySelector('[data-px'+k+']').value.trim(); return v===''?null:Math.round(+v*100)/100; };
+    const nv={pa:lu('a'),pvw:lu('w'),pvr:lu('r')}; const LIB={pa:"prix d'achat",pvw:'prix de gros',pvr:'prix retail'};
+    if(Object.values(nv).some(v=>v!=null&&!(v>=0))){ msg(tkT('Un prix n\'est pas lisible.','A price is not readable.','Un precio no se puede leer.')); return; }
+    const chg=Object.keys(nv).filter(k=>nv[k]!=null&&nv[k]!==P[k]);
+    if(!chg.length){ msg(tkT('Rien n\'a changé.','Nothing changed.','Nada cambió.')); return; }
+    if(nv.pvw!=null&&nv.pa!=null&&nv.pvw<nv.pa&&!confirm(tkT('Le prix de gros est sous le prix d\'achat. Continuer ?','The wholesale price is below the purchase price. Continue?','El precio mayorista está por debajo del de compra. ¿Continuar?'))) return;
+    let J=[]; try{ J=lit('crm-journal-v1',[])||[]; }catch(e){ J=[]; } if(!Array.isArray(J)) J=[];
+    const u=(typeof NOM_UTIL==='string'&&NOM_UTIL)?NOM_UTIL:'(non renseigné)';
+    chg.forEach(k=>{ m[k]=nv[k]; J.push({t:new Date().toISOString(),u,act:'prix',champ:k,lib:LIB[k]+' (depuis Tâches)',bc:P.bc,ref:P.ref,av:P[k],ap:nv[k]}); });
+    M[cle]=m; ecrit(KMOD,M); ecrit('crm-journal-v1',J);
+    b.querySelectorAll('input,[data-pxok]').forEach(e=>e.disabled=true);
+    msg(`<b>${tkT('Prix enregistrés dans le Catalogue.','Prices saved in the Catalog.','Precios guardados en el Catálogo.')}</b> ${tkT('Les mettre aussi sur les canaux de vente ?','Also put them on the sales channels?','¿Ponerlos también en los canales de venta?')}
+      <div class="tk-can"><label><input type="checkbox" data-can="site" checked> perfumestrade.com</label><label><input type="checkbox" data-can="sitegros" checked> wholesale.perfumestrade.com</label><label><input type="checkbox" data-can="perfumecity" checked> Perfume City (Shopify)</label>
+      <button class="pri" data-pxenv>${tkT('Mettre sur ces canaux','Put on these channels','Poner en estos canales')}</button><button data-pxnon>${tkT('Pas maintenant','Not now','Ahora no')}</button></div>`);
+    b.querySelector('[data-pxnon]').onclick=()=>tkStatue(id,'faite',undefined,titre);
+    b.querySelector('[data-pxenv]').onclick=()=>{ const cs=[...b.querySelectorAll('[data-can]:checked')].map(x=>x.dataset.can);
+      if(!cs.length){ tkStatue(id,'faite',undefined,titre); return; }
+      if(typeof prixCanauxFenetre!=='function'){ window.open('catalogue.html#cle='+encodeURIComponent(cle),'_blank'); tkStatue(id,'faite',undefined,titre); return; }
+      prixCanauxFenetre(cle,cs,()=>tkStatue(id,'faite',undefined,titre)); };
+  };
+}
+/* Ignorer un prix se justifie (Igal, 7 nov. 2026 : « pourquoi ignorer ? — parfum acheté trop cher ») : la raison est obligatoire,
+   gardée avec la tâche et au journal du cockpit */
+function tkIgnorePrix(btn){
+  const id=btn.dataset.pxign, z=btn.closest('.tk'); if(!z) return; const titre=(z.querySelector('.tk-a')||{}).dataset?z.querySelector('.tk-a').dataset.titre:'';
+  let b=z.querySelector('.tk-px'); if(!b){ b=document.createElement('div'); b.className='tk-px'; z.appendChild(b); }
+  b.innerHTML=`<div class="tk-msg"><b>${tkT('Pourquoi ignorer ce prix ?','Why ignore this price?','¿Por qué ignorar este precio?')}</b> ${tkT('Par exemple : parfum acheté trop cher.','For example: perfume bought too expensive.','Por ejemplo: perfume comprado demasiado caro.')}</div>
+    <textarea data-pxraison placeholder="${tkT('La raison…','The reason…','El motivo…')}"></textarea>
+    <button class="pri" data-pxignok>${tkT('Ignorer avec cette raison','Ignore with this reason','Ignorar con este motivo')}</button><button data-pxignnon>${tkT('Annuler','Cancel','Cancelar')}</button><div class="tk-msg" data-pxmsg></div>`;
+  const ta=b.querySelector('[data-pxraison]'); ta.focus();
+  b.querySelector('[data-pxignnon]').onclick=()=>{ const y=window.scrollY; tkPeint(); window.scrollTo(0,y); };
+  b.querySelector('[data-pxignok]').onclick=()=>{ const r=ta.value.trim(); if(!r){ b.querySelector('[data-pxmsg]').textContent=tkT('Il faut une raison.','A reason is required.','Hace falta un motivo.'); ta.focus(); return; }
+    tkStatue(id,'ignoree',undefined,titre,r); };
 }
 async function tkCharge(){
   try{ TK=await tkApi(''); tkPeint(); }
@@ -124,6 +194,6 @@ async function tkCharge(){
 
 html = coquille("Tâches", "Tâches",
     "Ce que Léa te demande de faire aujourd'hui, trouvé dans l'ERP : parfums à recommander, prix à vérifier, mises en ligne, Perfume City, expéditions. Fais, ignore, ou demande un rappel.",
-    CSS, CORPS, JS, donnees=('produits',))
+    CSS, CORPS, JS, donnees=('produits',)).replace('__IDX__', 'Object.fromEntries(D_TOUS().map(r=>[r[15],[r[0],r[13],r[2],r[12],r[6],r[8],r[7]]]))')
 open('taches.html', 'w').write(html)
 print('taches.html', len(html)//1024, 'Ko')

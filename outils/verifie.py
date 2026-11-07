@@ -21,10 +21,10 @@ D = pathlib.Path(__file__).parent.resolve()
 SCRIPTS = ['build_html.py','build_stock.py','build_ventes.py','build_factures.py',
            'build_clients.py','build_frn.py','build_journal.py','build_tableau.py',
            'build_reglages.py','build_connecteurs.py','build_acces.py','build_accueil.py',
-           'build_etude.py','build_messages.py','build_retail.py','build_expeditions.py','build_taches.py']
+           'build_etude.py','build_messages.py','build_retail.py','build_expeditions.py','build_taches.py','build_demandes_pc.py']
 PAGES = ['catalogue.html','stock.html','inventaire_pc.html','ventes.html','quotes.html','factures.html',
          'clients.html','fournisseurs.html','journal.html','tableau.html','reglages.html',
-         'connecteurs.html','acces.html','expeditions.html','taches.html']
+         'connecteurs.html','acces.html','expeditions.html','taches.html','demandes_pc.html']
 
 ok = []
 ko = []
@@ -221,7 +221,8 @@ with sync_playwright() as pw:
     #   22/10/2026 : 880 -> 900 Ko. La price list de gros (fenêtre, Excel, PDF en vrai texte avec logo, WhatsApp, email), alertes de publication : du code.
     #   02/11/2026 : 900 -> 920 Ko. La colonne « Prix payé » par client dans « Ventes de ce parfum » : du code.
     #   03/11/2026 : 920 -> 950 Ko. La fenêtre de Léa (centrée, sombre, sphère animée au son de la voix) : du code.
-    dit((D / 'catalogue.html').stat().st_size < 950_000, 'catalogue.html a maigri',
+    #   07/11/2026 : 950 -> 970 Ko. Les prix corrigés depuis Tâches posés sur les canaux (fenêtre en cadre, compte rendu par canal) : du code.
+    dit((D / 'catalogue.html').stat().st_size < 970_000, 'catalogue.html a maigri',
         str((D / 'catalogue.html').stat().st_size // 1024) + ' Ko')
 
     print('\n4. Chaque page s\'ouvre sans erreur')

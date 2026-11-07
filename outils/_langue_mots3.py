@@ -1693,3 +1693,36 @@ MOTS3.update({
     "Ce que Léa te demande de faire aujourd'hui, trouvé dans l'ERP : parfums à recommander, prix à vérifier, mises en ligne, Perfume City, expéditions. Fais, ignore, ou demande un rappel.": ["What Léa asks you to do today, found in the ERP: perfumes to reorder, prices to check, listings, Perfume City, shipments. Do it, ignore it, or ask for a reminder.", "Lo que Léa te pide hacer hoy, encontrado en el ERP: perfumes por pedir, precios por revisar, publicaciones, Perfume City, envíos. Hazlo, ignóralo o pide un recordatorio."],
     "Léa regarde ce qu'il y a à faire…": ["Léa is looking at what there is to do…", "Léa está mirando qué hay que hacer…"],
 })
+
+# ---- Tableau de bord, 7 nov. 2026 : « Parfums à racheter » (la liste pour l'offre de prix du fournisseur) et Tâches ----
+MOTS3.update({
+    "Parfums à racheter": ["Perfumes to reorder", "Perfumes por recomprar"],
+    "Parfums à racheter la liste à envoyer à un fournisseur pour une offre de prix Voir les tâches":
+        ["Perfumes to reorder <1>the list to send a supplier for a price offer</1> <2>See the tasks</2>",
+         "Perfumes por recomprar <1>la lista para pedir una oferta de precio a un proveedor</1> <2>Ver las tareas</2>"],
+    "la liste à envoyer à un fournisseur pour une offre de prix": ["the list to send a supplier for a price offer", "la lista para pedir una oferta de precio a un proveedor"],
+    "Voir les tâches": ["See the tasks", "Ver las tareas"],
+    "Rien pour l'instant. Dans Tâches, « Mettre dans Parfums à racheter » amène un parfum ici ; sous le seuil, coche les parfums puis « Mettre dans Parfums à racheter ».":
+        ["Nothing yet. In Tasks, “Add to Perfumes to reorder” brings a perfume here; under the threshold, check the perfumes then “Add to Perfumes to reorder”.",
+         "Nada por ahora. En Tareas, «Poner en Perfumes por recomprar» trae un perfume aquí; bajo el umbral, marca los perfumes y «Poner en Perfumes por recomprar»."],
+    "{n} parfum à racheter": ["{n} perfume to reorder", "{n} perfume por recomprar"],
+    "{n} parfums à racheter": ["{n} perfumes to reorder", "{n} perfumes por recomprar"],
+    "Corrige les quantités, puis Excel, WhatsApp ou copier. Rien n'est commandé par l'ERP : c'est la liste pour demander une offre de prix.":
+        ["Fix the quantities, then Excel, WhatsApp or copy. The ERP orders nothing: this is the list to ask for a price offer.",
+         "Corrige las cantidades y luego Excel, WhatsApp o copiar. El ERP no pide nada: es la lista para pedir una oferta de precio."],
+    "Vendus ce mois": ["Sold this month", "Vendidos este mes"],
+    "Vendus / 30 j": ["Sold / 30 d", "Vendidos / 30 d"],
+    "Vendus / 90 j": ["Sold / 90 d", "Vendidos / 90 d"],
+    "Par semaine": ["Per week", "Por semana"],
+    "Tient": ["Lasts", "Dura"],
+    "Dernière vente": ["Last sale", "Última venta"],
+    "plus aucun": ["none left", "ninguno"],
+    "moins d'un jour": ["less than a day", "menos de un día"],
+    "{n} semaines": ["{n} weeks", "{n} semanas"],
+    "Conseillé : {n} (un mois de ventes, moins le stock)": ["Suggested: {n} (one month of sales, minus the stock)", "Sugerido: {n} (un mes de ventas, menos el stock)"],
+    "Retirer de la liste : la tâche restera ignorée": ["Remove from the list: the task will stay ignored", "Quitar de la lista: la tarea seguirá ignorada"],
+    "Mettre dans Parfums à racheter": ["Add to Perfumes to reorder", "Poner en Perfumes por recomprar"],
+    "Mettre dans Parfums à racheter ({n})": ["Add to Perfumes to reorder ({n})", "Poner en Perfumes por recomprar ({n})"],
+    "Coche les parfums à racheter : ils rejoignent la liste « Parfums à racheter », plus haut.": ["Check the perfumes to reorder: they join the “Perfumes to reorder” list, above.", "Marca los perfumes por recomprar: se añaden a la lista «Perfumes por recomprar», más arriba."],
+    "Excel impossible : {q}": ["Excel failed: {q}", "Excel imposible: {q}"],
+})

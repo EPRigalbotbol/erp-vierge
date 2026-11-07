@@ -1400,6 +1400,8 @@ $('ok').onclick=()=>{
      mettre en ligne les références une par une » — les références créées ici et reçues par cette facture (elles ont maintenant du
      stock) sont proposées en ligne tout de suite, en une fois. */
   if(SENS==='achat'&&!canal) proposeEnLigne(lignes);
+  /* 7 nov. 2026 : une réception enregistrée sort le parfum de « Parfums à racheter » (tableau de bord) */
+  if(SENS==='achat'&&!canal&&typeof rachRecu==='function'){ try{ rachRecu((lignes||[]).map(l=>l&&l.cle)); }catch(e){} }
 };
 function proposeEnLigne(lignes){
   const N=window.__NOUVEAUX; if(!N||!N.size) return;

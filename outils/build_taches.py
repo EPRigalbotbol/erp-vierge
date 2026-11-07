@@ -35,6 +35,7 @@ h2.sec em{font-style:normal;font-size:12.5px;letter-spacing:0;text-transform:non
 .tk-a{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
 .tk-a a,.tk-a button,.tk-a select{font-family:inherit;font-size:12.5px;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:8px;padding:6px 10px;cursor:pointer;text-decoration:none;white-space:nowrap}
 .tk-a a.pri,.tk-a button.pri{background:var(--iris);border-color:var(--iris);color:#fff}
+.tk-ok{font-size:12.5px;font-weight:600;color:var(--good)}.tk-ok a{color:var(--iris);margin-left:4px}
 .tk-a button:hover,.tk-a a:hover{border-color:var(--iris);color:var(--iris)} .tk-a a.pri:hover,.tk-a button.pri:hover{color:#fff;filter:brightness(1.08)}
 .tk-a select{color:var(--ink-2)}
 .tk-vide{background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:22px;text-align:center;color:var(--ink-3);font-size:14px}
@@ -67,7 +68,11 @@ function tkLigne(t){
      par-dessus la liste (ficheFenetre, _fusion.py) ; une page de l'ERP s'ouvre dans un nouvel onglet. La liste est relue à la fermeture. */
   const ouvre=cls=>t.cle?`<button class="${cls}" data-fiche="${esc(t.cle)}" data-plus="${t.type==='publication'?'&canaux=1':''}">${cls==='pri'?tkT('Faire','Do it','Hacerlo'):tkT('Ouvrir','Open','Abrir')} →</button>`
                         :`<a class="${cls}" href="${esc(t.lien||'#')}" target="_blank" rel="noopener">${cls==='pri'?tkT('Faire','Do it','Hacerlo'):tkT('Ouvrir','Open','Abrir')} ↗</a>`;
-  if(t.etat==='a_faire') actions=`${ouvre('pri')}<button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
+  /* 7 nov. 2026 (Igal) : « Recommander » se règle sur place — un clic met le parfum dans « Parfums à racheter » (tableau de
+     bord), la tâche est faite, on reste ici. La fiche reste ouvrable à côté. */
+  const rach=(t.type==='rupture'||t.type==='manque')&&t.cle&&typeof rachAjoute==='function';
+  if(t.etat==='a_faire'&&rach) actions=`<button class="pri" data-rach="${esc(t.cle)}" data-id="${esc(t.id)}" data-bc="${esc(t.bc||'')}" data-ref="${esc(t.ref||'')}">${tkT('Mettre dans Parfums à racheter','Add to Perfumes to reorder','Poner en Perfumes por recomprar')} →</button>${ouvre('')}<button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
+  else if(t.etat==='a_faire') actions=`${ouvre('pri')}<button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
   else if(t.etat==='attente') actions=`${ouvre('')}<button data-etat="a_faire" data-id="${esc(t.id)}">${tkT('Remettre dans la liste','Put back in the list','Volver a la lista')}</button><button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
   else actions=`${ouvre('')}<button data-etat="a_faire" data-id="${esc(t.id)}">${tkT('Remettre dans la liste','Put back in the list','Volver a la lista')}</button>`;
   const pt=t.etat==='a_faire'?(t.urgence==='haute'?`<span class="pt">${tkT('urgent','urgent','urgente')}</span>`:'')+(t.revenue?`<span class="pt rev">${tkT('revenue','back','de vuelta')}</span>`:''):'';
@@ -89,6 +94,10 @@ function tkPeint(){
   z.querySelectorAll('button[data-etat]').forEach(b=>b.onclick=()=>tkStatue(b.dataset.id,b.dataset.etat,undefined,b.closest('.tk-a').dataset.titre));
   z.querySelectorAll('button[data-fiche]').forEach(b=>b.onclick=()=>{ if(typeof ficheFenetre!=='function'){ window.open('catalogue.html#cle='+encodeURIComponent(b.dataset.fiche),'_blank'); return; }
     ficheFenetre(b.dataset.fiche,()=>{ const y=window.scrollY; tkCharge().then(()=>window.scrollTo(0,y)); },b.dataset.plus||''); });
+  z.querySelectorAll('button[data-rach]').forEach(b=>b.onclick=async()=>{ if(TK_ENV) return;
+    try{ rachAjoute(b.dataset.rach,{bc:b.dataset.bc,ref:b.dataset.ref}); }catch(e){ alert(tkT('Pas enregistré : ','Not saved: ','No guardado: ')+(e&&e.message||e)); return; }
+    const z2=b.closest('.tk'); if(z2) z2.querySelector('.tk-a').innerHTML=`<span class="tk-ok">${tkT('Dans Parfums à racheter','In Perfumes to reorder','En Perfumes por recomprar')} ✓ <a href="tableau.html#racheter">${tkT('voir le tableau de bord','see the dashboard','ver el panel')}</a></span>`;
+    await tkStatue(b.dataset.id,'faite',undefined,b.closest('.tk-a')?b.closest('.tk-a').dataset.titre:''); });
   z.querySelectorAll('select[data-rappel]').forEach(sl=>sl.onchange=()=>{ if(sl.value) tkStatue(sl.dataset.rappel,'attente',+sl.value,sl.closest('.tk-a').dataset.titre); });
   const c=document.getElementById('ct-taches'); if(c){ c.textContent=n?String(n):''; c.className=n?'ct nb':'ct'; }
 }

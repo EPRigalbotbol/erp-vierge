@@ -59,7 +59,7 @@ const _IMBR={'ventes-v1'         : x=>x._i||[x.d||'',x.num||'',x.q,x.p,x.c||'',x
 const _SOUSMAP={'stock-externe-v1':['q']};
 /* magasins ou chaque fiche est un paquet de champs : on fusionne champ par champ,
    pour que deux onglets puissent corriger deux champs differents du meme produit */
-const _CHAMPS={'pc-stock-v1':1,'testeurs-pc-v1':1,'fiches-modifiees-v1':1,'demandes-pc-v1':1,'clients-v1':1,'reglements-v1':1,'fournisseurs-v1':1,'marche-v1':1,'photos-perso-v1':1};
+const _CHAMPS={'pc-stock-v1':1,'testeurs-pc-v1':1,'fiches-modifiees-v1':1,'demandes-pc-v1':1,'clients-v1':1,'reglements-v1':1,'fournisseurs-v1':1,'marche-v1':1,'photos-perso-v1':1,'parfums-a-racheter-v1':1};
 function fusChamps(dq,ref,cour){
   const o=(dq&&typeof dq==='object'&&!Array.isArray(dq))?Object.assign({},dq):{};
   const r=ref||{};
@@ -234,6 +234,22 @@ function photoReduite(fichier,max){
     r.readAsDataURL(fichier);
   });
 }
+/* « PARFUMS À RACHETER » (Igal, 7 nov. 2026 : « dans le tableau de bord, une partie qui regroupe tous les parfums à
+   recommander, pour éditer une liste et l'envoyer à un fournisseur en lui demandant une offre de prix »). Une liste
+   partagée (parfums-a-racheter-v1, une fiche par parfum, synchronisée par le cockpit comme les autres magasins) :
+   la tâche « Recommander » y met le parfum d'un clic ; le stock bas du tableau de bord aussi. Un parfum retiré de la
+   liste n'en sort pas : il passe « retiré » et la tâche reste ignorée (sinon Sam la reverrait tous les matins).
+   Une réception enregistrée dans Factures sort le parfum de la liste. */
+const K_RACH='parfums-a-racheter-v1';
+function rachLit(){ let R={}; try{ R=lit(K_RACH,{})||{}; }catch(e){ R={}; } return (R&&typeof R==='object'&&!Array.isArray(R))?R:{}; }
+function rachAjoute(cle,inf){ if(!cle) return false; const R=rachLit(), o=R[cle]||{}, i=inf||{};
+  const par=(typeof NOM_UTIL==='string'&&NOM_UTIL)?NOM_UTIL:(o.par||'');
+  const n=Object.assign({},o,{bc:String(i.bc||o.bc||''),ref:String(i.ref||o.ref||''),etat:'liste',t:new Date().toISOString(),par});
+  if(i.q!=null&&i.q!=='') n.q=Math.max(1,Math.round(+i.q)||1); delete n.tr; R[cle]=n; ecrit(K_RACH,R); return true; }
+function rachQuantite(cle,q){ const R=rachLit(); if(!R[cle]) return false; R[cle]=Object.assign({},R[cle],{q:Math.max(1,Math.round(+q)||1)}); ecrit(K_RACH,R); return true; }
+function rachRetire(cle){ const R=rachLit(); if(!R[cle]) return false; R[cle]=Object.assign({},R[cle],{etat:'retire',tr:new Date().toISOString()}); ecrit(K_RACH,R); return true; }
+function rachRecu(cles){ const R=rachLit(); let n=0; (cles||[]).forEach(c=>{ if(c&&R[c]&&R[c].etat==='liste'){ delete R[c]; n++; } }); if(n) ecrit(K_RACH,R); return n; }
+const rachListe=()=>Object.entries(rachLit()).filter(([,o])=>o&&o.etat==='liste').map(([cle,o])=>Object.assign({cle},o));
 /* LA FICHE DU PARFUM DANS UNE FENÊTRE, par-dessus la page en cours (Igal, 17 oct. 2026 : depuis une facture, puis
    depuis le détail d'une vente — « sans avoir à passer par le catalogue pour voir le produit »). C'est la fiche du
    Catalogue elle-même, ouverte en « mode cadre » (catalogue.html#cle=…&cadre=1) : mêmes champs, mêmes droits, même

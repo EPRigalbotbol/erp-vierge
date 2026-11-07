@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr"><head><meta charset="utf-8"><script>/* à qui appartient cette installation : posé par nouveau_client.py, lu par _comptes.py et _serveur.py */window.COCKPIT_ORG="demo";</script><script>/* ============ LE GRENIER (17 oct. 2026) ============
+<html lang="fr"><head><meta charset="utf-8"><script>/* ============ LE GRENIER (17 oct. 2026) ============
    La mémoire « localStorage » d'un navigateur est limitée à 5 Mo par site. Le 17 octobre, celle de Sam était PLEINE
    (relevé des sites 1,1 Mo, factures 1 Mo, journal 0,75 Mo, devis 0,8 Mo…) : « This browser's storage is full », les
    dernières données n'étaient plus rangées, et la page travaillait sur une copie périmée. Les GROS magasins (24 Ko et
@@ -431,6 +431,8 @@ border-radius:10px;padding:18px 20px;margin-bottom:16px}
 .alerte h3{margin:0 0 5px;font-size:16px;font-weight:700;letter-spacing:-.015em}
 .alerte p{margin:0;font-size:13.5px;color:var(--ink-2);line-height:1.6;max-width:78ch}
 .alerte p b{color:var(--ink)}
+.sous3{font-size:11.5px;color:var(--ink-3)}
+#rach-table input[type=number]{width:64px;text-align:right;font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
 
 .tbl{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--surface);
 border:1px solid var(--line);border-radius:10px;overflow:hidden}
@@ -604,31 +606,31 @@ font-variant-numeric:tabular-nums}
   <div class="logo"><div class="n">Perfumes Trade</div><div class="s">ERP</div></div>
   <nav>
     <div class="navlab">Produits</div>
-    <a class="nv" href="catalogue.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>Catalogue<span class="ct nu" id="ct-catalogue">0</span></a>
-    <a class="nv" href="stock.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg></span>Inventaire<span class="ct nu" id="ct-inventaire">0</span></a>
-    <a class="nv" href="inventaire_pc.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h16l-1-5H5z"/><path d="M5 9v11h14V9"/><path d="M10 20v-5h4v5"/></svg></span>Inventaire Perfume City<span class="ct" id="ct-pcity"></span></a>
-    <a class="nv" href="demandes_pc.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></span>Transfert interstore<span class="ct" id="ct-demandes"></span></a>
+    <a class="nv" href="catalogue.html?v=202611070939"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>Catalogue<span class="ct nu" id="ct-catalogue">0</span></a>
+    <a class="nv" href="stock.html?v=202611070939"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg></span>Inventaire<span class="ct nu" id="ct-inventaire">0</span></a>
+    <a class="nv" href="inventaire_pc.html?v=202611070939"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h16l-1-5H5z"/><path d="M5 9v11h14V9"/><path d="M10 20v-5h4v5"/></svg></span>Inventaire Perfume City<span class="ct" id="ct-pcity"></span></a>
+    <a class="nv" href="demandes_pc.html?v=202611070939"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></span>Transfert interstore<span class="ct" id="ct-demandes"></span></a>
     <div class="navlab">Commerce</div>
-    <a class="nv" href="quotes.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>Cote<span class="ct" id="ct-devis"></span></a>
-    <a class="nv" href="factures.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span>Factures<span class="ct" id="ct-factures"></span></a>
-    <a class="nv" href="ventes.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/></svg></span>Ventes<span class="ct" id="ct-ventes"></span></a>
-    <a class="nv" href="fournisseurs.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></svg></span>Fournisseurs<span class="ct" id="ct-fournisseurs"></span></a>
-    <a class="nv" href="etude.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg></span>Étude de cote<span class="ct" id="ct-étude"></span></a>
-    <a class="nv" href="clients.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></span>Clients<span class="ct nb" id="ct-clients">0</span></a>
-    <a class="nv sub" href="clients.html?v=202611052121#vip" data-id="clients-vip" data-sous="clients.html">Clients VIP</a>
-    <a class="nv" data-pilotage="1" href="connecteurs.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10l-3-3M17 17H7l3 3"/></svg></span>Connecteurs<span class="ct" id="ct-connecteurs"></span></a>
+    <a class="nv" href="quotes.html?v=202611070939"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>Cote<span class="ct" id="ct-devis"></span></a>
+    <a class="nv" href="factures.html?v=202611070939"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span>Factures<span class="ct" id="ct-factures"></span></a>
+    <a class="nv" href="ventes.html?v=202611070939"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/></svg></span>Ventes<span class="ct" id="ct-ventes"></span></a>
+    <a class="nv" href="fournisseurs.html?v=202611070939"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></svg></span>Fournisseurs<span class="ct" id="ct-fournisseurs"></span></a>
+    <a class="nv" href="etude.html?v=202611070939"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg></span>Étude de cote<span class="ct" id="ct-étude"></span></a>
+    <a class="nv" href="clients.html?v=202611070939"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></span>Clients<span class="ct nb" id="ct-clients">0</span></a>
+    <a class="nv sub" href="clients.html?v=202611070939#vip" data-id="clients-vip" data-sous="clients.html">Clients VIP</a>
+    <a class="nv" data-pilotage="1" href="connecteurs.html?v=202611070939"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10l-3-3M17 17H7l3 3"/></svg></span>Connecteurs<span class="ct" id="ct-connecteurs"></span></a>
     <a class="nv" href="#galou" id="gl-btn" data-id="galou" onclick="if(typeof galouOuvre==='function')galouOuvre();return false"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v10H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg></span>Parler à Léa<span class="ct" id="ct-parler"></span></a>
     <div class="navlab" data-pilotage="1">Pilotage</div>
     <a class="nv" href="#support" id="aid-btn" data-id="support" onclick="if(typeof aidOuvre==='function')aidOuvre();return false"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="m9.5 9.5-4-4M14.5 9.5l4-4M14.5 14.5l4 4M9.5 14.5l-4 4"/></svg></span>Support technique<span class="ct" id="ct-support"></span></a>
-    <a class="nv" data-pilotage="1" href="journal.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Journal<span class="ct" id="ct-journal"></span></a>
-    <a class="nv on" data-pilotage="1" href="tableau.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/></svg></span>Tableau de bord<span class="ct" id="ct-tableau"></span></a>
-    <a class="nv" data-pilotage="1" href="taches.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m8 12 3 3 5-6"/></svg></span>Tâches<span class="ct" id="ct-taches"></span></a>
-    <a class="nv" data-pilotage="1" href="acces.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.3 8 8 9 4.7-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></span>Accès<span class="ct" id="ct-accès"></span></a>
+    <a class="nv" data-pilotage="1" href="journal.html?v=202611070939"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Journal<span class="ct" id="ct-journal"></span></a>
+    <a class="nv on" data-pilotage="1" href="tableau.html?v=202611070939"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/></svg></span>Tableau de bord<span class="ct" id="ct-tableau"></span></a>
+    <a class="nv" data-pilotage="1" href="taches.html?v=202611070939"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m8 12 3 3 5-6"/></svg></span>Tâches<span class="ct" id="ct-taches"></span></a>
+    <a class="nv" data-pilotage="1" href="acces.html?v=202611070939"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.3 8 8 9 4.7-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></span>Accès<span class="ct" id="ct-accès"></span></a>
     <a class="nv" data-pilotage="1" href="https://app.gusto.com" target="_blank" rel="noopener" title="Ouvre Gusto dans un nouvel onglet"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M14.5 9a2.5 2 0 0 0-2.5-1.5c-1.4 0-2.5.8-2.5 2s1 1.7 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2A2.7 2 0 0 1 9.5 15M12 6v1.5M12 16.5V18"/></svg></span>Paie<span class="ct" id="ct-paie"></span></a>
-    <a class="nv" data-pilotage="1" href="reglages.html?v=202611052121"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg></span>Réglages<span class="ct" id="ct-réglages"></span></a>
+    <a class="nv" data-pilotage="1" href="reglages.html?v=202611070939"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg></span>Réglages<span class="ct" id="ct-réglages"></span></a>
   </nav>
   <div class="sfoot"><div id="sfu" class="sfu"></div><span id="sfoot"></span>
-    <div class="ver" title="Si cette date n'est pas la derni&egrave;re, recharge avec Cmd+Option+R">version du 11/05/2026 à 21h21</div>
+    <div class="ver" title="Si cette date n'est pas la derni&egrave;re, recharge avec Cmd+Option+R">version du 11/07/2026 à 09h39</div>
     <div class="sfline" id="sfline"></div></div>
 </aside>
 <main class="main"><div class="wrap">
@@ -709,7 +711,7 @@ try{
 }catch(e){}
 })();
 </script>
-<script src="donnees/langue.js?v=202611052121"></script>
+<script src="donnees/langue.js?v=202611070939"></script>
 <script>
 /* le menu réglé et la langue de l'écran, AVANT le code de la page : rien ne saute, rien n'est vu dans une autre langue */
 
@@ -1610,7 +1612,7 @@ const LG_FR_PARCOURS=!/catalogue|stock|inventaire/.test(location.pathname);
 })();
 
 </script>
-<script src="donnees/produits.js?v=202611052121"></script><script src="donnees/histgros.js?v=202611052121"></script>
+<script src="donnees/produits.js?v=202611070939"></script><script src="donnees/histgros.js?v=202611070939"></script>
 <script>
 if (typeof window.D_PROD==='undefined') {
   /* Le code de la page est lancé plus tard par l'amorce (voir _serveur.py) : ce drapeau
@@ -1632,7 +1634,7 @@ if (typeof window.D_PROD==='undefined') {
 }
 </script>
 <script type="text/plain" id="page-js">
-const VER_URL='202611052121';
+const VER_URL='202611070939';
 const $=i=>document.getElementById(i);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const nf=v=>Number(v||0).toLocaleString('fr-FR');
@@ -1705,7 +1707,7 @@ const _IMBR={'ventes-v1'         : x=>x._i||[x.d||'',x.num||'',x.q,x.p,x.c||'',x
 const _SOUSMAP={'stock-externe-v1':['q']};
 /* magasins ou chaque fiche est un paquet de champs : on fusionne champ par champ,
    pour que deux onglets puissent corriger deux champs differents du meme produit */
-const _CHAMPS={'pc-stock-v1':1,'testeurs-pc-v1':1,'fiches-modifiees-v1':1,'demandes-pc-v1':1,'clients-v1':1,'reglements-v1':1,'fournisseurs-v1':1,'marche-v1':1,'photos-perso-v1':1};
+const _CHAMPS={'pc-stock-v1':1,'testeurs-pc-v1':1,'fiches-modifiees-v1':1,'demandes-pc-v1':1,'clients-v1':1,'reglements-v1':1,'fournisseurs-v1':1,'marche-v1':1,'photos-perso-v1':1,'parfums-a-racheter-v1':1};
 function fusChamps(dq,ref,cour){
   const o=(dq&&typeof dq==='object'&&!Array.isArray(dq))?Object.assign({},dq):{};
   const r=ref||{};
@@ -1880,6 +1882,22 @@ function photoReduite(fichier,max){
     r.readAsDataURL(fichier);
   });
 }
+/* « PARFUMS À RACHETER » (Igal, 7 nov. 2026 : « dans le tableau de bord, une partie qui regroupe tous les parfums à
+   recommander, pour éditer une liste et l'envoyer à un fournisseur en lui demandant une offre de prix »). Une liste
+   partagée (parfums-a-racheter-v1, une fiche par parfum, synchronisée par le cockpit comme les autres magasins) :
+   la tâche « Recommander » y met le parfum d'un clic ; le stock bas du tableau de bord aussi. Un parfum retiré de la
+   liste n'en sort pas : il passe « retiré » et la tâche reste ignorée (sinon Sam la reverrait tous les matins).
+   Une réception enregistrée dans Factures sort le parfum de la liste. */
+const K_RACH='parfums-a-racheter-v1';
+function rachLit(){ let R={}; try{ R=lit(K_RACH,{})||{}; }catch(e){ R={}; } return (R&&typeof R==='object'&&!Array.isArray(R))?R:{}; }
+function rachAjoute(cle,inf){ if(!cle) return false; const R=rachLit(), o=R[cle]||{}, i=inf||{};
+  const par=(typeof NOM_UTIL==='string'&&NOM_UTIL)?NOM_UTIL:(o.par||'');
+  const n=Object.assign({},o,{bc:String(i.bc||o.bc||''),ref:String(i.ref||o.ref||''),etat:'liste',t:new Date().toISOString(),par});
+  if(i.q!=null&&i.q!=='') n.q=Math.max(1,Math.round(+i.q)||1); delete n.tr; R[cle]=n; ecrit(K_RACH,R); return true; }
+function rachQuantite(cle,q){ const R=rachLit(); if(!R[cle]) return false; R[cle]=Object.assign({},R[cle],{q:Math.max(1,Math.round(+q)||1)}); ecrit(K_RACH,R); return true; }
+function rachRetire(cle){ const R=rachLit(); if(!R[cle]) return false; R[cle]=Object.assign({},R[cle],{etat:'retire',tr:new Date().toISOString()}); ecrit(K_RACH,R); return true; }
+function rachRecu(cles){ const R=rachLit(); let n=0; (cles||[]).forEach(c=>{ if(c&&R[c]&&R[c].etat==='liste'){ delete R[c]; n++; } }); if(n) ecrit(K_RACH,R); return n; }
+const rachListe=()=>Object.entries(rachLit()).filter(([,o])=>o&&o.etat==='liste').map(([cle,o])=>Object.assign({cle},o));
 /* LA FICHE DU PARFUM DANS UNE FENÊTRE, par-dessus la page en cours (Igal, 17 oct. 2026 : depuis une facture, puis
    depuis le détail d'une vente — « sans avoir à passer par le catalogue pour voir le produit »). C'est la fiche du
    Catalogue elle-même, ouverte en « mode cadre » (catalogue.html#cle=…&cadre=1) : mêmes champs, mêmes droits, même
@@ -6150,33 +6168,72 @@ function blocDiff(){
   return h;
 }
 let vusDiff=25;
+/* 7 nov. 2026 (Igal) : les parfums cochés sous le seuil ne partent plus dans une fenêtre à part : ils rejoignent la liste
+   « Parfums à racheter » (quantité proposée = celle du dernier achat, sinon 6), d'où sortent l'Excel, WhatsApp et la copie. */
 function cmdOuvre(){
   const L=bas.filter(p=>CMD.has(p.cle)); if(!L.length) return;
-  const Q={}; L.forEach(p=>{ const h=dernierAchat(p.cle); Q[p.cle]=Math.max(1,(h&&+h.q)||6); });
-  const v=document.createElement('div'); v.className='mvoile';
-  const lig=()=>L.map(p=>{ const h=dernierAchat(p.cle);
-    return `<tr><td><div class="mq" style="font-size:10px;color:var(--iris);font-weight:700;letter-spacing:.06em;text-transform:uppercase">${esc(p.marque||'')}</div><b>${esc(p.nom||'')}</b><div style="font-size:11.5px;color:var(--ink-3)" data-nolang>${esc(p.bc||'')}</div></td>
-      <td class="r">${nf(p.qte)}</td>
-      <td class="r"><input type="number" min="1" step="1" data-q="${esc(p.cle)}" value="${Q[p.cle]}"></td>
-      <td class="r" data-nolang>${h?money2(h.p)+'<div style="font-size:11.5px;color:var(--ink-3)">'+esc(String(h.d).slice(0,10))+'</div>':'—'}</td>
-      <td>${h&&h.f?esc(h.f):'—'}</td></tr>`; }).join('');
-  v.innerHTML=`<div class="mfen" role="dialog" aria-modal="true"><h3>Liste à commander</h3>
-    <p class="sous2">${nf(L.length)} parfum${L.length>1?'s':''} sous le seuil. Corrige les quantités, puis Excel, WhatsApp ou copier. Rien ne change dans l'ERP.</p>
-    <table><thead><tr><th>Référence</th><th class="r">Reste</th><th class="r">À commander</th><th class="r">Dernier prix payé</th><th>Dernier fournisseur</th></tr></thead><tbody>${lig()}</tbody></table>
-    <div id="cmd-rep" class="mrep"></div>
-    <div class="mbtn"><button class="btn" id="cmd-ferme">Fermer</button><button class="btn" id="cmd-copie">Copier</button><button class="btn" id="cmd-wa">WhatsApp</button><button class="btn pri" id="cmd-xlsx">Excel</button></div></div>`;
-  document.body.appendChild(v);
-  v.querySelectorAll('[data-q]').forEach(i=>i.oninput=()=>{ Q[i.dataset.q]=Math.max(1,parseInt(i.value,10)||1); });
-  const lignes=()=>L.map(p=>{ const h=dernierAchat(p.cle); return {p,q:Q[p.cle],h}; });
-  const texte=()=>'Commande — Perfumes Trade — '+new Date().toLocaleDateString('en-US',{timeZone:'America/New_York'})+'\n'
-    +lignes().map(x=>`• ${(x.p.marque||'')+' '+(x.p.nom||'')} (${x.p.bc||''}) × ${x.q}`).join('\n');
-  v.querySelector('#cmd-ferme').onclick=()=>v.remove();
-  v.querySelector('#cmd-xlsx').onclick=()=>{ try{ sortieXlsx({titre:'Liste à commander',filtre:nf(L.length)+' parfum(s) sous le seuil de '+REG.seuilQte,fichier:'liste-a-commander',
-      colonnes:[{t:'Marque'},{t:'Parfum'},{t:'Code-barres'},{t:'Reste',y:'n'},{t:'À commander',y:'n'},{t:'Dernier prix payé',y:'m'},{t:'Date',y:'d'},{t:'Dernier fournisseur'}],
-      lignes:lignes().map(x=>[x.p.marque||'',x.p.nom||'',x.p.bc||'',x.p.qte,x.q,x.h?x.h.p:'',x.h?String(x.h.d).slice(0,10):'',x.h&&x.h.f?x.h.f:''])});
-      v.querySelector('#cmd-rep').textContent='Fichier Excel téléchargé.'; }catch(e){ v.querySelector('#cmd-rep').textContent='Excel impossible : '+((e&&e.message)||e); } };
-  v.querySelector('#cmd-wa').onclick=()=>{ window.open('https://wa.me/?text='+encodeURIComponent(texte()),'_blank','noopener'); };
-  v.querySelector('#cmd-copie').onclick=async()=>{ try{ await navigator.clipboard.writeText(texte()); v.querySelector('#cmd-rep').textContent='Liste copiée.'; }catch(e){ v.querySelector('#cmd-rep').textContent='Copie impossible : sélectionne le texte à la main.'; } };
+  L.forEach(p=>{ const h=dernierAchat(p.cle); rachAjoute(p.cle,{bc:p.bc,ref:((p.marque||'')+' '+(p.nom||'')).trim(),q:Math.max(1,(h&&+h.q)||6)}); });
+  CMD.clear(); dessine();
+  const z=document.getElementById('racheter'); if(z) z.scrollIntoView({behavior:'smooth',block:'start'});
+}
+/* ---- « Parfums à racheter » (Igal, 7 nov. 2026 : « une partie du tableau de bord qui regroupe tous les parfums à recommander,
+   pour éditer une liste et l'envoyer à un fournisseur en lui demandant une offre de prix — et des statistiques intéressantes
+   sur chaque parfum »). La liste vient de parfums-a-racheter-v1 (_fusion.py) : la tâche « Recommander » et le stock bas
+   y mettent les parfums. Les chiffres sont relus des ventes (rcLignes, les mêmes que Ventes) et du stock du Catalogue. */
+let RACH_L=null;
+function rachLignes(){ if(!RACH_L){ try{ RACH_L=rcLignes().filter(v=>v&&v.cle&&!v.ret&&v.q>0&&v.auto!=='shopify-pc'&&!v.hist); }catch(e){ RACH_L=[]; } } return RACH_L; }
+function rachStats(cle){
+  const L=rachLignes().filter(v=>v.cle===cle), auj=iso(AUJ), mois=auj.slice(0,7);
+  const som=M=>M.reduce((a,v)=>a+(+v.q||0),0);
+  const vMois=som(L.filter(v=>v.d.slice(0,7)===mois)), v30=som(L.filter(v=>v.d>=J30&&v.d<=auj)), v90=som(L.filter(v=>v.d>=J90&&v.d<=auj));
+  const p=parCle[cle]||{}, stock=Math.max(0,+p.qte||0), parJour=v90/90, ps=Math.round(parJour*7*10)/10;
+  const jours=parJour>0?stock/parJour:null, derniere=L.reduce((m,v)=>v.d>m?v.d:m,''), h=dernierAchat(cle);
+  const conseil=Math.max(1,Math.ceil(parJour*30-stock));
+  return {p,stock,vMois,v30,v90,ps,jours,derniere,h,conseil};
+}
+function blocRacheter(){
+  const R=rachListe().sort((a,b)=>String(b.t||'').localeCompare(String(a.t||'')));
+  let h=`<h2 class="sec" id="racheter">Parfums à racheter <em>la liste à envoyer à un fournisseur pour une offre de prix</em>
+      <a href="taches.html">Voir les tâches</a></h2>`;
+  if(!R.length) return h+`<div class="vide"><p>Rien pour l'instant. Dans Tâches, « Mettre dans Parfums à racheter » amène un parfum ici ; sous le seuil, coche les parfums puis « Mettre dans Parfums à racheter ».</p></div>`;
+  const tient=j=>j==null?'—':j<1?'moins d\'un jour':j<21?Math.round(j)+' jours':Math.round(j/7)+' semaines';
+  h+=`<div class="alerte"><h3>${nf(R.length)} parfum${R.length>1?'s':''} à racheter</h3>
+      <p>Corrige les quantités, puis Excel, WhatsApp ou copier. Rien n'est commandé par l'ERP : c'est la liste pour demander une offre de prix.</p></div>
+      <div class="wrapx"><table class="tbl" id="rach-table"><thead><tr>
+      <th>Référence</th><th class="r">Reste</th><th class="r">Vendus ce mois</th><th class="r">Vendus / 30 j</th><th class="r">Vendus / 90 j</th>
+      <th class="r">Par semaine</th><th class="r">Tient</th><th class="r">Dernière vente</th><th class="r">Dernier achat</th><th class="r">À commander</th><th></th></tr></thead><tbody>
+      ${R.map(o=>{ const s=rachStats(o.cle), p=s.p, q=o.q!=null?o.q:s.conseil;
+        return `<tr data-rach-l="${esc(o.cle)}">
+        <td class="ref"><div class="mq">${esc(p.marque||'')}</div><b>${esc(p.nom||o.ref||'')}${tyBadge(o.cle)}</b><span data-nolang>${esc(p.bc||o.bc||'')}</span></td>
+        <td class="r"><span class="rest ${s.stock===0?'c':s.jours!=null&&s.jours<=7?'c':'w'}">${s.stock===0?'plus aucun':nf(s.stock)}</span></td>
+        <td class="r">${nf(s.vMois)}</td><td class="r">${nf(s.v30)}</td><td class="r">${nf(s.v90)}</td>
+        <td class="r" data-nolang>${s.ps?String(s.ps).replace('.',','):'—'}</td>
+        <td class="r ${s.jours!=null&&s.jours<=7?'neg':''}">${s.stock===0?'—':tient(s.jours)}</td>
+        <td class="r" data-nolang>${s.derniere?dateUS(s.derniere):'—'}</td>
+        <td class="r" data-nolang>${s.h?money2(s.h.p)+'<div class="sous3">'+dateUS(String(s.h.d).slice(0,10))+(s.h.f?' · '+esc(s.h.f):'')+'</div>':'—'}</td>
+        <td class="r"><input type="number" min="1" step="1" data-rq="${esc(o.cle)}" value="${q}" title="Conseillé : ${s.conseil} (un mois de ventes, moins le stock)"></td>
+        <td><button class="btn" data-rx="${esc(o.cle)}" title="Retirer de la liste : la tâche restera ignorée">Retirer</button></td></tr>`; }).join('')}
+      </tbody></table></div>
+      <div class="cmdbar"><button class="btn" id="rach-copie">Copier</button><button class="btn" id="rach-wa">WhatsApp</button><button class="btn pri" id="rach-xlsx">Excel</button><span id="rach-rep"></span></div>`;
+  return h;
+}
+const dateUS=d=>{ const m=String(d||'').match(/^(\d{4})-(\d\d)-(\d\d)/); return m?`${m[2]}/${m[3]}/${m[1].slice(2)}`:String(d||''); };
+function rachTexte(){
+  const R=rachListe();
+  return 'Demande d\'offre de prix — Perfumes Trade — '+new Date().toLocaleDateString('en-US',{timeZone:'America/New_York'})+'\n'
+    +R.map(o=>{ const s=rachStats(o.cle), p=s.p; return `• ${((p.marque||'')+' '+(p.nom||o.ref||'')).trim()} (${p.bc||o.bc||''}) × ${o.q!=null?o.q:s.conseil}`; }).join('\n');
+}
+function rachBranche(){
+  const rep=t=>{ const e=$('rach-rep'); if(e) e.textContent=t; };
+  document.querySelectorAll('[data-rq]').forEach(i=>i.onchange=()=>{ rachQuantite(i.dataset.rq,i.value); });
+  document.querySelectorAll('[data-rx]').forEach(b=>b.onclick=()=>{ rachRetire(b.dataset.rx); const y=window.scrollY; dessine(); window.scrollTo(0,y); });
+  const x=$('rach-xlsx'); if(x) x.onclick=()=>{ try{ const R=rachListe();
+      sortieXlsx({titre:'Parfums à racheter',filtre:nf(R.length)+' parfum(s) — demande d\'offre de prix',fichier:'parfums-a-racheter',
+        colonnes:[{t:'Marque'},{t:'Parfum'},{t:'Code-barres'},{t:'Reste',y:'n'},{t:'Vendus / 30 j',y:'n'},{t:'Vendus / 90 j',y:'n'},{t:'À commander',y:'n'},{t:'Dernier prix payé',y:'m'},{t:'Date',y:'d'},{t:'Dernier fournisseur'}],
+        lignes:R.map(o=>{ const s=rachStats(o.cle), p=s.p; return [p.marque||'',p.nom||o.ref||'',p.bc||o.bc||'',s.stock,s.v30,s.v90,o.q!=null?o.q:s.conseil,s.h?s.h.p:'',s.h?String(s.h.d).slice(0,10):'',s.h&&s.h.f?s.h.f:'']; })});
+      rep('Fichier Excel téléchargé.'); }catch(e){ rep('Excel impossible : '+((e&&e.message)||e)); } };
+  const w=$('rach-wa'); if(w) w.onclick=()=>{ window.open('https://wa.me/?text='+encodeURIComponent(rachTexte()),'_blank','noopener'); };
+  const c=$('rach-copie'); if(c) c.onclick=async()=>{ try{ await navigator.clipboard.writeText(rachTexte()); rep('Liste copiée.'); }catch(e){ rep('Copie impossible : sélectionne le texte à la main.'); } };
 }
 /* ---- un envoi de stock aux sites BLOQUÉ (plus de 25 parfums à zéro d'un coup, ou refus du site) : jusqu'ici seulement au
    Journal (« stock NON envoyé aux sites — … »). Igal, 25 oct. 2026 : au tableau de bord, avec « Envoyer quand même ». */
@@ -6444,8 +6501,8 @@ function dernierAchat(cle){ const l=(HIST[cle]||[]).filter(x=>x&&x.d).slice().so
 function cmdBarre(){
   const n=CMD.size;
   return `<div class="cmdbar"><label><input type="checkbox" id="cmd-tout">Tout cocher</label>
-    <button class="btn pri" id="cmd-go" ${n?'':'disabled'}>Liste à commander${n?' ('+nf(n)+')':''}</button>
-    <span>${n?'':'Coche les parfums à commander, puis fais la liste : Excel, WhatsApp ou copier.'}</span></div>`;
+    <button class="btn pri" id="cmd-go" ${n?'':'disabled'}>Mettre dans Parfums à racheter${n?' ('+nf(n)+')':''}</button>
+    <span>${n?'':'Coche les parfums à racheter : ils rejoignent la liste « Parfums à racheter », plus haut.'}</span></div>`;
 }
 function tblBas(){
   const l=bas.slice(0,vus);
@@ -6542,7 +6599,8 @@ function dessine(){
 
   h+=blocPC();
 
-  /* --- ce qui va manquer --- */
+  /* --- les parfums à racheter (la liste pour le fournisseur), puis ce qui va manquer --- */
+  h+=blocRacheter();
   h+=`<h2 class="sec">Ce qui va manquer <em>au rythme des 90 derniers jours</em>
       <a href="etude.html">Étudier un devis</a></h2>`;
   if(!VL.length)
@@ -6707,9 +6765,10 @@ function dessine(){
     if(typeof ficheFenetre!=='function'){ location.href='catalogue.html#cle='+encodeURIComponent(b.dataset.mel)+'&mel=1'; return; }
     ficheFenetre(b.dataset.mel,()=>{ const y=window.scrollY; try{ DIFF=calcDiff(); }catch(e){} dessine(); window.scrollTo(0,y); },'&canaux=1'); });
   document.querySelectorAll('[data-cmd]').forEach(c=>c.onchange=()=>{ if(c.checked) CMD.add(c.dataset.cmd); else CMD.delete(c.dataset.cmd);
-    const g=$('cmd-go'); if(g){ g.disabled=!CMD.size; g.textContent='Liste à commander'+(CMD.size?' ('+nf(CMD.size)+')':''); } });
+    const g=$('cmd-go'); if(g){ g.disabled=!CMD.size; g.textContent='Mettre dans Parfums à racheter'+(CMD.size?' ('+nf(CMD.size)+')':''); } });
   const ct=$('cmd-tout'); if(ct) ct.onchange=()=>{ bas.slice(0,vus).forEach(p=>{ if(ct.checked) CMD.add(p.cle); else CMD.delete(p.cle); }); dessine(); };
   const cg=$('cmd-go'); if(cg) cg.onclick=cmdOuvre;
+  rachBranche();
   const sb=$('stb-go'); if(sb) sb.onclick=()=>stockBloqueEnvoie(sb);
   document.querySelectorAll('[data-pubx]').forEach(b=>b.onclick=()=>{ try{ const O=lit('publications-v1',{})||{}; delete O[b.dataset.pubx]; ecrit('publications-v1',O); }catch(e){} location.reload(); });
   const pts=rupture.length+perte.length+DOCS.length+PUB_KO.length+PC_KO.length+DIFF.L.length+(STB?1:0);

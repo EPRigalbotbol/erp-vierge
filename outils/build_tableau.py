@@ -35,6 +35,8 @@ border-radius:10px;padding:18px 20px;margin-bottom:16px}
 .alerte h3{margin:0 0 5px;font-size:16px;font-weight:700;letter-spacing:-.015em}
 .alerte p{margin:0;font-size:13.5px;color:var(--ink-2);line-height:1.6;max-width:78ch}
 .alerte p b{color:var(--ink)}
+.sous3{font-size:11.5px;color:var(--ink-3)}
+#rach-table input[type=number]{width:64px;text-align:right;font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
 
 .tbl{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--surface);
 border:1px solid var(--line);border-radius:10px;overflow:hidden}
@@ -374,33 +376,72 @@ function blocDiff(){
   return h;
 }
 let vusDiff=25;
+/* 7 nov. 2026 (Igal) : les parfums cochés sous le seuil ne partent plus dans une fenêtre à part : ils rejoignent la liste
+   « Parfums à racheter » (quantité proposée = celle du dernier achat, sinon 6), d'où sortent l'Excel, WhatsApp et la copie. */
 function cmdOuvre(){
   const L=bas.filter(p=>CMD.has(p.cle)); if(!L.length) return;
-  const Q={}; L.forEach(p=>{ const h=dernierAchat(p.cle); Q[p.cle]=Math.max(1,(h&&+h.q)||6); });
-  const v=document.createElement('div'); v.className='mvoile';
-  const lig=()=>L.map(p=>{ const h=dernierAchat(p.cle);
-    return `<tr><td><div class="mq" style="font-size:10px;color:var(--iris);font-weight:700;letter-spacing:.06em;text-transform:uppercase">${esc(p.marque||'')}</div><b>${esc(p.nom||'')}</b><div style="font-size:11.5px;color:var(--ink-3)" data-nolang>${esc(p.bc||'')}</div></td>
-      <td class="r">${nf(p.qte)}</td>
-      <td class="r"><input type="number" min="1" step="1" data-q="${esc(p.cle)}" value="${Q[p.cle]}"></td>
-      <td class="r" data-nolang>${h?money2(h.p)+'<div style="font-size:11.5px;color:var(--ink-3)">'+esc(String(h.d).slice(0,10))+'</div>':'—'}</td>
-      <td>${h&&h.f?esc(h.f):'—'}</td></tr>`; }).join('');
-  v.innerHTML=`<div class="mfen" role="dialog" aria-modal="true"><h3>Liste à commander</h3>
-    <p class="sous2">${nf(L.length)} parfum${L.length>1?'s':''} sous le seuil. Corrige les quantités, puis Excel, WhatsApp ou copier. Rien ne change dans l'ERP.</p>
-    <table><thead><tr><th>Référence</th><th class="r">Reste</th><th class="r">À commander</th><th class="r">Dernier prix payé</th><th>Dernier fournisseur</th></tr></thead><tbody>${lig()}</tbody></table>
-    <div id="cmd-rep" class="mrep"></div>
-    <div class="mbtn"><button class="btn" id="cmd-ferme">Fermer</button><button class="btn" id="cmd-copie">Copier</button><button class="btn" id="cmd-wa">WhatsApp</button><button class="btn pri" id="cmd-xlsx">Excel</button></div></div>`;
-  document.body.appendChild(v);
-  v.querySelectorAll('[data-q]').forEach(i=>i.oninput=()=>{ Q[i.dataset.q]=Math.max(1,parseInt(i.value,10)||1); });
-  const lignes=()=>L.map(p=>{ const h=dernierAchat(p.cle); return {p,q:Q[p.cle],h}; });
-  const texte=()=>'Commande — Perfumes Trade — '+new Date().toLocaleDateString('en-US',{timeZone:'America/New_York'})+'\n'
-    +lignes().map(x=>`• ${(x.p.marque||'')+' '+(x.p.nom||'')} (${x.p.bc||''}) × ${x.q}`).join('\n');
-  v.querySelector('#cmd-ferme').onclick=()=>v.remove();
-  v.querySelector('#cmd-xlsx').onclick=()=>{ try{ sortieXlsx({titre:'Liste à commander',filtre:nf(L.length)+' parfum(s) sous le seuil de '+REG.seuilQte,fichier:'liste-a-commander',
-      colonnes:[{t:'Marque'},{t:'Parfum'},{t:'Code-barres'},{t:'Reste',y:'n'},{t:'À commander',y:'n'},{t:'Dernier prix payé',y:'m'},{t:'Date',y:'d'},{t:'Dernier fournisseur'}],
-      lignes:lignes().map(x=>[x.p.marque||'',x.p.nom||'',x.p.bc||'',x.p.qte,x.q,x.h?x.h.p:'',x.h?String(x.h.d).slice(0,10):'',x.h&&x.h.f?x.h.f:''])});
-      v.querySelector('#cmd-rep').textContent='Fichier Excel téléchargé.'; }catch(e){ v.querySelector('#cmd-rep').textContent='Excel impossible : '+((e&&e.message)||e); } };
-  v.querySelector('#cmd-wa').onclick=()=>{ window.open('https://wa.me/?text='+encodeURIComponent(texte()),'_blank','noopener'); };
-  v.querySelector('#cmd-copie').onclick=async()=>{ try{ await navigator.clipboard.writeText(texte()); v.querySelector('#cmd-rep').textContent='Liste copiée.'; }catch(e){ v.querySelector('#cmd-rep').textContent='Copie impossible : sélectionne le texte à la main.'; } };
+  L.forEach(p=>{ const h=dernierAchat(p.cle); rachAjoute(p.cle,{bc:p.bc,ref:((p.marque||'')+' '+(p.nom||'')).trim(),q:Math.max(1,(h&&+h.q)||6)}); });
+  CMD.clear(); dessine();
+  const z=document.getElementById('racheter'); if(z) z.scrollIntoView({behavior:'smooth',block:'start'});
+}
+/* ---- « Parfums à racheter » (Igal, 7 nov. 2026 : « une partie du tableau de bord qui regroupe tous les parfums à recommander,
+   pour éditer une liste et l'envoyer à un fournisseur en lui demandant une offre de prix — et des statistiques intéressantes
+   sur chaque parfum »). La liste vient de parfums-a-racheter-v1 (_fusion.py) : la tâche « Recommander » et le stock bas
+   y mettent les parfums. Les chiffres sont relus des ventes (rcLignes, les mêmes que Ventes) et du stock du Catalogue. */
+let RACH_L=null;
+function rachLignes(){ if(!RACH_L){ try{ RACH_L=rcLignes().filter(v=>v&&v.cle&&!v.ret&&v.q>0&&v.auto!=='shopify-pc'&&!v.hist); }catch(e){ RACH_L=[]; } } return RACH_L; }
+function rachStats(cle){
+  const L=rachLignes().filter(v=>v.cle===cle), auj=iso(AUJ), mois=auj.slice(0,7);
+  const som=M=>M.reduce((a,v)=>a+(+v.q||0),0);
+  const vMois=som(L.filter(v=>v.d.slice(0,7)===mois)), v30=som(L.filter(v=>v.d>=J30&&v.d<=auj)), v90=som(L.filter(v=>v.d>=J90&&v.d<=auj));
+  const p=parCle[cle]||{}, stock=Math.max(0,+p.qte||0), parJour=v90/90, ps=Math.round(parJour*7*10)/10;
+  const jours=parJour>0?stock/parJour:null, derniere=L.reduce((m,v)=>v.d>m?v.d:m,''), h=dernierAchat(cle);
+  const conseil=Math.max(1,Math.ceil(parJour*30-stock));
+  return {p,stock,vMois,v30,v90,ps,jours,derniere,h,conseil};
+}
+function blocRacheter(){
+  const R=rachListe().sort((a,b)=>String(b.t||'').localeCompare(String(a.t||'')));
+  let h=`<h2 class="sec" id="racheter">Parfums à racheter <em>la liste à envoyer à un fournisseur pour une offre de prix</em>
+      <a href="taches.html">Voir les tâches</a></h2>`;
+  if(!R.length) return h+`<div class="vide"><p>Rien pour l'instant. Dans Tâches, « Mettre dans Parfums à racheter » amène un parfum ici ; sous le seuil, coche les parfums puis « Mettre dans Parfums à racheter ».</p></div>`;
+  const tient=j=>j==null?'—':j<1?'moins d\'un jour':j<21?Math.round(j)+' jours':Math.round(j/7)+' semaines';
+  h+=`<div class="alerte"><h3>${nf(R.length)} parfum${R.length>1?'s':''} à racheter</h3>
+      <p>Corrige les quantités, puis Excel, WhatsApp ou copier. Rien n'est commandé par l'ERP : c'est la liste pour demander une offre de prix.</p></div>
+      <div class="wrapx"><table class="tbl" id="rach-table"><thead><tr>
+      <th>Référence</th><th class="r">Reste</th><th class="r">Vendus ce mois</th><th class="r">Vendus / 30 j</th><th class="r">Vendus / 90 j</th>
+      <th class="r">Par semaine</th><th class="r">Tient</th><th class="r">Dernière vente</th><th class="r">Dernier achat</th><th class="r">À commander</th><th></th></tr></thead><tbody>
+      ${R.map(o=>{ const s=rachStats(o.cle), p=s.p, q=o.q!=null?o.q:s.conseil;
+        return `<tr data-rach-l="${esc(o.cle)}">
+        <td class="ref"><div class="mq">${esc(p.marque||'')}</div><b>${esc(p.nom||o.ref||'')}${tyBadge(o.cle)}</b><span data-nolang>${esc(p.bc||o.bc||'')}</span></td>
+        <td class="r"><span class="rest ${s.stock===0?'c':s.jours!=null&&s.jours<=7?'c':'w'}">${s.stock===0?'plus aucun':nf(s.stock)}</span></td>
+        <td class="r">${nf(s.vMois)}</td><td class="r">${nf(s.v30)}</td><td class="r">${nf(s.v90)}</td>
+        <td class="r" data-nolang>${s.ps?String(s.ps).replace('.',','):'—'}</td>
+        <td class="r ${s.jours!=null&&s.jours<=7?'neg':''}">${s.stock===0?'—':tient(s.jours)}</td>
+        <td class="r" data-nolang>${s.derniere?dateUS(s.derniere):'—'}</td>
+        <td class="r" data-nolang>${s.h?money2(s.h.p)+'<div class="sous3">'+dateUS(String(s.h.d).slice(0,10))+(s.h.f?' · '+esc(s.h.f):'')+'</div>':'—'}</td>
+        <td class="r"><input type="number" min="1" step="1" data-rq="${esc(o.cle)}" value="${q}" title="Conseillé : ${s.conseil} (un mois de ventes, moins le stock)"></td>
+        <td><button class="btn" data-rx="${esc(o.cle)}" title="Retirer de la liste : la tâche restera ignorée">Retirer</button></td></tr>`; }).join('')}
+      </tbody></table></div>
+      <div class="cmdbar"><button class="btn" id="rach-copie">Copier</button><button class="btn" id="rach-wa">WhatsApp</button><button class="btn pri" id="rach-xlsx">Excel</button><span id="rach-rep"></span></div>`;
+  return h;
+}
+const dateUS=d=>{ const m=String(d||'').match(/^(\d{4})-(\d\d)-(\d\d)/); return m?`${m[2]}/${m[3]}/${m[1].slice(2)}`:String(d||''); };
+function rachTexte(){
+  const R=rachListe();
+  return 'Demande d\'offre de prix — Perfumes Trade — '+new Date().toLocaleDateString('en-US',{timeZone:'America/New_York'})+'\n'
+    +R.map(o=>{ const s=rachStats(o.cle), p=s.p; return `• ${((p.marque||'')+' '+(p.nom||o.ref||'')).trim()} (${p.bc||o.bc||''}) × ${o.q!=null?o.q:s.conseil}`; }).join('\n');
+}
+function rachBranche(){
+  const rep=t=>{ const e=$('rach-rep'); if(e) e.textContent=t; };
+  document.querySelectorAll('[data-rq]').forEach(i=>i.onchange=()=>{ rachQuantite(i.dataset.rq,i.value); });
+  document.querySelectorAll('[data-rx]').forEach(b=>b.onclick=()=>{ rachRetire(b.dataset.rx); const y=window.scrollY; dessine(); window.scrollTo(0,y); });
+  const x=$('rach-xlsx'); if(x) x.onclick=()=>{ try{ const R=rachListe();
+      sortieXlsx({titre:'Parfums à racheter',filtre:nf(R.length)+' parfum(s) — demande d\'offre de prix',fichier:'parfums-a-racheter',
+        colonnes:[{t:'Marque'},{t:'Parfum'},{t:'Code-barres'},{t:'Reste',y:'n'},{t:'Vendus / 30 j',y:'n'},{t:'Vendus / 90 j',y:'n'},{t:'À commander',y:'n'},{t:'Dernier prix payé',y:'m'},{t:'Date',y:'d'},{t:'Dernier fournisseur'}],
+        lignes:R.map(o=>{ const s=rachStats(o.cle), p=s.p; return [p.marque||'',p.nom||o.ref||'',p.bc||o.bc||'',s.stock,s.v30,s.v90,o.q!=null?o.q:s.conseil,s.h?s.h.p:'',s.h?String(s.h.d).slice(0,10):'',s.h&&s.h.f?s.h.f:'']; })});
+      rep('Fichier Excel téléchargé.'); }catch(e){ rep('Excel impossible : '+((e&&e.message)||e)); } };
+  const w=$('rach-wa'); if(w) w.onclick=()=>{ window.open('https://wa.me/?text='+encodeURIComponent(rachTexte()),'_blank','noopener'); };
+  const c=$('rach-copie'); if(c) c.onclick=async()=>{ try{ await navigator.clipboard.writeText(rachTexte()); rep('Liste copiée.'); }catch(e){ rep('Copie impossible : sélectionne le texte à la main.'); } };
 }
 /* ---- un envoi de stock aux sites BLOQUÉ (plus de 25 parfums à zéro d'un coup, ou refus du site) : jusqu'ici seulement au
    Journal (« stock NON envoyé aux sites — … »). Igal, 25 oct. 2026 : au tableau de bord, avec « Envoyer quand même ». */
@@ -668,8 +709,8 @@ function dernierAchat(cle){ const l=(HIST[cle]||[]).filter(x=>x&&x.d).slice().so
 function cmdBarre(){
   const n=CMD.size;
   return `<div class="cmdbar"><label><input type="checkbox" id="cmd-tout">Tout cocher</label>
-    <button class="btn pri" id="cmd-go" ${n?'':'disabled'}>Liste à commander${n?' ('+nf(n)+')':''}</button>
-    <span>${n?'':'Coche les parfums à commander, puis fais la liste : Excel, WhatsApp ou copier.'}</span></div>`;
+    <button class="btn pri" id="cmd-go" ${n?'':'disabled'}>Mettre dans Parfums à racheter${n?' ('+nf(n)+')':''}</button>
+    <span>${n?'':'Coche les parfums à racheter : ils rejoignent la liste « Parfums à racheter », plus haut.'}</span></div>`;
 }
 function tblBas(){
   const l=bas.slice(0,vus);
@@ -766,7 +807,8 @@ function dessine(){
 
   h+=blocPC();
 
-  /* --- ce qui va manquer --- */
+  /* --- les parfums à racheter (la liste pour le fournisseur), puis ce qui va manquer --- */
+  h+=blocRacheter();
   h+=`<h2 class="sec">Ce qui va manquer <em>au rythme des 90 derniers jours</em>
       <a href="etude.html">Étudier un devis</a></h2>`;
   if(!VL.length)
@@ -931,9 +973,10 @@ function dessine(){
     if(typeof ficheFenetre!=='function'){ location.href='catalogue.html#cle='+encodeURIComponent(b.dataset.mel)+'&mel=1'; return; }
     ficheFenetre(b.dataset.mel,()=>{ const y=window.scrollY; try{ DIFF=calcDiff(); }catch(e){} dessine(); window.scrollTo(0,y); },'&canaux=1'); });
   document.querySelectorAll('[data-cmd]').forEach(c=>c.onchange=()=>{ if(c.checked) CMD.add(c.dataset.cmd); else CMD.delete(c.dataset.cmd);
-    const g=$('cmd-go'); if(g){ g.disabled=!CMD.size; g.textContent='Liste à commander'+(CMD.size?' ('+nf(CMD.size)+')':''); } });
+    const g=$('cmd-go'); if(g){ g.disabled=!CMD.size; g.textContent='Mettre dans Parfums à racheter'+(CMD.size?' ('+nf(CMD.size)+')':''); } });
   const ct=$('cmd-tout'); if(ct) ct.onchange=()=>{ bas.slice(0,vus).forEach(p=>{ if(ct.checked) CMD.add(p.cle); else CMD.delete(p.cle); }); dessine(); };
   const cg=$('cmd-go'); if(cg) cg.onclick=cmdOuvre;
+  rachBranche();
   const sb=$('stb-go'); if(sb) sb.onclick=()=>stockBloqueEnvoie(sb);
   document.querySelectorAll('[data-pubx]').forEach(b=>b.onclick=()=>{ try{ const O=lit('publications-v1',{})||{}; delete O[b.dataset.pubx]; ecrit('publications-v1',O); }catch(e){} location.reload(); });
   const pts=rupture.length+perte.length+DOCS.length+PUB_KO.length+PC_KO.length+DIFF.L.length+(STB?1:0);

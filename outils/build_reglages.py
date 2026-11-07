@@ -87,6 +87,7 @@ background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:h
 .can th{text-align:left;font-family:Inter,sans-serif;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;
 color:var(--ink-2);font-weight:700;padding:6px 8px;border-bottom:1px solid var(--line)}
 .can th.r,.can td.r{text-align:right}
+.can tr.sous td{border-top:0;padding-top:0}.can tr.sous td:first-child{padding-left:18px}
 .can td{padding:7px 8px;border-bottom:1px solid var(--line-2);vertical-align:middle}
 .can .bs{font-size:12px;color:var(--ink-3);font-family:Inter,sans-serif}
 .can input[type=text]{width:100%;min-width:150px;padding:7px 9px;font-family:inherit;font-size:13.5px;font-weight:600;
@@ -141,6 +142,9 @@ P_CANAUX = ('<p><b>Commission</b> : ce que la plateforme garde sur chaque vente.
   '(prix d\'achat + seuil de marge, commission comprise).</p>'
   '<p><b>Envoi</b> : ce qu\'un colis coûte à Sam, par commande, sur chaque canal qui expédie. Il est retiré de la '
   'marge de la commande ; le port payé par le client sur le site, lui, y est ajouté. Vide = 8 $.</p>'
+  '<p><b>Perfume City</b> : deux lignes. La première, c\'est la boutique (la caisse Shopify POS, pas d\'envoi) ; la seconde, « en ligne », '
+  'c\'est perfumeinthecity.com, avec sa propre commission et son coût d\'envoi par commande (vide = 0). L\'ERP sait d\'où vient chaque '
+  'commande Shopify et applique la bonne ligne ; changer une commission recalcule toutes les ventes, passées comprises.</p>'
   '<p>Sites, Amazon, Perfume City… ce que tu vends réellement.</p>'
   + agit('Catalogue — case de prix par canal', 'Ventes — marge nette et commission « Par canal »'))
 
@@ -501,9 +505,21 @@ function dessineCanaux(){
       <td class="r ex"><b>${v.toFixed(2).replace('.',',')} $</b> <span class="bs">${c.base==='pvw'?'gros':'retail'}</span></td>
       <td class="r ex" style="color:${net<REG.margeMin?'var(--crit)':'var(--good)'}"><b>${net.toFixed(1).replace('.',',')} %</b></td>
       <td class="r ex">${pl!=null?pl.toFixed(2).replace('.',',')+' $':'—'}</td>
-      <td class="r">${REG.canaux.length>1?`<button class="x" data-del="${i}" title="Retirer ce canal">&times;</button>`:''}</td></tr>`;
+      <td class="r">${REG.canaux.length>1?`<button class="x" data-del="${i}" title="Retirer ce canal">&times;</button>`:''}</td></tr>`
+    /* 7 nov. 2026 (Igal : « Perfume City a deux types de vente sur Shopify, boutique et en ligne ») : la ligne du canal, c'est la
+       BOUTIQUE (caisse POS, n'expédie pas) ; une seconde ligne règle la vente EN LIGNE (perfumeinthecity.com) : sa commission
+       et son coût d'envoi par commande (0 tant que rien n'est réglé). L'ERP reconnaît l'origine de chaque commande Shopify. */
+    +(c.id==='perfumecity'?(()=>{ const comL=(c.comLigne==null||c.comLigne==='')?(c.com||0):+c.comLigne, envL=envPc();
+        const netL=(v*(1-comL/100)-pa-envL)/v*100, denL=1-comL/100-REG.margeMin/100, plL=denL>0?r2(pa/denL):null;
+        return `<tr data-i="${i}" class="sous"><td><span class="bs">${esc(c.nom)} — </span><b>en ligne</b> <span class="bs">(perfumeinthecity.com)</span></td>
+      <td class="r"><input type="number" data-k="comLigne" min="0" max="60" step="0.1" value="${comL}"> %</td>
+      <td class="r"><input type="number" data-k="env" data-ek="shopify-pc" id="env-shopify-pc" min="0" step="0.5" value="${envL}"> $</td>
+      <td class="r ex"><b>${v.toFixed(2).replace('.',',')} $</b> <span class="bs">retail</span></td>
+      <td class="r ex" style="color:${netL<REG.margeMin?'var(--crit)':'var(--good)'}"><b>${netL.toFixed(1).replace('.',',')} %</b></td>
+      <td class="r ex">${plL!=null?plL.toFixed(2).replace('.',',')+' $':'—'}</td><td></td></tr>`; })():'');
   }).join('');
 }
+const envPc=()=>{ const E=REG.envois||{}; const v=E['shopify-pc']; return (v==null||v===''||isNaN(+v))?0:Math.max(0,+v); };
 /* On ne redessine JAMAIS le tableau pendant qu'une case a le focus : le champ serait recréé,
    le curseur repartirait au début et les chiffres s'écriraient à l'envers (taper « 15.5 »
    donnait « 50.51 »). Le tableau se recalcule quand on quitte la case. */
@@ -520,14 +536,14 @@ $('canaux').addEventListener('input',e=>{
   const tr=e.target.closest('tr'); if(!tr) return; const c=REG.canaux[+tr.dataset.i]; const k=e.target.dataset.k;
   const avant=c[k];
   if(k==='nom'){ c.nom=e.target.value; if(!c.id) c.id='c'+Date.now().toString(36); }
-  else if(k==='env'){ const ek=ENV_DE(c); const E2=Object.assign({},REG.envois||{}); const av=envDe(ek);
+  else if(k==='env'){ const ek=e.target.dataset.ek||ENV_DE(c); const pc=ek==='shopify-pc'; const E2=Object.assign({},REG.envois||{}); const av=pc?envPc():envDe(ek);
          const t=e.target.value.trim(); if(t==='') delete E2[ek]; else E2[ek]=Math.max(0,+t.replace(',','.')||0);
-         REG.envois=E2; logReg('envoi-'+ek,"coût d'un envoi — "+c.nom,av+' $',envDe(ek)+' $'); sauve(); recalculeCanaux(); return; }
+         REG.envois=E2; logReg('envoi-'+ek,"coût d'un envoi — "+c.nom+(pc?' (en ligne)':''),av+' $',(pc?envPc():envDe(ek))+' $'); sauve(); recalculeCanaux(); return; }
   else { const t=e.target.value.trim().replace(',','.');
          const v=parseFloat(t);
          if(t==='' || t==='-' || /[.,]$/.test(t)) return;   /* saisie en cours : on ne fige rien */
          c[k]=isNaN(v)?0:Math.max(0,Math.min(60,v)); }
-  const LIBK={nom:'nom du canal',maj:'majoration',com:'commission prélevée par le canal'};
+  const LIBK={nom:'nom du canal',maj:'majoration',com:'commission prélevée par le canal',comLigne:'commission prélevée par le canal (vente en ligne)'};
   logReg('can-'+(c.id||tr.dataset.i)+'-'+k,
          (LIBK[k]||k)+' — '+(k==='nom'?'canal':c.nom),
          k==='nom'?avant:(avant+' %'), k==='nom'?c[k]:(c[k]+' %'));

@@ -109,6 +109,13 @@ function rcCom(nom){
   if(n.includes('lightspeed')||n.includes('caisse')||n==='boutique') return 0;
   return 0;
 }
+/* 7 nov. 2026 (Igal : « Perfume City a deux types de vente sur Shopify, boutique et en ligne ») : la vente EN LIGNE de Perfume
+   City a sa propre commission (Réglages, ligne « Perfume City — en ligne », comLigne) et un coût d'envoi par commande
+   (REG.envois['shopify-pc'], 0 tant que rien n'est réglé) ; la vente en boutique garde la commission du canal, sans envoi. */
+const rcPcCanal=()=>rcCanauxReg().find(c=>c.id==='perfumecity');
+const rcPcEnLigne=v=>!!(v&&String(v.auto||'')==='shopify-pc'&&v.ou==='en ligne');
+function rcComDe(v){ if(rcPcEnLigne(v)){ const c=rcPcCanal(); if(c&&c.comLigne!=null&&c.comLigne!==''&&!isNaN(+c.comLigne)) return Math.max(0,+c.comLigne); } return rcCom(v.canal); }
+const rcEnvoiPc=()=>{ const E=(REG&&REG.envois)||{}; const v=E['shopify-pc']; return (v==null||v===''||isNaN(+v))?0:Math.max(0,+v); };
 const rcPaAct=cle=>{ const m=MOD[cle]; if(m&&m.pa!=null) return +m.pa; const v=(IDX[cle]||[])[3]; return v==null?null:+v; };
 const rcCarteTaux=()=>{ const v=REG&&REG.carteLS; return (v==null||v===''||isNaN(+v))?2.6:Math.max(0,+v); };
 const rcEnvoi=src=>{ const E=(REG&&REG.envois)||{}; const v=E[src]; return (v==null||v===''||isNaN(+v))?8:Math.max(0,+v); };
@@ -134,22 +141,40 @@ function rcLignes(){
       else L.push(Object.assign({},base,{d:f.d,cmd:'',q:l.q||0,p:l.p}));
     });
   });
-  L.forEach(v=>{ v.d=String(v.d||'').slice(0,10); v.mt=(v.q||0)*(v.p||0); v.com=rcCom(v.canal);
+  L.forEach(v=>{ v.d=String(v.d||'').slice(0,10); v.mt=(v.q||0)*(v.p||0); v.com=rcComDe(v);
     v.comMt=v.ret?0:v.mt*v.com/100; v.net=v.mt-v.comMt;
     v.mg=(v.pa!=null&&v.p!=null)?(v.net-v.pa*(v.q||0)):null; });
-  { const vus=new Set(); L.forEach(v=>{ const src=String(v.auto||''); if(!/^(amazon|woocommerce|woocommerce-gros)$/.test(src)||v.ret) return;
-      const k=(v.fid?'f|'+v.fid+'|'+(v.cmd||''):'a|'+src+'|'+v.num); if(vus.has(k)) return; vus.add(k);
-      let port=v.portF; if(port==null&&/^woocommerce/.test(src)&&typeof faStatutSite==='function'){ const st=faStatutSite(src,v.num); if(st&&+st.port>0) port=+st.port; }
-      v.portMt=+port>0?+port:0; v.envoiMt=rcEnvoi(src); if(v.mg!=null) v.mg+=v.portMt-v.envoiMt; }); }
-  { const vus=new Set(); L.forEach(v=>{ if(String(v.auto||'')!=='lightspeed'||v.ret||!v.paie||!(+v.paie.carte>0)) return;
-      const k='f|'+(v.fid||v.num); if(vus.has(k)) return; vus.add(k);
-      v.carteMt=Math.round(+v.paie.carte*rcCarteTaux())/100; if(v.mg!=null) v.mg-=v.carteMt; }); }
+  /* 7 nov. 2026 (Igal : « en quoi il perd de l'argent ? » — un parfum vendu 38,50 $, acheté 29 $, donné « à perte » parce que les
+     16,45 $ de frais de carte d'un panier de 616 $ étaient posés sur lui seul). Les frais d'une COMMANDE (port payé par le client,
+     8 $ d'envoi, frais de carte de la caisse) sont maintenant répartis entre ses lignes, au prorata du montant de chacune :
+     les totaux par canal ne bougent pas, et plus aucun parfum ne porte les frais des autres. */
+  rcRepartit(L, v=>{ const src=String(v.auto||''); if(!/^(amazon|woocommerce|woocommerce-gros)$/.test(src)||v.ret) return null; return (v.fid?'f|'+v.fid+'|'+(v.cmd||''):'a|'+src+'|'+v.num); },
+    v=>{ const src=String(v.auto||''); let port=v.portF; if(port==null&&/^woocommerce/.test(src)&&typeof faStatutSite==='function'){ const st=faStatutSite(src,v.num); if(st&&+st.port>0) port=+st.port; }
+      return {portMt:+port>0?+port:0, envoiMt:rcEnvoi(src)}; },
+    (v,x)=>{ v.portMt=x.portMt; v.envoiMt=x.envoiMt; if(v.mg!=null) v.mg+=x.portMt-x.envoiMt; });
+  rcRepartit(L, v=>(rcPcEnLigne(v)&&!v.ret&&rcEnvoiPc()>0)?'f|'+(v.fid||v.num):null,
+    v=>({portMt:0, envoiMt:rcEnvoiPc()}),
+    (v,x)=>{ v.portMt=x.portMt; v.envoiMt=x.envoiMt; if(v.mg!=null) v.mg+=x.portMt-x.envoiMt; });
+  rcRepartit(L, v=>(String(v.auto||'')!=='lightspeed'||v.ret||!v.paie||!(+v.paie.carte>0))?null:'f|'+(v.fid||v.num),
+    v=>({carteMt:Math.round(+v.paie.carte*rcCarteTaux())/100}),
+    (v,x)=>{ v.carteMt=x.carteMt; if(v.mg!=null) v.mg-=x.carteMt; });
   /* 2 nov. 2026 : les ventes en gros d'AVANT l'ERP (tableur de Sam jusqu'au 30 sept. 2026, donnees/histgros.js) comptent
      comme dans la fiche parfum : chiffre d'affaires et flacons, sans marge (le prix d'achat de l'époque est inconnu).
      Elles ne sont pas dans Ventes : le test de parité avec Ventes les laisse de côté (hist). */
   try{ const H=window.D_HG; if(H&&H.l){ Object.keys(H.l).forEach(k=>{ (H.l[k]||[]).forEach(r=>{ if(!r||!r[0]) return;
       const q=+r[2]||0, p=r[3]==null?0:+r[3]; L.push({canal:RC_HG,num:'',cle:null,pa:null,fid:'hg|'+r[0]+'|'+(r[1]||0),ret:false,auto:'',d:String(r[0]).slice(0,10),cmd:'',q,p,mt:q*p,com:0,comMt:0,net:q*p,mg:null,hist:true,client:(H.c||[])[r[1]]||''}); }); }); } }catch(e){}
   return L;
+}
+/* répartit les frais d'une commande entre ses lignes, au prorata du montant (les lignes sans prix d'achat n'en portent pas,
+   sauf s'il n'y en a aucune autre) ; le dernier centime va à la dernière ligne pour que la somme tombe juste */
+function rcRepartit(L,cleDe,calc,pose){
+  const G=new Map(); L.forEach(v=>{ const k=cleDe(v); if(!k) return; if(!G.has(k)) G.set(k,[]); G.get(k).push(v); });
+  G.forEach(gr=>{ const tot=calc(gr[0]); if(!tot) return;
+    const avec=gr.filter(v=>v.mg!=null), cible=avec.length?avec:[gr[0]];
+    const somme=cible.reduce((a,v)=>a+Math.max(0,v.mt||0),0);
+    const parts=cible.map((v,i)=>{ const r=somme>0?Math.max(0,v.mt||0)/somme:1/cible.length; const x={}; Object.keys(tot).forEach(k=>{ x[k]=Math.round(tot[k]*r*100)/100; }); return x; });
+    Object.keys(tot).forEach(k=>{ const d=Math.round((tot[k]-parts.reduce((a,x)=>a+x[k],0))*100)/100; parts[parts.length-1][k]=Math.round((parts[parts.length-1][k]+d)*100)/100; });
+    cible.forEach((v,i)=>pose(v,parts[i])); });
 }
 const RC_HG="Vente en gros · avant l'ERP";
 /* le premier jour dont les chiffres sont complets sur tous les canaux (mise en service de l'ERP, Amazon compris) */

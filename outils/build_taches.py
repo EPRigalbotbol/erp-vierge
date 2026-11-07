@@ -94,17 +94,16 @@ function tkLigne(t){
      bord), la tâche est faite, on reste ici. La fiche reste ouvrable à côté. */
   const rach=(t.type==='rupture'||t.type==='manque')&&t.cle&&typeof rachAjoute==='function';
   const px=t.type==='prix'&&t.cle&&IDX[t.cle];
-  /* 7 nov. 2026 : « Mettre en ligne N parfums sur un site » se fait sur place (la liste, des cases, un bouton) ; « Reprendre la mise
-     en ligne » aussi (les raisons du refus, un bouton Réessayer). C'est le Catalogue en cadre qui fait le travail, canal par canal. */
+  /* 7 nov. 2026 : « Reprendre la mise en ligne » se fait sur place (les raisons du refus, un bouton Réessayer) ; c'est le Catalogue
+     en cadre qui fait le travail. Les tâches « Mettre en ligne N parfums sur un site » n'existent plus (Igal : « je ne veux pas de ces
+     deux rubriques ») : ce qui manque sur un site reste au tableau de bord. */
   const pcs=t.type==='pcshopify'&&typeof pcRenvoiFacture==='function';
   const exp=t.type==='expedier'&&typeof faExpedier==='function'&&typeof faLitExp==='function'&&faLitExp().some(x=>x&&x._i===String(t.id).split('|')[1]&&x.statut==='attente');
-  const el=t.type==='enligne'&&t.canal&&Array.isArray(t.parfums)&&t.parfums.length&&typeof enLigneFenetre==='function';
   const pub=t.type==='publication'&&(t.cle||t.bc)&&typeof enLigneFenetre==='function';
   const cpl=t.type==='completer'&&typeof attenteFenetre==='function'&&tkFile().length;
   if(t.etat==='a_faire'&&cpl) actions=`${ouvre('')}<button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
   else if(t.etat==='a_faire'&&pcs) actions=`<button class="pri" data-pcs="${esc(String(t.id).split('|')[1]||'')}" data-id="${esc(t.id)}">${tkT('Renvoyer à Shopify','Send again to Shopify','Reenviar a Shopify')} →</button>${ouvre('')}<button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
   else if(t.etat==='a_faire'&&exp) actions=`${ouvre('')}<button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
-  else if(t.etat==='a_faire'&&el) actions=`${ouvre('')}<button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
   else if(t.etat==='a_faire'&&pub) actions=`<button class="pri" data-pub="${esc(t.cle||'')}" data-bc="${esc(t.bc||'')}" data-id="${esc(t.id)}" data-canaux="${esc((t.canaux||[]).join(','))}">${tkT('Réessayer la mise en ligne','Retry the listing','Reintentar la publicación')} →</button>${t.cle?ouvre(''):''}<button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
   else if(t.etat==='a_faire'&&px) actions=`${ouvre('')}<button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-pxign="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
   else if(t.etat==='a_faire'&&rach) actions=`<button class="pri" data-rach="${esc(t.cle)}" data-id="${esc(t.id)}" data-bc="${esc(t.bc||'')}" data-ref="${esc(t.ref||'')}">${tkT('Mettre dans Parfums à racheter','Add to Perfumes to reorder','Poner en Perfumes por recomprar')} →</button>${ouvre('')}<button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
@@ -116,17 +115,13 @@ function tkLigne(t){
   const raison=t.etat==='ignoree'&&t.raison?`<small class="tk-raison">${tkT('Raison','Reason','Motivo')} : <span data-nolang>${esc(t.raison)}</span></small>`:'';
   let bloc='';
   if(t.etat==='a_faire'&&px){ const P=tkPrix(t.cle), w=t.vente||{};
-    const vente=w.d?`<div class="tk-vente" data-nolang>${esc(tkDate(w.d))} · ${esc(w.canal||'')} : ${tkT('vendu','sold','vendido')} ${m2(w.p)}, ${tkT('acheté','bought','comprado')} ${m2(w.pa)} → ${w.perte?`<b>${tkT('perte de','loss of','pérdida de')} ${m2(-w.mg)}</b>`:`<b>${w.pct!=null?w.pct+' %':''}</b> ${tkT('de marge','margin','de margen')}`}${w.n>1?`, ${w.n} ${tkT('ventes cette semaine','sales this week','ventas esta semana')}`:''}</div>`:'';
+    const frais=[w.com?tkT('commission','commission','comisión')+' '+m2(w.com):'',w.carte?tkT('frais de carte','card fees','comisión de tarjeta')+' '+m2(w.carte):'',w.envoi?tkT('envoi','shipping','envío')+' '+m2(w.envoi):'',w.port?tkT('port payé par le client','shipping paid by the customer','portes pagados por el cliente')+' +'+m2(w.port):''].filter(Boolean);
+    const vente=w.d?`<div class="tk-vente" data-nolang>${esc(tkDate(w.d))} · ${esc(w.canal||'')} : ${tkT('vendu','sold','vendido')} ${m2(w.p)}${w.q>1?' × '+w.q:''}, ${tkT('acheté','bought','comprado')} ${m2(w.pa)}${w.q>1?' × '+w.q:''}${frais.length?', '+frais.join(', '):''} → ${w.perte?`<b>${tkT('perte de','loss of','pérdida de')} ${m2(-w.mg)}</b>`:`<b>${w.pct!=null?w.pct+' %':''}</b> ${tkT('de marge','margin','de margen')}`}${w.n>1?`, ${w.n} ${tkT('ventes cette semaine','sales this week','ventas esta semana')}`:''}</div>`:'';
     bloc=`<div class="tk-px" data-px="${esc(t.cle)}" data-id="${esc(t.id)}" data-titre="${esc(t.titre)}">${vente}
       <label>${tkT("Prix d'achat","Purchase price","Precio de compra")}<input type="number" step="0.01" min="0" data-pxa value="${P.pa==null?'':P.pa}"></label>
       <label>${tkT('Prix de gros','Wholesale price','Precio mayorista')}<input type="number" step="0.01" min="0" data-pxw value="${P.pvw==null?'':P.pvw}"></label>
       <label>${tkT('Prix retail','Retail price','Precio retail')}<input type="number" step="0.01" min="0" data-pxr value="${P.pvr==null?'':P.pvr}"></label>
       <button class="pri" data-pxok>${tkT('Enregistrer les prix','Save the prices','Guardar los precios')}</button><div class="tk-msg" data-pxmsg></div></div>`; }
-  if(t.etat==='a_faire'&&el){ const n=t.parfums.length;
-    bloc=`<div class="tk-px" data-el="${esc(t.canal)}" data-id="${esc(t.id)}" data-titre="${esc(t.titre)}">
-      <div class="tk-msg">${tkT('Coche les parfums à mettre en ligne sur ce site','Check the perfumes to list on this website','Marca los perfumes para publicar en esta web')}${t.poids>n?` <span data-nolang>(${nf(n)} / ${nf(t.poids)})</span>`:''} — <label style="display:inline-flex;flex-direction:row;gap:5px;font-weight:600"><input type="checkbox" data-eltout> ${tkT('tout cocher','check all','marcar todo')}</label></div>
-      <div class="tk-el">${t.parfums.map(p=>`<label><input type="checkbox" data-elc="${esc(p.cle)}"><span class="nm" data-nolang><b>${esc(p.nom||p.bc||'')}</b><span>${esc(p.bc||'')}</span></span><span class="st ${p.retire?'ret':''}">${p.retire?tkT('retiré faute de prix','withdrawn for lack of price','retirado por falta de precio'):tkT('en stock','in stock','en stock')+' : '+nf(p.qte)}</span></label>`).join('')}</div>
-      <button class="pri" data-elgo disabled>${tkT('Mettre en ligne la sélection','List the selection','Publicar la selección')}</button><div class="tk-msg" data-pxmsg></div></div>`; }
   if(t.etat==='a_faire'&&exp){ const e=faLitExp().find(x=>x&&x._i===String(t.id).split('|')[1]); const auj=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
     bloc=`<div class="tk-px" data-exp="${esc(e._i)}" data-id="${esc(t.id)}" data-titre="${esc(t.titre)}">
       <div class="tk-vente" data-nolang>${(e.lignes||[]).map(l=>`${esc(l.ref||l.des||l.bc||'')} × ${nf(l.q||0)}`).join(' · ')}${e.ville||e.pays?` — ${esc([e.ville,e.pays].filter(Boolean).join(', '))}`:''}</div>
@@ -164,7 +159,6 @@ function tkPeint(){
     await tkStatue(b.dataset.id,'faite',undefined,b.closest('.tk-a')?b.closest('.tk-a').dataset.titre:''); });
   z.querySelectorAll('.tk-px').forEach(b=>tkPrixBranche(b));
   z.querySelectorAll('button[data-pxign]').forEach(b=>b.onclick=()=>tkIgnorePrix(b));
-  z.querySelectorAll('.tk-px[data-el]').forEach(b=>tkEnLigneBranche(b));
   z.querySelectorAll('.tk-px[data-exp]').forEach(b=>tkExpBranche(b));
   z.querySelectorAll('button[data-cplv]').forEach(b=>b.onclick=()=>{ if(TK_ENV) return; attenteFenetre(b.dataset.cplv,()=>{ const y=window.scrollY; tkCharge().then(()=>window.scrollTo(0,y)); }); });
   z.querySelectorAll('button[data-pcs]').forEach(b=>b.onclick=async()=>{ if(TK_ENV) return; const id=b.dataset.id, titre=(b.closest('.tk-a')||{dataset:{}}).dataset.titre;
@@ -213,14 +207,6 @@ function tkPrixBranche(b){
       if(typeof prixCanauxFenetre!=='function'){ window.open('catalogue.html#cle='+encodeURIComponent(cle),'_blank'); tkStatue(id,'faite',undefined,titre); return; }
       prixCanauxFenetre(cle,cs,()=>tkStatue(id,'faite',undefined,titre)); };
   };
-}
-function tkEnLigneBranche(b){
-  const canal=b.dataset.el, id=b.dataset.id, titre=b.dataset.titre, go=b.querySelector('[data-elgo]'), tout=b.querySelector('[data-eltout]');
-  const cases=()=>[...b.querySelectorAll('[data-elc]')], maj=()=>{ const n=cases().filter(c=>c.checked).length; go.disabled=!n;
-    go.textContent=tkT('Mettre en ligne la sélection','List the selection','Publicar la selección')+(n?' ('+n+')':''); };
-  cases().forEach(c=>c.onchange=maj); tout.onchange=()=>{ cases().forEach(c=>c.checked=tout.checked); maj(); };
-  go.onclick=()=>{ const ids=cases().filter(c=>c.checked).map(c=>c.dataset.elc); if(!ids.length) return;
-    enLigneFenetre(ids,()=>{ const y=window.scrollY; tkCharge().then(()=>window.scrollTo(0,y)); },[canal]); };
 }
 function tkExpBranche(b){
   const eid=b.dataset.exp, id=b.dataset.id, titre=b.dataset.titre, go=b.querySelector('[data-xgo]'), msg=t=>{ const e=b.querySelector('[data-pxmsg]'); if(e) e.innerHTML=t; };

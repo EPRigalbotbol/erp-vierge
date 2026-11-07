@@ -1278,6 +1278,10 @@ function identCanal(nom){
   if(n==='gros')                  return {court:'Vente en gros',ic:'🤝'};
   return {court:nom,ic:'•'};
 }
+/* 7 nov. 2026 (Igal : « Perfume City a deux types de vente sur Shopify, boutique et en ligne ») : commission et envoi propres
+   à la vente EN LIGNE de Perfume City (Réglages, ligne « Perfume City — en ligne ») ; la boutique garde ceux du canal. */
+function comPcLigne(){ const c=canauxReg().find(x=>x.id==='perfumecity'); if(c&&c.comLigne!=null&&c.comLigne!==''&&!isNaN(+c.comLigne)) return Math.max(0,+c.comLigne); return comCanal(c?c.nom:'Perfume City'); }
+function envoiPc(){ const E=(REG&&REG.envois)||{}; const v=E['shopify-pc']; return (v==null||v===''||isNaN(+v))?0:Math.max(0,+v); }
 function comCanal(nom){
   if(!nom||nom===NP) return 0;
   const L=CANAUX_VENTE();
@@ -1373,7 +1377,7 @@ try{
       recu:v.recu||'',arr:''}); }));
 }catch(e){ try{ console.error('commandes en attente :',e); }catch(_){} }
 V.forEach(v=>{ v.mt=(v.q||0)*(v.p||0);
-  v.com=comCanal(v.canal);
+  v.com=(v.ou==='en ligne'&&String(v.auto||'')==='shopify-pc')?comPcLigne():comCanal(v.canal);   /* 7 nov. 2026 : Perfume City en ligne a sa commission */
   /* Sur un remboursement, la plateforme ne rend PAS sa commission : elle l'a déjà prise.
      La perte est donc le montant entier rendu au client, pas le montant moins la commission.
      (Amazon en rembourse une partie ; tant qu'on n'a pas ses conditions exactes, on compte
@@ -1385,32 +1389,38 @@ V.forEach(v=>{ v.mt=(v.q||0)*(v.p||0);
 /* ---- le port (Igal, 28-29 sept. 2026, « choix B ») ----
    Par COMMANDE (pas par flacon), sur Amazon et les deux sites : le port payé par le client
    (lu sur WooCommerce) est une rentrée, et ce que l'envoi coûte à Sam (fixe, réglé par
-   canal dans Réglages, 8 $ par défaut) est retiré. Porté par la première ligne de la
-   commande, pour que la commande entière le compte une seule fois. Le chiffre d'affaires
-   reste celui des parfums ; c'est la marge qui bouge. */
-{ const vus=new Set();
-  V.forEach(v=>{ const src=String(v.auto||'');
-    /* une vente saisie à la main : les frais d'envoi facturés ne sont PAS une marge
-       (Igal, 6 oct. 2026 : « il ne gagne pas d'argent sur le shipping ») — ils couvrent
-       l'envoi, point. Ni le port encaissé ni le coût de l'envoi n'entrent dans la marge. */
-    if(!/^(amazon|woocommerce|woocommerce-gros)$/.test(src)||v.ret) return;
-    const k=(v.fid?'f|'+v.fid+'|'+(v.cmd||''):'a|'+(v.aid||src+'|'+v.num)); if(vus.has(k)) return; vus.add(k);
-    let port=v.portF; if(port==null&&/^woocommerce/.test(src)&&typeof faStatutSite==='function'){ const st=faStatutSite(src,v.num); if(st&&+st.port>0) port=+st.port; }
-    v.portMt=+port>0?+port:0; v.envoiMt=envoiDe(src);
-    if(v.mg!=null){ v.mg+=v.portMt-v.envoiMt; v.pct=v.mt!==0?v.mg/Math.abs(v.mt)*100:null; }
-  }); }
+   canal dans Réglages, 8 $ par défaut) est retiré. Une seule fois par commande, réparti
+   entre ses lignes au prorata (7 nov. 2026). Le chiffre d'affaires reste celui des
+   parfums ; c'est la marge qui bouge. */
+/* répartit les frais d'une commande entre ses lignes, au prorata du montant (les lignes sans prix d'achat n'en portent pas,
+   sauf s'il n'y en a aucune autre) ; le dernier centime va à la dernière ligne pour que la somme tombe juste — même règle
+   que le tableau de bord (_recap.py, rcRepartit) et le cockpit */
+function vRepartit(L,cleDe,calc,pose){
+  const G=new Map(); L.forEach(v=>{ const k=cleDe(v); if(!k) return; if(!G.has(k)) G.set(k,[]); G.get(k).push(v); });
+  G.forEach(gr=>{ const tot=calc(gr[0]); if(!tot) return;
+    const avec=gr.filter(v=>v.mg!=null), cible=avec.length?avec:[gr[0]];
+    const somme=cible.reduce((a,v)=>a+Math.max(0,v.mt||0),0);
+    const parts=cible.map(v=>{ const r=somme>0?Math.max(0,v.mt||0)/somme:1/cible.length; const x={}; Object.keys(tot).forEach(k=>{ x[k]=Math.round(tot[k]*r*100)/100; }); return x; });
+    Object.keys(tot).forEach(k=>{ const d=Math.round((tot[k]-parts.reduce((a,x)=>a+x[k],0))*100)/100; parts[parts.length-1][k]=Math.round((parts[parts.length-1][k]+d)*100)/100; });
+    cible.forEach((v,i)=>pose(v,parts[i])); });
+}
+vRepartit(V, v=>{ const src=String(v.auto||''); if(!/^(amazon|woocommerce|woocommerce-gros)$/.test(src)||v.ret) return null; return (v.fid?'f|'+v.fid+'|'+(v.cmd||''):'a|'+(v.aid||src+'|'+v.num)); },
+  v=>{ const src=String(v.auto||''); let port=v.portF; if(port==null&&/^woocommerce/.test(src)&&typeof faStatutSite==='function'){ const st=faStatutSite(src,v.num); if(st&&+st.port>0) port=+st.port; }
+    return {portMt:+port>0?+port:0, envoiMt:envoiDe(src)}; },
+  (v,x)=>{ v.portMt=x.portMt; v.envoiMt=x.envoiMt; if(v.mg!=null){ v.mg+=x.portMt-x.envoiMt; v.pct=v.mt!==0?v.mg/Math.abs(v.mt)*100:null; } });
 /* ---- les frais de carte de la caisse Lightspeed (Igal, 25 oct. 2026 : « 2,6 il me semble, mais fais en sorte qu'il
    puisse le modifier, et le modifier agira sur toutes les transactions enregistrées ») ----
    Ce que Lightspeed Payments prélève à Sam sur une carte, en % de la PART PAYÉE PAR CARTE de chaque vente de la caisse
    (paie.carte, posé par le cockpit depuis le 24 oct.) : les espèces et Zelle ne coûtent rien, donc pas un canal à
    commission. Taux dans Réglages (REG.carteLS, 2,6 % par défaut), appliqué à l'affichage : changer le taux recalcule
-   toutes les ventes, passées comprises. Porté par la première ligne de la vente, une seule fois par vente. */
-{ const vus=new Set();
-  V.forEach(v=>{ if(String(v.auto||'')!=='lightspeed'||v.ret||!v.paie||!(+v.paie.carte>0)) return;
-    const k='f|'+(v.fid||v.num); if(vus.has(k)) return; vus.add(k);
-    v.carteMt=Math.round(+v.paie.carte*carteTaux())/100; v.carteBase=+v.paie.carte;
-    if(v.mg!=null){ v.mg-=v.carteMt; v.pct=v.mt!==0?v.mg/Math.abs(v.mt)*100:null; }
-  }); }
+   toutes les ventes, passées comprises. Une seule fois par vente, répartie entre ses lignes au prorata du montant (7 nov. 2026 : avant, tout tombait sur
+   la première ligne, et un parfum pouvait passer « vendu à perte » à cause du panier des autres). */
+vRepartit(V, v=>(String(v.auto||'')==='shopify-pc'&&v.ou==='en ligne'&&!v.ret&&envoiPc()>0)?'f|'+(v.fid||v.num):null,
+  v=>({portMt:0, envoiMt:envoiPc()}),
+  (v,x)=>{ v.portMt=x.portMt; v.envoiMt=x.envoiMt; if(v.mg!=null){ v.mg+=x.portMt-x.envoiMt; v.pct=v.mt!==0?v.mg/Math.abs(v.mt)*100:null; } });
+vRepartit(V, v=>(String(v.auto||'')!=='lightspeed'||v.ret||!v.paie||!(+v.paie.carte>0))?null:'f|'+(v.fid||v.num),
+  v=>({carteMt:Math.round(+v.paie.carte*carteTaux())/100}),
+  (v,x)=>{ v.carteMt=x.carteMt; v.carteBase=+v.paie.carte; if(v.mg!=null){ v.mg-=x.carteMt; v.pct=v.mt!==0?v.mg/Math.abs(v.mt)*100:null; } });
 /* Le tri se fait sur l'heure DE LA VENTE (v.h), pas sur l'heure d'ENREGISTREMENT
    dans l'outil (v.t) : une vente d'un canal automatique porte son heure réelle
    dans v.h, mais v.t est le moment où le navigateur l'a inscrite — souvent bien
@@ -1592,8 +1602,8 @@ function blocsVente(grp,x,enAttente){
   /* le calcul de la commande entière */
   const vente=grp.reduce((a,z)=>a+(z.mt||0),0), q=grp.reduce((a,z)=>a+(z.q||0),0);
   const com=grp.reduce((a,z)=>a+(z.comMt||0),0);
-  const g0=grp.find(z=>z.portMt!=null||z.envoiMt!=null)||{}, port=g0.portMt||0, envoi=g0.envoiMt||0;
-  const gc=grp.find(z=>z.carteMt)||{}, carte=gc.carteMt||0;
+  const port=grp.reduce((a,z)=>a+(z.portMt||0),0), envoi=grp.reduce((a,z)=>a+(z.envoiMt||0),0);   /* répartis entre les lignes : on les additionne */
+  const carte=grp.reduce((a,z)=>a+(z.carteMt||0),0), gc=grp.find(z=>z.carteBase)||{};
   const sansPa=grp.filter(z=>z.pa==null), achat=grp.filter(z=>z.pa!=null).reduce((a,z)=>a+z.pa*(z.q||0),0);
   const mg=sansPa.length?null:(vente-com+port-envoi-carte-achat), pct=(mg!=null&&vente)?mg/Math.abs(vente)*100:null;
   const pctCom=grp.find(z=>z.com)?.com;

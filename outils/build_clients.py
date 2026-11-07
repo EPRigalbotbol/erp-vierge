@@ -337,7 +337,7 @@ const dfr=d=>{ if(!d) return '—'; const [a,m,j]=String(d).slice(0,10).split('-
    le client Robert. Le tableur est déjà rangé ainsi (build_clients_data.py) ; ici, ce sont les ventes
    faites dans l'outil et les fiches déjà enregistrées sous l'ancien nom, qui rejoignent le même client.
    Les fiches ne sont pas réécrites : Ventes et Cote retrouvent toujours « Juan Carlos » par son nom. */
-const ALIAS_CLI={'juan':'Casa del Perfume','juan carlos':'Casa del Perfume','la casa del perfume':'Casa del Perfume','casa del perfume':'Casa del Perfume','myriam':'Robert',
+const ALIAS_CLI={'juan':'Casa del Perfume','juan carlos':'Casa del Perfume','la casa del perfume':'Casa del Perfume','casa del perfume':'Casa del Perfume','myriam':'Robert','miriam':'Robert',   /* 7 nov. 2026 (Igal) : Miriam et Robert, un seul client */
   /* 31 oct. 2026 (Igal : « c'est le même client ») : le nom de la société, tapé dans Lightspeed, rejoint « Habibi » */
   'habibi perfumes llc':'Habibi','habibi perfumes':'Habibi','habibi perfume':'Habibi'};
 const canon=nom=>ALIAS_CLI[cNorm(nom)]||nom;

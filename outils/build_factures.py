@@ -1399,24 +1399,40 @@ $('ok').onclick=()=>{
   /* 5 nov. 2026 (Igal) : « lorsque c'est une nouvelle référence, Sam crée le produit mais il est obligé d'aller sur le Catalogue pour
      mettre en ligne les références une par une » — les références créées ici et reçues par cette facture (elles ont maintenant du
      stock) sont proposées en ligne tout de suite, en une fois. */
-  if(SENS==='achat'&&!canal) proposeEnLigne(lignes);
+  if(SENS==='achat'&&!canal) setTimeout(()=>proposeEnLigne(lignes,f.id),f.pcShopify?1500:0);   /* après le premier envoi à Shopify, pour savoir ce qui y manque */
   /* 7 nov. 2026 : une réception enregistrée sort le parfum de « Parfums à racheter » (tableau de bord) */
   if(SENS==='achat'&&!canal&&typeof rachRecu==='function'){ try{ rachRecu((lignes||[]).map(l=>l&&l.cle)); }catch(e){} }
 };
-function proposeEnLigne(lignes){
-  const N=window.__NOUVEAUX; if(!N||!N.size) return;
-  const ids=[...new Set((lignes||[]).map(l=>l&&l.cle).filter(c=>c&&N.has(c)))]; if(!ids.length) return;
-  ids.forEach(c=>N.delete(c));
-  const noms=ids.map(c=>{ const v=IDX[c]||[]; return ((v[2]||'')+' '+(v[1]||'')).trim(); });
+/* 7 nov. 2026 (Igal : « Perfume City : 3 parfums mis à jour sur Shopify, 1 PAS — ce parfum n'est pas (encore) chez Perfume City —
+   je ne comprends pas pourquoi ça fait ça à chaque fois ») : un parfum reçu POUR Perfume City mais absent de sa boutique Shopify
+   ne peut pas y recevoir de stock. Il est maintenant proposé ici, avec les nouvelles références : « Mettre en ligne maintenant »
+   le crée chez Perfume City, puis la réception est renvoyée à Shopify toute seule. */
+function pcAbsentShopify(bc){ let S=null; try{ S=lit('shopify-pc-prix-v1',null); }catch(e){} if(!S||typeof S!=='object') return false;   /* relevé pas lu : on ne sait pas, on ne propose pas */
+  const k=String(bc||'').replace(/[^0-9A-Za-z]/g,'').replace(/^0+/,''); if(!k) return false; const e=S[k]; return !(Array.isArray(e)&&e[0]&&e[1])&&!((S._amb||[]).includes(k)); }
+function proposeEnLigne(lignes,fid){
+  const N=window.__NOUVEAUX||new Set();
+  const nouv=[...new Set((lignes||[]).map(l=>l&&l.cle).filter(c=>c&&N.has(c)))];
+  const pcv=l=>l.pcVend!=null?+l.pcVend:+l.pc;
+  const pcm=[...new Set((lignes||[]).filter(l=>l&&l.cle&&l.bc&&pcv(l)>0&&!N.has(l.cle)&&pcAbsentShopify(l.bc)).map(l=>l.cle))];
+  const ids=nouv.concat(pcm); if(!ids.length) return;
+  nouv.forEach(c=>N.delete(c));
+  const noms=ids.map(c=>{ const v=IDX[c]||[]; return ((v[2]||'')+' '+(v[1]||'')).trim()+(pcm.includes(c)&&!nouv.includes(c)?' — '+L3('absent chez Perfume City','missing at Perfume City','ausente en Perfume City'):''); });
+  const titre=nouv.length?L3('Nouvelles références reçues','New references received','Nuevas referencias recibidas'):L3('Reçus pour Perfume City, absents de sa boutique','Received for Perfume City, missing from its store','Recibidos para Perfume City, ausentes de su tienda');
+  const expl=nouv.length?L3('Elles ne sont pas encore sur les sites ni chez Perfume City. Les mettre en ligne maintenant ?','They are not on the websites or at Perfume City yet. Put them online now?','Todavía no están en los sitios ni en Perfume City. ¿Ponerlas en línea ahora?')
+    :L3('Ces parfums ont du stock pour Perfume City, mais la boutique Shopify ne les connaît pas : le stock ne peut pas y être posé. Les créer chez Perfume City maintenant ? La réception sera ensuite renvoyée à Shopify toute seule.','These perfumes have stock for Perfume City, but the Shopify store does not know them: the stock cannot be set there. Create them at Perfume City now? The receipt will then be sent to Shopify again by itself.','Estos perfumes tienen stock para Perfume City, pero la tienda Shopify no los conoce: no se puede poner el stock. ¿Crearlos en Perfume City ahora? La recepción se reenviará a Shopify sola.');
   const v=document.createElement('div'); v.className='ft-voile'; v.style.cssText='position:fixed;inset:0;z-index:90;background:rgba(20,16,30,.45);display:flex;align-items:center;justify-content:center;padding:16px';
   v.innerHTML=`<div role="dialog" aria-modal="true" style="background:var(--surface,#fff);color:var(--ink,#17171d);border-radius:14px;width:min(560px,100%);padding:20px 22px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
-    <h2 style="margin:0 0 8px;font-size:18px">${L3('Nouvelles références reçues','New references received','Nuevas referencias recibidas')} (${ids.length})</h2>
-    <p style="margin:0 0 10px;color:var(--ink-3,#777);font-size:13.5px">${L3('Elles ne sont pas encore sur les sites ni chez Perfume City. Les mettre en ligne maintenant ?','They are not on the websites or at Perfume City yet. Put them online now?','Todavía no están en los sitios ni en Perfume City. ¿Ponerlas en línea ahora?')}</p>
+    <h2 style="margin:0 0 8px;font-size:18px">${titre} (${ids.length})</h2>
+    <p style="margin:0 0 10px;color:var(--ink-3,#777);font-size:13.5px">${expl}</p>
     <ul style="margin:0 0 14px 18px;padding:0;font-size:14px;line-height:1.6" data-nolang>${noms.map(n=>'<li>'+esc(n)+'</li>').join('')}</ul>
     <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" id="pel-non">${L3('Plus tard','Later','Más tarde')}</button><button class="btn pri" id="pel-oui">${L3('Mettre en ligne maintenant','Put online now','Poner en línea ahora')}</button></div></div>`;
   document.body.appendChild(v);
   v.querySelector('#pel-non').onclick=()=>v.remove();
-  v.querySelector('#pel-oui').onclick=()=>{ v.remove(); if(typeof enLigneFenetre==='function') enLigneFenetre(ids,()=>{ try{ refaitIndex(); }catch(e){} }); };
+  v.querySelector('#pel-oui').onclick=()=>{ v.remove(); if(typeof enLigneFenetre!=='function') return;
+    enLigneFenetre(ids,()=>{ try{ refaitIndex(); }catch(e){}
+      /* les parfums créés chez Perfume City : la réception leur est renvoyée (le cockpit ne compte jamais deux fois) */
+      if(pcm.length&&fid){ const f=FACT.find(x=>x.id===fid); if(f&&f.pcShopify&&f.pcShopify.etat!=='ok') setTimeout(()=>{ try{ pcEnvoiFacture(fid); }catch(e){} },300); } },
+      nouv.length?null:['perfumecity']); };
 }
 
 /* ---------------- PERFUME CITY : la part d'une réception (Igal, 20 oct. 2026) ----------------

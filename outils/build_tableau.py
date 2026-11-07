@@ -36,6 +36,7 @@ border-radius:10px;padding:18px 20px;margin-bottom:16px}
 .alerte p{margin:0;font-size:13.5px;color:var(--ink-2);line-height:1.6;max-width:78ch}
 .alerte p b{color:var(--ink)}
 .sous3{font-size:11.5px;color:var(--ink-3)}
+.tbl tr.clic{cursor:pointer}.tbl tr.clic:hover td{background:var(--surface-2)}
 #rach-table input[type=number]{width:64px;text-align:right;font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
 
 .tbl{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--surface);
@@ -939,7 +940,7 @@ function dessine(){
     h+=`<div class="alerte"><h3>${nf(sansPhoto.length)} parfum${sansPhoto.length>1?'s':''} en stock sans photo</h3>
       <p>Ni dans le fichier, ni prise dans l'ERP, ni sur un des deux sites, ni chez Perfume City. Soit <b>${money(c)}</b> de marchandise qu'on ne peut pas montrer.</p></div>
       <div class="wrapx"><table class="tbl"><thead><tr><th>Référence</th><th class="r">Reste</th><th class="r">Marchandise</th></tr></thead><tbody>
-      ${sansPhoto.slice(0,25).map(p=>`<tr>
+      ${sansPhoto.slice(0,25).map(p=>`<tr class="clic" data-fiche="${esc(p.cle)}" title="Ouvrir la fiche pour ajouter la photo">
         <td class="ref"><div class="mq">${esc(p.marque||'')}</div><b>${esc(p.nom||'')}${tyBadge(p.cle)}</b><span>${esc(p.bc||'')}</span></td>
         <td class="r">${nf(p.qte)}</td><td class="r">${money(cap(p))}</td></tr>`).join('')}</tbody></table></div>
       ${sansPhoto.length>25?`<p style="font-size:13px;color:var(--ink-3)">et ${nf(sansPhoto.length-25)} autres dans le catalogue.</p>`:''}`;
@@ -969,6 +970,11 @@ function dessine(){
   const td=$('tri-diff'); if(td) td.onchange=()=>{ TRI_DIFF=td.value; try{ TRI_DIFF?localStorage.setItem(K_TRI_DIFF,TRI_DIFF):localStorage.removeItem(K_TRI_DIFF); }catch(e){} const y=window.scrollY; dessine(); window.scrollTo(0,y); };
   /* la fiche du Catalogue s'ouvre par-dessus le tableau de bord, la fenêtre « Mettre en ligne » déjà ouverte ; à la fermeture
      le relevé des canaux est relu et la liste redessinée à la même hauteur */
+  /* 7 nov. 2026 (Igal, « Sans photo » : « il faudrait que Sam se mette sur le parfum directement ») : un clic sur la ligne ouvre
+     la fiche par-dessus le tableau de bord, où la photo se prend ou se cherche ; à la fermeture, la liste est redessinée */
+  document.querySelectorAll('tr[data-fiche]').forEach(tr=>tr.onclick=()=>{
+    if(typeof ficheFenetre!=='function'){ location.href='catalogue.html#cle='+encodeURIComponent(tr.dataset.fiche); return; }
+    ficheFenetre(tr.dataset.fiche,()=>location.reload()); });
   document.querySelectorAll('[data-mel]').forEach(b=>b.onclick=()=>{
     if(typeof ficheFenetre!=='function'){ location.href='catalogue.html#cle='+encodeURIComponent(b.dataset.mel)+'&mel=1'; return; }
     ficheFenetre(b.dataset.mel,()=>{ const y=window.scrollY; try{ DIFF=calcDiff(); }catch(e){} dessine(); window.scrollTo(0,y); },'&canaux=1'); });

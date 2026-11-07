@@ -35,6 +35,7 @@ h2.sec em{font-style:normal;font-size:12.5px;letter-spacing:0;text-transform:non
 .tk-a{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
 .tk-a a,.tk-a button,.tk-a select{font-family:inherit;font-size:12.5px;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:8px;padding:6px 10px;cursor:pointer;text-decoration:none;white-space:nowrap}
 .tk-a a.pri,.tk-a button.pri{background:var(--iris);border-color:var(--iris);color:#fff}
+.tk-id{display:block;font-size:12px;color:var(--ink-3);margin:-2px 0 4px;font-variant-numeric:tabular-nums}
 .tk-ok{font-size:12.5px;font-weight:600;color:var(--good)}.tk-ok a{color:var(--iris);margin-left:4px}
 .tk-px{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end;margin-top:8px;padding:10px 12px;background:var(--surface-2);border-radius:10px}
 .tk-px label{display:flex;flex-direction:column;gap:3px;font-size:11.5px;color:var(--ink-3);font-weight:600}
@@ -113,6 +114,9 @@ function tkLigne(t){
   const pt=t.etat==='a_faire'?(t.urgence==='haute'?`<span class="pt">${tkT('urgent','urgent','urgente')}</span>`:'')+(t.revenue?`<span class="pt rev">${tkT('revenue','back','de vuelta')}</span>`:''):'';
   const sous=t.etat==='attente'?`<small>${tkT('Rappel le','Reminder on','Recordatorio el')} <span data-nolang>${tkDate(t.jusqua)}</span></small>`:t.etat==='ignoree'?`<small>${tkT('Ignorée le','Ignored on','Ignorada el')} <span data-nolang>${tkDate(t.depuis)}</span></small>`:'';
   const raison=t.etat==='ignoree'&&t.raison?`<small class="tk-raison">${tkT('Raison','Reason','Motivo')} : <span data-nolang>${esc(t.raison)}</span></small>`:'';
+  /* 7 nov. 2026 (Igal) : le code-barres et la contenance du parfum sur la ligne */
+  const inf=t.cle&&IDX[t.cle]?IDX[t.cle]:null, bcl=(inf&&inf[0])||t.bc||'', ml=inf?String(inf[7]||'').trim():'';
+  const idp=(bcl||ml)?`<small class="tk-id" data-nolang>${esc(bcl)}${bcl&&ml?' · ':''}${esc(ml)}${inf&&inf[8]?' '+esc(String(inf[8]).toUpperCase()):''}</small>`:'';
   let bloc='';
   if(t.etat==='a_faire'&&px){ const P=tkPrix(t.cle), w=t.vente||{};
     const frais=[w.com?tkT('commission','commission','comisión')+' '+m2(w.com):'',w.carte?tkT('frais de carte','card fees','comisión de tarjeta')+' '+m2(w.carte):'',w.envoi?tkT('envoi','shipping','envío')+' '+m2(w.envoi):'',w.port?tkT('port payé par le client','shipping paid by the customer','portes pagados por el cliente')+' +'+m2(w.port):''].filter(Boolean);
@@ -136,7 +140,7 @@ function tkLigne(t){
       <div class="tk-el" style="grid-template-columns:1fr auto auto">${F.slice(0,40).map(v=>`<span class="nm" data-nolang><b>${esc((v.num?v.num+' · ':'')+(tkSrc(v.src)))}${v.client?' — '+esc(typeof faNomClient==='function'?faNomClient(v.client):String(v.client&&v.client.nom||v.client||'')):''}</b><span>${esc((v.lignes||[]).map(l=>(l.des||l.bc||'?')+' ×'+(l.q||1)).join(', ').slice(0,140))}</span></span><span class="st" data-nolang>${esc(tkDate(v.d||''))}</span><button data-cplv="${esc(v._i)}">${tkT('Compléter','Complete','Completar')} →</button>`).join('')}</div>
       ${F.length>40?`<div class="tk-msg" data-nolang>… +${nf(F.length-40)}</div>`:''}</div>`; }
   if(t.etat==='a_faire'&&pub&&t.raisons&&t.raisons.length) bloc=`<div class="tk-px"><div class="tk-msg">${t.raisons.map(r=>`<div data-nolang><b>${esc(r.nom||r.canal)}</b> : ${esc(r.r)}</div>`).join('')}<div>${tkT('Règle ce qui manque (la photo, le prix : « Ouvrir » la fiche), puis réessaie.','Fix what is missing (the photo, the price: “Open” the sheet), then retry.','Arregla lo que falta (la foto, el precio: «Abrir» la ficha) y vuelve a intentar.')}</div></div></div>`;
-  return `<div class="tk ${t.etat==='a_faire'?t.urgence:t.etat}" data-tk="${esc(t.id)}"><div><h3><span data-nolang>${esc(t.titre)}</span>${pt}</h3><p data-nolang>${esc(t.detail||'')}</p>${sous}${raison}<small>${typ}</small></div><div class="tk-a" data-titre="${esc(t.titre)}">${actions}</div>${bloc}</div>`;
+  return `<div class="tk ${t.etat==='a_faire'?t.urgence:t.etat}" data-tk="${esc(t.id)}"><div><h3><span data-nolang>${esc(t.titre)}</span>${pt}</h3>${idp}<p data-nolang>${esc(t.detail||'')}</p>${sous}${raison}<small>${typ}</small></div><div class="tk-a" data-titre="${esc(t.titre)}">${actions}</div>${bloc}</div>`;
 }
 function tkPeint(){
   const z=$('tk-corps'), h=$('tk-tete'); if(!TK) return;
@@ -148,7 +152,7 @@ function tkPeint(){
   let s=`<h2 class="sec">${tkT('À faire','To do','Por hacer')} <em>${tkT('les plus urgentes en premier · une tâche disparaît toute seule quand le problème n\'existe plus','most urgent first · a task goes away by itself once the problem is gone','las más urgentes primero · una tarea desaparece sola cuando el problema ya no existe')}</em></h2>`;
   s+=n?TK.a_faire.map(tkLigne).join(''):`<div class="tk-vide"><b>${tkT('Rien à faire pour l\'instant','Nothing to do right now','Nada que hacer por ahora')}</b>${tkT('Léa te dira dès qu\'il y a quelque chose.','Léa will tell you as soon as there is something.','Léa te avisará en cuanto haya algo.')}</div>`;
   if(TK.attente.length) s+=`<h2 class="sec">${tkT('En attente','Waiting','En espera')} <em>${tkT('elles reviendront dans la liste à la date du rappel','they will come back to the list on the reminder date','volverán a la lista en la fecha del recordatorio')}</em></h2>`+TK.attente.map(tkLigne).join('');
-  if(TK.ignorees.length) s+=`<details class="tk-ign"><summary>${tkT(`${nf(TK.ignorees.length)} tâche${TK.ignorees.length>1?'s':''} ignorée${TK.ignorees.length>1?'s':''}`,`${nf(TK.ignorees.length)} ignored task${TK.ignorees.length>1?'s':''}`,`${nf(TK.ignorees.length)} tarea${TK.ignorees.length>1?'s':''} ignorada${TK.ignorees.length>1?'s':''}`)}</summary>`+TK.ignorees.map(tkLigne).join('')+'</details>';
+  if(TK.ignorees.length) s+=`<details class="tk-ign" open><summary>${tkT(`${nf(TK.ignorees.length)} tâche${TK.ignorees.length>1?'s':''} ignorée${TK.ignorees.length>1?'s':''}`,`${nf(TK.ignorees.length)} ignored task${TK.ignorees.length>1?'s':''}`,`${nf(TK.ignorees.length)} tarea${TK.ignorees.length>1?'s':''} ignorada${TK.ignorees.length>1?'s':''}`)}</summary>`+TK.ignorees.map(tkLigne).join('')+'</details>';
   z.innerHTML=s;
   z.querySelectorAll('button[data-etat]').forEach(b=>b.onclick=()=>tkStatue(b.dataset.id,b.dataset.etat,undefined,b.closest('.tk-a').dataset.titre));
   z.querySelectorAll('button[data-fiche]').forEach(b=>b.onclick=()=>{ if(typeof ficheFenetre!=='function'){ window.open('catalogue.html#cle='+encodeURIComponent(b.dataset.fiche),'_blank'); return; }
@@ -249,6 +253,6 @@ async function tkCharge(){
 
 html = coquille("Tâches", "Tâches",
     "Ce que Léa te demande de faire aujourd'hui, trouvé dans l'ERP : parfums à recommander, prix à vérifier, mises en ligne, Perfume City, expéditions. Fais, ignore, ou demande un rappel.",
-    CSS, CORPS, JS, donnees=('produits',)).replace('__IDX__', 'Object.fromEntries(D_TOUS().map(r=>[r[15],[r[0],r[13],r[2],r[12],r[6],r[8],r[7]]]))')
+    CSS, CORPS, JS, donnees=('produits',)).replace('__IDX__', 'Object.fromEntries(D_TOUS().map(r=>[r[15],[r[0],r[13],r[2],r[12],r[6],r[8],r[7],r[3],r[4]]]))')
 open('taches.html', 'w').write(html)
 print('taches.html', len(html)//1024, 'Ko')

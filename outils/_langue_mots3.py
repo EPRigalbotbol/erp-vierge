@@ -1743,3 +1743,8 @@ MOTS3.update({
     "commission prélevée par le canal (vente en ligne)": ["commission taken by the channel (online sale)", "comisión que cobra el canal (venta en línea)"],
     "coût d'un envoi — {q} (en ligne)": ["cost of one shipment — {q} (online)", "coste de un envío — {q} (en línea)"],
 })
+
+# ---- Tableau de bord › Sans photo, 7 nov. 2026 : la ligne ouvre la fiche ----
+MOTS3.update({
+    "Ouvrir la fiche pour ajouter la photo": ["Open the sheet to add the photo", "Abrir la ficha para añadir la foto"],
+})

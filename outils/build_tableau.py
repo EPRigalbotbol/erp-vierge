@@ -534,9 +534,11 @@ const caisseFondPC=()=>(REG.fondCaissePC!=null&&isFinite(+REG.fondCaissePC))?+RE
 /* les espèces d'une vente : ce que la caisse a dit (paie), sinon une vente/un retour saisi « espèces » dans l'ERP */
 /* 27 oct. 2026 : le paiement gardé à part par le cockpit (caisse-paie-v1) complète une vente enregistrée sans paiement */
 let _PAIE=null;
-function paieDe(f){ if(f&&f.paie&&typeof f.paie==='object') return f.paie; if(!f||!f._i) return null;
-  if(!_PAIE){ try{ _PAIE=lit('caisse-paie-v1',{})||{}; }catch(e){ _PAIE={}; } }
-  const p=_PAIE[String(f._i).replace(/^fa\|/,'')]; return (p&&typeof p==='object')?p:null; }
+/* 8 nov. 2026 : le magasin du cockpit (relu chez Shopify) a le dernier mot sur la copie embarquée, sauf correction à la main (corrige) */
+function paieDe(f){ if(!f) return null; const emb=(f.paie&&typeof f.paie==='object')?f.paie:null; if(emb&&emb.corrige) return emb;
+  if(f._i){ if(!_PAIE){ try{ _PAIE=lit('caisse-paie-v1',{})||{}; }catch(e){ _PAIE={}; } }
+    const p=_PAIE[String(f._i).replace(/^fa\|/,'')]; if(p&&typeof p==='object') return p; }
+  return emb; }
 function especesDe(f){
   if(!f||f.sens!=='vente'||f.annule) return 0;
   /* le paiement détaillé ne vaut que pour la caisse de Sam (Lightspeed) : les espèces de Perfume City (Shopify) sont dans

@@ -1313,12 +1313,21 @@ function comCanal(nom){
 /* 27 oct. 2026 (Sam : « j'ai reçu des espèces mais je ne les vois pas ») : le cockpit ne lisait pas les paiements du Zap
    Lightspeed ; il les garde maintenant à part (caisse-paie-v1, par vente), y compris pour les ventes déjà enregistrées. */
 let _PAIE=null;
+/* 8 nov. 2026 (PC-1867, « Espèces + Carte » à minuit vingt) : pour une vente venue toute seule, le cockpit a le dernier mot — il
+   relit les encaissements chez Shopify et corrige son magasin (caisse-paie-v1) ; la copie embarquée dans la vente date du jour où
+   elle est entrée. Sauf si quelqu'un a corrigé l'encaissement à la main dans « Modifier la vente » (paie.corrige). */
 function paieDe(f){
-  if(f&&f.paie&&typeof f.paie==='object') return f.paie;
-  if(!f||!f._i) return null;
-  if(!_PAIE){ try{ _PAIE=lit('caisse-paie-v1',{})||{}; }catch(e){ _PAIE={}; } }
-  const p=_PAIE[String(f._i).replace(/^fa\|/,'')]; return (p&&typeof p==='object')?p:null;
+  if(!f) return null;
+  const emb=(f.paie&&typeof f.paie==='object')?f.paie:null;
+  if(emb&&emb.corrige) return emb;
+  if(f._i){ if(!_PAIE){ try{ _PAIE=lit('caisse-paie-v1',{})||{}; }catch(e){ _PAIE={}; } }
+    const p=_PAIE[String(f._i).replace(/^fa\|/,'')]; if(p&&typeof p==='object') return p; }
+  return emb;
 }
+/* 8 nov. 2026 (PC-1867, en ligne via l'appli Shop) : le port payé par le client d'une commande Perfume City voyage avec son
+   paiement (relu chez Shopify) — une vente enregistrée sans port le récupère ainsi ; une vente qui a son port le garde */
+function portDe(f){ if(!f) return undefined; if(f.port!=null) return f.port; if(String(f.auto||'')!=='shopify-pc'||f.retour) return undefined;
+  const p=paieDe(f); return (p&&+p.port>0)?+p.port:undefined; }
 /* 31 oct. 2026 (Igal : « repérer les ventes du site Shopify de Perfume City et les ventes en boutique ») : le cockpit garde
    l'origine de chaque commande de Perfume City (pc-origine-v1 : « boutique » = la caisse POS, « en ligne » = perfumeinthecity.com).
    Un remboursement prend l'origine de sa commande (même numéro). */
@@ -1331,6 +1340,22 @@ function origineDe(f){
   return _ORIGN[f.num]||'';
 }
 const ouLib=o=>o==='boutique'?r3('en boutique','in store','en tienda'):o==='en ligne'?r3('en ligne','online','en línea'):o==='commande manuelle'?r3('commande manuelle','manual order','pedido manual'):/^\d+$/.test(String(o||''))?r3('autre canal','other channel','otro canal'):(o||'');   /* une application branchée sur Shopify n'a qu'un numéro */
+/* 8 nov. 2026 (Igal : « quand on clique sur la vente, je veux le détail de ce qui a été payé en carte, en espèces ») :
+   le détail de l'encaissement, montant par moyen, dans la fenêtre de la vente. */
+function paieBloc(x,f){
+  const p=x&&x.paie; if(!p||typeof p!=='object') return '';
+  const a=v=>Math.abs(+v||0)>0.005; const L=[];
+  if(a(p.especes)) L.push([r3('Espèces','Cash','Efectivo'),+p.especes]);
+  if(a(p.carte)) L.push([r3('Carte bancaire','Card','Tarjeta'),+p.carte]);
+  if(a(p.autre)) L.push([(Array.isArray(p.noms)&&p.noms.length)?p.noms.join(' + '):r3('Autre','Other','Otro'),+p.autre]);
+  if(!L.length) return '';
+  const au=String((f&&f.auto)||x.auto||'');
+  const src=au==='lightspeed'?r3('la caisse Lightspeed','the Lightspeed register','la caja Lightspeed'):au==='shopify-pc'?r3('Shopify (Perfume City)','Shopify (Perfume City)','Shopify (Perfume City)'):'';
+  const tot=Math.round(L.reduce((s,[,m])=>s+m,0)*100)/100;
+  return `<div class="pl gr"><span>${esc(src?r3('Encaissé, selon '+src,'Collected, per '+src,'Cobrado, según '+src):r3('Encaissé','Collected','Cobrado'))}${p.corrige?' · '+esc(r3('corrigé à la main','corrected by hand','corregido a mano')):''}</span><b>${money2(tot)}</b></div>`
+    + L.map(([n,m])=>`<div class="pl"><span>&nbsp;&nbsp;${esc(n)}</span><b>${money2(m)}</b></div>`).join('')
+    + (p.approx?`<p class="nt">${esc(r3('Partage ESTIMÉ (Shopify ne donnait que la liste des moyens de paiement) — pas encore relu sur les encaissements réels.','ESTIMATED split (Shopify only gave the list of payment methods) — not yet re-read from the real transactions.','Reparto ESTIMADO (Shopify solo daba la lista de medios de pago) — aún no releído sobre los cobros reales.'))}</p>`:'');
+}
 /* le moyen de paiement, en deux mots, sur la ligne (Sam, 27 oct. 2026) */
 function payLib(x){
   const L=[];
@@ -1363,7 +1388,7 @@ FACT.filter(f=>f.sens==='vente').forEach(f=>{
        c'est le prix d'achat d'aujourd'hui qui compte. Date réglable : REG.paFigeDepuis. */
     const paV=(l.cle&&String(f.d||'')<String((REG&&REG.paFigeDepuis)||'2026-10-01')&&paEff(l.cle)!=null)?paEff(l.cle):l.paAv;
     const base={canal,num:f.num,ref:l.ref,cle:l.cle,bc:l.bc,pa:paV,par:f.par,t:f.t,fid:f.id,exp:!!f.export,
-                ret:!!f.retour,refNum:f.refNum,mode:f.mode,motif:f.motif,manuel:!!f.manuel,h:hF,expd:!!f.exp,auto:f.auto||'',portF:f.port,
+                ret:!!f.retour,refNum:f.refNum,mode:f.mode,motif:f.motif,manuel:!!f.manuel,h:hF,expd:!!f.exp,auto:f.auto||'',portF:portDe(f),
                 paie:paieDe(f),   /* la caisse : part espèces / carte / autre */
                 ou:origineDe(f),  /* Perfume City : en boutique / en ligne */
                 pmode:(f.doc&&f.doc.pmode)||'',
@@ -1830,10 +1855,12 @@ function ouvreDetail(x){
       ${(D.reste||0)>0
         ? `<div class="pl gr"><span>Reste dû</span><b style="color:var(--crit)">${money2(D.reste)}</b></div>`
         : `<div class="pl gr"><span>Soldée</span><b class="mg g">${money2(D.regle||D.total)}</b></div>`}
+      ${paieBloc(x,f)}
       ${D.fiscal==='exempt'?'<p class="nt">Document marqué exempt de sales tax.</p>':''}
     </div>`);
   } else {
     l.push(`<div class="blo"><h4>Paiement</h4>
+      ${paieBloc(x,f)}
       <p class="nt" data-nolang>${L3(
         `<b>Aucune facture n'a été émise pour cette vente</b> : elle est entrée directement au journal${x.exp?" par l'export d'un canal":(x.manuel?' par saisie manuelle':'')}. Le règlement n'est donc pas suivi ici — l'outil ne sait pas si l'argent est rentré. ${x.exp?"Pour un canal (Amazon, le site…), c'est normal : la plateforme encaisse pour toi.":"Si tu veux suivre le règlement, il faut cocher « Facture » au moment d'enregistrer la vente."}`,
         `<b>No invoice was issued for this sale</b>: it went straight into the log${x.exp?' through a channel export':(x.manuel?' by manual entry':'')}. Payment is therefore not tracked here — the tool does not know whether the money came in. ${x.exp?'For a channel (Amazon, the website…) that is normal: the platform collects for you.':'To track payment, tick “Invoice” when recording the sale.'}`,
@@ -1883,7 +1910,9 @@ function ouvreDetail(x){
 
   /* ---- la saisie ---- */
   l.push(`<div class="blo"><h4>Saisie</h4>
-    <div class="pl"><span>Enregistré par</span><b>${esc(x.par&&x.par!=='(non renseigné)'?x.par:'—')}</b></div>
+    ${x.auto?`<div class="pl"><span>Enregistré par</span><b>${esc(r3('Automatique','Automatic','Automático'))} — ${esc(nomAff(x.canal||''))}</b></div>
+      ${x.par&&x.par!=='(non renseigné)'?`<div class="pl"><span>${esc(r3("Reçue par l'ERP ouvert chez","Received by the ERP open at","Recibida por el ERP abierto en"))}</span><b>${esc(x.par)}</b></div>`:''}`
+      :`<div class="pl"><span>Enregistré par</span><b>${esc(x.par&&x.par!=='(non renseigné)'?x.par:'—')}</b></div>`}
     <div class="pl"><span>Le</span><b>${x.t?esc(quandMiami(x.t).replace(' · ',' à ')):'—'}</b></div>
     <div class="pl"><span>Origine</span><b data-nolang>${esc(origine(x))}</b></div>
     ${f&&f.poste?`<div class="pl"><span>Ordinateur</span><b data-nolang>${esc(f.poste)}</b></div>`:''}
@@ -2174,6 +2203,27 @@ function origine(x){
               'Pedido de Amazon, leído en el email de pedido que Amazon envía a Sam.');
   if(a==='message')
     return r3('Commande reçue par message, enregistrée depuis Ventes.','Order received by message, recorded from Sales.','Pedido recibido por mensaje, registrado desde Ventas.');
+  /* 8 nov. 2026 (Igal, PC-1867 : « je vois que c'est Sam qui l'a enregistré — est-ce logique ? ») : une vente de Perfume City
+     disait « Facture créée dans l'ERP par Sam ». Non : elle vient de Shopify ; Sam n'est que le poste où l'ERP était ouvert. */
+  if(a==='shopify-pc'){
+    const ou=String(x.ou||'');
+    if(ou==='boutique') return r3('Vente passée à la caisse Shopify (POS) de la boutique Perfume City, arrivée toute seule dans l\'ERP (cockpit).',
+                                  'Sale rung up at the Perfume City store\'s Shopify POS register, sent to the ERP automatically (cockpit).',
+                                  'Venta cobrada en la caja Shopify (POS) de la tienda Perfume City, llegó sola al ERP (cockpit).');
+    if(ou==='en ligne') return r3('Commande passée sur le site perfumeinthecity.com (Shopify), arrivée toute seule dans l\'ERP.',
+                                  'Order placed on perfumeinthecity.com (Shopify), received automatically by the ERP.',
+                                  'Pedido hecho en la web perfumeinthecity.com (Shopify), llegó solo al ERP.');
+    if(ou==='commande manuelle') return r3('Commande créée à la main dans l\'admin Shopify de Perfume City (draft), arrivée toute seule dans l\'ERP.',
+                                  'Order created by hand in Perfume City\'s Shopify admin (draft), received automatically by the ERP.',
+                                  'Pedido creado a mano en el admin Shopify de Perfume City (borrador), llegó solo al ERP.');
+    const app=/^\d+$/.test(ou)?r3('l\'application n° '+ou,'app no. '+ou,'la aplicación n.º '+ou):ou?'« '+ou+' »':'';
+    return app?r3(`Commande Shopify de Perfume City passée par ${app} (ni la caisse de la boutique, ni le site), arrivée toute seule dans l'ERP.`,
+                  `Perfume City Shopify order placed through ${app} (neither the store register nor the website), received automatically by the ERP.`,
+                  `Pedido Shopify de Perfume City hecho por ${app} (ni la caja de la tienda ni la web), llegó solo al ERP.`)
+              :r3('Commande Shopify de Perfume City, arrivée toute seule dans l\'ERP (origine non précisée par Shopify).',
+                  'Perfume City Shopify order, received automatically by the ERP (origin not given by Shopify).',
+                  'Pedido Shopify de Perfume City, llegó solo al ERP (origen no indicado por Shopify).');
+  }
   const qui=x.par&&x.par!=='(non renseigné)'?x.par:'';
   if(x.manuel)
     return r3(`Saisie à la main dans Ventes${qui?' par '+qui:''} (bouton « Nouvelle vente ») — ne vient d'aucune caisse ni d'aucun site.`,
@@ -2579,7 +2629,7 @@ function ouvreModif(f){
     if($('v-frais')) $('v-frais').value = D.fraisPct!=null ? String(D.fraisPct) : '';
   }
   /* vente de la caisse : son encaissement se corrige avec elle ; vente venue toute seule : la caisse ou le site ne bougent pas */
-  { const w=$('v-paie-w'); if(w){ const p=(!estD&&f.paie&&typeof f.paie==='object')?f.paie:null; w.hidden=!p;
+  { const w=$('v-paie-w'); if(w){ const p=(!estD&&f.paie&&typeof f.paie==='object')?(paieDe(f)||f.paie):null; w.hidden=!p;
       if(p){ $('v-paie-esp').value=p.especes>0?p.especes:''; $('v-paie-car').value=p.carte>0?p.carte:''; $('v-paie-aut').value=p.autre>0?p.autre:''; } } }
   if(!estD&&venteAuto(f)){
     const src=nomAff(f.canal||'');
@@ -2904,7 +2954,7 @@ $('v-ok').onclick=()=>{
     if(doc) old.doc=doc; else delete old.doc;
     /* vente de la caisse : l'encaissement corrigé (espèces / carte / autre) remplace celui du ticket, et le document suit —
        réglé = ce qui a été encaissé, reste = ce qui manque (la caisse ne connaît pas d'acompte : normalement zéro) */
-    { const pS=paieSaisie(); if(pS&&old.paie){ old.paie=Object.assign({},old.paie,pS);
+    { const pS=paieSaisie(); if(pS&&old.paie){ old.paie=Object.assign({},old.paie,pS,{corrige:true}); delete old.paie.approx;
         if(doc){ const regle=Math.round((pS.especes+pS.carte+pS.autre)*100)/100; doc.regle=regle; doc.reste=Math.max(0,Math.round(((+doc.total||0)-regle)*100)/100); doc.pstat=doc.reste>0?(regle>0?'partiel':'apayer'):'paye'; } } }
     if(doc&&D0&&D0.auto) doc.auto=D0.auto;
     if(doc&&doc.port>0) old.port=doc.port; else delete old.port;

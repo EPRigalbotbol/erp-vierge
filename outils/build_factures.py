@@ -1414,13 +1414,13 @@ function proposeEnLigne(lignes,fid){
   const nouv=[...new Set((lignes||[]).map(l=>l&&l.cle).filter(c=>c&&N.has(c)))];
   const pcv=l=>l.pcVend!=null?+l.pcVend:+l.pc;
   const pcm=[...new Set((lignes||[]).filter(l=>l&&l.cle&&l.bc&&pcv(l)>0&&!N.has(l.cle)&&pcAbsentShopify(l.bc)).map(l=>l.cle))];
-  const ids=nouv.concat(pcm); if(!ids.length) return;
+  const ids=nouv.concat(pcm); if(!ids.length||document.querySelector('.ft-voile')) return;
   nouv.forEach(c=>N.delete(c));
   const noms=ids.map(c=>{ const v=IDX[c]||[]; return ((v[2]||'')+' '+(v[1]||'')).trim()+(pcm.includes(c)&&!nouv.includes(c)?' — '+L3('absent chez Perfume City','missing at Perfume City','ausente en Perfume City'):''); });
   const titre=nouv.length?L3('Nouvelles références reçues','New references received','Nuevas referencias recibidas'):L3('Reçus pour Perfume City, absents de sa boutique','Received for Perfume City, missing from its store','Recibidos para Perfume City, ausentes de su tienda');
   const expl=nouv.length?L3('Elles ne sont pas encore sur les sites ni chez Perfume City. Les mettre en ligne maintenant ?','They are not on the websites or at Perfume City yet. Put them online now?','Todavía no están en los sitios ni en Perfume City. ¿Ponerlas en línea ahora?')
     :L3('Ces parfums ont du stock pour Perfume City, mais la boutique Shopify ne les connaît pas : le stock ne peut pas y être posé. Les créer chez Perfume City maintenant ? La réception sera ensuite renvoyée à Shopify toute seule.','These perfumes have stock for Perfume City, but the Shopify store does not know them: the stock cannot be set there. Create them at Perfume City now? The receipt will then be sent to Shopify again by itself.','Estos perfumes tienen stock para Perfume City, pero la tienda Shopify no los conoce: no se puede poner el stock. ¿Crearlos en Perfume City ahora? La recepción se reenviará a Shopify sola.');
-  const v=document.createElement('div'); v.className='ft-voile'; v.style.cssText='position:fixed;inset:0;z-index:90;background:rgba(20,16,30,.45);display:flex;align-items:center;justify-content:center;padding:16px';
+  const v=document.createElement('div'); v.className='ft-voile'; v.style.cssText='position:fixed;inset:0;z-index:9500;background:rgba(20,16,30,.45);display:flex;align-items:center;justify-content:center;padding:16px';
   v.innerHTML=`<div role="dialog" aria-modal="true" style="background:var(--surface,#fff);color:var(--ink,#17171d);border-radius:14px;width:min(560px,100%);padding:20px 22px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
     <h2 style="margin:0 0 8px;font-size:18px">${titre} (${ids.length})</h2>
     <p style="margin:0 0 10px;color:var(--ink-3,#777);font-size:13.5px">${expl}</p>
@@ -1477,7 +1477,7 @@ async function pcPousse(f,annule){
     return r.ok?j:{erreur:j.erreur||('erreur '+r.status)};
   }catch(e){ return {erreur:L3("le cockpit ne répond pas","the cockpit is not responding","el cockpit no responde")}; }
 }
-async function pcEnvoiFacture(id){
+async function pcEnvoiFacture(id,propose){
   const f=FACT.find(x=>x.id===id); if(!f) return;
   const lg=(f.lignes||[]).filter(l=>pcVendDe(l)>0&&l.bc);
   if(!lg.length) return;
@@ -1506,6 +1506,11 @@ async function pcEnvoiFacture(id){
     `Factura guardada. Perfume City: ${bon.length} perfume${bon.length>1?'s':''} actualizado${bon.length>1?'s':''} en Shopify, ${mal.length} NO (${mal.slice(0,3).map(l=>nom(l)+' — '+(l.raison||l.etat)).join('; ')}${mal.length>3?'…':''}). El stock del ERP está al día.`),'');
   log({act:'site',lib:(annule?'annulation':'réception')+' '+f.num+' : stock de Perfume City envoyé à Shopify ('+bon.length+' ok'+(mal.length?', '+mal.length+' non':'')+')',n:bon.length,impact:0,det:[]});
   dessineListe();
+  /* 8 nov. 2026 (Igal : « ça bloque toujours… c'est un parfum, je comprends pas pourquoi il passe pas ») : « Renvoyer à Shopify » bute
+     sur un parfum que la boutique ne connaît pas → on propose de le créer chez Perfume City tout de suite, et la réception repart seule */
+  if(propose&&mal.some(l=>l.etat==='absent')){ const abs=new Set(mal.filter(l=>l.etat==='absent').map(l=>String(l.bc||'').replace(/^0+/,'')));
+    setTimeout(()=>{ try{ proposeEnLigne((f.lignes||[]).filter(l=>l&&abs.has(String(l.bc||'').replace(/^0+/,''))),id); }catch(e){} },200); return {propose:true}; }
+  return {};
 }
 /* le code de cette page est un module (à cause de pdf.js) : ce qui suit sert aux tests automatiques */
 window.__F={get APERCU(){ return APERCU; }, get EDITS(){ return EDITS; }, qteEff, paEff, parBC, trouve, lit, $, pcsCarte, pcsCle, annule, detail};
@@ -1599,7 +1604,7 @@ function detail(id){
       return `<p class="repnote" id="d-pc"><b>${L3('Perfume City','Perfume City','Perfume City')} : ${nf(uPC)} ${L3('flacon(s)','bottle(s)','frasco(s)')}</b> — ${etat}.`
         +(mal.length?`<br>${mal.slice(0,6).map(l=>esc((l.nom||l.bc)+' — '+(l.raison||l.etat))).join('<br>')}`:'')
         +(P&&P.etat==='ok'?'':` <button type="button" class="btn" id="d-pc-renvoi" style="margin-left:8px">${L3('Renvoyer à Shopify','Send again to Shopify','Reenviar a Shopify')}</button>`)+`</p>`; })();
-  { const b=$('d-pc-renvoi'); if(b) b.onclick=async()=>{ b.disabled=true; await pcEnvoiFacture(f.id); $('dov').classList.remove('on'); detail(f.id); }; }
+  { const b=$('d-pc-renvoi'); if(b) b.onclick=async()=>{ b.disabled=true; const r=await pcEnvoiFacture(f.id,true)||{}; $('dov').classList.remove('on'); if(!r.propose) detail(f.id); }; }
   $('d-tot').innerHTML=`<span>${nf(u)} unité${u>1?'s':''}</span>`
     +`<span>Total <b>${money2(f.montant)}</b></span>`;
   /* Igal, 24 oct. 2026 : « comment je fais pour changer le nom du fournisseur ? » — sur une réception déjà enregistrée,

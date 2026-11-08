@@ -83,7 +83,22 @@ const tkFile=()=>{ try{ const F=lit('caisse-file-v1',[]); return Array.isArray(F
 const tkSrc=s=>({woocommerce:'perfumestrade.com','woocommerce-gros':'wholesale.perfumestrade.com',lightspeed:'Lightspeed',shopify:'Shopify','shopify-pc':'Perfume City',amazon:'Amazon',message:'message'})[s]||s||'';
 const tkDate=iso=>{ if(!iso) return ''; const [Y,M,D]=String(iso).slice(0,10).split('-'); return `${M}/${D}/${String(Y).slice(2)}`; };
 const TYPES={rupture:['Réassort','Restock','Reposición'],manque:['Réassort','Restock','Reposición'],prix:['Prix','Price','Precio'],enligne:['Mise en ligne','Listing','Publicación'],pcshopify:['Perfume City','Perfume City','Perfume City'],publication:['Mise en ligne','Listing','Publicación'],expedier:['Expédition','Shipping','Envío'],completer:['Ventes','Sales','Ventas']};
+/* 8 nov. 2026 (Igal, YSL Opium Femme : « il faut que tu le mettes en tâche urgente : créer le parfum, car il n'est pas chez
+   Perfume City ») : les parfums que la boutique Shopify ne connaît pas (t.absents, nommés par le cockpit) — leurs clés du Catalogue */
+function tkAbsCles(t){ return (Array.isArray(t.absents)?t.absents:[]).map(a=>{ if(a.cle&&IDX[a.cle]) return a.cle; const bc=String(a.bc||'').replace(/^0+/,'');
+  return bc?(Object.keys(IDX).find(k=>String((IDX[k]||[])[0]||'').replace(/^0+/,'')===bc)||''):''; }).filter(Boolean); }
+/* le titre et le détail d'une tâche Perfume City, dans la langue de l'écran (le cockpit les écrit en français) */
+function tkTitrePC(t){ if(t.type!=='pcshopify') return null;
+  const num=t.num||((/la réception (.+)$/.exec(String(t.titre||''))||[])[1]||'');   /* un cockpit d'avant ne donne que le titre */
+  if(!num) return null; t=Object.assign({},t,{num});
+  const A=Array.isArray(t.absents)?t.absents:[];
+  if(A.length){ const noms=A.map(a=>a.nom||a.bc).join(', '), n=A.reduce((s,a)=>s+(+a.q||0),0);
+    return {titre:tkT(`Créer chez Perfume City : ${noms} — pas dans sa boutique Shopify (réception ${t.num})`,`Create at Perfume City: ${noms} — not in its Shopify store (receipt ${t.num})`,`Crear en Perfume City: ${noms} — no está en su tienda Shopify (recepción ${t.num})`),
+      detail:tkT(`La boutique Shopify de Perfume City ne connaît pas ce parfum : les ${n} flacon(s) reçus pour elle ne peuvent pas y être posés. Crée-le ici, la réception repartira toute seule.`,`Perfume City's Shopify store does not know this perfume: the ${n} bottle(s) received for it cannot be set there. Create it here, the receipt will be sent again by itself.`,`La tienda Shopify de Perfume City no conoce este perfume: los ${n} frasco(s) recibidos para ella no se pueden poner allí. Créalo aquí, la recepción se reenviará sola.`)}; }
+  return {titre:tkT(`Renvoyer à Shopify la réception ${t.num}`,`Send receipt ${t.num} to Shopify again`,`Reenviar a Shopify la recepción ${t.num}`),
+    detail:tkT(`Le stock de Perfume City est à jour dans l'ERP, pas sur Shopify. Clique « Renvoyer à Shopify » : rien n'est compté deux fois.`,`Perfume City's stock is up to date in the ERP, not on Shopify. Click “Send again to Shopify”: nothing is counted twice.`,`El stock de Perfume City está al día en el ERP, no en Shopify. Pulsa «Reenviar a Shopify»: nada se cuenta dos veces.`)}; }
 function tkLigne(t){
+  { const tp=tkTitrePC(t); if(tp){ t=Object.assign({},t,tp); } }
   const typ=TYPES[t.type]?tkT(...TYPES[t.type]):t.type;
   const rappel=`<select data-rappel="${esc(t.id)}" title="${tkT('Me le rappeler plus tard','Remind me later','Recordármelo más tarde')}"><option value="">${tkT('Plus tard…','Later…','Más tarde…')}</option>${(TK.rappels||[1,2,5,10]).map(n=>`<option value="${n}">${n===1?tkT('demain','tomorrow','mañana'):tkT(`dans ${n} jours`,`in ${n} days`,`en ${n} días`)}</option>`).join('')}</select>`;
   let actions='';
@@ -103,7 +118,7 @@ function tkLigne(t){
   const pub=t.type==='publication'&&(t.cle||t.bc)&&typeof enLigneFenetre==='function';
   const cpl=t.type==='completer'&&typeof attenteFenetre==='function'&&tkFile().length;
   if(t.etat==='a_faire'&&cpl) actions=`${ouvre('')}<button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
-  else if(t.etat==='a_faire'&&pcs) actions=`<button class="pri" data-pcs="${esc(String(t.id).split('|')[1]||'')}" data-id="${esc(t.id)}">${tkT('Renvoyer à Shopify','Send again to Shopify','Reenviar a Shopify')} →</button>${ouvre('')}<button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
+  else if(t.etat==='a_faire'&&pcs) actions=`<button class="pri" data-pcs="${esc(String(t.id).split('|')[1]||'')}" data-id="${esc(t.id)}" data-abs="${esc(tkAbsCles(t).join(','))}">${tkAbsCles(t).length?tkT('Créer chez Perfume City','Create at Perfume City','Crear en Perfume City'):tkT('Renvoyer à Shopify','Send again to Shopify','Reenviar a Shopify')} →</button>${ouvre('')}<button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
   else if(t.etat==='a_faire'&&exp) actions=`${ouvre('')}<button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
   else if(t.etat==='a_faire'&&pub) actions=`<button class="pri" data-pub="${esc(t.cle||'')}" data-bc="${esc(t.bc||'')}" data-id="${esc(t.id)}" data-canaux="${esc((t.canaux||[]).join(','))}">${tkT('Réessayer la mise en ligne','Retry the listing','Reintentar la publicación')} →</button>${t.cle?ouvre(''):''}<button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-etat="ignoree" data-id="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
   else if(t.etat==='a_faire'&&px) actions=`${ouvre('')}<button data-etat="faite" data-id="${esc(t.id)}">${tkT('Fait','Done','Hecho')} ✓</button>${rappel}<button data-pxign="${esc(t.id)}">${tkT('Ignorer','Ignore','Ignorar')}</button>`;
@@ -166,9 +181,25 @@ function tkPeint(){
   z.querySelectorAll('.tk-px[data-exp]').forEach(b=>tkExpBranche(b));
   z.querySelectorAll('button[data-cplv]').forEach(b=>b.onclick=()=>{ if(TK_ENV) return; attenteFenetre(b.dataset.cplv,()=>{ const y=window.scrollY; tkCharge().then(()=>window.scrollTo(0,y)); }); });
   z.querySelectorAll('button[data-pcs]').forEach(b=>b.onclick=async()=>{ if(TK_ENV) return; const id=b.dataset.id, titre=(b.closest('.tk-a')||{dataset:{}}).dataset.titre;
-    const m=z.querySelector(`[data-pxmsg-pc="${CSS.escape(id)}"]`); b.disabled=true; if(m) m.textContent=tkT('Envoi à Shopify…','Sending to Shopify…','Enviando a Shopify…');
+    const m=z.querySelector(`[data-pxmsg-pc="${CSS.escape(id)}"]`); b.disabled=true;
+    const abs0=String(b.dataset.abs||'').split(',').filter(Boolean);
+    if(abs0.length&&typeof enLigneFenetre==='function'){ /* le parfum est connu absent : on le crée d'abord, puis la réception repart */
+      if(m) m.textContent=tkT('Création chez Perfume City…','Creating at Perfume City…','Creando en Perfume City…');
+      enLigneFenetre(abs0,async()=>{ if(m) m.textContent=tkT('Envoi à Shopify…','Sending to Shopify…','Enviando a Shopify…');
+        const r2=await pcRenvoiFacture(b.dataset.pcs);
+        if(r2.ok){ if(m) m.innerHTML=`<b>${tkT('Stock de Perfume City mis à jour sur Shopify','Perfume City stock updated on Shopify','Stock de Perfume City actualizado en Shopify')} (${nf(r2.bon)})</b>`; await tkStatue(id,'faite',undefined,titre); }
+        else { b.disabled=false; if(m) m.innerHTML=`<b style="color:var(--crit)">${tkT('Pas envoyé','Not sent','No enviado')}</b> — <span data-nolang>${esc(r2.raison||(r2.mal||[]).join(' ; '))}</span>`; } },['perfumecity']);
+      return; }
+    if(m) m.textContent=tkT('Envoi à Shopify…','Sending to Shopify…','Enviando a Shopify…');
     const r=await pcRenvoiFacture(b.dataset.pcs);
     if(r.ok){ if(m) m.innerHTML=`<b>${tkT('Stock de Perfume City mis à jour sur Shopify','Perfume City stock updated on Shopify','Stock de Perfume City actualizado en Shopify')} (${nf(r.bon)})</b>`; await tkStatue(id,'faite',undefined,titre); }
+    else if((r.absents||[]).length&&typeof enLigneFenetre==='function'){
+      /* 8 nov. 2026 : le parfum n'existe pas chez Perfume City → on le crée tout de suite (Catalogue en cadre, canal Perfume City), puis on renvoie */
+      if(m) m.innerHTML=`<b>${tkT('Pas encore chez Perfume City','Not yet at Perfume City','Todavía no en Perfume City')}</b> — ${tkT('on le crée dans sa boutique Shopify, puis la réception repart.','creating it in its Shopify store, then the receipt is sent again.','se crea en su tienda Shopify y luego se reenvía la recepción.')}`;
+      enLigneFenetre(r.absents,async()=>{ if(m) m.textContent=tkT('Envoi à Shopify…','Sending to Shopify…','Enviando a Shopify…');
+        const r2=await pcRenvoiFacture(b.dataset.pcs);
+        if(r2.ok){ if(m) m.innerHTML=`<b>${tkT('Stock de Perfume City mis à jour sur Shopify','Perfume City stock updated on Shopify','Stock de Perfume City actualizado en Shopify')} (${nf(r2.bon)})</b>`; await tkStatue(id,'faite',undefined,titre); }
+        else { b.disabled=false; if(m) m.innerHTML=`<b style="color:var(--crit)">${tkT('Pas envoyé','Not sent','No enviado')}</b> — <span data-nolang>${esc(r2.raison||(r2.mal||[]).join(' ; '))}</span>`; } },['perfumecity']); }
     else { b.disabled=false; if(m) m.innerHTML=`<b style="color:var(--crit)">${tkT('Pas envoyé','Not sent','No enviado')}</b> — <span data-nolang>${esc(r.raison||(r.mal||[]).join(' ; '))}</span>`; } });
   z.querySelectorAll('button[data-pub]').forEach(b=>b.onclick=()=>{ if(TK_ENV) return;
     let cle=b.dataset.pub; if(!cle&&b.dataset.bc){ const bc=String(b.dataset.bc).replace(/^0+/,''); cle=Object.keys(IDX).find(k=>String((IDX[k]||[])[0]||'').replace(/^0+/,'')===bc)||''; }

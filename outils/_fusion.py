@@ -271,7 +271,12 @@ async function pcRenvoiFacture(fid){
   const L=j.lignes||[], bon=L.filter(l=>l.etat==='ok'||l.etat==='deja'), mal=L.filter(l=>!(l.etat==='ok'||l.etat==='deja'||l.etat==='ignore'));
   maj({etat:mal.length?'partiel':'ok',lignes:L.map(l=>({bc:l.bc,nom:l.nom,etat:l.etat,raison:l.raison,avant:l.avant,apres:l.apres}))});
   jou('réception '+(f.num||'')+' : stock de Perfume City envoyé à Shopify ('+bon.length+' ok'+(mal.length?', '+mal.length+' non':'')+') — depuis Tâches');
-  return {ok:!mal.length,bon:bon.length,mal:mal.map(l=>(l.nom||l.bc)+' — '+(l.raison||l.etat))};
+  /* 8 nov. 2026 (Igal : « ça bloque toujours ces histoires d'envoyer sur Shopify — c'est un parfum, je comprends pas pourquoi il passe
+     pas ») : un parfum absent de la boutique Shopify ne peut pas y recevoir de stock. On rend ses clés (absents) : la page propose de le
+     créer chez Perfume City tout de suite, puis renvoie la réception. */
+  const absBc=new Set(mal.filter(l=>l.etat==='absent').map(l=>String(l.bc||'').replace(/^0+/,'')));
+  const absents=[...new Set(lg.filter(l=>absBc.has(String(l.bc||'').replace(/^0+/,''))).map(l=>l.cle).filter(Boolean))];
+  return {ok:!mal.length,bon:bon.length,mal:mal.map(l=>(l.nom||l.bc)+' — '+(l.raison||l.etat)),absents};
 }
 /* LA FICHE DU PARFUM DANS UNE FENÊTRE, par-dessus la page en cours (Igal, 17 oct. 2026 : depuis une facture, puis
    depuis le détail d'une vente — « sans avoir à passer par le catalogue pour voir le produit »). C'est la fiche du

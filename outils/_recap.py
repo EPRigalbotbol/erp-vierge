@@ -127,9 +127,14 @@ const rcPaAct=cle=>{ const m=MOD[cle]; if(m&&m.pa!=null) return +m.pa; const v=(
 const rcCarteTaux=()=>{ const v=REG&&REG.carteLS; return (v==null||v===''||isNaN(+v))?2.6:Math.max(0,+v); };
 const rcEnvoi=src=>{ const E=(REG&&REG.envois)||{}; const v=E[src]; return (v==null||v===''||isNaN(+v))?8:Math.max(0,+v); };
 let _rcPaie=null, _rcOrig=null;
-function rcPaie(f){ if(f&&f.paie&&typeof f.paie==='object') return f.paie; if(!f||!f._i) return null;
-  if(!_rcPaie){ try{ _rcPaie=lit('caisse-paie-v1',{})||{}; }catch(e){ _rcPaie={}; } }
-  const p=_rcPaie[String(f._i).replace(/^fa\|/,'')]; return (p&&typeof p==='object')?p:null; }
+/* 8 nov. 2026 : le magasin du cockpit (relu chez Shopify) a le dernier mot sur la copie embarquée, sauf correction à la main (corrige) */
+function rcPaie(f){ if(!f) return null; const emb=(f.paie&&typeof f.paie==='object')?f.paie:null; if(emb&&emb.corrige) return emb;
+  if(f._i){ if(!_rcPaie){ try{ _rcPaie=lit('caisse-paie-v1',{})||{}; }catch(e){ _rcPaie={}; } }
+    const p=_rcPaie[String(f._i).replace(/^fa\|/,'')]; if(p&&typeof p==='object') return p; }
+  return emb; }
+/* 8 nov. 2026 : le port payé par le client d'une commande Perfume City voyage avec son paiement (relu chez Shopify) */
+function rcPortDe(f){ if(!f) return undefined; if(f.port!=null) return f.port; if(String(f.auto||'')!=='shopify-pc'||f.retour) return undefined;
+  const p=rcPaie(f); return (p&&+p.port>0)?+p.port:undefined; }
 function rcOrigineFn(F){ let O={}; try{ O=lit('pc-origine-v1',{})||{}; }catch(e){}
   const parNum={}; F.forEach(g=>{ if(g&&g.auto==='shopify-pc'&&!g.retour){ const o=O[String(g._i||'').replace(/^fa\|/,'')]; if(o) parNum[g.num]=o; } });
   return f=>{ if(!f||f.auto!=='shopify-pc') return ''; const k=String(f._i||'').replace(/^fa\|/,''); return O[k]||parNum[f.num]||''; }; }
@@ -143,7 +148,7 @@ function rcLignes(){
     const canal=f.canal||'(non précisé)';
     (f.lignes||[]).forEach(l=>{
       const paV=(l.cle&&String(f.d||'')<fige&&rcPaAct(l.cle)!=null)?rcPaAct(l.cle):l.paAv;
-      const base={canal,num:f.num,cle:l.cle,pa:paV,fid:f.id,ret:!!f.retour,auto:f.auto||'',portF:f.port,paie:rcPaie(f),ou:orig(f)};
+      const base={canal,num:f.num,cle:l.cle,pa:paV,fid:f.id,ret:!!f.retour,auto:f.auto||'',portF:rcPortDe(f),paie:rcPaie(f),ou:orig(f)};
       if(l.cmds&&l.cmds.length) l.cmds.forEach(c=>L.push(Object.assign({},base,{d:c.d||f.d,cmd:c.cmd||'',q:c.q||0,p:c.p!=null?c.p:l.p})));
       else L.push(Object.assign({},base,{d:f.d,cmd:'',q:l.q||0,p:l.p}));
     });

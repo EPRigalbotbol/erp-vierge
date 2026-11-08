@@ -6943,16 +6943,18 @@ $('lsnv').onclick=lsOuvre; $('lsx').onclick=lsFerme; $('lsannul').onclick=lsFerm
      2. chaque produit de la caisse est rapproché d'une fiche du Catalogue par son code-barres (trouve : codes, « nobox »,
         autres codes) ou par une équivalence confirmée à la main (lightspeed-paires-v1 : sku → clé, ou « - » = pas dans l'ERP) ;
         les non-reconnus sont listés avec une fiche probable à confirmer d'un clic ;
-     3. « Préparer les fichiers » fabrique le fichier RETAIL (seulement les lignes dont le prix change ; seulement les colonnes
-        qu'exige Lightspeed pour reconnaître le produit — id, handle, name, variantes — et retail_price) et le fichier WHOLESALE
+     3. « Préparer les fichiers » fabrique le fichier RETAIL (seulement les lignes dont le prix change ; TOUTES les colonnes de
+        l'export sauf le stock, telles quelles, retail_price remplacé par celui du Catalogue) et le fichier WHOLESALE
         (au format de l'export d'un catalogue de prix : sku, handle, id, retail_price…, prix de gros du Catalogue).
 
    « On n'a pas le droit à l'erreur » (Igal, 8 nov. 2026). Les garde-fous :
      • un prix qui change de plus du double ou de moins de la moitié, ou qui dépasse 5 000 $, n'est PAS envoyé : il est listé
        « à vérifier » (le premier essai portait deux miniatures Burberry à 45 416 $, un 17,50 $ passé à 185 $) ;
      • un prix de gros AU-DESSUS du prix retail n'est pas envoyé non plus (liste « à vérifier ») ;
-     • le fichier Retail n'emporte que l'identifiant, le nom et le prix : une colonne absente, Lightspeed ne la touche pas — un
-       export un peu ancien ne peut donc pas remettre d'anciennes valeurs (description, étiquettes, prix d'achat…) ;
+     • le fichier Retail reprend l'export TEL QUEL (sauf le stock) : essai du 8 nov. 2026 dans Lightspeed, un fichier réduit à
+       id/nom/prix est refusé sans SKU, et sans « supply_price » Lightspeed annonce qu'il mettra le prix d'achat à 0 $. C'est la
+       méthode de l'aide Lightspeed (exporter, retirer le stock, changer, réimporter) ; comme l'export doit être frais (ci-dessous),
+       il ne remet aucune ancienne valeur ;
      • Lightspeed CRÉE UN DOUBLON dans un catalogue de prix pour toute ligne sans l'identifiant de la ligne existante (aide
        Lightspeed, « Updating a price book »). Une fois des prix de gros envoyés, le fichier Wholesale n'est plus fabriqué
        sans un export du catalogue wholesale déposé APRÈS : il donne l'identifiant de chaque ligne ; une ligne au même prix
@@ -6960,7 +6962,7 @@ $('lsnv').onclick=lsOuvre; $('lsx').onclick=lsFerme; $('lsannul').onclick=lsFerm
      • l'export des produits doit dater de moins de 24 h et être plus récent que les derniers fichiers préparés. */
 const K_LSM_P='lightspeed-paires-v1', K_LSM_E='lightspeed-envoye-v1', K_LSM_T='lightspeed-tarif-wholesale-v1';
 const LSM_FRAIS=24*3600e3, LSM_MAX=5000;
-const LSM_COLS_R=/^(id|handle|name|variant_option_(one|two|three)_(name|value)|retail_price)$/;
+const LSM_STOCK=/^(inventory|reorder_point|reorder_quantity|min_quantity|max_quantity|items_on_special_order)_/;
 const LSM_ENTETE_W='sku,handle,id,retail_price,loyalty_value,min_units,max_units';
 let LSM=null, LSM_RETOUR=null;
 /* la clé d'une fiche : `cle` quand elle en a une, sinon son identifiant (31 fiches créées dans l'ERP n'ont pas de `cle` : avec
@@ -7139,7 +7141,7 @@ async function lsmDepose(fichiers){
 function lsmFichiers(){
   const X=LSM&&LSM.X, rec=LSM&&LSM.rec; if(!X||!rec) return;
   lsmCalc(); const B=LSM.bloque||{}, recs=LSM.rec;
-  const cols=(X.cols||[]).filter(c=>LSM_COLS_R.test(c));
+  const cols=(X.cols||[]).filter(c=>!LSM_STOCK.test(c));
   const R=B.retail?[]:recs.filter(x=>x.chR).map(x=>cols.map(c=>lsmQ(c==='retail_price'?(+x.pvr).toFixed(2):x.r[c])).join(','));
   const W=B.gros?[]:recs.filter(x=>x.w).map(x=>{ const t=x.w.t||{}; return [x.r.sku,x.r.handle||x.r.sku,x.w.id||'',(+x.pvw).toFixed(2),t.lv||'',t.mn||'',t.mx||''].map(lsmQ).join(','); });
   const m=$('lsmmsg');

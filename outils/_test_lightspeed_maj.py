@@ -11,7 +11,7 @@
 #   5. déposer un export envoie le fichier au cockpit (route de l'ERP, pas celle de l'admin) ;
 #   6. en anglais et en espagnol, la fenêtre et le bouton sont traduits.
 #   7. « ON N'A PAS LE DROIT À L'ERREUR » (Igal, 8 nov. 2026) : un prix qui change de plus du double / moins de la moitié, ou un prix de
-#      gros au-dessus du retail, n'est pas envoyé (liste « à vérifier ») ; le fichier Retail n'emporte que id, handle, name, retail_price ;
+#      gros au-dessus du retail, n'est pas envoyé (liste « à vérifier ») ; le fichier Retail reprend toutes les colonnes de l'export sauf le stock ;
 #      le fichier Wholesale est au format de l'export du catalogue de prix, avec l'IDENTIFIANT de chaque ligne existante (sans lui,
 #      Lightspeed crée un doublon) ; après un envoi, il faut des exports plus récents, sinon les fichiers sont bloqués ;
 #   8. « Même parfum » marche aussi sur une fiche sans « cle » ; « Voir la fiche » ouvre la fiche sur le côté et la fenêtre revient.
@@ -119,9 +119,10 @@ try:
         F = pg.evaluate("()=>window.__LSM.get().derniers")
         R = list(csv.reader(io.StringIO('\n'.join(F['R'])))); W = list(csv.reader(io.StringIO('\n'.join(F['W']))))
         hdr = R[0]
-        check('LE POINT — RETAIL : SEULEMENT id, handle, name, retail_price (une colonne absente, Lightspeed n\'y touche pas) ; 3 lignes (A, E, le testeur), prix du Catalogue ; ni D ni G',
-              hdr == ['id', 'handle', 'name', 'retail_price'] and len(R) == 4 and {r[0] for r in R[1:]} == {'u-1', 'u-5', 'u-3'}
-              and next(r for r in R[1:] if r[0] == 'u-1')[3] == '%.2f' % float(A[7]) and next(r for r in R[1:] if r[0] == 'u-1')[2] == f'{A[2]} {A[13]} EDP 3.4 oz', R)
+        i_px = hdr.index('retail_price'); i_tags = hdr.index('tags'); i_sp = hdr.index('supply_price')
+        check('LE POINT — RETAIL : TOUTES les colonnes de l\'export sauf le stock (sans « supply_price », Lightspeed mettrait le prix d\'achat à 0 $) ; 3 lignes (A, E, le testeur), prix du Catalogue, le reste intact ; ni D ni G',
+              hdr == EXPORT['cols'] and 'inventory_Main_Outlet' not in hdr and len(R) == 4 and {r[0] for r in R[1:]} == {'u-1', 'u-5', 'u-3'}
+              and next(r for r in R[1:] if r[0] == 'u-1')[i_px] == '%.2f' % float(A[7]) and next(r for r in R[1:] if r[0] == 'u-1')[i_tags] == 'Homme, été' and next(r for r in R[1:] if r[0] == 'u-1')[i_sp] == '10', R)
         check('LE POINT — WHOLESALE : au format de l\'export d\'un catalogue de prix (sku, handle, id…), 5 lignes (A, B, E, testeur, fiche sans cle), identifiants vides la première fois, prix de gros du Catalogue ; pas G',
               W[0] == ['sku', 'handle', 'id', 'retail_price', 'loyalty_value', 'min_units', 'max_units'] and len(W) == 6 and all(r[2] == '' for r in W[1:])
               and next(r for r in W[1:] if r[0] == str(A[0]))[3] == '%.2f' % float(A[8]) and str(G[0]) not in {r[0] for r in W[1:]} and str(D[0]) not in {r[0] for r in W[1:]} and next(r for r in W[1:] if r[0] == V)[3] == '30.00', W)

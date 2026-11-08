@@ -65,6 +65,10 @@ background:var(--surface-2);color:var(--ink-2);border:1px solid var(--line)}
 .ch::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--c,var(--ink-3))}
 .ch.c0{--c:#5B4B8A}.ch.c1{--c:#2C6E4E}.ch.c2{--c:#B4530A}.ch.c3{--c:#1F6FB2}.ch.c4{--c:#A4262C}
 .ch.cpc{--c:#E0457F;background:#FDEDF3;color:#9A2A56;border-color:#F4B8CF}
+.ch .ou{font-weight:800;letter-spacing:.04em;text-transform:uppercase;font-size:10.5px}
+.ch.ou-ligne{background:#9A2A56;color:#fff;border-color:#9A2A56}
+.ch.ou-ligne .ou{color:#fff}
+.ch.ou-ligne::before{background:#fff}
 .ch.c5{--c:#8A5A00}.ch.c6{--c:#4C7C8A}.ch.c7{--c:#7A4E9E}.ch.na{--c:transparent;border-style:dashed;color:var(--ink-3);font-weight:500}
 
 /* Par canal : un onglet par canal, avec son logo (l'icône du site du canal, jamais
@@ -312,6 +316,8 @@ text-transform:uppercase;padding:2px 7px;border-radius:99px;background:var(--cri
 .tbl tr.pcr.ret td{background:var(--crit-soft)}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .ch.cpc{background:#33202A;color:#F4B8CF;border-color:#6A3047}}
 :root[data-theme="dark"] .ch.cpc{background:#33202A;color:#F4B8CF;border-color:#6A3047}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .ch.ou-ligne{background:#C2437A;color:#fff;border-color:#C2437A}}
+:root[data-theme="dark"] .ch.ou-ligne{background:#C2437A;color:#fff;border-color:#C2437A}
 .tbl tr.att td{background:#F5F1FC}
 .tbl tr.att:hover td{background:#EDE6F9}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .tbl tr.att td{background:#231E30}}
@@ -1365,8 +1371,8 @@ function payLib(x){
     const T={especes:r3('Espèces','Cash','Efectivo'),zelle:'Zelle',carte:r3('Carte','Card','Tarjeta'),cheque:r3('Chèque','Check','Cheque'),virement:r3('Virement','Transfer','Transferencia'),credit:r3('Crédit','Credit','Crédito'),enligne:r3('En ligne','Online','En línea')};
     if(T[m]) L.push(T[m]);
     else if(/^(woocommerce|woocommerce-gros|amazon)$/.test(String(x.auto||''))) L.push(r3('En ligne','Online','En línea')); }
-  const o=x.ou?ouLib(x.ou):'';
-  return L.join(' + ')+(o?(L.length?' · ':'')+o:'');
+  /* 8 nov. 2026 : l'origine (boutique / en ligne) est maintenant sur la pastille Perfume City elle-même, plus ici */
+  return L.join(' + ');
 }
 let V=[];
 function construitV(){
@@ -2181,8 +2187,12 @@ function canalCourt(c){ const t=String(c||'');
 /* le nom montré d'un canal saisi à la main (listes de choix, filtre, pastilles) */
 function nomAff(c){ const t=String(c||''); return /^gros$/i.test(t)?'Vente en gros':/^boutique$/i.test(t)?'Vente au détail':t; }
 /* la pastille du canal : le nom fixe n'est pas traduit (un nom propre), la bulle explique */
+/* 8 nov. 2026 (Igal : « sur le petit logo Perfume City, mets online ou boutique directement, beaucoup plus visible ») : la pastille
+   dit elle-même d'où vient la vente — « Perfume City · BOUTIQUE » ou « Perfume City · EN LIGNE » */
 function pastCanal(x){ const c=x.canal, k=identCanal(c);
-  return `<span class="ch ${cls(c)}" title="${esc(origine(x))}"${k.fixe?' data-nolang':''}>${esc(canalCourt(c))}</span>`; }
+  let ou=''; if(String(x.auto||'')==='shopify-pc'&&x.ou){ const o=String(x.ou);
+    ou=o==='boutique'?r3('Boutique','Store','Tienda'):o==='en ligne'?r3('En ligne','Online','En línea'):o==='commande manuelle'?r3('Manuelle','Manual','Manual'):/^\d+$/.test(o)?r3('Autre canal','Other channel','Otro canal'):o; }
+  return `<span class="ch ${cls(c)}${ou?' ou-'+(String(x.ou)==='en ligne'?'ligne':'bout'):''}" title="${esc(origine(x))}"${k.fixe?' data-nolang':''}>${esc(canalCourt(c))}${ou?` <b class="ou">· ${esc(ou)}</b>`:''}</span>`; }
 /* d'où vient la vente, en une phrase, dans la langue de l'écran */
 function origine(x){
   const a=String(x.auto||'').toLowerCase(), c=String(x.canal||'');

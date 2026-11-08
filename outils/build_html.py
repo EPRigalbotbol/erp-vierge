@@ -1287,6 +1287,20 @@ footer{margin-top:40px;border-top:1px solid var(--line);padding-top:15px;font-si
 display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between}
 __AIDECSS__
 /* nouvelles références pour Lightspeed */
+.btn.lspd{background:#e8412c;border-color:#e8412c;color:#fff;font-weight:700;display:inline-flex;align-items:center;gap:8px;padding:9px 16px 9px 12px}
+.btn.lspd:hover{filter:brightness(1.08);color:#fff}
+.btn.lspd svg{width:16px;height:18px;flex:none;fill:#fff}
+.lsm-etat{display:flex;gap:14px;flex-wrap:wrap;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2)}
+.lsm-etat b{font-size:15px}
+.lsm-kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.lsm-kpi div{border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+.lsm-kpi b{display:block;font-size:20px;font-weight:700}
+.lsm-kpi span{font-size:12px;color:var(--ink-3)}
+.lsm-tab td{vertical-align:middle}
+.lsm-tab select{max-width:320px;font:inherit;font-size:12.5px;padding:4px 6px}
+.lsm-tab .btn{padding:5px 9px;font-size:12px;margin-left:4px}
+.lsm-depot{font-size:12.5px;color:var(--ink-3)}
+.lsm-depot input{font-size:12px}
 .lsnv-tete{margin:4px 0 2px;font-size:14px}
 .lsnv-av{margin-top:16px;color:var(--crit)}
 .lsnv-case{display:flex;gap:8px;align-items:center;margin:6px 0 10px;font-size:13.5px;cursor:pointer}
@@ -1359,6 +1373,7 @@ __BARRE__
     <button class="btn" id="fac">Enregistrer une facture</button>
     <button class="btn" id="svg">Sauvegarder mon travail</button>
     <button class="btn" id="lsnv">Nouvelles réf. pour Lightspeed</button>
+    <button class="btn lspd" id="lsmaj" data-nolang><svg viewBox="0 0 16 18" aria-hidden="true"><path d="M8.6 0.4c0.3 2.6 1.9 3.9 3.6 5.7 1.8 1.9 3 4 2.6 6.6-0.5 3.2-3.1 5.3-6.6 5.3-3.8 0-6.5-2.5-6.5-6.1 0-2.5 1.3-4.3 3.3-6.2-0.1 1.6 0.4 2.8 1.5 3.3-0.4-2.3 0.2-4.6 2.1-8.6zM8.1 9.6c-1.6 1.1-2.4 2.3-2.4 3.5 0 1.5 1 2.6 2.4 2.6s2.4-1 2.4-2.5c0-1.2-0.8-2.3-2.4-3.6z"/></svg><span id="lsmaj-t">Mettre à jour Lightspeed</span></button>
     <button class="btn" id="plb" title="La liste de tout ce qui est en stock, avec le prix de gros — en PDF ou en Excel, à envoyer à un client">Price list</button>
     <button class="btn" id="maj">Mettre à jour le stock</button>
     <button class="btn" id="psite" style="display:none">Mettre les sites à jour</button>
@@ -1630,6 +1645,13 @@ __BARRE__
 </div></div>
 <!-- 3 oct. 2026 — point 8 de Sam : le fichier d'inventaire envoyé à Lightspeed ne crée pas
      les parfums que la caisse ne connaît pas. Ce fichier-ci les crée, avec ce que Sam a mis dans l'ERP. -->
+<div class="ov" id="lsmov"><div class="mod" role="dialog" aria-modal="true" aria-labelledby="lsmt" style="max-width:860px">
+  <div class="mh"><h2 id="lsmt" data-nolang>Mettre à jour Lightspeed</h2><button class="x" id="lsmx" aria-label="Fermer">&times;</button></div>
+  <div class="mb" id="lsmcorps" data-nolang></div>
+  <div class="mf"><span class="msg" id="lsmmsg" data-nolang></span>
+    <button class="btn" id="lsmannul" data-nolang>Fermer</button>
+    <button class="btn lspd" id="lsmok" data-nolang disabled>Préparer les fichiers</button></div>
+</div></div>
 <div class="ov" id="lsov"><div class="mod" role="dialog" aria-modal="true" aria-labelledby="lst" style="max-width:720px">
   <div class="mh"><h2 id="lst">Nouvelles références pour Lightspeed</h2><button class="x" id="lsx" aria-label="Fermer">&times;</button></div>
   <div class="mb">
@@ -6908,6 +6930,143 @@ function lsTelecharge(){
 }
 function lsFerme(){ $('lsov').classList.remove('on'); }
 $('lsnv').onclick=lsOuvre; $('lsx').onclick=lsFerme; $('lsannul').onclick=lsFerme; $('lsok').onclick=lsTelecharge;
+
+/* ============ METTRE À JOUR LIGHTSPEED (Igal, 8 nov. 2026) ============
+   « En un clic, transférer le fichier Wholesale et le fichier Retail sur Lightspeed pour mettre à niveau les prix, avec un
+   formulaire déjà pré-rempli par l'ERP. » Lightspeed (forfait de Sam) n'ouvre aucune porte automatique : il ne met à jour que ce
+   qu'il reconnaît dans SON export, par son identifiant. Donc :
+     1. l'export des produits de la caisse (Catalogue → Produits → Exporter la liste → CSV) est déposé ici une fois — le cockpit
+        le garde (lightspeed-export-v1), sans les colonnes de stock ;
+     2. chaque produit de la caisse est rapproché d'une fiche du Catalogue par son code-barres (trouve : codes, « nobox »,
+        autres codes) ou par une équivalence confirmée à la main (lightspeed-paires-v1 : sku → clé, ou « - » = pas dans l'ERP) ;
+        les non-reconnus sont listés avec une fiche probable à confirmer d'un clic ;
+     3. « Préparer les fichiers » fabrique le fichier RETAIL (l'export tel quel, seulement les lignes dont le prix retail change,
+        colonne retail_price remplacée par celui du Catalogue) et le fichier WHOLESALE (le modèle de tarif de Lightspeed :
+        sku, handle, retail_price = prix de gros du Catalogue). Ce que Sam charge ensuite dans Lightspeed : Catalogue → Importer
+        (Retail) ; Catalogues de prix → wholesale → fichier (Wholesale). Rien d'autre n'est touché : ni stock, ni noms, ni taxes. */
+const K_LSM_P='lightspeed-paires-v1', K_LSM_E='lightspeed-envoye-v1';
+let LSM=null;
+const lsmT=(a,b,c)=>(typeof L3==='function'?L3(a,b,c):a);
+const lsmQ=v=>{ v=String(v==null?'':v); return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+const lsmPaires=()=>{ const P=lit(K_LSM_P,{}); return (P&&typeof P==='object'&&!Array.isArray(P))?P:{}; };
+const lsmTok=s=>{ const t=String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9 ]+/g,' ').split(' ');
+  const STOP=new Set('by the de du des la le les pour for eau edp edt edc parfum toilette cologne spray oz ml men homme women femme unisex tester no box nobox new set gift coffret and'.split(' '));
+  return new Set(t.filter(x=>x.length>1&&!STOP.has(x))); };
+function lsmSuggere(nom,arts){
+  const ta=lsmTok(nom); if(ta.size<2) return [];
+  const out=[];
+  for(const a of arts){ const te=a._tok||(a._tok=lsmTok((a.marque||'')+' '+(a.nom||'')+' '+(a.nomSrc||''))); if(!te.size) continue;
+    let n=0; ta.forEach(x=>{ if(te.has(x)) n++; }); if(n<2||n/ta.size<0.6||n/te.size<0.6) continue;
+    out.push({s:n/Math.max(ta.size,te.size),a}); }
+  return out.sort((x,y)=>y.s-x.s).slice(0,3);
+}
+/* la même recherche que trouve(), mais avec un index construit une fois (2 660 produits × 3 800 fiches : trouve() relit tout à chaque appel) */
+function lsmIndex(arts){
+  const I={}; const pose=(k,a)=>{ if(!k) return; (I[k]=I[k]||[]).push(a); };
+  const EX=(typeof bcExtra==='function')?bcExtra():{};
+  arts.forEach(a=>{ if(a.bc) pose(String(a.bc).replace(/[^0-9]/g,'').replace(/^0+/,''),a); bcsDe(a).forEach(k=>pose(k,a)); (EX[a.cle]||[]).forEach(k=>pose(String(k).replace(/^0+/,''),a)); });
+  return I;
+}
+function lsmTrouve(I,sku){
+  const M=(typeof mentionBC==='function')?mentionBC(sku):{digits:String(sku).replace(/[^0-9]/g,''),mention:''};
+  const nu=String(M.digits||'').replace(/^0+/,''); if(!nu) return null;
+  const C=I[nu]||[]; if(!C.length) return null;
+  if(typeof parMention==='function') return parMention(C,M.mention,x=>x.nom+' '+(x.nomSrc||''))||null;
+  return M.mention?null:C[0];
+}
+/* rapproche chaque produit de la caisse d'une fiche : par équivalence confirmée, sinon par code-barres */
+function lsmCalc(){
+  const X=LSM&&LSM.X; if(!X) return;
+  const arts=tousLesArticles(), parCle={}; arts.forEach(a=>{ if(a.cle) parCle[a.cle]=a; });
+  const I=lsmIndex(arts);
+  const P=lsmPaires(); const rec=[], inc=[]; let retail=0, gros=0, ignores=0;
+  (X.lignes||[]).forEach(r=>{
+    const sku=String(r.sku||'').trim(); if(!sku) return;
+    let a=null; const pa=P[sku];
+    if(pa==='-'){ ignores++; return; }
+    if(pa&&parCle[pa]) a=parCle[pa]; else { try{ a=lsmTrouve(I,sku); }catch(e){ a=null; } }
+    if(!a){ inc.push({r,sug:lsmSuggere(r.name,arts)}); return; }
+    const pvr=a.pvr!=null&&a.pvr!==''?+a.pvr:null, pvw=a.pvw!=null&&a.pvw!==''?+a.pvw:null;
+    const chR=pvr>0&&Math.abs(pvr-(+r.retail_price||0))>0.005;
+    if(chR) retail++; if(pvw>0) gros++;
+    rec.push({r,a,pvr,pvw,chR});
+  });
+  LSM.rec=rec; LSM.inc=inc; LSM.n={retail,gros,ignores};
+}
+function lsmPeint(){
+  const z=$('lsmcorps'); if(!LSM){ z.innerHTML=''; return; }
+  const X=LSM.X; let h='';
+  const depot=`<label class="lsm-depot">${lsmT('Déposer un export plus récent de la caisse (Catalogue → Produits → Exporter la liste → CSV) :','Drop a newer register export (Catalog → Products → Export list → CSV):','Dejar una exportación más reciente de la caja (Catálogo → Productos → Exportar la lista → CSV):')} <input type="file" id="lsm-fic" accept=".csv,text/csv"></label>`;
+  if(!X){ h+=`<div class="lsm-etat"><b>${lsmT("Pas encore d'export de la caisse.","No register export yet.","Todavía no hay exportación de la caja.")}</b> <span>${lsmT("Il faut d'abord déposer l'export des produits de Lightspeed : c'est lui qui porte les identifiants que Lightspeed reconnaît.","First drop Lightspeed's product export: it carries the identifiers Lightspeed recognizes.","Primero hay que dejar la exportación de productos de Lightspeed: lleva los identificadores que Lightspeed reconoce.")}</span></div>${depot}`;
+    z.innerHTML=h; lsmBranche(); $('lsmok').disabled=true; return; }
+  const d=X.t?new Date(X.t):null, dl=d&&!isNaN(d)?d.toLocaleDateString(typeof lgLocale==='function'?lgLocale():'fr-FR')+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'';
+  h+=`<div class="lsm-etat"><b>${lsmT('Export de la caisse du','Register export of','Exportación de la caja del')} ${esc(dl)}</b><span>${nf(X.n||(X.lignes||[]).length)} ${lsmT('produits','products','productos')}</span>${depot}</div>`;
+  const n=LSM.n||{}, rec=LSM.rec||[], inc=LSM.inc||[];
+  h+=`<div class="lsm-kpi">
+    <div><b>${nf(rec.length)}</b><span>${lsmT('produits de la caisse reconnus dans le Catalogue','register products matched in the Catalog','productos de la caja reconocidos en el Catálogo')}</span></div>
+    <div><b>${nf(n.retail||0)}</b><span>${lsmT('prix retail à changer dans la caisse','retail prices to change in the register','precios retail a cambiar en la caja')}</span></div>
+    <div><b>${nf(n.gros||0)}</b><span>${lsmT('prix de gros à poser (tarif wholesale)','wholesale prices to set (wholesale price book)','precios mayoristas a poner (tarifa wholesale)')}</span></div>
+    <div><b>${nf(inc.length)}</b><span>${lsmT('non reconnus — à confirmer ci-dessous','not matched — confirm below','no reconocidos — confirmar abajo')}${n.ignores?` · ${nf(n.ignores)} ${lsmT('ignorés','ignored','ignorados')}`:''}</span></div></div>`;
+  if(inc.length){
+    const avecSug=inc.filter(x=>x.sug.length), sans=inc.filter(x=>!x.sug.length);
+    h+=`<div class="lsnv-tete"><b>${lsmT('Non reconnus par le code-barres','Not matched by barcode','No reconocidos por el código de barras')}</b> — ${lsmT("si c'est le même parfum qu'une fiche du Catalogue, confirme : l'ERP s'en souviendra et ses prix suivront.","if it is the same perfume as a Catalog item, confirm: the ERP will remember and its prices will follow.","si es el mismo perfume que una ficha del Catálogo, confirma: el ERP lo recordará y sus precios seguirán.")}</div>`;
+    const ligne=x=>{ const sel=x.sug.length?`<select data-lsmsel="${esc(x.r.sku)}">${x.sug.map(s=>`<option value="${esc(s.a.cle||'')}">${esc((s.a.marque||'')+' '+(s.a.nom||''))}${s.a.pvr!=null?' — '+money(+s.a.pvr):''}</option>`).join('')}</select><button class="btn" data-lsmoui="${esc(x.r.sku)}">${lsmT('Même parfum','Same perfume','Mismo perfume')}</button>`:`<span class="hint">${lsmT('aucune fiche ressemblante','no similar item','ninguna ficha parecida')}</span>`;
+      return `<tr><td>${esc(x.r.sku)}</td><td>${esc(x.r.name||'')}<br><small>${lsmT('prix caisse','register price','precio caja')} ${esc(String(x.r.retail_price||''))} $</small></td><td>${sel}<button class="btn" data-lsmnon="${esc(x.r.sku)}">${lsmT("Pas dans l'ERP","Not in the ERP","No está en el ERP")}</button></td></tr>`; };
+    h+=`<div class="prev lsnv-tab lsm-tab" style="max-height:360px"><table><thead><tr><th>SKU ${lsmT('caisse','register','caja')}</th><th>${lsmT('Produit dans la caisse','Product in the register','Producto en la caja')}</th><th>${lsmT('Fiche du Catalogue','Catalog item','Ficha del Catálogo')}</th></tr></thead><tbody>`
+      +avecSug.concat(sans).slice(0,150).map(ligne).join('')+`</tbody></table></div>`;
+    if(inc.length>150) h+=`<p class="hint">${lsmT(`… et ${inc.length-150} autres, après ceux-ci.`,`… and ${inc.length-150} more, after these.`,`… y ${inc.length-150} más, después de estos.`)}</p>`;
+  }
+  const E=lit(K_LSM_E,null);
+  if(E&&E.t) h+=`<p class="hint">${lsmT('Derniers fichiers préparés le','Last files prepared on','Últimos archivos preparados el')} ${esc(dateFr(E.t))} — ${nf(E.retail||0)} retail, ${nf(E.gros||0)} wholesale${E.u?' ('+esc(E.u)+')':''}.</p>`;
+  h+=`<p class="hint">${lsmT('Ensuite, dans Lightspeed : Catalogue → Produits → Importer → fichier Retail ; Catalogue → Catalogues de prix → wholesale → Modifier → fichier Wholesale. Seuls les prix changent : ni le stock, ni les noms, ni les taxes.','Then, in Lightspeed: Catalog → Products → Import → Retail file; Catalog → Price books → wholesale → Edit → Wholesale file. Only prices change: not stock, names or taxes.','Luego, en Lightspeed: Catálogo → Productos → Importar → archivo Retail; Catálogo → Catálogos de precios → wholesale → Modificar → archivo Wholesale. Solo cambian los precios: ni el stock, ni los nombres, ni los impuestos.')}</p>`;
+  z.innerHTML=h; lsmBranche();
+  $('lsmok').disabled=!((n.retail||0)+(n.gros||0));
+}
+function lsmBranche(){
+  const f=$('lsm-fic'); if(f) f.onchange=()=>{ const file=f.files&&f.files[0]; if(file) lsmDepose(file); };
+  document.querySelectorAll('[data-lsmoui]').forEach(b=>b.onclick=()=>{ const sku=b.dataset.lsmoui, sel=document.querySelector(`[data-lsmsel="${CSS.escape(sku)}"]`); if(!sel||!sel.value) return;
+    const P=lsmPaires(); P[sku]=sel.value; ecrit(K_LSM_P,P); log({act:'prix',lib:'Lightspeed : « '+sku+' » = fiche '+sel.value+' (même parfum, confirmé)',n:1,impact:0,det:[]}); lsmCalc(); lsmPeint(); });
+  document.querySelectorAll('[data-lsmnon]').forEach(b=>b.onclick=()=>{ const sku=b.dataset.lsmnon; const P=lsmPaires(); P[sku]='-'; ecrit(K_LSM_P,P); lsmCalc(); lsmPeint(); });
+}
+async function lsmCharge(){
+  LSM={X:null};
+  if(!(typeof CK_URL!=='undefined'&&typeof ckTok==='function'&&ckTok())){ $('lsmcorps').innerHTML=`<p class="hint">${lsmT("Il faut ouvrir l'ERP en ligne : l'export de la caisse est gardé sur le serveur.","Open the online ERP: the register export is kept on the server.","Hay que abrir el ERP en línea: la exportación de la caja está en el servidor.")}</p>`; return; }
+  try{ const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/donnees/lightspeed-export-v1',{headers:{Authorization:'Bearer '+ckTok()},cache:'no-store'});
+    if(r.status!==404){ if(!r.ok) throw new Error('serveur '+r.status); const j=await r.json(); if(j&&j.val&&Array.isArray(j.val.lignes)) LSM.X=j.val; } }
+  catch(e){ $('lsmcorps').innerHTML=`<p class="hint">${lsmT('Le serveur ne répond pas. Réessaie dans un instant.','The server is not responding. Try again in a moment.','El servidor no responde. Vuelve a intentarlo en un momento.')}</p>`; return; }
+  lsmCalc(); lsmPeint();
+}
+async function lsmDepose(file){
+  const m=$('lsmmsg'); m.textContent=lsmT("Lecture de l'export…","Reading the export…","Leyendo la exportación…"); m.className='msg';
+  try{ const texte=await file.text();
+    const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/lightspeed/export',{method:'POST',headers:{'Content-Type':'text/csv',Authorization:'Bearer '+ckTok()},body:texte});
+    const j=await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.erreur||('serveur '+r.status));
+    m.textContent=lsmT(`Export reçu : ${nf(j.exportGarde)} produits.`,`Export received: ${nf(j.exportGarde)} products.`,`Exportación recibida: ${nf(j.exportGarde)} productos.`); m.className='msg ok';
+    await lsmCharge();
+  }catch(e){ m.textContent=(e&&e.message)||'échec'; m.className='msg err'; }
+}
+function lsmFichiers(){
+  const X=LSM&&LSM.X, rec=LSM&&LSM.rec; if(!X||!rec) return;
+  const cols=(X.cols||[]).filter(c=>!/^(inventory|reorder_point|reorder_quantity|min_quantity|max_quantity|items_on_special_order)_/.test(c));
+  const R=rec.filter(x=>x.chR).map(x=>cols.map(c=>lsmQ(c==='retail_price'?(+x.pvr).toFixed(2):x.r[c])).join(','));
+  const W=rec.filter(x=>x.pvw>0).map(x=>[x.r.sku,x.r.handle||x.r.sku,(+x.pvw).toFixed(2),'','',''].map(lsmQ).join(','));
+  const tele=(nom,lignes)=>{ const el=document.createElement('a'); el.href=URL.createObjectURL(new Blob(['﻿'+lignes.join('\r\n')+'\r\n'],{type:'text/csv;charset=utf-8'})); el.download=nom; document.body.appendChild(el); el.click(); el.remove(); setTimeout(()=>URL.revokeObjectURL(el.href),2000); };
+  if(R.length) tele(`lightspeed-retail-${ajd()}.csv`,[cols.join(',')].concat(R));
+  if(W.length) setTimeout(()=>tele(`lightspeed-wholesale-${ajd()}.csv`,['sku,handle,retail_price,loyalty_value,min_units,max_units'].concat(W)),600);
+  const E={t:new Date().toISOString(),u:USR||'',retail:R.length,gros:W.length}; ecrit(K_LSM_E,E);
+  log({act:'prix',lib:'fichiers Lightspeed préparés : '+R.length+' prix retail à changer, '+W.length+' prix de gros (tarif wholesale)',n:R.length+W.length,impact:0,det:[]});
+  const m=$('lsmmsg'); m.textContent=lsmT(`Deux fichiers téléchargés : Retail (${nf(R.length)} prix) et Wholesale (${nf(W.length)} prix). À charger dans Lightspeed.`,`Two files downloaded: Retail (${nf(R.length)} prices) and Wholesale (${nf(W.length)} prices). Load them in Lightspeed.`,`Dos archivos descargados: Retail (${nf(R.length)} precios) y Wholesale (${nf(W.length)} precios). Cárgalos en Lightspeed.`); m.className='msg ok';
+  LSM.derniers={R:[cols.join(',')].concat(R),W:['sku,handle,retail_price,loyalty_value,min_units,max_units'].concat(W)};   /* pour les tests */
+}
+function lsmOuvre(){ $('lsmt').textContent=lsmT('Mettre à jour Lightspeed','Update Lightspeed','Actualizar Lightspeed'); $('lsmannul').textContent=lsmT('Fermer','Close','Cerrar'); $('lsmok').textContent=lsmT('Préparer les fichiers','Prepare the files','Preparar los archivos');
+  $('lsmmsg').textContent=''; $('lsmmsg').className='msg'; $('lsmcorps').innerHTML=`<p class="hint">${lsmT('Lecture…','Loading…','Cargando…')}</p>`; $('lsmok').disabled=true; $('lsmov').classList.add('on'); lsmCharge(); }
+function lsmFerme(){ $('lsmov').classList.remove('on'); }
+{ const b=$('lsmaj'); if(b){ b.onclick=lsmOuvre; const t=$('lsmaj-t'); if(t) t.textContent=lsmT('Mettre à jour Lightspeed','Update Lightspeed','Actualizar Lightspeed');
+    if(typeof peut==='function'&&!(peut('voirMarge')&&peut('voirPA'))) b.style.display='none'; } }
+$('lsmx').onclick=lsmFerme; $('lsmannul').onclick=lsmFerme; $('lsmok').onclick=lsmFichiers;
+$('lsmov').addEventListener('click',e=>{ if(e.target===$('lsmov')) lsmFerme(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&$('lsmov').classList.contains('on')) lsmFerme(); });
+window.__LSM={get(){ return LSM; }, calc:lsmCalc, fichiers:lsmFichiers, ouvre:lsmOuvre};
 $('lsov').addEventListener('click',e=>{ if(e.target===$('lsov')) lsFerme(); });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&$('lsov').classList.contains('on')) lsFerme(); });
 

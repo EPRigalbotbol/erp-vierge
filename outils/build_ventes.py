@@ -1897,12 +1897,12 @@ function ouvreDetail(x){
   }
 
   /* ---- ce parfum (une vente d'un seul parfum : pour plusieurs, chaque carte du haut le dit) ---- */
+  /* 8 nov. 2026 (Igal : « je ne sais pas à quoi elle sert cette ligne ») : la fourchette « Prix pratiqués 0 → 20 $ » n'est plus affichée */
   if(x.bc && !multi){
     l.push(`<div class="blo"><h4>Ce parfum</h4>
       ${stock!=null?`<div class="pl"><span>En stock aujourd'hui</span><b class="${stock<=0?'mg c':''}">${nf(stock)} flacon${Math.abs(stock)>1?'s':''}</b></div>`
         :`<div class="pl"><span>Référence</span><b>inconnue du catalogue</b></div>`}
       <div class="pl"><span>Vendu ${nf(hp.length)} fois${hp.length?', '+nf(somme(hp,'q'))+' flacon(s)':''}</span><b>${money2(somme(hp,'mt'))}</b></div>
-      ${pMin!=null&&pMax!=null&&pMax-pMin>0.005?`<div class="pl"><span>Prix pratiqués</span><b>${money2(pMin)} → ${money2(pMax)}</b></div>`:''}
       ${paNow!=null&&vpa()?`<div class="pl"><span>Prix d'achat actuel</span><b>${money2(paNow)}</b></div>`:''}
       ${x.bc?`<button class="btn sm" id="d-bc">Voir toutes ses ventes</button>`:''}
       ${stock===null?'<p class="nt">Ce code-barres ne correspond à aucune fiche du catalogue : le stock ne peut pas être suivi, et la marge non plus.</p>':''}

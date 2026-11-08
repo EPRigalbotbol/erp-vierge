@@ -796,12 +796,20 @@ async function _pdfLibs(){
 }
 /* la feuille photographiée une fois ; le PDF et l'aperçu en sortent tous les deux */
 /* 5 nov. 2026 : chaque page de l'écran est photographiée entière — plus de découpe au ciseau dans une feuille continue */
+/* 7 nov. 2026 (Sam, deux documents aux mots entassés les uns sur les autres : « Thecollectionperfumes », « PaymentCheck ») :
+   sur une fenêtre de moins de 900 px — le portable de Sam — la feuille est réduite à 72 % à l'écran (transform:scale). Le
+   photographe mesure chaque mot sur la feuille réduite, mais le dessine en taille réelle : les mots se chevauchent. Le temps
+   de la photo, la feuille repasse à 100 % ; l'écran la retrouve réduite juste après. */
 async function docCanvas(){
   await _pdfLibs();
   let pages=[...document.querySelectorAll('#doc-pages .doc.pg')];
   if(!pages.length){ docPagine(); pages=[...document.querySelectorAll('#doc-pages .doc.pg')]; }
-  const out=[];
-  for(const el of pages) out.push(await window.html2canvas(el,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,width:816,height:1056,windowWidth:900}));
+  const out=[], P=document.querySelector('#doc-pages'), ov=document.getElementById('docov');
+  const avant=P?P.style.transform:''; if(P) P.style.transform='none';
+  const ovAvant=ov?ov.style.overflow:''; if(ov) ov.style.overflow='visible';
+  try{
+    for(const el of pages) out.push(await window.html2canvas(el,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,width:816,height:1056,windowWidth:900}));
+  } finally { if(P) P.style.transform=avant; if(ov) ov.style.overflow=ovAvant; }
   return out;
 }
 function canvasPDF(cs){

@@ -1345,6 +1345,9 @@ MOTS3.update({
          "Lo que el cliente paga por el envío. Se suma al total, después del sales tax (indicado aparte). Vacío = nada."],
     "Frais d'envoi": ["Shipping", "Envío"],
     "Modifier la vente": ["Edit the sale", "Modificar la venta"],
+    # 7 nov. 2026 : une vente de la caisse se modifie dans l'ERP, encaissement compris
+    "Encaissement du ticket ($)": ["Ticket payment ($)", "Cobro del ticket ($)"],
+    "Ce que la cliente a réellement payé à la caisse. Le total doit retomber sur le total TTC de la vente.": ["What the customer really paid at the register. The total must match the sale's total including tax.", "Lo que la clienta pagó realmente en caja. El total debe coincidir con el total de la venta con impuestos."],
     "Enregistrer les modifications": ["Save the changes", "Guardar los cambios"],
     "Le stock a été remis d'aplomb, le journal garde l'avant et l'après.": ["Stock has been put straight; the log keeps the before and after.", "El stock quedó ajustado; el diario guarda el antes y el después."],
     "modifiée": ["edited", "modificada"],

@@ -1459,8 +1459,9 @@ vRepartit(V, v=>{ const src=String(v.auto||''); if(!/^(amazon|woocommerce|woocom
 vRepartit(V, v=>(!v.ret&&fixeDe(v)>0)?(v.fid?'f|'+v.fid+'|'+(v.cmd||''):'a|'+(v.aid||String(v.auto||'')+'|'+v.num)):null,
   v=>({fixeMt:fixeDe(v)}),
   (v,x)=>{ v.fixeMt=x.fixeMt; v.comMt=Math.round((v.comMt+x.fixeMt)*100)/100; v.net=v.mt-v.comMt; if(v.mg!=null){ v.mg-=x.fixeMt; v.pct=v.mt!==0?v.mg/Math.abs(v.mt)*100:null; } });
-vRepartit(V, v=>(String(v.auto||'')==='shopify-pc'&&v.ou==='en ligne'&&!v.ret&&envoiPc()>0)?'f|'+(v.fid||v.num):null,
-  v=>({portMt:0, envoiMt:envoiPc()}),
+/* 8 nov. 2026 : le port payé par le client d'une commande Perfume City (relu chez Shopify) est une rentrée, comme pour les sites */
+vRepartit(V, v=>(String(v.auto||'')==='shopify-pc'&&!v.ret&&(v.ou==='en ligne'&&envoiPc()>0||+v.portF>0))?'f|'+(v.fid||v.num):null,
+  v=>({portMt:+v.portF>0?+v.portF:0, envoiMt:v.ou==='en ligne'?envoiPc():0}),
   (v,x)=>{ v.portMt=x.portMt; v.envoiMt=x.envoiMt; if(v.mg!=null){ v.mg+=x.portMt-x.envoiMt; v.pct=v.mt!==0?v.mg/Math.abs(v.mt)*100:null; } });
 vRepartit(V, v=>(String(v.auto||'')!=='lightspeed'||v.ret||!v.paie||!(+v.paie.carte>0))?null:'f|'+(v.fid||v.num),
   v=>({carteMt:Math.round(+v.paie.carte*carteTaux())/100}),

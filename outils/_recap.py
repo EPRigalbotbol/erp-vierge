@@ -168,8 +168,8 @@ function rcLignes(){
   rcRepartit(L, v=>(!v.ret&&rcFixeDe(v)>0)?(v.fid?'f|'+v.fid+'|'+(v.cmd||''):'a|'+String(v.auto||'')+'|'+v.num):null,
     v=>({fixeMt:rcFixeDe(v)}),
     (v,x)=>{ v.fixeMt=x.fixeMt; v.comMt=Math.round((v.comMt+x.fixeMt)*100)/100; v.net=v.mt-v.comMt; if(v.mg!=null) v.mg-=x.fixeMt; });
-  rcRepartit(L, v=>(rcPcEnLigne(v)&&!v.ret&&rcEnvoiPc()>0)?'f|'+(v.fid||v.num):null,
-    v=>({portMt:0, envoiMt:rcEnvoiPc()}),
+  rcRepartit(L, v=>(String(v.auto||'')==='shopify-pc'&&!v.ret&&(rcPcEnLigne(v)&&rcEnvoiPc()>0||+v.portF>0))?'f|'+(v.fid||v.num):null,
+    v=>({portMt:+v.portF>0?+v.portF:0, envoiMt:rcPcEnLigne(v)?rcEnvoiPc():0}),
     (v,x)=>{ v.portMt=x.portMt; v.envoiMt=x.envoiMt; if(v.mg!=null) v.mg+=x.portMt-x.envoiMt; });
   rcRepartit(L, v=>(String(v.auto||'')!=='lightspeed'||v.ret||!v.paie||!(+v.paie.carte>0))?null:'f|'+(v.fid||v.num),
     v=>({carteMt:Math.round(+v.paie.carte*rcCarteTaux())/100}),

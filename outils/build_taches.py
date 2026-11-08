@@ -97,8 +97,47 @@ function tkTitrePC(t){ if(t.type!=='pcshopify') return null;
       detail:tkT(`La boutique Shopify de Perfume City ne connaît pas ce parfum : les ${n} flacon(s) reçus pour elle ne peuvent pas y être posés. Crée-le ici, la réception repartira toute seule.`,`Perfume City's Shopify store does not know this perfume: the ${n} bottle(s) received for it cannot be set there. Create it here, the receipt will be sent again by itself.`,`La tienda Shopify de Perfume City no conoce este perfume: los ${n} frasco(s) recibidos para ella no se pueden poner allí. Créalo aquí, la recepción se reenviará sola.`)}; }
   return {titre:tkT(`Renvoyer à Shopify la réception ${t.num}`,`Send receipt ${t.num} to Shopify again`,`Reenviar a Shopify la recepción ${t.num}`),
     detail:tkT(`Le stock de Perfume City est à jour dans l'ERP, pas sur Shopify. Clique « Renvoyer à Shopify » : rien n'est compté deux fois.`,`Perfume City's stock is up to date in the ERP, not on Shopify. Click “Send again to Shopify”: nothing is counted twice.`,`El stock de Perfume City está al día en el ERP, no en Shopify. Pulsa «Reenviar a Shopify»: nada se cuenta dos veces.`)}; }
+/* 8 nov. 2026 (Igal : « occupe-toi des traductions ») : le cockpit écrit les tâches en français ; la page les réécrit dans la langue de
+   l'écran à partir des chiffres qu'il envoie (ps, qte, jours, vente, raisons, num, client…). Une tâche d'un cockpit d'avant, sans ces
+   chiffres, garde son texte français plutôt qu'un texte inventé. Les noms de parfums ne se traduisent jamais. */
+const tkMD=iso=>{ const d=String(iso||'').slice(0,10).split('-'); return d.length===3?`${d[1]}/${d[2]}`:String(iso||''); };
+const tkN=v=>Number(v).toLocaleString(LANG==='en'?'en-US':LANG==='es'?'es-ES':'fr-FR',{maximumFractionDigits:2});
+const tkM=v=>tkN(v)+'\u00a0$';   /* « 15 $ », « 12,50 $ » — comme le cockpit l'écrivait */
+function tkTitre(t){
+  const tp=tkTitrePC(t); if(tp) return tp;
+  const ref=t.ref||'';
+  if((t.type==='rupture'||t.type==='manque')&&ref&&t.ps!=null){
+    const titre=tkT(`Recommander ${ref}`,`Reorder ${ref}`,`Volver a pedir ${ref}`);
+    if(t.type==='rupture'||+t.qte===0) return {titre,detail:tkT(`À zéro, et ça part à ${tkN(t.ps)} par semaine (${tkN(t.q90||0)} vendus sur 90 jours).`,`Out of stock, and it sells ${tkN(t.ps)} a week (${tkN(t.q90||0)} sold over 90 days).`,`A cero, y se venden ${tkN(t.ps)} por semana (${tkN(t.q90||0)} vendidos en 90 días).`)};
+    const j=Math.round(+t.jours||0);
+    return {titre,detail:tkT(`${tkN(t.qte)} en stock, ${tkN(t.ps)} vendus par semaine : plus rien dans ${j} jour${j>1?'s':''}.`,`${tkN(t.qte)} in stock, ${tkN(t.ps)} sold a week: nothing left in ${j} day${j>1?'s':''}.`,`${tkN(t.qte)} en stock, ${tkN(t.ps)} vendidos por semana: nada en ${j} día${j>1?'s':''}.`)};
+  }
+  if(t.type==='prix'&&ref&&t.vente&&t.margeMin!=null){
+    const w=t.vente, perte=!!w.perte;
+    const titre=perte?tkT(`Vendu à perte : ${ref}`,`Sold at a loss: ${ref}`,`Vendido con pérdida: ${ref}`):tkT(`Marge trop faible : ${ref}`,`Margin too low: ${ref}`,`Margen demasiado bajo: ${ref}`);
+    const x=w.q>1?' × '+w.q:'';
+    const frais=[w.com?tkT(`commission ${tkM(w.com)}`,`commission ${tkM(w.com)}`,`comisión ${tkM(w.com)}`):'',w.carte?tkT(`frais de carte ${tkM(w.carte)}`,`card fee ${tkM(w.carte)}`,`comisión de tarjeta ${tkM(w.carte)}`):'',w.envoi?tkT(`envoi ${tkM(w.envoi)}`,`shipping ${tkM(w.envoi)}`,`envío ${tkM(w.envoi)}`):'',w.port?tkT(`port payé par le client ${tkM(w.port)}`,`shipping paid by the customer ${tkM(w.port)}`,`porte pagado por el cliente ${tkM(w.port)}`):''].filter(Boolean);
+    const fin=perte?tkT(`perte de ${tkM(-w.mg)}`,`loss of ${tkM(-w.mg)}`,`pérdida de ${tkM(-w.mg)}`):tkT(`${w.pct} % de marge (minimum ${t.margeMin} %)`,`${w.pct}% margin (minimum ${t.margeMin}%)`,`${w.pct} % de margen (mínimo ${t.margeMin} %)`);
+    const n=w.n>1?tkT(`, ${w.n} ventes cette semaine`,`, ${w.n} sales this week`,`, ${w.n} ventas esta semana`):'';
+    return {titre,detail:`${tkMD(w.d)}, ${w.canal||''} : ${tkT('vendu','sold','vendido')} ${tkM(w.p)}${x}, ${tkT('acheté','bought','comprado')} ${tkM(w.pa)}${x}${frais.length?', '+frais.join(', '):''} → ${fin}${n}. ${tkT('Vérifie son prix.','Check its price.','Revisa su precio.')}`};
+  }
+  if(t.type==='publication'&&(ref||t.bc)&&Array.isArray(t.raisons)){
+    const R={'photo manquante':['photo missing','falta la foto'],'pas de prix':['no price','sin precio'],'prix manquant':['price missing','falta el precio'],'refusé':['refused','rechazado'],'refuse':['refused','rechazado'],'hors ligne':['offline','sin conexión'],'code-barres manquant':['barcode missing','falta el código de barras']};
+    const tr=r=>{ const k=String(r||'').trim().toLowerCase(); return R[k]?tkT(r,R[k][0],R[k][1]):r; };
+    return {titre:tkT(`Reprendre la mise en ligne de ${ref||t.bc}`,`Retry listing ${ref||t.bc}`,`Retomar la publicación de ${ref||t.bc}`),detail:t.raisons.map(r=>`${r.nom||r.canal} : ${tr(r.r||'refusé')}`).join(' ; ')+'.'};
+  }
+  if(t.type==='expedier'&&t.num!=null&&t.total!=null){
+    return {titre:tkT(`Expédier la commande ${t.num}`,`Ship order ${t.num}`,`Enviar el pedido ${t.num}`)+(t.client?' — '+t.client:''),
+      detail:tkT(`${t.lieu||''}, ${tkM(t.total)}, reçue le ${tkMD(t.d)}. Le stock sortira à l'expédition.`,`${t.lieu||''}, ${tkM(t.total)}, received on ${tkMD(t.d)}. Stock leaves at shipping.`,`${t.lieu||''}, ${tkM(t.total)}, recibido el ${tkMD(t.d)}. El stock saldrá al enviar.`)};
+  }
+  if(t.type==='completer'&&t.n!=null){ const n=+t.n||0;
+    return {titre:tkT(`Compléter ${n} vente${n>1?'s':''} en attente`,`Complete ${n} pending sale${n>1?'s':''}`,`Completar ${n} venta${n>1?'s':''} pendiente${n>1?'s':''}`),
+      detail:tkT("Des ventes sont arrivées avec un parfum que l'ERP ne reconnaît pas : dis-lui lequel, sinon le stock ne bouge pas.","Sales came in with a perfume the ERP does not recognize: tell it which one, otherwise stock does not move.","Llegaron ventas con un perfume que el ERP no reconoce: dile cuál, si no el stock no se mueve.")};
+  }
+  return null;
+}
 function tkLigne(t){
-  { const tp=tkTitrePC(t); if(tp){ t=Object.assign({},t,tp); } }
+  { const tp=tkTitre(t); if(tp){ t=Object.assign({},t,tp); } }
   const typ=TYPES[t.type]?tkT(...TYPES[t.type]):t.type;
   const rappel=`<select data-rappel="${esc(t.id)}" title="${tkT('Me le rappeler plus tard','Remind me later','Recordármelo más tarde')}"><option value="">${tkT('Plus tard…','Later…','Más tarde…')}</option>${(TK.rappels||[1,2,5,10]).map(n=>`<option value="${n}">${n===1?tkT('demain','tomorrow','mañana'):tkT(`dans ${n} jours`,`in ${n} days`,`en ${n} días`)}</option>`).join('')}</select>`;
   let actions='';

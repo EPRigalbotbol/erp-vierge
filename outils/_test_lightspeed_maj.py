@@ -54,6 +54,8 @@ try:
         b = p.chromium.launch(); pg = b.new_page(viewport={'width': 1400, 'height': 1000}); err = []
         pg.on('pageerror', lambda e: err.append(str(e)))
         pg.on('dialog', lambda d: d.accept())
+        DL = {}
+        pg.on('download', lambda d: DL.__setitem__(d.suggested_filename, open(d.path(), 'rb').read()))
         def cockpit(route):
             u = route.request.url
             if '/donnees/lightspeed-export-v1' in u:
@@ -115,7 +117,10 @@ try:
         check('le Journal garde la confirmation', any('Lightspeed' in j and 'même parfum' in j for j in J), J[-2:])
 
         print('4. les deux fichiers')
-        pg.click('#lsmok'); pg.wait_for_timeout(1500)
+        pg.click('#lsmok'); pg.wait_for_timeout(2500)
+        fr = next((v for k, v in DL.items() if k.startswith('lightspeed-retail-')), b''); fw = next((v for k, v in DL.items() if k.startswith('lightspeed-wholesale-')), b'')
+        check('LE POINT — le fichier WHOLESALE téléchargé commence SANS BOM (Lightspeed ignore en silence un catalogue de prix avec BOM — essai du 8 nov.) ; le Retail garde le sien',
+              fw.startswith(b'sku,handle,id,retail_price') and fr.startswith(b'\xef\xbb\xbfid,handle'), (fw[:30], fr[:30]))
         F = pg.evaluate("()=>window.__LSM.get().derniers")
         R = list(csv.reader(io.StringIO('\n'.join(F['R'])))); W = list(csv.reader(io.StringIO('\n'.join(F['W']))))
         hdr = R[0]

@@ -7146,9 +7146,13 @@ function lsmFichiers(){
   const W=B.gros?[]:recs.filter(x=>x.w).map(x=>{ const t=x.w.t||{}; return [x.r.sku,x.r.handle||x.r.sku,x.w.id||'',(+x.pvw).toFixed(2),t.lv||'',t.mn||'',t.mx||''].map(lsmQ).join(','); });
   const m=$('lsmmsg');
   if(!R.length&&!W.length){ m.textContent=lsmT('Rien à envoyer.','Nothing to send.','Nada que enviar.'); m.className='msg'; return; }
-  const tele=(nom,lignes)=>{ const el=document.createElement('a'); el.href=URL.createObjectURL(new Blob(['﻿'+lignes.join('\r\n')+'\r\n'],{type:'text/csv;charset=utf-8'})); el.download=nom; document.body.appendChild(el); el.click(); el.remove(); setTimeout(()=>URL.revokeObjectURL(el.href),2000); };
-  if(R.length) tele(`lightspeed-retail-${ajd()}.csv`,[cols.join(',')].concat(R));
-  if(W.length) setTimeout(()=>tele(`lightspeed-wholesale-${ajd()}.csv`,[LSM_ENTETE_W].concat(W)),600);
+  /* bom : le fichier Retail garde le BOM (accents lus en UTF-8 : essai réussi le 8 nov.) ; le fichier WHOLESALE n'en a PAS :
+     la page des catalogues de prix de Lightspeed ignore EN SILENCE un fichier qui commence par un BOM (essai du 8 nov. 2026 :
+     « Your pricebook is importing », puis rien — le même fichier sans BOM est passé) */
+  const tele=(nom,lignes,bom)=>{ const el=document.createElement('a'); el.href=URL.createObjectURL(new Blob([(bom?'﻿':'')+lignes.join('\r\n')+'\r\n'],{type:'text/csv;charset=utf-8'})); el.download=nom; document.body.appendChild(el); el.click(); el.remove(); setTimeout(()=>URL.revokeObjectURL(el.href),2000); };
+  if(R.length) tele(`lightspeed-retail-${ajd()}.csv`,[cols.join(',')].concat(R),true);
+  if(W.length) setTimeout(()=>tele(`lightspeed-wholesale-${ajd()}.csv`,[LSM_ENTETE_W].concat(W),false),600);
+  LSM.bom={R:true,W:false};   /* pour les tests */
   const V=lsmEnvoi(), ici=new Date().toISOString();
   const E={t:ici,u:USR||'',retail:R.length,gros:W.length,tR:R.length?ici:(V.tR?new Date(V.tR).toISOString():''),tW:W.length?ici:(V.tW?new Date(V.tW).toISOString():'')};
   ecrit(K_LSM_E,E);

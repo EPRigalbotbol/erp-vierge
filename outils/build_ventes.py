@@ -719,6 +719,16 @@ CORPS = r'''
     <div class="fld rech" id="v-q2w" hidden><label>Ajouter un autre parfum — sans remonter</label>
       <input id="v-q2" autocomplete="off" placeholder="Code-barres, marque ou nom du parfum"></div>
     <div class="fld" id="v-note-w" hidden><label>Note</label><input id="v-note" placeholder="facultatif — visible sur le devis et dans la liste" maxlength="200"></div>
+    <!-- 7 nov. 2026 (Igal, trois tickets de caisse d'une même cliente qu'il n'arrivait ni à annuler ni à modifier) : une vente
+         venue de la caisse se corrige maintenant ici. L'encaissement du ticket (espèces / carte / autre) se corrige avec elle :
+         les frais de carte (2,6 % de la part carte) suivent. Ce bloc n'apparaît que pour une vente de la caisse. -->
+    <div class="fld" id="v-paie-w" hidden><label>Encaissement du ticket ($)</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <label style="flex:1;min-width:120px;font-size:12.5px;color:var(--mute)">Espèces<input id="v-paie-esp" type="number" step="0.01" min="0" placeholder="0" style="margin-top:4px"></label>
+        <label style="flex:1;min-width:120px;font-size:12.5px;color:var(--mute)">Carte<input id="v-paie-car" type="number" step="0.01" min="0" placeholder="0" style="margin-top:4px"></label>
+        <label style="flex:1;min-width:120px;font-size:12.5px;color:var(--mute)">Autre<input id="v-paie-aut" type="number" step="0.01" min="0" placeholder="0" style="margin-top:4px"></label>
+      </div>
+      <span class="aide" id="v-paie-aide">Ce que la cliente a réellement payé à la caisse. Le total doit retomber sur le total TTC de la vente.</span></div>
 
     <label class="coche"><input type="checkbox" id="v-stock" checked>
       <span>Sortir ces flacons du stock (à décocher si le stock a déjà été mis à jour ailleurs).</span></label>
@@ -1692,9 +1702,8 @@ function ouvreCommande(g){
 }
 
 /* ---- NOMMER LE CLIENT d'une vente qui n'en a pas (Igal, 21 oct. 2026 : « Clemencia a enregistré une vente en oubliant le nom du client »).
-   Une vente arrivée toute seule (caisse Lightspeed, site) n'a pas de « Modifier la vente » : elle se corrige à la source, et la caisse ne renvoie
-   jamais le ticket. Le bouton « Modifier » de la FACTURE recalcule tout, et fait disparaître la sales tax encaissée au ticket (testé : 657,69 $ → 656,50 $).
-   Ici on ne change QUE le nom : ni les lignes, ni le stock, ni la taxe, ni les montants. Le nom va sur la vente (donc sa facture et le Journal des ventes),
+   (Depuis le 7 nov. 2026 une vente arrivée toute seule se modifie aussi — voir peutModifierVente — et la modification garde le taux
+   de taxe du ticket.) Ici on ne change QUE le nom : ni les lignes, ni le stock, ni la taxe, ni les montants. Le nom va sur la vente (donc sa facture et le Journal des ventes),
    et le Journal garde l'avant et l'après. Pas pour Amazon, qui n'envoie jamais le nom de l'acheteur ; pas pour un export qui porte ses propres clients. */
 function peutNommerClient(f,x){
   if(!f||f.sens!=='vente'||f.retour||f.annule||MODE_QUOTES) return false;
@@ -2505,13 +2514,27 @@ function fusionneCotes(f){
     `${A.length+1} quotes combined: check the perfumes and prices, then Save. ${nums.join(', ')} will be archived.`,
     `${A.length+1} cotizaciones reunidas: revisa los perfumes y los precios y luego Guardar. ${nums.join(', ')} se archivará(n).`); $('v-msg').className='msg';
 }
+/* 7 nov. 2026 (Igal : « j'arrive pas à annuler la vente ou à modifier la vente — il faudrait un onglet pour modifier la vente ») :
+   jusque-là seule une vente saisie à la main se modifiait ; une vente arrivée toute seule (caisse Lightspeed, sites, Amazon,
+   Perfume City) ne se corrigeait « qu'à la source ». Or la caisse ne renvoie jamais un ticket corrigé : trois tickets d'une même
+   cliente (6 Elixir au ticket, 3 emportés) sont restés faux. Toute vente se modifie donc ici — la caisse ou le site, eux, ne
+   bougent pas, et la fenêtre le dit. Ce qui reste fermé : un retour, une vente annulée, une vente qui a déjà un remboursement
+   (le remboursement s'appuie sur ses lignes), un export de commandes (plusieurs clients dans une seule écriture). */
 function peutModifierVente(f){
   if(!f||MODE_QUOTES) return false;
   if(typeof peut==='function'&&!peut('vendre')) return false;
-  if(!f.manuel||f.sens!=='vente'||f.retour||f.annule) return false;
+  if(f.sens!=='vente'||f.retour||f.annule) return false;
+  if(f.export&&!f.auto&&!f.manuel) return false;
   if(f.doc&&f.doc.converti) return false;
   if(FACT.some(z=>z.retour&&z.refId===f.id)) return false;
   return true;
+}
+function venteAuto(f){ return !!(f&&f.auto&&!f.manuel); }
+/* la part espèces / carte / autre saisie dans la fenêtre (vente de la caisse seulement), ou null */
+function paieSaisie(){
+  const w=$('v-paie-w'); if(!w||w.hidden) return null;
+  const n=id=>{ const v=Math.round(parseFloat(String($(id).value||'').replace(',','.'))*100)/100; return v>0?v:0; };
+  return {especes:n('v-paie-esp'),carte:n('v-paie-car'),autre:n('v-paie-aut')};
 }
 /* 15 oct. 2026 (Igal : « quand Sam fait une cote et qu'il clique dessus, il faut qu'il puisse la
    modifier ») : une cote faite dans l'ERP se rouvre dans le formulaire de cote, pré-remplie
@@ -2540,6 +2563,9 @@ function ouvreModif(f){
   const D=f.doc||{};
   $('v-doc').value=f.doc?(estD?'devis':'facture'):''; $('v-doc').dataset.touche='1';
   if(f.doc){
+    /* « Payé à la caisse » / « Payé en ligne » ne sont pas dans la liste de la fenêtre : on les y met, sinon la modification
+       retombait sur Zelle (et la vente de caisse perdait son mode de paiement) */
+    if(D.pmode&&FMODES[D.pmode]&&![...$('v-pmode').options].some(o=>o.value===D.pmode)) $('v-pmode').insertAdjacentHTML('beforeend',`<option value="${esc(D.pmode)}">${esc(FMODES[D.pmode])}</option>`);
     if(D.pmode&&FMODES[D.pmode]) $('v-pmode').value=D.pmode;
     const regle=+D.regle||0, reste=+D.reste||0;
     $('v-pstat').value=reste<=0?'paye':(regle>0?'partiel':'apayer'); $('v-pregle').value=(reste>0&&regle>0)?regle:'';
@@ -2547,6 +2573,20 @@ function ouvreModif(f){
     $('v-remtype').value=D.remType||'pct'; $('v-remval').value=D.remVal||''; $('v-remlib').value=D.remLib||'';
     if($('v-port')) $('v-port').value=D.port>0?D.port:'';
     $('v-langue').value=D.langue||'';
+    /* La sales tax garde le taux DU TICKET : avant, la modification reprenait le taux des Réglages et la taxe encaissée changeait
+       (657,69 $ → 656,50 $ sur une facture inchangée). Le taux effectif (taxe ÷ base) redonne la même taxe au cent près. */
+    if($('v-taux')){ const b=+D.base||0, t=+D.taxe||0; $('v-taux').value = D.fiscal&&D.fiscal!=='taxable' ? '' : (b>0&&t>0 ? String(Math.round(t/b*1000000)/10000) : (D.taux!=null?String(D.taux):'')); }
+    if($('v-frais')) $('v-frais').value = D.fraisPct!=null ? String(D.fraisPct) : '';
+  }
+  /* vente de la caisse : son encaissement se corrige avec elle ; vente venue toute seule : la caisse ou le site ne bougent pas */
+  { const w=$('v-paie-w'); if(w){ const p=(!estD&&f.paie&&typeof f.paie==='object')?f.paie:null; w.hidden=!p;
+      if(p){ $('v-paie-esp').value=p.especes>0?p.especes:''; $('v-paie-car').value=p.carte>0?p.carte:''; $('v-paie-aut').value=p.autre>0?p.autre:''; } } }
+  if(!estD&&venteAuto(f)){
+    const src=nomAff(f.canal||'');
+    $('v-msg').textContent=r3(`Vente arrivée toute seule (${src}) : ce que tu corriges ici ne vaut que dans l'ERP — ${src} garde son ticket tel quel. Le stock et le journal des ventes suivent ta correction.`,
+      `Sale that came in on its own (${src}): what you fix here only changes the ERP — ${src} keeps its ticket as it is. Stock and the sales journal follow your correction.`,
+      `Venta que entró sola (${src}): lo que corriges aquí solo cambia el ERP — ${src} conserva su ticket tal cual. El stock y el diario de ventas siguen tu corrección.`);
+    $('v-msg').className='msg';
   }
   majAide();
   const h=document.querySelector('#vov .mh h3'); if(h) h.textContent=vf(estD?'Modifier le devis':'Modifier la vente')+' '+(estD?(D.num||''):(f.num||''));
@@ -2567,6 +2607,8 @@ function ouvreVente(){
   if($('v-note')) $('v-note').value='';
   $('v-msg').className='msg';
   $('v-stock').checked=true;
+  if($('v-paie-w')) $('v-paie-w').hidden=true;
+  [...$('v-pmode').options].forEach(o=>{ if(/^(caisse|enligne)$/.test(o.value)) o.remove(); });
   majAide(); peintRes(); peintPanier();
   try{ docReset(); }catch(e){}
   $('vov').classList.add('on'); setTimeout(()=>vq().focus(),60);
@@ -2829,13 +2871,17 @@ $('v-ok').onclick=()=>{
       VENT[l.cle]=VENT[l.cle].filter(e=>!(String(e.num||'')===String(old.num||'')&&e.k===old.canal&&e.d===old.d)); });
   }
   const pcVente=estPC(canal);                     /* Perfume City : les flacons sortent de SON inventaire */
+  /* modification : la vente garde son heure et le prix d'achat figé le jour de la vente (la marge d'une vente d'octobre ne doit
+     pas changer parce qu'on la corrige en novembre) */
+  const hV=(old&&old.h)?old.h:heureMiami();
+  const paOld={}; if(old) (old.lignes||[]).forEach(l=>{ if(l.cle&&l.paAv!=null&&paOld[l.cle]==null) paOld[l.cle]=+l.paAv; });
   PAN.forEach(l=>{
     const v=IDX[l.cle]||[], ref=((v[2]||'')+' '+(v[1]||'')+tyTexte(l.cle)).trim(), qAv=pcVente?pcQte(l.cle):qteEff(l.cle);
     const qAp=($('v-stock').checked&&!estDevis)?Math.max(0,qAv-(l.q||0)):qAv;
-    lignes.push({cle:l.cle,bc:v[0],ref,q:l.q,p:l.p,qAv,qAp,manque:Math.max(0,(l.q||0)-qAv),paAv:paEff(l.cle),
+    lignes.push({cle:l.cle,bc:v[0],ref,q:l.q,p:l.p,qAv,qAp,manque:Math.max(0,(l.q||0)-qAv),paAv:paOld[l.cle]!=null?paOld[l.cle]:paEff(l.cle),
                  pAv:l.pAv==null?undefined:l.pAv,pc:pcVente||undefined});
     if(qAp!==qAv){ if(pcVente) pcPose(l.cle,qAp); else MOD[l.cle]=Object.assign({},MOD[l.cle]||{},{qte:qAp}); det.push({bc:v[0],ref,av:qAv,ap:qAp}); sortis+=qAv-qAp; }
-    if(!estDevis) (VENT[l.cle]=VENT[l.cle]||[]).push({d,h:heureMiami(),p:l.p,c:client,q:l.q,num,k:canal});
+    if(!estDevis) (VENT[l.cle]=VENT[l.cle]||[]).push({d,h:hV,p:l.p,c:client,q:l.q,num,k:canal});
   });
   pcSauve();                                      /* inventaire Perfume City : écrit une fois, après tous les mouvements */
   if(client) CLI[client]=Object.assign({nom:client},CLI[client]||{},{maj:new Date().toISOString()});
@@ -2852,17 +2898,22 @@ $('v-ok').onclick=()=>{
     if(doc&&D0){ doc.num=D0.num; doc.emis=D0.emis||doc.emis; if(D0.regs) doc.regs=D0.regs; if(D0.lien) doc.lien=D0.lien; if(D0.deDevis) doc.deDevis=D0.deDevis;
       /* une cote modifiée garde ce qu'on en a fait : ses envois et son rangement dans les archives */
       if(D0.type==='devis'){ if(D0.envoye) doc.envoye=D0.envoye; if(D0.archive) doc.archive=D0.archive; } }
-    const avant={num:old.num,client:old.tiers||'',montant:old.montant,total:D0?D0.total:old.montant,n:(old.lignes||[]).length};
+    const avant={num:old.num,client:old.tiers||'',montant:old.montant,total:D0?D0.total:old.montant,n:(old.lignes||[]).length,paie:old.paie||undefined};
     Object.assign(old,{num,canal,tiers:client,d,lignes,montant,stock:$('v-stock').checked});
     if(pcVente) old.pc=true; else delete old.pc;
     if(doc) old.doc=doc; else delete old.doc;
+    /* vente de la caisse : l'encaissement corrigé (espèces / carte / autre) remplace celui du ticket, et le document suit —
+       réglé = ce qui a été encaissé, reste = ce qui manque (la caisse ne connaît pas d'acompte : normalement zéro) */
+    { const pS=paieSaisie(); if(pS&&old.paie){ old.paie=Object.assign({},old.paie,pS);
+        if(doc){ const regle=Math.round((pS.especes+pS.carte+pS.autre)*100)/100; doc.regle=regle; doc.reste=Math.max(0,Math.round(((+doc.total||0)-regle)*100)/100); doc.pstat=doc.reste>0?(regle>0?'partiel':'apayer'):'paye'; } } }
+    if(doc&&D0&&D0.auto) doc.auto=D0.auto;
     if(doc&&doc.port>0) old.port=doc.port; else delete old.port;
     (old.modifs=old.modifs||[]).push({t:new Date().toISOString(),u:USR||'(non renseigné)',av:avant});
     f=old;
     if(String(avant.num)!==String(num)) noteRang(num,d);
     ecrit(KFACT,FACT); ecrit(KMOD,MOD); ecrit(KVENT,VENT); ecrit(KCLI,CLI);
     JOU.push({t:new Date().toISOString(),u:USR||'(non renseigné)',act:'vente',
-      lib:(old.sens==='devis'?'devis '+(doc?doc.num:num)+' modifié':'vente modifiée — '+num)+(client?' — '+client:'')+' — '+canal+(doc?' — '+(FMODES[doc.pmode]||doc.pmode):'')+(pcVente&&sortis?" — flacons sortis de l'inventaire Perfume City":''),
+      lib:(old.sens==='devis'?'devis '+(doc?doc.num:num)+' modifié':'vente modifiée — '+(doc&&doc.num?doc.num:num))+(client?' — '+client:'')+' — '+canal+(doc?' — '+(FMODES[doc.pmode]||doc.pmode):'')+(pcVente&&sortis?" — flacons sortis de l'inventaire Perfume City":'')+(venteAuto(old)?' — corrigée dans l\'ERP seulement, '+canal+' garde son ticket':''),
       ref:num,av:money2(avant.total),ap:money2(doc?doc.total:montant),n:det.length,impact:-Math.round(montant-(+avant.montant||0)),det});
   } else {
     FACT.push(f); noteRang(num,d);
@@ -2891,7 +2942,7 @@ $('v-ok').onclick=()=>{
   b.style.background='var(--good-soft)';
   b.innerHTML=devis&&etaitModif?`<b>Devis ${esc(doc.num)} modifié</b> — ${PANIER.length} parfum${PANIER.length>1?'s':''}, ${money2(doc.total)}${client?' pour '+esc(client):''}. Le stock ne bouge pas. `
     :devis?`<b>Devis ${esc(doc.num)} enregistré</b> — ${PANIER.length} parfum${PANIER.length>1?'s':''}, ${money2(doc.total)}${client?' pour '+esc(client):''}. Le stock ne bouge pas. `
-    :etaitModif?`<b>${doc?'Facture '+esc(doc.num):'Vente '+esc(num)} modifiée</b> — ${PANIER.length} parfum${PANIER.length>1?'s':''}, ${money2(doc?doc.total:montant)} sur ${esc(canal)}. Le stock a été remis d'aplomb, le journal garde l'avant et l'après. `
+    :etaitModif?`<b>${doc?'Facture '+esc(doc.num):'Vente '+esc(num)} modifiée</b> — ${PANIER.length} parfum${PANIER.length>1?'s':''}, ${money2(doc?doc.total:montant)} sur ${esc(canal)}. Le stock a été remis d'aplomb, le journal garde l'avant et l'après. ${venteAuto(f)?esc(r3(`${nomAff(canal)} n'est pas modifié : la correction ne vaut que dans l'ERP.`,`${nomAff(canal)} is not changed: the correction only applies in the ERP.`,`${nomAff(canal)} no se modifica: la corrección solo vale en el ERP.`)):''}`
     :`<b>${doc?'Facture '+esc(doc.num):'Vente '+esc(num)} enregistrée</b> — ${PANIER.length} parfum${PANIER.length>1?'s':''}, ${money2(doc?doc.total:montant)} sur ${esc(canal)}${sortis?(pcVente?`, ${nf(sortis)} flacon${sortis>1?'s':''} sorti${sortis>1?'s':''} de l'inventaire Perfume City (le stock central ne bouge pas)`:`, ${nf(sortis)} flacon${sortis>1?'s':''} sortis du stock`):', stock inchangé'}. `;
   if(doc){ const vb=document.createElement('button'); vb.className='btn sm'; vb.textContent='Voir le document'; vb.style.marginLeft='8px'; vb.onclick=()=>dessineDoc(f); b.appendChild(vb); }
   $('corps').parentNode.insertBefore(b,$('corps'));

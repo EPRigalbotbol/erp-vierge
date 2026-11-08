@@ -129,9 +129,13 @@ def coquille(titre, actif, sous, css, corps, js, donnees=()):
 <meta http-equiv="Expires" content="0">
 <script>/* en anglais ou en espagnol, l'écran reste caché le temps que la traduction passe (quelques ms) : on ne voit jamais le français d'origine */try{{var _l=localStorage.getItem('langue-v1');if(_l&&_l!=='fr'){{document.documentElement.style.visibility='hidden';setTimeout(function(){{document.documentElement.style.visibility='';}},1500);}}
 /* un menu réglé (ordre, rubriques cachées) : la barre reste cachée le temps qu'il s'applique, pour que les rubriques ne sautent pas */
-var _m=JSON.parse(localStorage.getItem('menu-perso-v1')||'null');if(_m&&((_m.ordre&&_m.ordre.length)||(_m.caches&&_m.caches.length))){{document.documentElement.classList.add('mn-attente');setTimeout(function(){{document.documentElement.classList.remove('mn-attente');}},1500);}}}}catch(e){{}}</script>
+var _m=JSON.parse(localStorage.getItem('menu-perso-v1')||'null');if(_m&&((_m.ordre&&_m.ordre.length)||(_m.caches&&_m.caches.length))){{document.documentElement.classList.add('mn-attente');setTimeout(function(){{document.documentElement.classList.remove('mn-attente');}},1500);}}
+/* 7 nov. 2026 (Igal : « je ne veux pas qu'un Commercial aperçoive les autres rubriques, même une seconde ») : d'après la session déjà
+   en mémoire, un rôle sans marges (ni Patron, ni Admin, ni Comptable) cache Pilotage et Léa AVANT la première peinture (mn-cial) ;
+   le menu confirme ou corrige ensuite avec les droits réels (_menu.py, mnPilotage) */
+var _s=JSON.parse(localStorage.getItem('sam-session-v1')||'null');if(_s&&_s.role&&!/^(patron|admin|comptable)$/.test(String(_s.role))){{document.documentElement.classList.add('mn-cial');}}}}catch(e){{}}</script>
 <script>/* le contenu de la page reste caché jusqu'à ce que son code l'ait dessiné (voir _serveur.py) */try{{document.documentElement.classList.add('pg-attente');setTimeout(function(){{document.documentElement.classList.remove('pg-attente');}},4000);}}catch(e){{}}</script>
-<style>.mn-attente .side nav{{visibility:hidden}} .pg-attente .main{{visibility:hidden}}</style>
+<style>.mn-attente .side nav{{visibility:hidden}} .pg-attente .main{{visibility:hidden}} html.mn-cial .side nav [data-pilotage],html.mn-cial .side nav #gl-btn{{display:none!important}}</style>
 
 <title>{titre} — Perfumes Trade</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">

@@ -1935,7 +1935,7 @@ function ligneJour(d,L){
   const quiTxt=qui.length?' ('+qui.slice(0,3).map(q=>`<button class="lnk jpa" data-sanspa="${esc(q.k)}" title="${esc(r3("Ouvrir cette vente et saisir le prix d'achat",'Open this sale and enter the cost','Abrir esta venta y escribir el precio de compra'))}">${esc(q.t)}</button>`).join(' ; ')+(qui.length>3?' …':'')+')':'';
   const pct=mtM?mg/mtM*100:null;
   const prof=(mgL.length||sansPa)&&vmg()?`<span class="jm mg ${mgL.length?mcls(pct):'na'}" data-nolang title="${esc(r3('Marge nette du jour : prix de vente moins le prix d’achat, les commissions et l’envoi','Net profit of the day: sale price minus cost, fees and shipping','Margen neto del día: precio de venta menos compra, comisiones y envío'))}">${mgL.length?r3('marge','profit','margen')+' '+money(mg)+(pct!=null?' · '+pc(pct):''):''}${sansPa?(mgL.length?' · ':'')+nf(sansPa)+' '+r3(sansPa>1?'ventes sans prix d’achat':'vente sans prix d’achat',sansPa>1?'sales without cost':'sale without cost',sansPa>1?'ventas sin precio de compra':'venta sin precio de compra')+quiTxt:''}</span>`:'';
-  return `<tr class="jour"><td colspan="12"><span class="jd" data-nolang>${esc(jd)}</span><span class="jn">${nf(n)} commande${n>1?'s':''} · ${nf(q)} flacon${Math.abs(q)>1?'s':''} · ${money(mt)}</span>${prof}${na?`<span class="ja">dont ${nf(na)} en attente</span>`:''}</td></tr>`;
+  return `<tr class="jour"><td colspan="12"><span class="jd" data-nolang>${esc(jd)}</span><span class="jn">${nf(n)} commande${n>1?'s':''} · ${nf(q)} flacon${Math.abs(q)>1?'s':''}${vmg()?' · '+money(mt):''}</span>${prof}${na?`<span class="ja">dont ${nf(na)} en attente</span>`:''}</td></tr>`;
 }
 function dessine(){
   const P=filtre(true), L=P;                     /* les KPI suivent le filtre affiché : un seul total à l'écran */
@@ -2192,7 +2192,7 @@ function carnet(){
   const out=[], vus=new Set();
   const add=(nom,tag,det)=>{ const k=cNorm(nom); if(!nom||vus.has(k)) return; vus.add(k); out.push({nom,tag,det}); };
   try{ ((window.D_CLI||{}).clients||[]).forEach(c=>add(c.nom,'gros',
-        (c.total?money(c.total)+' · ':'')+(c.nb||0)+' commande'+((c.nb||0)>1?'s':''))); }catch(e){}
+        (c.total&&vmg()?money(c.total)+' · ':'')+(c.nb||0)+' commande'+((c.nb||0)>1?'s':''))); }catch(e){}   /* 7 nov. 2026 : pas de CA du client pour le Commercial */
   try{ const R=(()=>{ try{ const t=localStorage.getItem('retail-local-v1'); if(t){ const L=JSON.parse(t); if(Array.isArray(L)) return L; } }catch(e){}
                       return Array.isArray(window.D_RETAIL)?window.D_RETAIL:[]; })();
        R.forEach(c=>add(c.nom,'détail',[c.ville,c.email].filter(Boolean).join(' · ')||'')); }catch(e){}

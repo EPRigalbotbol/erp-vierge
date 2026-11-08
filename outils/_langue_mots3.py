@@ -1748,3 +1748,10 @@ MOTS3.update({
 MOTS3.update({
     "Ouvrir la fiche pour ajouter la photo": ["Open the sheet to add the photo", "Abrir la ficha para añadir la foto"],
 })
+
+# ---- Clients › Coordonnées, 7 nov. 2026 : trois numéros de téléphone ----
+MOTS3.update({
+    "Téléphone 1": ["Phone 1", "Teléfono 1"],
+    "Téléphone 2": ["Phone 2", "Teléfono 2"],
+    "Téléphone 3": ["Phone 3", "Teléfono 3"],
+})

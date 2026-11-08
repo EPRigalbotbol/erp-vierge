@@ -341,6 +341,9 @@ const ALIAS_CLI={'juan':'Casa del Perfume','juan carlos':'Casa del Perfume','la 
   /* 31 oct. 2026 (Igal : « c'est le même client ») : le nom de la société, tapé dans Lightspeed, rejoint « Habibi » */
   'habibi perfumes llc':'Habibi','habibi perfumes':'Habibi','habibi perfume':'Habibi'};
 const canon=nom=>ALIAS_CLI[cNorm(nom)]||nom;
+/* 7 nov. 2026 (Igal, rôle Commercial : « enlever le CA des clients et l'argent qu'on lui doit ») : un compte qui ne voit
+   pas les marges ne voit ni le chiffre d'affaires par client, ni ce qu'un client doit ; ces blocs sont VIDÉS, pas cachés */
+const voitCA=()=>{ try{ return typeof peut!=='function'||!!peut('voirMarge'); }catch(e){ return true; } };
 const AUJ=new Date();
 let TRI='mt', PTOP=10, PTRI='q';
 
@@ -422,7 +425,7 @@ const payLib=p=>{ if(!p) return '—'; if(p.st==='rembourse') return `<span clas
   const m=MODE_LIB[p.mode]||(MODES.find(x=>x[0]===p.mode)||['',''])[1]||'';
   if(p.st==='paye') return `<span class="ok">payé</span>${m?' · '+esc(m):''}`;
   if(p.st==='part') return `<span class="du">acompte ${money2(p.regle||0)}</span> · reste ${money2(p.reste!=null?p.reste:0)}${m?' · '+esc(m):''}`;
-  if(p.st==='du') return `<span class="du">à payer</span>${p.reste!=null?' · '+money2(p.reste):''}${m?' · '+esc(m):''}`;
+  if(p.st==='du') return `<span class="du">à payer</span>${p.reste!=null&&voitCA()?' · '+money2(p.reste):''}${m?' · '+esc(m):''}`;
   return `<span class="non">—</span>${m?' · '+esc(m):''}`; };
 const regleDe=(a)=>{ const p=a.pay||{}; if(a.src==='tableur') return p.st==='paye'?a.montant:(+p.regle||0); return p.st==='paye'?a.montant:(+p.regle||0); };
 const resteDe=(a)=>{ const p=a.pay||{}; if(a.src==='tableur') return p.st==='du'?a.montant:p.st==='part'?Math.max(0,a.montant-(+p.regle||0)):0;
@@ -464,7 +467,7 @@ function construit(){
   /* 4. les fiches de l'outil : les coordonnées corrigées ici l'emportent ; un nom sans vente reste un client */
   /* les fiches enregistrées sous un ancien nom passent d'abord : celle du nom retenu l'emporte */
   Object.keys(CLI).sort((a,b)=>(canon(a)===a?1:0)-(canon(b)===b?1:0)).forEach(nom=>{ if(!faNomClient(nom)) return; const c=CLI[nom]||{}; const o=get(nom); if(!o) return;
-    ['email','tel','prenom','nomfam','raison','adresse','note','fiscal','fiscalRef','pmode','ville','pays','nodiff'].forEach(k=>{ if(c[k]) o.co[k]=c[k]; }); });
+    ['email','tel','tel2','tel3','prenom','nomfam','raison','adresse','note','fiscal','fiscalRef','pmode','ville','pays','nodiff'].forEach(k=>{ if(c[k]) o.co[k]=c[k]; }); });
   TOUS=Object.values(M).map(o=>{
     o.achats.sort((a,b)=>(b.d||'').localeCompare(a.d||'')||(b.h||'').localeCompare(a.h||''));
     const v=o.achats.filter(a=>!a.retour);
@@ -479,7 +482,7 @@ const parNom=nom=>TOUS.find(o=>o.k===cNorm(canon(nom)))||null;
 function lignes(){
   const per=+$('per').value, q=cNorm($('q').value), typ=$('typ').value;
   const lim=per?isoJour(new Date(AUJ.getTime()-per*864e5)):null;
-  return TOUS.filter(o=>!q||[o.nom,o.co.prenom,o.co.nomfam,o.co.email,o.co.ville,o.co.tel,o.co.raison].some(v=>cNorm(v).includes(q)))
+  return TOUS.filter(o=>!q||[o.nom,o.co.prenom,o.co.nomfam,o.co.email,o.co.ville,o.co.tel,o.co.tel2,o.co.tel3,o.co.raison].some(v=>cNorm(v).includes(q)))
     .filter(o=>typ==='vip'?estVip(o.nom):typ==='sans'?!o.achats.length:(!typ||o.types.has(typ)))
     .map(o=>{ const A=o.achats.filter(a=>!lim||(a.d&&a.d>=lim)), v=A.filter(a=>!a.retour);
       return {o,A,vip:estVip(o.nom),total:A.reduce((s,a)=>s+a.montant,0),nb:v.length,fl:A.reduce((s,a)=>s+(a.retour?-Math.abs(a.fl):a.fl),0),der:v.reduce((m,a)=>a.d>m?a.d:m,'')}; })
@@ -503,20 +506,20 @@ function dessine(){
   const du=TOUS.reduce((s,o)=>s+o.reste,0);
   $('kpis').innerHTML=`<div class="kpis">
     <div class="kpi"><div class="v">${nf(TOUS.length)}</div><div class="k">clients — ${nf(nGros)} en gros, ${nf(nSite)} du site</div></div>
-    <div class="kpi"><div class="v i">${money(tot)}</div><div class="k">vendu aux clients affichés</div></div>
+    ${voitCA()?`<div class="kpi"><div class="v i">${money(tot)}</div><div class="k">vendu aux clients affichés</div></div>`:''}
     <div class="kpi"><div class="v">${nf(ncmd)}</div><div class="k">achats sur la période</div></div>
-    <div class="kpi"><div class="v${du>0?' c':''}" style="${du>0?'color:var(--crit)':''}">${money(du)}</div><div class="k">reste à encaisser, tous clients</div></div></div>`;
+    ${voitCA()?`<div class="kpi"><div class="v${du>0?' c':''}" style="${du>0?'color:var(--crit)':''}">${money(du)}</div><div class="k">reste à encaisser, tous clients</div></div>`:''}</div>`;
   const th=(k,l,cls)=>`<th class="${cls||''}${TRI===k?' on':''}" data-k="${k}">${l}</th>`;
   $('corps').innerHTML = R.length ? `<div class="wrapx"><table class="tbl"><thead><tr>
-      <th class="coch"><input type="checkbox" class="ck" id="cktout" title="Tout cocher / tout décocher"></th><th class="fav" title="Favoris">★</th>${th('az','Client')}${th('mt','Vendu à ce client','n')}${th('nb','Achats','n')}${th('fl','Flacons','n')}${th('dt','Dernier achat','n')}</tr></thead>
+      <th class="coch"><input type="checkbox" class="ck" id="cktout" title="Tout cocher / tout décocher"></th><th class="fav" title="Favoris">★</th>${th('az','Client')}${voitCA()?th('mt','Vendu à ce client','n'):''}${th('nb','Achats','n')}${th('fl','Flacons','n')}${th('dt','Dernier achat','n')}</tr></thead>
       <tbody>${R.map((r,i)=>`<tr data-c="${esc(r.o.nom)}"${r.vip?' class="vip"':''}>
         <td class="coch"><input type="checkbox" class="ck" data-ck="${esc(r.o.nom)}"${COCHES.has(r.o.nom)?' checked':''}></td>
         <td class="fav"><button class="et${r.vip?' on':''}" data-fav="${esc(r.o.nom)}" title="${r.vip?'Retirer des favoris':'Mettre en favoris'}">${r.vip?'★':'☆'}</button></td>
-        <td class="nom"><span data-nolang>${esc(r.o.nom)}</span>${badges(r.o)}${r.o.douteux.length?'<span class="warn">à vérifier</span>':''}${r.o.reste>0?`<span class="warn">${money(r.o.reste)} à payer</span>`:''}<small data-nolang>${esc([r.o.co.raison,r.o.co.email,r.o.co.tel,r.o.co.ville].filter(Boolean).join(' · '))}</small></td>
-        <td class="n mt">${r.nb||r.total?money(r.total):'<span class="non">—</span>'}<div class="bar"><i style="width:${max?Math.max(1,r.total/max*100):0}%"></i></div></td>
+        <td class="nom"><span data-nolang>${esc(r.o.nom)}</span>${badges(r.o)}${r.o.douteux.length?'<span class="warn">à vérifier</span>':''}${r.o.reste>0&&voitCA()?`<span class="warn">${money(r.o.reste)} à payer</span>`:''}<small data-nolang>${esc([r.o.co.raison,r.o.co.email,r.o.co.tel,r.o.co.ville].filter(Boolean).join(' · '))}</small></td>
+        ${voitCA()?`<td class="n mt">${r.nb||r.total?money(r.total):'<span class="non">—</span>'}<div class="bar"><i style="width:${max?Math.max(1,r.total/max*100):0}%"></i></div></td>`:''}
         <td class="n">${r.nb?nf(r.nb):'<span class="non">—</span>'}${r.o.devis.length&&!r.nb?`<small style="display:block;color:var(--ink-3)">${r.o.devis.length} devis</small>`:''}</td>
         <td class="n dim">${r.fl?nf(Math.round(r.fl)):'—'}</td><td class="n dim">${r.der?dfr(r.der):(r.o.site&&r.o.site.der?'<span title="d\'après le fichier du site">'+dfr(r.o.site.der)+' ≈</span>':'—')}</td></tr>`).join('')}</tbody>
-      <tfoot><tr><td></td><td></td><td style="font-weight:700">${R.length} clients</td><td class="n mt">${money(tot)}</td><td class="n" style="font-weight:700">${nf(ncmd)}</td><td class="n dim">${nf(Math.round(R.reduce((a,r)=>a+r.fl,0)))}</td><td></td></tr></tfoot></table></div>`
+      <tfoot><tr><td></td><td></td><td style="font-weight:700">${R.length} clients</td>${voitCA()?`<td class="n mt">${money(tot)}</td>`:''}<td class="n" style="font-weight:700">${nf(ncmd)}</td><td class="n dim">${nf(Math.round(R.reduce((a,r)=>a+r.fl,0)))}</td><td></td></tr></tfoot></table></div>`
     : `<div class="vide">Aucun client ne correspond.</div>`;
   document.querySelectorAll('.tbl tbody tr').forEach(el=>el.onclick=e=>{
     /* l'étoile et la case ne doivent pas ouvrir la fiche */
@@ -578,13 +581,14 @@ function ouvre(nom){
   const o=parNom(nom); if(!o) return; OUV=o;
   const v=o.achats.filter(a=>!a.retour);
   $('dnom').innerHTML=`<span data-nolang>${esc(o.nom)}</span>${badges(o)}`;
-  $('dco').innerHTML=[[o.co.prenom,o.co.nomfam].filter(Boolean).join(' '),o.co.raison,o.co.email,o.co.tel,[o.co.ville,o.co.pays].filter(Boolean).join(', ')].filter(Boolean).map(x=>`<span data-nolang>${esc(x)}</span>`).join(' · ')||'<span class="non">pas de coordonnées — onglet Coordonnées</span>';
+  $('dco').innerHTML=[[o.co.prenom,o.co.nomfam].filter(Boolean).join(' '),o.co.raison,o.co.email,o.co.tel,o.co.tel2,o.co.tel3,[o.co.ville,o.co.pays].filter(Boolean).join(', ')].filter(Boolean).map(x=>`<span data-nolang>${esc(x)}</span>`).join(' · ')||'<span class="non">pas de coordonnées — onglet Coordonnées</span>';
   const dus=o.achats.filter(a=>resteDe(a)>0);
-  $('dk').innerHTML=`<div><b class="i">${money(o.total)}</b><span>vendu à ce client au total</span></div>
+  $('dk').innerHTML=(voitCA()?`<div><b class="i">${money(o.total)}</b><span>vendu à ce client au total</span></div>
     <div><b>${nf(v.length)}</b><span>achats · ${v.length?money(o.total/v.length):'—'} en moyenne</span></div>
-    <div><b class="${o.reste>0?'c':''}">${money(o.reste)}</b><span>reste à payer${dus.length?' · '+dus.length+' achat'+(dus.length>1?'s':''):''}</span></div>
+    <div><b class="${o.reste>0?'c':''}">${money(o.reste)}</b><span>reste à payer${dus.length?' · '+dus.length+' achat'+(dus.length>1?'s':''):''}</span></div>`
+    :`<div><b>${nf(v.length)}</b><span>achats</span></div>`)+`
     <div><b>${dfr(o.der)}</b><span>dernier achat${o.prem?' · premier le '+dfr(o.prem):''}</span></div>`;
-  $('drel').disabled=!dus.length; $('drel').title=dus.length?'':'Rien à relancer : aucun achat marqué « À payer ».';
+  $('drel').disabled=!dus.length||!voitCA(); $('drel').title=dus.length?'':'Rien à relancer : aucun achat marqué « À payer ».'; $('drel').hidden=!voitCA();
   $('drel').onclick=()=>relance(o,dus);
   $('decr').onclick=()=>ecrire(o);
   const fv=$('dfav');
@@ -659,8 +663,10 @@ function ouvre(nom){
   $('p-coord').innerHTML=`<div class="ed">
       <label>Prénom<input id="e-prenom" value="${esc(co.prenom||'')}"></label>
       <label>Nom<input id="e-nomfam" value="${esc(co.nomfam||'')}"></label>
-      <label>Téléphone<input id="e-tel" value="${esc(co.tel||'')}"></label>
+      <label>Téléphone 1<input id="e-tel" value="${esc(co.tel||'')}"></label>
       <label>E-mail<input id="e-email" value="${esc(co.email||'')}"></label>
+      <label>Téléphone 2<input id="e-tel2" value="${esc(co.tel2||'')}"></label>
+      <label>Téléphone 3<input id="e-tel3" value="${esc(co.tel3||'')}"></label>
       <label>Société<input id="e-raison" value="${esc(co.raison||'')}"></label>
       <label>Adresse<input id="e-adresse" value="${esc(co.adresse||'')}"></label>
       <label>Ville<input id="e-ville" value="${esc(co.ville||'')}"></label>
@@ -678,8 +684,9 @@ function ouvre(nom){
   pjPeint(o.nom);
   $('pj-f').onchange=e=>{ const f=e.target.files[0]; e.target.value=''; if(f) pjDepose(o.nom,f,$('pj-type').value); };
   $('e-ok').onclick=()=>{
-    const n={nom:o.nom}; ['prenom','nomfam','tel','email','raison','adresse','ville','pays','note'].forEach(k=>{ const val=$('e-'+k).value.trim(); if(val) n[k]=val; });
-    CLI[o.nom]=Object.assign({},CLI[o.nom]||{},n,{maj:new Date().toISOString()}); sauveCLI();
+    /* 7 nov. 2026 (Igal) : trois numéros de téléphone ; une case vidée efface le numéro (avant, un champ vidé gardait l'ancien) */
+    const n={nom:o.nom}; ['prenom','nomfam','tel','tel2','tel3','email','raison','adresse','ville','pays','note'].forEach(k=>{ const val=$('e-'+k).value.trim(); if(val) n[k]=val; else if(/^tel[23]$/.test(k)) n[k]=undefined; });
+    CLI[o.nom]=Object.assign({},CLI[o.nom]||{},n,{maj:new Date().toISOString()}); Object.keys(CLI[o.nom]).forEach(k=>{ if(CLI[o.nom][k]===undefined) delete CLI[o.nom][k]; }); sauveCLI();
     journal('client','fiche client modifiée',o.nom,'coordonnées');
     $('e-msg').textContent='enregistré'; setTimeout(()=>$('e-msg').textContent='',2000); construit(); dessine(); };
   onglet('cmd');
@@ -810,7 +817,7 @@ document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>onglet(b.dataset.t));
 function coordChangees(){
   if(!OUV) return false;
   const co=Object.assign({},OUV.co,CLI[OUV.nom]||{});
-  return ['prenom','nomfam','tel','email','raison','adresse','ville','pays','note'].some(k=>{ const el=$('e-'+k); return el && el.value.trim()!==((co[k]||'').trim()); });
+  return ['prenom','nomfam','tel','tel2','tel3','email','raison','adresse','ville','pays','note'].some(k=>{ const el=$('e-'+k); return el && el.value.trim()!==((co[k]||'').trim()); });
 }
 function ferme(force){
   if(!force && coordChangees() && !confirm("Les coordonnées saisies ne sont pas enregistrées.\n\nFermer quand même ? Ce qui a été tapé sera perdu.")) return;

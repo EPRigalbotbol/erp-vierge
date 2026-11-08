@@ -238,6 +238,8 @@ function glMicro(auto){
 function glMicroFerme(){ try{ if(GL_MICFLUX){ GL_MICFLUX.getTracks().forEach(x=>x.stop()); GL_MICFLUX=null; } }catch(e){} GL_ANA=null; if(GL_MODE==='ecoute') glMode('repos'); }
 function glFerme(){ const ov=document.getElementById('gl-ov'); if(ov) ov.remove(); glCoupe(); if(GL_REC){ try{ GL_REC.stop(); }catch(e){} GL_REC=null; } glMicroFerme(); cancelAnimationFrame(GL_ANIM); GL_ANIM=0; GL_MODE='repos'; }
 function galouOuvre(){
+  /* 7 nov. 2026 (Igal) : « enlever le Parler à Léa pour les commerciaux » — un rôle sans marges, sans accès, sans réglages n'ouvre pas la fenêtre */
+  try{ if(typeof peut==='function'&&typeof role==='function'&&role()&&!(peut('voirMarge')||peut('acces')||peut('reglages'))) return; }catch(e){}
   if(document.getElementById('gl-ov')) return;
   glStyle();
   const ov=document.createElement('div'); ov.id='gl-ov'; ov.className='gl-ov';

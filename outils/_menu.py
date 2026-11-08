@@ -141,8 +141,13 @@ function mnPilotage(){
     const nav=mnNav(); if(!nav) return;
     nav.querySelectorAll('a.nv').forEach(a=>{ const h=(a.getAttribute('href')||'').replace(/[?#].*$/,'').split('/').pop();
       if(MN_MURS[h]&&!peut(MN_MURS[h])) a.style.display='none'; });
-    if(peut('voirMarge')||peut('acces')||peut('reglages')) return;
+    const large=!!(peut('voirMarge')||peut('acces')||peut('reglages'));
+    /* 7 nov. 2026 (Igal) : le rôle réel tranche — la classe mn-cial (posée dès l'entête d'après la session, pour qu'un Commercial
+       n'aperçoive jamais Pilotage ni Léa, même une seconde) est confirmée ou retirée ici */
+    document.documentElement.classList.toggle('mn-cial',!large);
+    if(large) return;
     nav.querySelectorAll('[data-pilotage]').forEach(e=>{ e.style.display='none'; });
+    const gl=nav.querySelector('#gl-btn'); if(gl) gl.style.display='none';   /* « Parler à Léa » : pas pour le Commercial (Igal, 7 nov. 2026) */
   }catch(e){}
 }
 function mnSous(){

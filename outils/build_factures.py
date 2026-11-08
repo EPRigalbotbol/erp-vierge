@@ -1400,6 +1400,8 @@ $('ok').onclick=()=>{
      mettre en ligne les références une par une » — les références créées ici et reçues par cette facture (elles ont maintenant du
      stock) sont proposées en ligne tout de suite, en une fois. */
   if(SENS==='achat'&&!canal) setTimeout(()=>proposeEnLigne(lignes,f.id),f.pcShopify?1500:0);   /* après le premier envoi à Shopify, pour savoir ce qui y manque */
+  /* 8 nov. 2026 (Igal) : « à chaque new order, une fenêtre : est-ce que vous voulez l'envoyer à vos clients favoris ? » — après la mise en ligne */
+  if(SENS==='achat'&&!canal) setTimeout(()=>proposeArrivage(f.id),(f.pcShopify?1500:0)+400);
   /* 7 nov. 2026 : une réception enregistrée sort le parfum de « Parfums à racheter » (tableau de bord) */
   if(SENS==='achat'&&!canal&&typeof rachRecu==='function'){ try{ rachRecu((lignes||[]).map(l=>l&&l.cle)); }catch(e){} }
 };
@@ -1409,6 +1411,31 @@ $('ok').onclick=()=>{
    le crée chez Perfume City, puis la réception est renvoyée à Shopify toute seule. */
 function pcAbsentShopify(bc){ let S=null; try{ S=lit('shopify-pc-prix-v1',null); }catch(e){} if(!S||typeof S!=='object') return false;   /* relevé pas lu : on ne sait pas, on ne propose pas */
   const k=String(bc||'').replace(/[^0-9A-Za-z]/g,'').replace(/^0+/,''); if(!k) return false; const e=S[k]; return !(Array.isArray(e)&&e[0]&&e[1])&&!((S._amb||[]).includes(k)); }
+/* LES NOUVEAUX ARRIVAGES AUX CLIENTS FAVORIS (Igal, 8 nov. 2026) : la liste des parfums reçus, sans prix, en PDF, par WhatsApp.
+   La fenêtre d'envoi est celle du Catalogue (catalogue.html#arrivage=<id>&cadre=1) : les photos et les fiches y sont. Ici, on la
+   propose une fois la réception enregistrée — après la fenêtre « Nouvelles références reçues » si elle s'est ouverte. */
+function arrNbFavoris(){
+  const C=lit('clients-v1',{})||{}, G={}, n=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'');
+  Object.keys(C).forEach(k=>{ const c=C[k]; if(c&&typeof c==='object'){ const g=n(k); if(g) (G[g]=G[g]||[]).push(c); } });
+  return Object.values(G).filter(L=>L.some(c=>c.vip)&&!L.some(c=>c.nodiff)&&L.some(c=>[c.tel,c.tel2,c.tel3].some(t=>String(t||'').replace(/\D/g,'').length>=8))).length;
+}
+function arrivageFenetre(fid){ if(fid&&typeof cadreFenetre==='function') cadreFenetre('#arrivage='+encodeURIComponent(fid)+'&cadre=1',null,L3('Nouveaux arrivages','New arrivals','Nuevos arribos')); }
+function proposeArrivage(fid,essai){
+  essai=essai||0;
+  if(document.querySelector('.ft-voile')||document.getElementById('fv-ov')){ if(essai<1200) setTimeout(()=>proposeArrivage(fid,essai+1),500); return; }
+  const f=FACT.find(x=>x.id===fid); if(!f||f.annule) return;
+  const nP=new Set((f.lignes||[]).filter(l=>l&&+l.q>0&&l.cle).map(l=>l.cle)).size, nF=arrNbFavoris();
+  if(!nP||!nF) return;
+  const v=document.createElement('div'); v.className='ft-voile'; v.id='arr-propose'; v.style.cssText='position:fixed;inset:0;z-index:9500;background:rgba(20,16,30,.45);display:flex;align-items:center;justify-content:center;padding:16px';
+  v.innerHTML=`<div role="dialog" aria-modal="true" style="background:var(--surface,#fff);color:var(--ink,#17171d);border-radius:14px;width:min(520px,100%);padding:20px 22px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <h2 style="margin:0 0 8px;font-size:18px">${L3('Nouvel arrivage : l\'envoyer à vos clients favoris ?','New arrival: send it to your favourite customers?','Nuevo arribo: ¿enviarlo a sus clientes favoritos?')}</h2>
+    <p style="margin:0 0 14px;color:var(--ink-3,#777);font-size:14px;line-height:1.5">${L3(`${nP} parfum${nP>1?'s':''} reçu${nP>1?'s':''}. La liste (photos, codes-barres, sans les prix) part par WhatsApp à vos ${nF} client${nF>1?'s':''} favori${nF>1?'s':''}, chacun dans sa langue.`,`${nP} perfume${nP>1?'s':''} received. The list (photos, barcodes, no prices) goes by WhatsApp to your ${nF} favourite customer${nF>1?'s':''}, each in their language.`,`${nP} perfume${nP>1?'s':''} recibido${nP>1?'s':''}. La lista (fotos, códigos de barras, sin precios) sale por WhatsApp a sus ${nF} cliente${nF>1?'s':''} favorito${nF>1?'s':''}, cada uno en su idioma.`)}</p>
+    <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" id="arrp-non">${L3('Plus tard','Later','Más tarde')}</button><button class="btn pri" id="arrp-oui">${L3('Préparer l\'envoi','Prepare the sending','Preparar el envío')}</button></div></div>`;
+  document.body.appendChild(v);
+  v.querySelector('#arrp-non').onclick=()=>v.remove();
+  v.querySelector('#arrp-oui').onclick=()=>{ v.remove(); arrivageFenetre(fid); };
+}
+window.proposeArrivage=proposeArrivage;   /* la page est un module : visible des tests */
 function proposeEnLigne(lignes,fid){
   const N=window.__NOUVEAUX||new Set();
   const nouv=[...new Set((lignes||[]).map(l=>l&&l.cle).filter(c=>c&&N.has(c)))];
@@ -1610,6 +1637,12 @@ function detail(id){
   /* Igal, 24 oct. 2026 : « comment je fais pour changer le nom du fournisseur ? » — sur une réception déjà enregistrée,
      le nom se corrige ici (Patron/Admin, comme l'annulation) : la réception, l'historique des prix d'achat et la liste des
      fournisseurs suivent ; rien d'autre ne bouge (stock, prix, lignes). Le Journal garde l'avant et l'après. */
+  /* 8 nov. 2026 : une réception déjà enregistrée peut toujours partir aux clients favoris */
+  if(achat&&!f.canal&&!f.annule&&(f.lignes||[]).some(l=>l&&+l.q>0)){
+    const b=document.createElement('button'); b.type='button'; b.className='btn'; b.id='d-arr'; b.style.marginLeft='8px';
+    b.textContent=L3('Envoyer aux clients favoris','Send to favourite customers','Enviar a clientes favoritos');
+    $('d-sous').appendChild(b); b.onclick=()=>{ $('dov').classList.remove('on'); arrivageFenetre(f.id); };
+  }
   if(achat&&!f.id.startsWith('seed-')&&peut('annuler')){
     const b=document.createElement('button'); b.type='button'; b.className='btn'; b.id='d-frn'; b.style.marginLeft='8px';
     b.textContent=L3('Changer le fournisseur','Change the supplier','Cambiar el proveedor');

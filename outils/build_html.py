@@ -1654,6 +1654,11 @@ __BARRE__
     <button class="btn" id="lsmannul" data-nolang>Fermer</button>
     <button class="btn lspd" id="lsmok" data-nolang disabled>Préparer les fichiers</button></div>
 </div></div>
+<div class="ov" id="arrov"><div class="mod" role="dialog" aria-modal="true" aria-labelledby="arr-t">
+  <div class="mh"><h2 id="arr-t" data-nolang>Envoyer les nouveaux arrivages</h2><button class="x" id="arr-x" aria-label="Fermer">&times;</button></div>
+  <div class="mb" id="arr-corps" data-nolang></div>
+  <div class="mf"><span class="msg" id="arr-msg" data-nolang></span><button class="btn" id="arr-ferme" data-nolang>Fermer</button></div>
+</div></div>
 <div class="ov" id="lsov"><div class="mod" role="dialog" aria-modal="true" aria-labelledby="lst" style="max-width:720px">
   <div class="mh"><h2 id="lst">Nouvelles références pour Lightspeed</h2><button class="x" id="lsx" aria-label="Fermer">&times;</button></div>
   <div class="mb">
@@ -7170,6 +7175,15 @@ $('lsmx').onclick=lsmFerme; $('lsmannul').onclick=lsmFerme; $('lsmok').onclick=l
 $('lsmov').addEventListener('click',e=>{ if(e.target===$('lsmov')) lsmFerme(); });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&$('lsmov').classList.contains('on')) lsmFerme(); });
 window.__LSM={get(){ return LSM; }, calc:lsmCalc, fichiers:lsmFichiers, ouvre:lsmOuvre};
+/* NOUVEAUX ARRIVAGES (8 nov. 2026) : le code vit dans lib/arrivage.js, chargé seulement quand la fenêtre s'ouvre
+   (la page du Catalogue reste sous le million d'octets) */
+function arrivageOuvre(fid){
+  if(typeof arrivageFenetreOuvre==='function') return arrivageFenetreOuvre(fid);
+  const sc=document.createElement('script'); sc.src='lib/arrivage.js?v=__VER__';
+  sc.onload=()=>{ try{ arrivageFenetreOuvre(fid); }catch(e){ console.error(e); } };
+  sc.onerror=()=>alert(L3('La fenêtre des arrivages ne se charge pas : recharge la page.','The arrivals window does not load: reload the page.','La ventana de arribos no carga: recarga la página.'));
+  document.head.appendChild(sc);
+}
 $('lsov').addEventListener('click',e=>{ if(e.target===$('lsov')) lsFerme(); });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&$('lsov').classList.contains('on')) lsFerme(); });
 
@@ -7219,6 +7233,9 @@ if(/[#&]cadre=1/.test(location.hash) && window.parent!==window){
   const mp=location.hash.match(/[#&]prix=([^&]+)/);
   if(mp){ const id=decodeURIComponent(mp[1]); const mc=location.hash.match(/[#&]canaux=([^&]+)/); const cs=mc?decodeURIComponent(mc[1]).split(',').filter(Boolean):[];
     pret(); setTimeout(()=>{ try{ prixAutoCanaux(id,cs); }catch(e){ console.error(e); } },80); return; }
+  /* 8 nov. 2026 : depuis une réception (Factures), envoyer les nouveaux arrivages aux clients favoris (#arrivage=<id>&cadre=1) */
+  const ma=location.hash.match(/[#&]arrivage=([^&]+)/);
+  if(ma){ pret(); setTimeout(()=>{ try{ arrivageOuvre(decodeURIComponent(ma[1])); }catch(e){ console.error(e); } },80); return; }
   const m=location.hash.match(/cle=([^&]+)/); if(!m){ pret(); return; }
   const id=decodeURIComponent(m[1]); const p=tousLesArticles().find(x=>x.id===id); if(!p){ pret(); return; }
   $('fs').value=''; $('q').value=p.bc||p.nom; render(); setTimeout(()=>{ ouvreFiche(id); pret();
@@ -7306,4 +7323,5 @@ for k,v in {'__NCLI__':str(_ncli),'__TOTAL__':n(S['total']),'__ENSTOCK__':n(S['e
 for i in range(1,10):
     out=out.replace(f'__A{i}__', n(S['an'].get(str(i),0)))
 open('catalogue.html','w').write(enligne(out))
+import _arrivage; _arrivage.ecrit('.')   # lib/arrivage.js : la fenêtre des nouveaux arrivages (chargée à la demande)
 import os;print('catalogue.html',round(os.path.getsize('catalogue.html')/1024),'Ko')

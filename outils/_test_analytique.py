@@ -191,6 +191,23 @@ try:
             nxt = pr.evaluate("()=>{ const L=[...document.querySelectorAll('.side nav a.nv')].map(a=>(a.getAttribute('href')||'').split('?')[0]); const i=L.indexOf('tableau.html'); return L[i+1]; }")
             check(f'{role} : « Analytique » au menu, juste sous Tableau de bord', vis != 'none' and vis != 'absent' and nxt == 'analytique.html', [vis, nxt])
             pr.context.close()
+        # 7. la stratégie vue d'une autre page (Igal, 9 nov. : « qu'ils puissent aller sur une autre page, mais qu'en même temps la stratégie tourne »)
+        MAJ = "([e,c])=>{ const S=JSON.parse(localStorage.getItem('strategie-v1')); S.encours=e?{id:'S77',type:'strategie',etape:'le stratège propose',depuis:new Date(Date.now()-60e3).toISOString(),par:'Igal',err:''}:null; if(c) S.courante=Object.assign({},S.courante,{id:'S77',date:'2026-12-02T12:00:00Z'});   /* après le rapport du 1er déc. de l\'exemple */ localStorage.setItem('strategie-v1',JSON.stringify(S)); window.dispatchEvent(new CustomEvent('ck-maj',{detail:{cles:['strategie-v1']}})); }"
+        for lg, prete in (('fr', 'La nouvelle stratégie est prête'), ('en', 'The new strategy is ready'), ('es', 'La nueva estrategia está lista')):
+            pt = ouvre(lg=lg, page='tableau.html')
+            pt.evaluate(MAJ, [True, False]); pt.wait_for_timeout(300)
+            c1 = pt.evaluate("()=>{ const p=document.querySelector('.side nav a.nv[href^=\"analytique.html\"] .mn-st'); return p?p.className:''; }")
+            check(f'LE POINT — {lg} : pendant l\'analyse, sur une autre page (Tableau de bord), un point bleu bat à côté d\'« Analytique »', 'cours' in c1, c1)
+            pt.evaluate(MAJ, [False, True]); pt.wait_for_timeout(300)
+            c2 = pt.evaluate("()=>{ const p=document.querySelector('.side nav a.nv[href^=\"analytique.html\"] .mn-st'); return p?p.className:''; }")
+            toast = pt.locator('.mn-st-toast').inner_text() if pt.locator('.mn-st-toast').count() else ''
+            check(f'LE POINT — {lg} : quand elle est prête, un message le dit sur la page où l\'on est, avec un lien, et le point passe au vert', 'neuve' in c2 and prete in toast and pt.locator('.mn-st-toast a[href="analytique.html"]').count() == 1, [c2, toast])
+            pt.evaluate(MAJ, [False, False]); pt.wait_for_timeout(200)
+            check(f'{lg} : le message ne revient pas une deuxième fois pour la même stratégie', pt.locator('.mn-st-toast').count() == 1, pt.locator('.mn-st-toast').count())
+            pt.goto(pt.url.replace('tableau.html', 'analytique.html')); pt.wait_for_timeout(1500)
+            c3 = pt.evaluate("()=>{ const p=document.querySelector('.side nav a.nv[href^=\"analytique.html\"] .mn-st'); return p?p.className:''; }")
+            check(f'{lg} : une fois la page Analytique ouverte, le point vert s\'éteint', c3 == 'mn-st', c3)
+            pt.context.close()
         # 6. langues
         for lg in ('en', 'es'):
             pe = ouvre(lg=lg)

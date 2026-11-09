@@ -3338,13 +3338,16 @@ function alignePrixOutil(base,cid,v){
    deviennent le prix retail / gros du Catalogue */
 function alignePrixAnciens(){
   try{
-    if(!peutPrixSite()||REG.prixAligne) return;
+    /* 9 nov. 2026 : plus « une seule fois ». À chaque ouverture du Catalogue par le Patron ou l'admin, un prix « manuel »
+       resté sur le canal d'un site (posé avant le correctif, ou par une page ancienne restée ouverte sur un autre poste) devient le prix
+       du Catalogue. Sans prix manuel, rien n'est écrit. */
+    if(!peutPrixSite()) return;
     let n=0;
     Object.keys(MOD).forEach(id=>{ const m=MOD[id]; if(!m||!m.pc||typeof m.pc!=='object') return;
       [['site','pvr'],['sitegros','pvw']].forEach(([cid,k])=>{ const v=m.pc[cid]; if(v==null||v===''||!(+v>0)) return;
         const c=canaux().find(x=>x.id===cid)||{}; m[k]=r2(+v/(1+(c.maj||0)/100)); delete m.pc[cid]; n++; });
       if(m.pc&&!Object.keys(m.pc).length) delete m.pc; });
-    REG.prixAligne=1; sauveREG();
+    if(REG.prixAligne!==2){ REG.prixAligne=2; sauveREG(); }
     if(n){ sauveMOD(); log({act:'prix',lib:'prix retail / gros du Catalogue alignés sur les prix payés sur les sites ('+n+')',bc:'',ref:'',av:null,ap:null}); }
   }catch(e){ try{ console.warn('alignement des prix',e); }catch(_){} }
 }
@@ -4645,6 +4648,19 @@ $('ddb').addEventListener('input',e=>{
   const t=e.target;
   if(t.dataset.sb!==undefined||t.dataset.sp!==undefined){ majEnvoi(t.dataset.sb||t.dataset.sp); return; }
   if(t.dataset.sr!==undefined||t.dataset.srp!==undefined){ marqueSite(); return; }
+  /* 9 nov. 2026 (Igal : un parfum mis à 20 $ dans la case « Site perfumestrade.com » de la fiche, le site est passé à 20 $
+     mais le Catalogue est resté à 16 $). Règle du 6 nov. : le prix du Catalogue fixe tout. Pour les deux sites, la case du canal
+     n'est donc pas un prix « manuel » à part : c'est le prix retail (site) ou le prix de gros (site de gros) lui-même. */
+  if(t.dataset.pc==='site'||t.dataset.pc==='sitegros'){
+    const id=t.dataset.pc, base=cur[FICHE.pos], k=id==='site'?'pvr':'pvw', c=canaux().find(x=>x.id===id)||{};
+    const v = t.value===''? null : r2(+t.value/(1+(c.maj||0)/100));
+    FICHE.brouillon[k]=v; if((base[k]??null)===(v??null)) delete FICHE.brouillon[k];
+    const pc=Object.assign({},FICHE.brouillon.pc||{});
+    if((base.pc||{})[id]!=null) pc[id]=null; else delete pc[id];   /* un ancien prix « manuel » du site est effacé : c'est le prix de l'outil qui compte */
+    if(Object.keys(pc).length) FICHE.brouillon.pc=pc; else delete FICHE.brouillon.pc;
+    redessineApres();
+    return;
+  }
   if(t.dataset.pc){
     const id=t.dataset.pc, base=cur[FICHE.pos];
     const v = t.value===''? null : +t.value;

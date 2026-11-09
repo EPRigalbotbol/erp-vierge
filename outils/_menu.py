@@ -512,6 +512,59 @@ window.mnCompteurs=mnCompteurs;
   window.addEventListener('resize',()=>{ clearTimeout(go.r); go.r=setTimeout(suit,80); });
 })();
 
+/* ================= LA STRATÉGIE, VUE DE N'IMPORTE QUELLE PAGE =================
+   Igal, 9 nov. 2026 : « qu'ils puissent aller sur une autre page, mais qu'en même temps la stratégie tourne ».
+   Elle tourne déjà sur le cockpit (le serveur), pas dans la page. Ce qui manquait : le savoir ailleurs.
+   Sur le lien « Analytique » du menu (Admin et Patron seulement) : un point bleu qui bat pendant l'analyse,
+   un point vert quand une stratégie ou un rapport neuf n'a pas encore été regardé ; et, sur la page où l'on
+   se trouve, un petit message en bas à droite quand elle est prête, avec un lien pour aller la lire. */
+function mnStrategie(){
+  const a=document.querySelector('.side nav a.nv[href^="analytique.html"]'); if(!a) return;
+  const T=(fr,en,es)=>typeof L3==='function'?L3(fr,en,es):fr;
+  let S=null; try{ S=JSON.parse(localStorage.getItem('strategie-v1')||'null'); }catch(e){}
+  const E=S&&S.encours, C=S&&S.courante, R=S&&Array.isArray(S.rapports)?S.rapports[0]:null;
+  const enCours=!!(E&&!E.err&&E.depuis&&Date.now()-Date.parse(E.depuis)<15*60e3);
+  /* le dernier résultat : la stratégie ou le rapport le plus récent */
+  const der=[C&&{id:C.id,d:C.date,r:0},R&&{id:R.id,d:R.date,r:1}].filter(Boolean).sort((x,y)=>String(y.d).localeCompare(String(x.d)))[0]||null;
+  const ici=/analytique\.html/.test(location.pathname);
+  let vu=''; try{ vu=localStorage.getItem('strategie-vue')||''; }catch(e){}
+  if(der&&ici){ try{ localStorage.setItem('strategie-vue',der.id); }catch(e){} vu=der.id; }
+  if(der&&!vu){ try{ localStorage.setItem('strategie-vue',der.id); }catch(e){} vu=der.id; }   /* première visite : l'ancienne n'est pas « neuve » */
+  const neuve=!!(der&&der.id!==vu&&!enCours);
+  let p=a.querySelector('.mn-st'); if(!p){ p=document.createElement('i'); p.className='mn-st'; p.setAttribute('aria-hidden','true'); a.appendChild(p); }
+  p.className='mn-st'+(enCours?' cours':neuve?' neuve':'');
+  a.title=enCours?T('La stratégie est en préparation — elle continue même si vous changez de page','The strategy is being prepared — it keeps going even if you change page','La estrategia se está preparando — sigue aunque cambie de página')
+    :neuve?T('Nouvelle stratégie à lire','New strategy to read','Nueva estrategia para leer'):'';
+  /* le petit message, une seule fois par résultat, et seulement si on l'a vu tourner depuis cette page */
+  if(enCours) window.__mnStCours=E.id;
+  if(!enCours&&window.__mnStCours&&der&&neuve&&!ici){
+    window.__mnStCours=null;
+    let an=''; try{ an=localStorage.getItem('strategie-annonce')||''; }catch(e){}
+    if(an!==der.id){ try{ localStorage.setItem('strategie-annonce',der.id); }catch(e){}
+      const b=document.createElement('div'); b.className='mn-st-toast'; b.setAttribute('role','status');
+      b.innerHTML=`<b>${der.r?T('Le rapport du mois est prêt','The monthly report is ready','El informe del mes está listo'):T('La nouvelle stratégie est prête','The new strategy is ready','La nueva estrategia está lista')}</b><a href="analytique.html">${T('La lire','Read it','Leerla')}</a><button type="button" aria-label="${T('Fermer','Close','Cerrar')}">×</button>`;
+      b.querySelector('button').onclick=()=>b.remove(); document.body.appendChild(b); setTimeout(()=>{ try{ b.remove(); }catch(e){} },30000); }
+  }
+  if(!enCours&&E&&E.err) window.__mnStCours=null;
+}
+window.mnStrategie=mnStrategie;
+(function(){
+  try{ const st=document.createElement('style');
+    st.textContent='.side nav a.nv .mn-st{display:none;width:8px;height:8px;border-radius:50%;margin-left:auto;flex:none}'
+      +'.side nav a.nv .mn-st.cours{display:inline-block;background:#1a73e8;animation:mnStBat 1.2s ease-in-out infinite}'
+      +'.side nav a.nv .mn-st.neuve{display:inline-block;background:#188038}'
+      +'@keyframes mnStBat{0%,100%{box-shadow:0 0 0 0 rgba(26,115,232,.55)}50%{box-shadow:0 0 0 6px rgba(26,115,232,0)}}'
+      +'@media (prefers-reduced-motion:reduce){.side nav a.nv .mn-st.cours{animation:none}}'
+      +'.mn-st-toast{position:fixed;right:18px;bottom:18px;z-index:9000;display:flex;align-items:center;gap:14px;background:#1f1f1f;color:#fff;padding:12px 14px 12px 16px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.25);font-size:14px;max-width:calc(100vw - 36px)}'
+      +'.mn-st-toast a{color:#8ab4f8;font-weight:700;text-decoration:none}.mn-st-toast button{background:none;border:0;color:#bbb;font-size:20px;line-height:1;cursor:pointer;padding:0 2px}';
+    (document.head||document.documentElement).appendChild(st); }catch(e){}
+  const t=()=>{ try{ mnStrategie(); }catch(e){} };
+  window.addEventListener('storage',e=>{ if(e.key==='strategie-v1') t(); });
+  window.addEventListener('ck-maj',e=>{ try{ if((e.detail&&e.detail.cles||[]).includes('strategie-v1')) t(); }catch(_){} });
+  setInterval(t,30000);   /* le point bleu s'éteint seul après un quart d'heure, même sans nouvelle donnée */
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',t); else setTimeout(t,0);
+})();
+
 (function(){
   /* Tout de suite, avant la première peinture : le menu réglé (ordre, noms,
      rubriques cachées) s'applique pendant que la page se construit. Sinon on

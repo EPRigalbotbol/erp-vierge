@@ -9,7 +9,8 @@
 #      « WhatsApp Web » ouvre web.whatsapp.com ; l'envoi est noté (envoyé ✓, journal) ;
 #   5. décocher un parfum refait le PDF (même lien) ; « ajouter aussi » la réception du même jour ajoute ses parfums ;
 #   6. « Fermer » referme le cadre ; le détail d'une réception a son bouton « Envoyer aux clients favoris » ;
-#   7. en anglais et en espagnol, la proposition et la fenêtre sont traduites.
+#   7. le message se change dans Réglages › Ma société (par langue ; {prenom}, {lien} ; « Remettre les messages d'origine ») ;
+#   8. en anglais et en espagnol, la proposition, la fenêtre et la section des Réglages sont traduites.
 import pathlib, subprocess, time, socket, json, base64, io, re, urllib.parse
 from playwright.sync_api import sync_playwright
 from PIL import Image
@@ -81,8 +82,8 @@ try:
 
         print('1. à l\'enregistrement : la proposition')
         prepare()
-        facture('MPS-2', [ligne(r, 6) for r in P2])
-        check('LE POINT — une réception enregistrée propose l\'envoi : 2 parfums, 3 clients favoris joignables', pg.locator('#arr-propose').count() == 1 and '2 parfums reçus' in pg.inner_text('#arr-propose') and '3 clients favoris' in pg.inner_text('#arr-propose'), pg.inner_text('body')[:300] if not pg.locator('#arr-propose').count() else pg.inner_text('#arr-propose'))
+        facture('MPS-2', [ligne(r, 6) for r in P2 + [P1[1]]])   # P1[1] revient aussi dans MPS-1 : un doublon
+        check('LE POINT — une réception enregistrée propose l\'envoi : 3 parfums, 3 clients favoris joignables', pg.locator('#arr-propose').count() == 1 and '3 parfums reçus' in pg.inner_text('#arr-propose') and '3 clients favoris' in pg.inner_text('#arr-propose'), pg.inner_text('body')[:300] if not pg.locator('#arr-propose').count() else pg.inner_text('#arr-propose'))
         pg.click('#arrp-non'); pg.wait_for_timeout(400)
         check('« Plus tard » : rien ne s\'ouvre, rien n\'est déposé', pg.locator('#fv-ov').count() == 0 and not DOCS)
         facture('MPS-1', [ligne(r, 12) for r in P1])
@@ -126,13 +127,13 @@ try:
         check('Carmen seule cochée : « Envoyer par WhatsApp (1 client) »', 'Envoyer par WhatsApp (1 client)' in fr.inner_text('#arr-envoi'), fr.inner_text('#arr-envoi'))
         fr.click('#arr-envoi'); fr.wait_for_timeout(500)
         u = fr.evaluate("()=>window.__arrDernier||''"); txt = urllib.parse.unquote(u.split('&text=')[-1]) if '&text=' in u else ''
-        check('LE POINT — Carmen seule : l\'application WhatsApp (whatsapp://send) sur son numéro, message en espagnol avec le lien du PDF espagnol',
-              u.startswith('whatsapp://send?phone=17865550101&text=') and txt.startswith('Hola Carmen') and 'nuevos arribos' in txt and 'https://ck.test/d/dasy/jetonARR-MPS1-ES' in txt and 'Precios a solicitud' in txt, (u[:80], txt))
+        check('LE POINT — Carmen seule : WhatsApp Web (le seul chemin) sur son numéro, message en espagnol avec le lien du PDF espagnol',
+              u.startswith('https://web.whatsapp.com/send?phone=17865550101&text=') and txt.startswith('Hola Carmen') and 'nuevos arribos' in txt and 'https://ck.test/d/dasy/jetonARR-MPS1-ES' in txt and 'Precios a solicitud' in txt, (u[:80], txt))
         E = fr.evaluate("()=>lit('arrivages-envoyes-v1',{})")
         J = fr.evaluate("()=>lit('crm-journal-v1',[]).map(j=>j.lib)")
         check('l\'envoi est noté (réception, Journal) ; le bouton dit « C\'est fait : 1 envoyé »', 'Carmen' in ((E.get(fid) or {}).get('a') or {}) and any('nouveaux arrivages envoyés à Carmen' in j for j in J) and "C'est fait : 1 envoyé" in fr.inner_text('#arr-envoi'), (E, J[-1:], fr.inner_text('#arr-envoi')))
         fr.click('#arr-caucun'); fr.wait_for_timeout(200)
-        fr.check('input[name=arrwa][value=web]'); fr.wait_for_timeout(200)
+        check('plus de choix « application / WhatsApp Web » (une seule façon, Igal 9 nov.)', fr.locator('input[name=arrwa]').count() == 0 and 'Ouvrir avec' not in fr.inner_text('#arrov'))
         fr.click('#arr-ctous'); fr.wait_for_timeout(300)
         vus = []
         for k in range(3):
@@ -142,9 +143,8 @@ try:
         check('LE POINT — « Tout cocher » puis un clic par client : Carmen, Miky, Robert, chacun dans sa langue, « Client suivant : … (2/3) », puis « C\'est fait : 3 envoyés »',
               noms == ['Hola Carmen', 'Bonjour Miky', 'Hello Robert'] and 'Client suivant : Miky Chevalier (2/3)' in vus[0][1] and 'Client suivant : Robert (3/3)' in vus[1][1] and "C'est fait : 3 envoyés" in vus[2][1], (noms, [v[1] for v in vus]))
         u = vus[1][0]; txt = urllib.parse.unquote(u.split('&text=')[-1])
-        check('LE POINT — « WhatsApp Web » : web.whatsapp.com, Miky en français (« veuillez trouver ci-joint nos nouveaux arrivages »)',
+        check('LE POINT — web.whatsapp.com, Miky en français (« veuillez trouver ci-joint nos nouveaux arrivages »)',
               u.startswith('https://web.whatsapp.com/send?phone=33612345678&text=') and 'Veuillez trouver ci-joint nos nouveaux arrivages' in txt and 'jetonARR-MPS1-FR' in txt, (u[:80], txt))
-        check('le choix « WhatsApp Web » est retenu sur cet ordinateur', fr.evaluate("()=>localStorage.getItem('arrivage-whatsapp-v1')") == 'web')
 
         print('5. décocher un parfum, ajouter la réception du même jour')
         n0 = len(DOCS)
@@ -154,7 +154,8 @@ try:
         check('LE POINT — un parfum décoché : les PDF sont refaits avec 4 parfums, sous les mêmes numéros (le lien ne change pas)', len(nouv) == 3 and all(d['q'].get('lignes') == '4' for d in nouv) and {d['num'] for d in nouv} == {'ARR-MPS1-ES', 'ARR-MPS1-FR', 'ARR-MPS1-EN'}, [(d['num'], d['q'].get('lignes')) for d in nouv])
         fr.check('[data-arrf]'); attend(fr, "()=>window.__ARR.get().items.length===7&&window.__ARR.get().items.every(x=>x.photo!==undefined)", 30000)
         S = fr.evaluate("()=>{ const A=window.__ARR.get(); return {n:A.items.length, choix:A.choix.size}; }")
-        check('« ajouter aussi MPS-2 » : 7 parfums, les 2 nouveaux cochés, le décoché reste décoché', S == {'n': 7, 'choix': 6}, S)
+        check('LE POINT — « ajouter aussi MPS-2 » : 7 parfums et pas 8 (le parfum présent dans les deux réceptions n\'apparaît qu\'une fois), les 2 nouveaux cochés, le décoché reste décoché', S == {'n': 7, 'choix': 6}, S)
+        check('la date de la réception est un jour (« 2 novembre 2026 »), sans heure ni décalage de fuseau', '2 novembre 2026' in fr.inner_text('.arr-sous') and ':' not in fr.inner_text('.arr-sous'), fr.inner_text('.arr-sous'))
 
         print('6. fermer ; le bouton du détail')
         fr.click('#arr-ferme'); pg.wait_for_timeout(600)
@@ -164,9 +165,29 @@ try:
         pg.click('#d-arr'); pg.wait_for_timeout(800)
         check('… qui rouvre la fenêtre d\'envoi', ('#arrivage=' + fid) in pg.evaluate("()=>(document.querySelector('#fv-ov iframe')||{}).src||''"))
 
+        print('6b. le message se change dans Réglages')
+        pg.goto(base + 'reglages.html'); pg.wait_for_timeout(2500)
+        pg.evaluate("()=>{ const b=[...document.querySelectorAll('#ong button')].find(x=>x.dataset.t==='soc'); if(b) b.click(); }")
+        orig = pg.input_value('#am-fr')
+        check('Réglages › Ma société : les trois messages, celui d\'origine affiché', 'Veuillez trouver ci-joint nos nouveaux arrivages' in orig and '{prenom}' in orig and '{lien}' in orig and pg.locator('#am-en').count() == 1 and pg.locator('#am-es').count() == 1, orig)
+        pg.fill('#am-fr', 'Salut {prenom} ! Voici la sélection de la semaine.'); pg.dispatch_event('#am-fr', 'change'); pg.wait_for_timeout(3000)
+        R = pg.evaluate("()=>JSON.parse(localStorage.getItem('reglages-v1')).arrMsg")
+        J = pg.evaluate("()=>lit('crm-journal-v1',[]).map(j=>j.lib)")
+        check('LE POINT — le message français changé est enregistré (et noté au Journal)', R == {'fr': 'Salut {prenom} ! Voici la sélection de la semaine.'} and any('message des nouveaux arrivages' in j for j in J), (R, J[-1:]))
+        pg.goto(base + 'factures.html'); pg.wait_for_timeout(2500)
+        pg.locator(f'#liste tr[data-d="{fid}"]').click(); pg.wait_for_timeout(700); pg.click('#d-arr'); pg.wait_for_timeout(3500); fr = cadre()
+        attend(fr, "()=>window.__ARR&&window.__ARR.get()&&window.__ARR.get().items.length>0", 20000)
+        fr.check('.arr-d:has-text("Miky Chevalier") input[data-arrsel]'); fr.wait_for_timeout(300)
+        attend(fr, "()=>window.__ARR.get().etat.fr==='ok'", 60000)
+        fr.click('#arr-envoi'); fr.wait_for_timeout(600)
+        txt = urllib.parse.unquote(fr.evaluate("()=>window.__arrDernier||''").split('&text=')[-1])
+        check('LE POINT — l\'envoi prend le message des Réglages : « Salut Miky ! … » et le lien ajouté à la fin (il manquait {lien})', txt.startswith('Salut Miky ! Voici la sélection de la semaine.') and txt.rstrip().endswith('jetonARR-MPS1-FR'), txt)
+        pg.goto(base + 'reglages.html'); pg.wait_for_timeout(2500); pg.click('#am-defaut'); pg.wait_for_timeout(300)
+        check('« Remettre les messages d\'origine »', pg.evaluate("()=>JSON.parse(localStorage.getItem('reglages-v1')).arrMsg") == {} and 'Veuillez trouver ci-joint' in pg.input_value('#am-fr'))
+
         print('7. en anglais et en espagnol')
-        for lang, mots_p, mots in (('en', ['New arrival: send it to your favourite customers?', 'Prepare the sending', 'Later'], ['Send the new arrivals', 'Perfumes on the list', 'Favourite customers', 'Open with', 'See the PDF', 'Tick all', 'Untick all', 'Tick at least one customer', 'also add', 'Favourites without a number', 'Close']),
-                                   ('es', ['Nuevo arribo: ¿enviarlo a sus clientes favoritos?', 'Preparar el envío', 'Más tarde'], ['Enviar los nuevos arribos', 'Perfumes de la lista', 'Clientes favoritos', 'Abrir con', 'Ver el PDF', 'Marcar todo', 'Desmarcar todo', 'Marca al menos un cliente', 'añadir también', 'Favoritos sin número', 'Cerrar'])):
+        for lang, mots_p, mots in (('en', ['New arrival: send it to your favourite customers?', 'Prepare the sending', 'Later'], ['Send the new arrivals', 'Perfumes on the list', 'Favourite customers', 'See the PDF', 'Tick all', 'Untick all', 'Tick at least one customer', 'also add', 'Favourites without a number', 'Close']),
+                                   ('es', ['Nuevo arribo: ¿enviarlo a sus clientes favoritos?', 'Preparar el envío', 'Más tarde'], ['Enviar los nuevos arribos', 'Perfumes de la lista', 'Clientes favoritos', 'Ver el PDF', 'Marcar todo', 'Desmarcar todo', 'Marca al menos un cliente', 'añadir también', 'Favoritos sin número', 'Cerrar'])):
             prepare(lang, FS)
             pg.goto(base + 'factures.html'); pg.wait_for_timeout(2500)
             pg.evaluate(f"()=>proposeArrivage({json.dumps(fid)})"); pg.wait_for_timeout(400)
@@ -176,6 +197,11 @@ try:
             attend(fr, "()=>window.__ARR&&window.__ARR.get()&&window.__ARR.get().items.length>0", 20000)
             t = fr.inner_text('#arrov')
             check(f'en {lang} : la fenêtre est traduite, aucun mot français', all(m in t for m in mots) and not any(f in t for f in ['Parfums de la liste', 'Clients favoris', 'Ouvrir avec', 'Voir le PDF', 'Fermer', 'sans numéro', 'Tout décocher', 'Coche au moins']), [m for m in mots if m not in t] or t[:300])
+            pg.goto(base + 'reglages.html'); pg.wait_for_timeout(2500)
+            tr = pg.inner_text('#sec-arrivages') if pg.locator('#sec-arrivages').count() else ''
+            attendu = {'en': ['WhatsApp message for new arrivals', 'Message in English', 'Message in French', 'Message in Spanish', 'Restore the original messages'],
+                       'es': ['Mensaje de WhatsApp de los nuevos arribos', 'Mensaje en inglés', 'Mensaje en francés', 'Mensaje en español', 'Restablecer los mensajes originales']}[lang]
+            check(f'en {lang} : Réglages › le message des nouveaux arrivages est traduit (le titre est en capitales à l\'écran)', all(m.lower() in tr.lower() for m in attendu) and 'Message en anglais' not in tr and 'Remettre' not in tr, [m for m in attendu if m.lower() not in tr.lower()] or tr[:300])
         check('aucune erreur JS', not err, err[:3])
         b.close()
 finally:

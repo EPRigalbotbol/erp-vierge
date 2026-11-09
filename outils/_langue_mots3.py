@@ -1758,3 +1758,15 @@ MOTS3.update({
     "Téléphone 2": ["Phone 2", "Teléfono 2"],
     "Téléphone 3": ["Phone 3", "Teléfono 3"],
 })
+
+# ---- 9 nov. 2026 : Réglages › message des nouveaux arrivages ----
+MOTS3.update({
+    "Message WhatsApp des nouveaux arrivages": ["WhatsApp message for new arrivals", "Mensaje de WhatsApp de los nuevos arribos"],
+    "Le message qui part avec la liste des nouveaux arrivages quand tu l'envoies à tes clients favoris (après une new order). Chaque client le reçoit dans sa langue.": ["The message sent with the new arrivals list when you send it to your favourite customers (after a new order). Each customer gets it in their language.", "El mensaje que sale con la lista de los nuevos arribos cuando la envías a tus clientes favoritos (después de una new order). Cada cliente lo recibe en su idioma."],
+    "{prenom} est remplacé par le prénom du client, {lien} par le lien du PDF. Si tu enlèves {lien}, le lien est ajouté à la fin du message.": ["{prenom} is replaced by the customer's first name, {lien} by the PDF link. If you remove {lien}, the link is added at the end of the message.", "{prenom} se sustituye por el nombre del cliente, {lien} por el enlace del PDF. Si quitas {lien}, el enlace se añade al final del mensaje."],
+    "New orders — « Envoyer aux clients favoris »": ["New orders — “Send to favourite customers”", "New orders — « Enviar a clientes favoritos »"],
+    "Message en anglais": ["Message in English", "Mensaje en inglés"],
+    "Message en français": ["Message in French", "Mensaje en francés"],
+    "Message en espagnol": ["Message in Spanish", "Mensaje en español"],
+    "Remettre les messages d'origine": ["Restore the original messages", "Restablecer los mensajes originales"],
+})

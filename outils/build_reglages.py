@@ -2,6 +2,7 @@
 import json
 from build_crm import coquille
 import _donnees
+from _arrivage import MSG_DEF as ARR_MSG_DEF   # les messages d'origine des nouveaux arrivages
 C=json.load(open('cat.json'))
 IDX={r[15]:[r[0],r[13],r[2],r[12],r[6],r[8],r[7]] for r in C}   # bc,nom,marque,pa,qte,pvw,pvr
 
@@ -62,6 +63,7 @@ display:flex;flex-direction:column;gap:8px}
 .plus b{color:var(--ink)}
 .lg.large{grid-template-columns:minmax(0,1fr) 30px}
 .lg.large .ctl{grid-column:1/-1;justify-content:flex-start}
+.lg .ctl textarea.am{width:100%;min-height:150px;font:inherit;font-size:14px;line-height:1.45;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);resize:vertical}
 
 .logoz{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
 .logoap{flex:none;width:150px;height:104px;border:1px dashed var(--line);border-radius:10px;
@@ -204,6 +206,17 @@ CORPS = r'''
       <option value="gmail">Ouvrir Gmail dans le navigateur</option>
       <option value="outlook">Ouvrir Outlook.com dans le navigateur</option>
     </select>''') + r'''
+</section>
+<section class="rg" id="sec-arrivages">
+  <h3>Message WhatsApp des nouveaux arrivages <button class="q" type="button" aria-expanded="false" title="Explications">?</button></h3>
+  <div class="plus" hidden>
+    <p>Le message qui part avec la liste des nouveaux arrivages quand tu l'envoies à tes clients favoris (après une new order). Chaque client le reçoit dans sa langue.</p>
+    <p>{prenom} est remplacé par le prénom du client, {lien} par le lien du PDF. Si tu enlèves {lien}, le lien est ajouté à la fin du message.</p>
+    ''' + agit('New orders — « Envoyer aux clients favoris »') + r'''</div>
+''' + ligne('Message en anglais', '', '<textarea id="am-en" rows="7" class="am"></textarea>', large=True) \
+    + ligne('Message en français', '', '<textarea id="am-fr" rows="7" class="am"></textarea>', large=True) \
+    + ligne('Message en espagnol', '', '<textarea id="am-es" rows="7" class="am"></textarea>', large=True) \
+    + ligne('', '', '<button type="button" class="btn" id="am-defaut">Remettre les messages d\'origine</button>') + r'''
 </section>
 </div>
 </div>
@@ -638,6 +651,16 @@ $('r-soc').value=REG.societe||'';
     const av=REG[k]; REG[k]=el.value.trim?el.value.trim():el.value;
     logReg('reg-'+k,lib,av,REG[k]); sauve(); });
 });
+/* 9 nov. 2026 (Igal : « dans Réglages, pouvoir changer le message d'envoi, le configurer comme on veut ») : le message des nouveaux
+   arrivages, par langue. Vide ou identique à celui d'origine = celui d'origine. */
+const AM_DEF=__AMDEF__;
+const amPeint=()=>['en','fr','es'].forEach(l=>{ const el=$('am-'+l); if(el) el.value=((REG.arrMsg||{})[l])||AM_DEF[l]; });
+['en','fr','es'].forEach(l=>{ const el=$('am-'+l); if(!el) return;
+  el.addEventListener('change',()=>{ const M=Object.assign({},REG.arrMsg||{}), av=M[l]||AM_DEF[l]; let v=el.value.replace(/\r/g,'').replace(/\s+$/,'');
+    if(!v.trim()||v===AM_DEF[l]){ delete M[l]; if(!v.trim()) el.value=AM_DEF[l]; } else M[l]=v;
+    REG.arrMsg=M; logReg('reg-arrMsg-'+l,'message des nouveaux arrivages ('+l+')',av,M[l]||AM_DEF[l]); sauve(); }); });
+{ const b=$('am-defaut'); if(b) b.onclick=()=>{ REG.arrMsg={}; amPeint(); logReg('reg-arrMsg','messages des nouveaux arrivages','modifiés',"messages d'origine"); sauve(); }; }
+amPeint();
 /* Factures et devis : un objet à part, relu par la rubrique Ventes au moment d'imprimer. */
 REG.fact=Object.assign({},DEF.fact,REG.fact||{});
 [['f-raison','raison','raison sociale'],['f-enseigne','enseigne','nom commercial'],['f-adresse','adresse','adresse'],
@@ -784,5 +807,6 @@ html = coquille("Réglages", "Réglages",
   "Un onglet par sujet, une ligne par réglage. Le « ? » au bout d'une ligne explique ce qu'elle change et où. "
   "Tout s'enregistre au fur et à mesure.",
   CSS, CORPS, JS, donnees=('produits',)).replace('__IDX__', 'Object.fromEntries(D_TOUS().map(r=>[r[15],[r[0],r[13],r[2],r[12],r[6],r[8],r[7]]]))')
+html = html.replace('__AMDEF__', json.dumps(ARR_MSG_DEF, ensure_ascii=False))
 open('reglages.html','w').write(html)
 print('reglages.html',len(html)//1024,'Ko')

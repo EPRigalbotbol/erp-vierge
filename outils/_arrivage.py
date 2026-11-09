@@ -1,6 +1,11 @@
 # NOUVEAUX ARRIVAGES → CLIENTS FAVORIS (Igal, 8 nov. 2026). Le code de la fenêtre et de la feuille PDF, écrit dans
 # lib/arrivage.js à chaque construction du Catalogue (build_html.py) : il n'est chargé que lorsque la fenêtre s'ouvre.
 import pathlib, json
+# les messages d'origine (Igal, 8 nov. 2026 : « veuillez trouver ci-joint nos new arrivals ») — modifiables dans Réglages
+MSG_DEF = {
+    'en': 'Hello {prenom},\n\nPlease find attached our New Arrivals:\n{lien}\n\nPrices on request — reply with the barcode and the quantity.\n\nPerfumes Trade',
+    'fr': 'Bonjour {prenom},\n\nVeuillez trouver ci-joint nos nouveaux arrivages :\n{lien}\n\nPrix sur demande — répondez-nous avec le code-barres et la quantité.\n\nPerfumes Trade',
+    'es': 'Hola {prenom},\n\nLe enviamos adjuntos nuestros nuevos arribos:\n{lien}\n\nPrecios a solicitud — respóndanos con el código de barras y la cantidad.\n\nPerfumes Trade'}
 CSS = r'''/* ===== NOUVEAUX ARRIVAGES (8 nov. 2026) : la fenêtre d'envoi, puis la feuille photographiée en PDF ===== */
 #arrov .mod{max-width:900px;width:100%}
 .arr-sous{margin:0 0 6px;color:var(--ink-3);font-size:13px}
@@ -23,7 +28,7 @@ CSS = r'''/* ===== NOUVEAUX ARRIVAGES (8 nov. 2026) : la fenêtre d'envoi, puis 
 .arr-sel{display:flex;gap:8px;align-items:center;margin-bottom:8px}.arr-sel .hint{margin:0}
 .arr-go{display:flex;justify-content:flex-end;margin-top:10px}.arr-go .btn{font-size:15px;padding:10px 18px}
 .btn.arr-wa:disabled{background:var(--surface-2);border-color:var(--line);color:var(--ink-3)}
-.arr-wa-aide{margin:-4px 0 8px;font-size:12px}
+
 .arr-d.fait{background:#f3faf5}
 .arr-dn{flex:1;min-width:0}.arr-dn small{display:block;color:var(--ink-3);font-size:12px}
 .arr-st{font-size:12.5px;color:#1e6b34;min-width:70px;text-align:right}
@@ -71,15 +76,22 @@ JS = r'''/* ============ NOUVEAUX ARRIVAGES → CLIENTS FAVORIS (Igal, 8 nov. 20
    de la première page (la page publique du cockpit, comme les cotes). Le PDF est fabriqué ici, une fois par langue, PRÊT avant
    le clic : un clic sur un client ouvre WhatsApp tout de suite (un lien ouvert après une longue attente serait bloqué).
    Ouvert en cadre depuis Factures (catalogue.html#arrivage=<id facture>&cadre=1) : ici vivent les photos et les fiches. */
-const K_ARR_E='arrivages-envoyes-v1', K_ARR_WA='arrivage-whatsapp-v1';
+const K_ARR_E='arrivages-envoyes-v1';
 const ARR_LG={en:'English',fr:'Français',es:'Español'};
 const ARR_T={
-  en:{titre:'New Arrivals',intro:n=>`${n} fragrance${n>1?'s':''} just landed in our Miami warehouse. Available now for our partners.`,prix:'Prices on request',cta:'Send us the barcode and the quantity on WhatsApp — we reply the same day.',g:{M:'Men',W:'Women',F:'Women',U:'Unisex'},fic:'New-Arrivals',
-      msg:(p,u)=>`Hello${p?' '+p:''},\n\nPlease find attached our New Arrivals:\n${u}\n\nPrices on request — reply with the barcode and the quantity.\n\nPerfumes Trade`},
-  fr:{titre:'Nouveaux arrivages',intro:n=>`${n} parfum${n>1?'s':''} vien${n>1?'nent':'t'} d'arriver dans notre entrepôt de Miami. Disponible${n>1?'s':''} dès maintenant pour nos partenaires.`,prix:'Prix sur demande',cta:'Envoyez-nous le code-barres et la quantité sur WhatsApp — réponse le jour même.',g:{M:'Homme',W:'Femme',F:'Femme',U:'Mixte'},fic:'Nouveaux-arrivages',
-      msg:(p,u)=>`Bonjour${p?' '+p:''},\n\nVeuillez trouver ci-joint nos nouveaux arrivages :\n${u}\n\nPrix sur demande — répondez-nous avec le code-barres et la quantité.\n\nPerfumes Trade`},
-  es:{titre:'Nuevos arribos',intro:n=>`${n} perfume${n>1?'s':''} acaba${n>1?'n':''} de llegar a nuestro almacén de Miami. Disponible${n>1?'s':''} ya para nuestros socios.`,prix:'Precios a solicitud',cta:'Envíenos el código de barras y la cantidad por WhatsApp — respondemos el mismo día.',g:{M:'Hombre',W:'Mujer',F:'Mujer',U:'Unisex'},fic:'Nuevos-arribos',
-      msg:(p,u)=>`Hola${p?' '+p:''},\n\nLe enviamos adjuntos nuestros nuevos arribos:\n${u}\n\nPrecios a solicitud — respóndanos con el código de barras y la cantidad.\n\nPerfumes Trade`}};
+  en:{titre:'New Arrivals',intro:n=>`${n} fragrance${n>1?'s':''} just landed in our Miami warehouse. Available now for our partners.`,prix:'Prices on request',cta:'Send us the barcode and the quantity on WhatsApp — we reply the same day.',g:{M:'Men',W:'Women',F:'Women',U:'Unisex'},fic:'New-Arrivals',},
+  fr:{titre:'Nouveaux arrivages',intro:n=>`${n} parfum${n>1?'s':''} vien${n>1?'nent':'t'} d'arriver dans notre entrepôt de Miami. Disponible${n>1?'s':''} dès maintenant pour nos partenaires.`,prix:'Prix sur demande',cta:'Envoyez-nous le code-barres et la quantité sur WhatsApp — réponse le jour même.',g:{M:'Homme',W:'Femme',F:'Femme',U:'Mixte'},fic:'Nouveaux-arrivages',},
+  es:{titre:'Nuevos arribos',intro:n=>`${n} perfume${n>1?'s':''} acaba${n>1?'n':''} de llegar a nuestro almacén de Miami. Disponible${n>1?'s':''} ya para nuestros socios.`,prix:'Precios a solicitud',cta:'Envíenos el código de barras y la cantidad por WhatsApp — respondemos el mismo día.',g:{M:'Hombre',W:'Mujer',F:'Mujer',U:'Unisex'},fic:'Nuevos-arribos',}};
+/* le message qui part avec le lien : celui des Réglages (Ma société › Message des nouveaux arrivages), sinon celui d'origine.
+   {prenom} = le prénom du client, {lien} = le lien du PDF ; sans {lien}, le lien est ajouté à la fin (il ne peut pas manquer) */
+const ARR_MSG_DEF=__MSG_DEF__;
+function arrMessage(lg,prenom,lien){
+  let R={}; try{ R=(lit('reglages-v1',{})||{}).arrMsg||{}; }catch(e){}
+  let t=String((R&&R[lg])||ARR_MSG_DEF[lg]||ARR_MSG_DEF.en);
+  if(!/\{lien\}/i.test(t)) t=t.replace(/\s+$/,'')+'\n\n{lien}';
+  t=prenom?t.replace(/\{prenom\}/gi,prenom):t.replace(/ ?\{prenom\}/gi,'');
+  return t.replace(/\{lien\}/gi,lien);
+}
 const ARR_TYPE={EDP:'Eau de Parfum',EDT:'Eau de Toilette',EDC:'Eau de Cologne',P:'Parfum',PARFUM:'Parfum',EXTRAIT:'Extrait de Parfum',ELIXIR:'Elixir'};
 let ARR=null;
 const arrT=(a,b,c)=>(typeof L3==='function'?L3(a,b,c):a);
@@ -114,7 +126,11 @@ function arrLignes(factures){
   const vus=new Set(), out=[];
   factures.forEach(f=>(f.lignes||[]).forEach(l=>{ if(!l||!(+l.q>0)) return;
     const a=par[l.cle]||parBc[String(l.bc||'').replace(/^0+/,'')]; if(!a) return;
-    const k=a.cle||a.id; if(vus.has(k)) return; vus.add(k); out.push(a); }));
+    /* 9 nov. 2026 (Igal : « si un parfum revient sur les 2 ou 3 dernières commandes, pas de doublon ») : un parfum n'apparaît
+       qu'une fois, reconnu par sa fiche, par son code-barres ou par marque + nom + contenance + type */
+    const ks=[a.cle||a.id, 'bc:'+String(a.bc||'').replace(/[^0-9A-Za-z]/g,'').replace(/^0+/,''), 'n:'+arrNorm([a.marque,a.nom,a.ml,a.type].join(' '))]
+      .filter(k=>k&&k!=='bc:'&&k!=='n:');
+    if(ks.some(k=>vus.has(k))) return; ks.forEach(k=>vus.add(k)); out.push(a); }));
   return out.sort((x,y)=>(String(x.marque||'')+' '+x.nom).toLowerCase().localeCompare((String(y.marque||'')+' '+y.nom).toLowerCase()));
 }
 /* la photo, recadrée sur le flacon et posée au centre d'un carré blanc : chaque parfum occupe la même place sur la feuille */
@@ -141,6 +157,9 @@ async function arrPhoto(a){
   }
   return ARR_PH[k]=null;
 }
+/* la date d'une réception (« 2026-11-02 ») est un JOUR : lue telle quelle, sans fuseau (sinon Miami affichait « 1 novembre à 19:00 ») */
+const arrJour=d=>{ const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(d||'')); if(!m) return String(d||'');
+  return new Date(+m[1],+m[2]-1,+m[3]).toLocaleDateString(typeof lgLocale==='function'?lgLocale():'fr-FR',{day:'numeric',month:'long',year:'numeric'}); };
 const arrTaille=m=>{ const v=parseFloat(String(m||'').replace(',','.')); return isFinite(v)&&v>0?(Math.round(v*10)/10)+' oz':String(m||''); };
 /* ---- la feuille : 12 parfums par page, la première avec le grand titre, la dernière avec « Prix sur demande » ---- */
 function arrFeuilles(items,lg,F){
@@ -217,10 +236,10 @@ function arrPrepare(){
 const arrCoches=()=>ARR.dest.map((d,i)=>i).filter(i=>ARR.sel.has(i)&&ARR.dest[i].tel);
 const arrLangues=()=>[...new Set(arrCoches().map(i=>ARR.dest[i].lg))];
 const arrEnvois=()=>{ const E=lit(K_ARR_E,{})||{}; return (E&&typeof E==='object')?E:{}; };
-const arrWa=()=>{ try{ return localStorage.getItem(K_ARR_WA)==='web'?'web':'app'; }catch(e){ return 'app'; } };
-function arrLien(tel,txt){
-  return arrWa()==='web'?'https://web.whatsapp.com/send?phone='+tel+'&text='+encodeURIComponent(txt):'whatsapp://send?phone='+tel+'&text='+encodeURIComponent(txt);
-}
+/* 9 nov. 2026 (Igal : « deux types d'application WhatsApp, ça porte à confusion ») : un seul chemin, WhatsApp Web — il marche sur
+   tout ordinateur, sans rien installer ; la première fois, WhatsApp montre un QR code à scanner avec le téléphone. Tous les envois
+   d'une tournée s'ouvrent dans le MÊME onglet. */
+function arrLien(tel,txt){ return 'https://web.whatsapp.com/send?phone='+tel+'&text='+encodeURIComponent(txt); }
 function arrOuvre(url){
   window.__arrDernier=url;   /* pour les tests */
   if(/^https:/.test(url)){ const w=window.open(url,'arr-whatsapp-web'); if(w) return; }
@@ -234,7 +253,7 @@ async function arrEnvoie(i){
   if(!url){ m.textContent=arrT('Le PDF se prépare… clique à nouveau dans un instant.','The PDF is being prepared… click again in a moment.','El PDF se está preparando… vuelve a hacer clic en un momento.'); m.className='msg';
     try{ await arrDepot(d.lg); ARR.etat[d.lg]='ok'; arrPeintEtat(); m.textContent=arrT('PDF prêt : clique à nouveau sur WhatsApp.','PDF ready: click WhatsApp again.','PDF listo: vuelve a hacer clic en WhatsApp.'); m.className='msg ok'; }
     catch(e){ m.textContent=(e&&e.message)||'échec'; m.className='msg err'; } return; }
-  const txt=(ARR_T[d.lg]||ARR_T.en).msg(d.prenom,url);
+  const txt=arrMessage(d.lg,d.prenom,url);
   arrOuvre(arrLien(d.tel,txt)); ARR.faits.add(i);
   const E=arrEnvois(), k=ARR.f.id; E[k]=Object.assign({t:'',n:0,a:{}},E[k]||{}); E[k].a[d.nom]={t:new Date().toISOString(),lg:d.lg,u:USR||''}; E[k].t=new Date().toISOString(); E[k].n=ARR.choix.size; ecrit(K_ARR_E,E);
   log({act:'vente',lib:'nouveaux arrivages envoyés à '+d.nom+' par WhatsApp ('+(ARR_LG[d.lg]||d.lg)+', '+ARR.choix.size+' parfums, réception '+(ARR.f.num||'')+')',n:ARR.choix.size,impact:0,det:[]});
@@ -276,15 +295,14 @@ function arrPeintDest(){
 function arrPeint(){
   if(!ARR) return; const c=$('arr-corps');
   const autres=ARR.memeJour.map(f=>`<label class="arr-autre"><input type="checkbox" data-arrf="${esc(f.id)}"${ARR.factures.includes(f)?' checked':''}> ${arrT('ajouter aussi','also add','añadir también')} <span data-nolang>${esc(f.num||'')} · ${esc(f.tiers||'')}</span> (${nf((f.lignes||[]).filter(l=>l&&+l.q>0).length)})</label>`).join('');
-  c.innerHTML=`<p class="arr-sous" data-nolang>${esc(ARR.f.num||'')} · ${esc(ARR.f.tiers||'')} · ${esc(typeof dateFr==='function'?dateFr(ARR.f.d):ARR.f.d)}</p>${autres}
+  c.innerHTML=`<p class="arr-sous" data-nolang>${esc(ARR.f.num||'')} · ${esc(ARR.f.tiers||'')} · ${esc(arrJour(ARR.f.d))}</p>${autres}
     <div class="arr-tete"><b>${arrT('Parfums de la liste','Perfumes on the list','Perfumes de la lista')} (${nf(ARR.choix.size)}/${nf(ARR.items.length)})</b>
       <span><button class="btn" id="arr-tous">${arrT('Tout cocher','Tick all','Marcar todo')}</button> <button class="btn" id="arr-voir">${arrT('Voir le PDF','See the PDF','Ver el PDF')}</button></span></div>
     <div class="arr-grille">${ARR.items.map(x=>`<label class="arr-p${ARR.choix.has(x.k)?' on':''}"><input type="checkbox" data-arrp="${esc(x.k)}"${ARR.choix.has(x.k)?' checked':''}><span class="arr-ph">${x.photo?`<img src="${x.photo}">`:(x.photo===null?`<em>${arrT('sans photo','no photo','sin foto')}</em>`:'')}</span><span class="arr-pn" data-nolang><small>${esc(x.marque||'')}</small>${esc(x.nom||'')}</span></label>`).join('')}</div>
     <div class="arr-tete"><b>${arrT('Clients favoris','Favourite customers','Clientes favoritos')}</b>
-      <span class="arr-wa-choix">${arrT('Ouvrir avec','Open with','Abrir con')} <label title="${arrT('si WhatsApp est installé sur cet ordinateur','if WhatsApp is installed on this computer','si WhatsApp está instalado en este ordenador')}"><input type="radio" name="arrwa" value="app"${arrWa()==='app'?' checked':''}> ${arrT("l'application WhatsApp","the WhatsApp app","la aplicación WhatsApp")}</label> <label title="${arrT('dans le navigateur','in the browser','en el navegador')}"><input type="radio" name="arrwa" value="web"${arrWa()==='web'?' checked':''}> WhatsApp Web</label></span></div>
-    <p class="hint arr-wa-aide">${arrT("Application : si WhatsApp est installé sur cet ordinateur. WhatsApp Web : WhatsApp s'ouvre dans un onglet du navigateur.","App: if WhatsApp is installed on this computer. WhatsApp Web: WhatsApp opens in a browser tab.","Aplicación: si WhatsApp está instalado en este ordenador. WhatsApp Web: WhatsApp se abre en una pestaña del navegador.")}</p>
+</div>
     <div id="arr-etat" class="arr-etat"></div><div id="arr-dest"></div>
-    <p class="hint">${arrT("Coche les clients, puis « Envoyer par WhatsApp » : WhatsApp s'ouvre pour le premier, avec le message dans sa langue et le lien du PDF. Appuie sur Envoyer dans WhatsApp, puis reviens ici pour le suivant (WhatsApp n'accepte pas l'envoi à plusieurs d'un coup depuis un site).","Tick the customers, then “Send by WhatsApp”: WhatsApp opens for the first one, with the message in their language and the PDF link. Press Send in WhatsApp, then come back here for the next one (WhatsApp does not allow sending to several people at once from a website).","Marca los clientes y luego « Enviar por WhatsApp »: WhatsApp se abre para el primero, con el mensaje en su idioma y el enlace del PDF. Pulsa Enviar en WhatsApp y vuelve aquí para el siguiente (WhatsApp no permite enviar a varios a la vez desde un sitio web).")}</p>`;
+    <p class="hint">${arrT("Coche les clients, puis « Envoyer par WhatsApp » : WhatsApp s'ouvre dans un onglet, pour le premier, avec le message dans sa langue et le lien du PDF. Appuie sur Envoyer dans WhatsApp, puis reviens ici pour le suivant. La première fois, WhatsApp demande de scanner un QR code avec le téléphone. Le message se change dans Réglages › Ma société.","Tick the customers, then “Send by WhatsApp”: WhatsApp opens in a tab, for the first one, with the message in their language and the PDF link. Press Send in WhatsApp, then come back here for the next one. The first time, WhatsApp asks you to scan a QR code with your phone. The message can be changed in Settings › My company.","Marca los clientes y luego « Enviar por WhatsApp »: WhatsApp se abre en una pestaña, para el primero, con el mensaje en su idioma y el enlace del PDF. Pulsa Enviar en WhatsApp y vuelve aquí para el siguiente. La primera vez, WhatsApp pide escanear un código QR con el teléfono. El mensaje se cambia en Ajustes › Mi empresa.")}</p>`;
   c.querySelectorAll('[data-arrp]').forEach(b=>b.onchange=()=>{ b.checked?ARR.choix.add(b.dataset.arrp):ARR.choix.delete(b.dataset.arrp); b.closest('.arr-p').classList.toggle('on',b.checked);
     c.querySelector('.arr-tete b').textContent=`${arrT('Parfums de la liste','Perfumes on the list','Perfumes de la lista')} (${nf(ARR.choix.size)}/${nf(ARR.items.length)})`; ARR.etat={}; arrPeintEtat(); arrPrepare(); });
   c.querySelectorAll('[data-arrf]').forEach(b=>b.onchange=()=>{ const f=ARR.memeJour.find(x=>x.id===b.dataset.arrf); if(!f) return;
@@ -294,7 +312,6 @@ function arrPeint(){
     try{ const items=ARR.items.filter(x=>ARR.choix.has(x.k)); const r=ARR.liens[lg]&&ARR.liens[lg].blob?{pdf:ARR.liens[lg].blob}:await arrPdf(items,lg);
       const u=URL.createObjectURL(r.pdf); if(w&&!w.closed) w.location.href=u; else window.open(u,'_blank'); }
     catch(e){ try{ if(w) w.close(); }catch(_){} $('arr-msg').textContent=(e&&e.message)||'échec'; $('arr-msg').className='msg err'; } };
-  c.querySelectorAll('input[name=arrwa]').forEach(r=>r.onchange=()=>{ try{ localStorage.setItem(K_ARR_WA,r.value); }catch(e){} });
   arrPeintEtat(); arrPeintDest();
 }
 async function arrCharge(){
@@ -324,5 +341,5 @@ window.__ARR={get(){ return ARR; }, ouvre:arrivageFenetreOuvre, favoris:arrFavor
 def ecrit(dossier):
     d = pathlib.Path(dossier) / 'lib'; d.mkdir(exist_ok=True)
     corps = ("(function(){ const st=document.createElement('style'); st.id='arr-css'; st.textContent="
-             + json.dumps(CSS) + "; document.head.appendChild(st); })();\n" + JS + "\n")
+             + json.dumps(CSS) + "; document.head.appendChild(st); })();\n" + JS.replace('__MSG_DEF__', json.dumps(MSG_DEF, ensure_ascii=False)) + "\n")
     (d / 'arrivage.js').write_text(corps, encoding='utf-8')

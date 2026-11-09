@@ -45,8 +45,8 @@ if(!Array.isArray(FACT)) FACT=[];
 const A3=(fr,en)=>L3(fr,en,en);
 const AN_K='analytique-vue';      /* la période et la mesure choisies : propres à ce navigateur, jamais envoyées au serveur */
 const AN={sel:'rel:30',met:'n',site:'tous',src:'n'};
-try{ const r=JSON.parse(localStorage.getItem(AN_K)||'null'); if(r&&typeof r==='object'){ ['sel','met','site','src'].forEach(k=>{ if(r[k]) AN[k]=r[k]; }); } }catch(e){}
-const anSauve=()=>{ try{ localStorage.setItem(AN_K,JSON.stringify(AN)); }catch(e){} };
+try{ const r=JSON.parse(localStorage.getItem(AN_K)||'null'); if(r&&typeof r==='object'){ ['sel','met','site','src','ppf','pptri'].forEach(k=>{ if(r[k]) AN[k]=r[k]; }); } }catch(e){}
+const anSauve=()=>{ try{ const o=Object.assign({},AN); delete o.ppq; delete o.ppn; localStorage.setItem(AN_K,JSON.stringify(o)); }catch(e){} };
 
 /* ---- les origines : sept familles + « inconnue », une couleur fixe chacune (palette validée, clair et sombre) ---- */
 const AN_GR=[
@@ -241,6 +241,10 @@ function anBranche(){
   z.querySelectorAll('.ga-i').forEach(b=>{ b.onmouseenter=()=>montre(b); b.onmouseleave=cache; b.onfocus=()=>montre(b); b.onblur=cache; b.onclick=e=>{ e.stopPropagation(); montre(b); }; });
   if(!window._anInfoDoc){ window._anInfoDoc=1; document.addEventListener('click',cache); window.addEventListener('scroll',cache,{passive:true}); }
   const xl=document.getElementById('an-xl'); if(xl) xl.onclick=anExportPub;
+  if(document.getElementById('pp-liste')){ anPPListe();
+    z.querySelectorAll('[data-ppf]').forEach(b=>b.onclick=()=>{ AN.ppf=b.dataset.ppf; AN.ppn=25; z.querySelectorAll('[data-ppf]').forEach(x=>x.classList.toggle('on',x===b)); anSauve(); anPPListe(); });
+    const t=document.getElementById('pp-tri'); if(t) t.onchange=()=>{ AN.pptri=t.value; AN.ppn=25; anSauve(); anPPListe(); };
+    const q=document.getElementById('pp-q'); if(q) q.oninput=()=>{ AN.ppq=q.value; AN.ppn=25; anPPListe(); }; }
   clearInterval(window._anChrono); const ch=document.querySelector('.sc-chrono');
   if(ch) window._anChrono=setInterval(()=>{ const el=document.querySelector('.sc-chrono'); if(!el){ clearInterval(window._anChrono); return; } const d=Math.max(0,Math.round((Date.now()-Date.parse(el.dataset.depuis))/1000)); el.textContent=Math.floor(d/60)+':'+String(d%60).padStart(2,'0'); },1000);
   const sm=document.getElementById('st-maj'); if(sm) sm.onclick=()=>{ if(confirm(A3('Lancer les agents ? Ils travaillent une à trois minutes sur les chiffres de cette page.','Start the agents? They work for one to three minutes on the figures of this page.'))) anStratLance('strategie'); };
@@ -339,6 +343,8 @@ function anStrategie(L,tous){
   if(enCours){ h+=anScene(E); window._anEnCours=E.type; }
   else if(window._anEnCours&&!(E&&E.err)){ const t=window._anEnCours; window._anEnCours=null; window._anFin=Date.now(); window._anFinType=t; setTimeout(()=>{ gaAnime=true; anDessine(); },6500); }
   if(!enCours&&window._anFin&&Date.now()-window._anFin<6000) h+=anSceneFin(window._anFinType==='rapport');
+  /* 9 nov. 2026 : une analyse restée plus d'un quart d'heure sans fin ni erreur (cockpit redémarré, modèle muet) : on le dit, au lieu de rien */
+  if(!enCours&&E&&!E.err&&E.depuis) h+=`<div class="an-alerte">${A3(`L'analyse lancée à ${new Date(E.depuis).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})} s'est arrêtée en route (étape : « ${esc(E.etape||'')} »). Relancez-la avec le bouton ci-dessous.`,`The analysis started at ${new Date(E.depuis).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})} stopped on the way. Start it again with the button below.`)}</div>`;
   if(!enCours&&E&&E.err) h+=`<div class="an-alerte">${A3('La dernière analyse n\'a pas abouti : ','The last analysis did not finish: ')}<span data-nolang>${esc(E.err)}</span></div>`;
   const age=C?Math.floor((Date.now()-Date.parse(C.date))/86400e3):0;
   h+=`<div class="ga-actions"><button type="button" class="ga-btn" id="st-maj" ${enCours?'disabled':''}>${C?A3('Mettre à jour la stratégie','Update the strategy'):A3('Établir la stratégie','Build the strategy')}</button>`
@@ -414,9 +420,12 @@ function anParfumsPub(tous){
     <div><span>${A3('À sortir : plus en stock','Take out: out of stock')}</span><b>${nf(A.stock.length)}</b><small>${money(A.stock.reduce((a,o)=>a+o.pub,0)/3)} ${A3('de pub par mois','of ads per month')}</small></div>
     <div><span>${A3('À vérifier (prix manquant dans l\'ERP)','To check (price missing in the ERP)')}</span><b>${nf(A.verif.length)}</b><small>${money(A.verif.reduce((a,o)=>a+o.pub,0)/3)} ${A3('de pub par mois','of ads per month')}</small></div>
   </div>`;
-  const pires=A.sortir.concat(A.stock).sort((a,b)=>(a.res!=null?a.res:-a.pub)-(b.res!=null?b.res:-b.pub)).slice(0,8);
-  if(pires.length) h+=`<p class="ga-st2">${A3('Ceux qui coûtent le plus','The most costly ones')}</p><div class="ga-pp">${pires.map(o=>`<div class="ga-ppr"><span class="ga-ppn"><b data-nolang>${esc(o.nom||o.sku)}</b><small data-nolang>${esc(o.marque||'')}${o.dec==='stock'?' · '+A3('plus en stock','out of stock'):''}</small></span>
-      <span class="ga-ppv"><small>${A3('pub','ads')}</small>${money(o.pub)}</span><span class="ga-ppv"><small>${A3('marge rapportée','margin brought')}</small>${o.mgE!=null?money(o.mgE):'—'}</span><span class="ga-ppv neg"><small>${A3('perte','loss')}</small>${money(o.res!=null?o.res:-o.pub)}</span></div>`).join('')}</div>`;
+  /* 9 nov. 2026 (Igal : « pourquoi on ne peut pas tous les voir, avec un filtre… ceux qui coûtent le plus en pub, ceux où il gagne le
+     plus de marge ») : TOUS les parfums, avec un filtre par décision, un tri, une recherche ; 25 lignes, puis « voir plus » */
+  h+=`<div class="pp-barre"><div class="ga-mini" id="pp-f">${[['tous',A3('Tous','All'),A.L.length],['garder',A3('À garder','Keep'),A.garder.length],['sortir',A3('À sortir','Take out'),A.sortir.length],['stock',A3('Plus en stock','Out of stock'),A.stock.length],['verif',A3('À vérifier','To check'),A.verif.length]].map(([k,l,n])=>`<button type="button" data-ppf="${k}" class="${(AN.ppf||'tous')===k?'on':''}">${l} <small>${nf(n)}</small></button>`).join('')}</div>
+    <label class="pp-tri">${A3('Trier par','Sort by')} <select id="pp-tri">${[['perte',A3('Ceux qui perdent le plus','Biggest losses')],['gain',A3('Ceux qui rapportent le plus','Biggest gains')],['pub',A3('Ceux qui coûtent le plus en pub','Highest ad spend')],['ventes',A3('Ceux qui vendent le plus (selon Google)','Most sales (per Google)')],['marge',A3('Meilleure marge par flacon','Best margin per bottle')]].map(([k,l])=>`<option value="${k}" ${(AN.pptri||'perte')===k?'selected':''}>${l}</option>`).join('')}</select></label>
+    <input type="search" id="pp-q" class="pp-q" placeholder="${esc(A3('Chercher un parfum…','Search a perfume…'))}" value="${esc(AN.ppq||'')}"></div>
+  <div id="pp-liste"></div>`;
   h+=`<div class="ga-actions"><button type="button" class="ga-btn" id="an-xl">${A3('Télécharger la liste complète (Excel)','Download the full list (Excel)')}</button>
     <span>${A3('Pour la personne qui gère les campagnes Google Ads : une ligne par parfum, avec la décision « garder » / « sortir ».','For whoever runs the Google Ads campaigns: one line per perfume, with the decision “keep” / “take out”.')}</span></div>
   <div class="ga-expl"><b>${A3('Pourquoi ce tableau ?','Why this table?')}</b>
@@ -430,6 +439,25 @@ function anParfumsPub(tous){
   <details class="ga-calc"><summary>${A3('Comment c\'est calculé','How it is calculated')}</summary><p class="ga-note">${A3(`Marge d'un flacon = prix du site − commission (${nf(A.com)} % + ${money2(A.fixe)}) − prix d'achat − envoi (${money(A.envoi)}) + port payé en moyenne (${money2(A.port)}). Les ventes que Google attribue à chaque parfum sont ramenées au réel (× ${nf(Math.round(A.k*100))} % : ce que la pub a vraiment vendu, divisé par ce que Google annonce). Estimation, à revoir chaque mois.`,`Margin per bottle = site price − fee (${nf(A.com)} % + ${money2(A.fixe)}) − purchase price − shipping (${money(A.envoi)}) + average shipping paid (${money2(A.port)}). Sales Google credits to each perfume are scaled to reality (× ${nf(Math.round(A.k*100))} %: what the ads really sold, divided by what Google reports). An estimate, to review every month.`)}</p></details></section>`;
   window._anXL=A;
   return h;
+}
+function anPPListe(){
+  const A=window._anXL, el=document.getElementById('pp-liste'); if(!A||!el) return;
+  const f=AN.ppf||'tous', tri=AN.pptri||'perte', q=String(AN.ppq||'').trim().toLowerCase(), n=AN.ppn||25;
+  const res=o=>o.res!=null?o.res:-o.pub;
+  let X=A.L.filter(o=>f==='tous'||o.dec===f);
+  if(q) X=X.filter(o=>((o.nom||'')+' '+(o.marque||'')+' '+(o.sku||'')).toLowerCase().includes(q));
+  /* « à vérifier » : pas de résultat connu, donc toujours en bas des tris par résultat (jamais présenté comme la pire perte) */
+  const dern=(a,b)=>(a.dec==='verif')-(b.dec==='verif');
+  const T={perte:(a,b)=>dern(a,b)||res(a)-res(b),gain:(a,b)=>dern(a,b)||res(b)-res(a),pub:(a,b)=>b.pub-a.pub,ventes:(a,b)=>b.vg-a.vg,marge:(a,b)=>(b.m??-1e9)-(a.m??-1e9)}[tri]||((a,b)=>res(a)-res(b));
+  X=X.slice().sort(T);
+  const lib={garder:A3('À garder','Keep'),sortir:A3('À sortir','Take out'),stock:A3('Plus en stock','Out of stock'),verif:A3('À vérifier','To check')};
+  el.innerHTML=X.length?`<div class="pp-tete"><span>${A3('Parfum','Perfume')}</span><span>${A3('Pub (90 j)','Ads (90 d)')}</span><span>${A3('Ventes Google','Google sales')}</span><span>${A3('Marge rapportée','Margin brought')}</span><span>${A3('Résultat','Result')}</span></div>`
+    +X.slice(0,n).map(o=>`<div class="pp-l"><span class="pp-n"><b data-nolang>${esc(o.nom||o.sku)}</b><small><i class="pp-d ${o.dec}">${lib[o.dec]}</i> <span data-nolang>${esc(o.marque||'')}</span>${o.m!=null?' · '+A3('marge/flacon','margin/bottle')+' '+money(o.m):''}</small></span>
+      <span class="pp-v">${money(o.pub)}</span><span class="pp-v">${money(o.vg)}</span><span class="pp-v">${o.mgE!=null?money(o.mgE):'—'}</span><span class="pp-v ${o.dec==='verif'?'':res(o)<0?'neg':'pos'}">${o.dec==='verif'?'—':money(res(o))}</span></div>`).join('')
+    +(X.length>n?`<button type="button" class="ga-btn sec pp-plus" id="pp-plus">${A3(`Voir plus (${nf(X.length-n)} de plus)`,`Show more (${nf(X.length-n)} more)`)}</button>`:'')
+    +`<p class="ga-note">${A3(`${nf(X.length)} parfum${X.length>1?'s':''} · total de la pub : ${money(X.reduce((a,o)=>a+o.pub,0))} sur 90 jours`,`${nf(X.length)} perfume${X.length>1?'s':''} · total ad spend: ${money(X.reduce((a,o)=>a+o.pub,0))} over 90 days`)}</p>`
+    :`<p class="ga-vide">${A3('Aucun parfum ne correspond.','No perfume matches.')}</p>`;
+  const plus=document.getElementById('pp-plus'); if(plus) plus.onclick=()=>{ AN.ppn=n+50; anPPListe(); };
 }
 function anExportPub(){ const A=window._anXL; if(!A||typeof sortieXlsx!=='function') return;
   const lib={garder:A3('Garder','Keep'),sortir:A3('Sortir de la pub','Take out of ads'),stock:A3('Sortir de la pub (plus en stock)','Take out of ads (out of stock)'),verif:A3('À vérifier','To check')};
@@ -460,6 +488,12 @@ majUser();
   anDessine();
   try{ $('src').innerHTML=A3('origine des commandes<br>relue toutes les 10 min','order origin<br>re-read every 10 min'); }catch(e){}
   /* une nouvelle version des factures ou des origines arrive du serveur (toutes les 8 s) : on relit et on redessine */
+  /* 9 nov. 2026 : la relève du serveur (toutes les 8 s) annonce les magasins arrivés par « ck-maj » (et non par « storage ») :
+     sans cette écoute, la vidéo restait sur la première étape et le résultat des agents n'apparaissait qu'en rechargeant */
+  const AN_CLES=['ventes-origine-v1','google-pub-v1','strategie-v1',KFACT];
+  window.addEventListener('ck-maj',e=>{ const c=(e.detail&&e.detail.cles)||[]; if(!c.some(k=>AN_CLES.includes(k))) return;
+    try{ ORI=JSON.parse(localStorage.getItem('ventes-origine-v1')||'{}')||{}; FACT=JSON.parse(localStorage.getItem(KFACT)||'[]')||[]; STRAT=JSON.parse(localStorage.getItem('strategie-v1')||'{}')||{}; }catch(_){}
+    anDessine(); });
   window.addEventListener('storage',e=>{ if(e.key==='ventes-origine-v1'||e.key==='google-pub-v1'||e.key==='strategie-v1'||e.key===KFACT){ try{ ORI=JSON.parse(localStorage.getItem('ventes-origine-v1')||'{}')||{}; FACT=JSON.parse(localStorage.getItem(KFACT)||'[]')||[]; STRAT=JSON.parse(localStorage.getItem('strategie-v1')||'{}')||{}; }catch(_){} anDessine(); } });
 })();
 '''

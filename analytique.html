@@ -630,6 +630,23 @@ font-size:11.5px;color:var(--ink-3);line-height:1.5}
 .sc-accord b{width:40px;height:40px;border-radius:50%;background:#1baf7a;display:inline-flex;align-items:center;justify-content:center;font-size:22px;text-shadow:none}
 @keyframes scAccord{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.sc *{animation:none!important}.sc-dit span:first-child{opacity:1}}
+.pp-barre{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin:18px 0 10px}
+.pp-barre .ga-mini button small{font-weight:500;color:var(--ink-3);margin-left:2px}
+.pp-tri{font-size:12.5px;color:var(--ink-3);display:inline-flex;align-items:center;gap:6px}
+.pp-tri select,.pp-q{font:inherit;font-size:13px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 9px}
+.pp-tri select{max-width:270px}
+.pp-q{flex:1 1 180px;min-width:150px}
+.pp-tete,.pp-l{display:grid;grid-template-columns:minmax(0,1fr) 92px 112px 120px 100px;gap:10px;align-items:center}
+.pp-tete{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);padding:6px 2px;border-bottom:1px solid var(--line)}
+.pp-tete span:not(:first-child),.pp-v{text-align:right}
+.pp-l{padding:8px 2px;border-bottom:1px solid var(--line-2)}
+.pp-n b{display:block;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pp-n small{font-size:11.5px;color:var(--ink-3)}
+.pp-d{font-style:normal;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:999px;margin-right:4px}
+.pp-d.garder{background:color-mix(in srgb,#188038 14%,transparent);color:#188038}.pp-d.sortir{background:color-mix(in srgb,#d93025 12%,transparent);color:#d93025}
+.pp-d.stock{background:color-mix(in srgb,#e8710a 14%,transparent);color:#b45309}.pp-d.verif{background:var(--surface-2);color:var(--ink-3)}
+.pp-v{font-size:13.5px;font-weight:600;font-variant-numeric:tabular-nums}.pp-v.neg{color:#d93025}.pp-v.pos{color:#188038}
+.pp-plus{margin:12px auto 0;display:block}
+@media(max-width:700px){.pp-tete{display:none}.pp-l{grid-template-columns:minmax(0,1fr) auto}.pp-l .pp-v:nth-child(2),.pp-l .pp-v:nth-child(3),.pp-l .pp-v:nth-child(4){display:none}}
 .ga-free{margin:12px 0 0;font-size:12.5px;color:var(--ink-2);line-height:1.5}
 .ga-free.ko span{color:#d93025}
 .ga-top10{display:flex;flex-direction:column}
@@ -668,32 +685,32 @@ font-size:11.5px;color:var(--ink-3);line-height:1.5}
   <div class="logo"><div class="n">Perfumes Trade</div><div class="s">ERP</div></div>
   <nav>
     <div class="navlab">Produits</div>
-    <a class="nv" href="catalogue.html?v=202611091224"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>Catalogue<span class="ct nu" id="ct-catalogue">0</span></a>
-    <a class="nv" href="stock.html?v=202611091224"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg></span>Inventaire<span class="ct nu" id="ct-inventaire">0</span></a>
-    <a class="nv" href="inventaire_pc.html?v=202611091224"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h16l-1-5H5z"/><path d="M5 9v11h14V9"/><path d="M10 20v-5h4v5"/></svg></span>Inventaire Perfume City<span class="ct" id="ct-pcity"></span></a>
-    <a class="nv" href="demandes_pc.html?v=202611091224"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></span>Transfert interstore<span class="ct" id="ct-demandes"></span></a>
+    <a class="nv" href="catalogue.html?v=202611091256"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>Catalogue<span class="ct nu" id="ct-catalogue">0</span></a>
+    <a class="nv" href="stock.html?v=202611091256"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg></span>Inventaire<span class="ct nu" id="ct-inventaire">0</span></a>
+    <a class="nv" href="inventaire_pc.html?v=202611091256"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h16l-1-5H5z"/><path d="M5 9v11h14V9"/><path d="M10 20v-5h4v5"/></svg></span>Inventaire Perfume City<span class="ct" id="ct-pcity"></span></a>
+    <a class="nv" href="demandes_pc.html?v=202611091256"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></span>Transfert interstore<span class="ct" id="ct-demandes"></span></a>
     <div class="navlab">Commerce</div>
-    <a class="nv" href="quotes.html?v=202611091224"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>Cote<span class="ct" id="ct-devis"></span></a>
-    <a class="nv" href="factures.html?v=202611091224"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span>Factures<span class="ct" id="ct-factures"></span></a>
-    <a class="nv" href="ventes.html?v=202611091224"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/></svg></span>Ventes<span class="ct" id="ct-ventes"></span></a>
-    <a class="nv" href="fournisseurs.html?v=202611091224"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></svg></span>Fournisseurs<span class="ct" id="ct-fournisseurs"></span></a>
-    <a class="nv" href="etude.html?v=202611091224"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg></span>Étude de cote<span class="ct" id="ct-étude"></span></a>
-    <a class="nv" href="clients.html?v=202611091224"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></span>Clients<span class="ct nb" id="ct-clients">0</span></a>
-    <a class="nv sub" href="clients.html?v=202611091224#vip" data-id="clients-vip" data-sous="clients.html">Clients VIP</a>
-    <a class="nv" data-pilotage="1" href="connecteurs.html?v=202611091224"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10l-3-3M17 17H7l3 3"/></svg></span>Connecteurs<span class="ct" id="ct-connecteurs"></span></a>
+    <a class="nv" href="quotes.html?v=202611091256"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>Cote<span class="ct" id="ct-devis"></span></a>
+    <a class="nv" href="factures.html?v=202611091256"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span>Factures<span class="ct" id="ct-factures"></span></a>
+    <a class="nv" href="ventes.html?v=202611091256"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/></svg></span>Ventes<span class="ct" id="ct-ventes"></span></a>
+    <a class="nv" href="fournisseurs.html?v=202611091256"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></svg></span>Fournisseurs<span class="ct" id="ct-fournisseurs"></span></a>
+    <a class="nv" href="etude.html?v=202611091256"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg></span>Étude de cote<span class="ct" id="ct-étude"></span></a>
+    <a class="nv" href="clients.html?v=202611091256"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></span>Clients<span class="ct nb" id="ct-clients">0</span></a>
+    <a class="nv sub" href="clients.html?v=202611091256#vip" data-id="clients-vip" data-sous="clients.html">Clients VIP</a>
+    <a class="nv" data-pilotage="1" href="connecteurs.html?v=202611091256"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10l-3-3M17 17H7l3 3"/></svg></span>Connecteurs<span class="ct" id="ct-connecteurs"></span></a>
     <a class="nv" href="#galou" id="gl-btn" data-id="galou" onclick="if(typeof galouOuvre==='function')galouOuvre();return false"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v10H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg></span>Parler à Léa<span class="ct" id="ct-parler"></span></a>
     <div class="navlab" data-pilotage="1">Pilotage</div>
     <a class="nv" href="#support" id="aid-btn" data-id="support" onclick="if(typeof aidOuvre==='function')aidOuvre();return false"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="m9.5 9.5-4-4M14.5 9.5l4-4M14.5 14.5l4 4M9.5 14.5l-4 4"/></svg></span>Support technique<span class="ct" id="ct-support"></span></a>
-    <a class="nv" data-pilotage="1" href="journal.html?v=202611091224"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Journal<span class="ct" id="ct-journal"></span></a>
-    <a class="nv" data-pilotage="1" href="tableau.html?v=202611091224"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/></svg></span>Tableau de bord<span class="ct" id="ct-tableau"></span></a>
-    <a class="nv on" data-pilotage="1" href="analytique.html?v=202611091224"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>Analytique<span class="ct" id="ct-analytique"></span></a>
-    <a class="nv" data-pilotage="1" href="taches.html?v=202611091224"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m8 12 3 3 5-6"/></svg></span>Tâches<span class="ct" id="ct-taches"></span></a>
-    <a class="nv" data-pilotage="1" href="acces.html?v=202611091224"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.3 8 8 9 4.7-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></span>Accès<span class="ct" id="ct-accès"></span></a>
+    <a class="nv" data-pilotage="1" href="journal.html?v=202611091256"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Journal<span class="ct" id="ct-journal"></span></a>
+    <a class="nv" data-pilotage="1" href="tableau.html?v=202611091256"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/></svg></span>Tableau de bord<span class="ct" id="ct-tableau"></span></a>
+    <a class="nv on" data-pilotage="1" href="analytique.html?v=202611091256"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>Analytique<span class="ct" id="ct-analytique"></span></a>
+    <a class="nv" data-pilotage="1" href="taches.html?v=202611091256"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m8 12 3 3 5-6"/></svg></span>Tâches<span class="ct" id="ct-taches"></span></a>
+    <a class="nv" data-pilotage="1" href="acces.html?v=202611091256"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.3 8 8 9 4.7-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></span>Accès<span class="ct" id="ct-accès"></span></a>
     <a class="nv" data-pilotage="1" href="https://app.gusto.com" target="_blank" rel="noopener" title="Ouvre Gusto dans un nouvel onglet"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M14.5 9a2.5 2 0 0 0-2.5-1.5c-1.4 0-2.5.8-2.5 2s1 1.7 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2A2.7 2 0 0 1 9.5 15M12 6v1.5M12 16.5V18"/></svg></span>Paie<span class="ct" id="ct-paie"></span></a>
-    <a class="nv" data-pilotage="1" href="reglages.html?v=202611091224"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg></span>Réglages<span class="ct" id="ct-réglages"></span></a>
+    <a class="nv" data-pilotage="1" href="reglages.html?v=202611091256"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg></span>Réglages<span class="ct" id="ct-réglages"></span></a>
   </nav>
   <div class="sfoot"><div id="sfu" class="sfu"></div><span id="sfoot"></span>
-    <div class="ver" title="Si cette date n'est pas la derni&egrave;re, recharge avec Cmd+Option+R">version du 11/09/2026 à 12h24</div>
+    <div class="ver" title="Si cette date n'est pas la derni&egrave;re, recharge avec Cmd+Option+R">version du 11/09/2026 à 12h56</div>
     <div class="sfline" id="sfline"></div></div>
 </aside>
 <main class="main"><div class="wrap">
@@ -774,7 +791,7 @@ try{
 }catch(e){}
 })();
 </script>
-<script src="donnees/langue.js?v=202611091224"></script>
+<script src="donnees/langue.js?v=202611091256"></script>
 <script>
 /* le menu réglé et la langue de l'écran, AVANT le code de la page : rien ne saute, rien n'est vu dans une autre langue */
 
@@ -1686,7 +1703,7 @@ const LG_FR_PARCOURS=!/catalogue|stock|inventaire/.test(location.pathname);
 })();
 
 </script>
-<script src="donnees/produits.js?v=202611091224"></script><script src="donnees/histgros.js?v=202611091224"></script>
+<script src="donnees/produits.js?v=202611091256"></script><script src="donnees/histgros.js?v=202611091256"></script>
 <script>
 if (typeof window.D_PROD==='undefined') {
   /* Le code de la page est lancé plus tard par l'amorce (voir _serveur.py) : ce drapeau
@@ -1708,7 +1725,7 @@ if (typeof window.D_PROD==='undefined') {
 }
 </script>
 <script type="text/plain" id="page-js">
-const VER_URL='202611091224';
+const VER_URL='202611091256';
 const $=i=>document.getElementById(i);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const nf=v=>Number(v||0).toLocaleString('fr-FR');
@@ -6218,8 +6235,8 @@ if(!Array.isArray(FACT)) FACT=[];
 const A3=(fr,en)=>L3(fr,en,en);
 const AN_K='analytique-vue';      /* la période et la mesure choisies : propres à ce navigateur, jamais envoyées au serveur */
 const AN={sel:'rel:30',met:'n',site:'tous',src:'n'};
-try{ const r=JSON.parse(localStorage.getItem(AN_K)||'null'); if(r&&typeof r==='object'){ ['sel','met','site','src'].forEach(k=>{ if(r[k]) AN[k]=r[k]; }); } }catch(e){}
-const anSauve=()=>{ try{ localStorage.setItem(AN_K,JSON.stringify(AN)); }catch(e){} };
+try{ const r=JSON.parse(localStorage.getItem(AN_K)||'null'); if(r&&typeof r==='object'){ ['sel','met','site','src','ppf','pptri'].forEach(k=>{ if(r[k]) AN[k]=r[k]; }); } }catch(e){}
+const anSauve=()=>{ try{ const o=Object.assign({},AN); delete o.ppq; delete o.ppn; localStorage.setItem(AN_K,JSON.stringify(o)); }catch(e){} };
 
 /* ---- les origines : sept familles + « inconnue », une couleur fixe chacune (palette validée, clair et sombre) ---- */
 const AN_GR=[
@@ -6414,6 +6431,10 @@ function anBranche(){
   z.querySelectorAll('.ga-i').forEach(b=>{ b.onmouseenter=()=>montre(b); b.onmouseleave=cache; b.onfocus=()=>montre(b); b.onblur=cache; b.onclick=e=>{ e.stopPropagation(); montre(b); }; });
   if(!window._anInfoDoc){ window._anInfoDoc=1; document.addEventListener('click',cache); window.addEventListener('scroll',cache,{passive:true}); }
   const xl=document.getElementById('an-xl'); if(xl) xl.onclick=anExportPub;
+  if(document.getElementById('pp-liste')){ anPPListe();
+    z.querySelectorAll('[data-ppf]').forEach(b=>b.onclick=()=>{ AN.ppf=b.dataset.ppf; AN.ppn=25; z.querySelectorAll('[data-ppf]').forEach(x=>x.classList.toggle('on',x===b)); anSauve(); anPPListe(); });
+    const t=document.getElementById('pp-tri'); if(t) t.onchange=()=>{ AN.pptri=t.value; AN.ppn=25; anSauve(); anPPListe(); };
+    const q=document.getElementById('pp-q'); if(q) q.oninput=()=>{ AN.ppq=q.value; AN.ppn=25; anPPListe(); }; }
   clearInterval(window._anChrono); const ch=document.querySelector('.sc-chrono');
   if(ch) window._anChrono=setInterval(()=>{ const el=document.querySelector('.sc-chrono'); if(!el){ clearInterval(window._anChrono); return; } const d=Math.max(0,Math.round((Date.now()-Date.parse(el.dataset.depuis))/1000)); el.textContent=Math.floor(d/60)+':'+String(d%60).padStart(2,'0'); },1000);
   const sm=document.getElementById('st-maj'); if(sm) sm.onclick=()=>{ if(confirm(A3('Lancer les agents ? Ils travaillent une à trois minutes sur les chiffres de cette page.','Start the agents? They work for one to three minutes on the figures of this page.'))) anStratLance('strategie'); };
@@ -6512,6 +6533,8 @@ function anStrategie(L,tous){
   if(enCours){ h+=anScene(E); window._anEnCours=E.type; }
   else if(window._anEnCours&&!(E&&E.err)){ const t=window._anEnCours; window._anEnCours=null; window._anFin=Date.now(); window._anFinType=t; setTimeout(()=>{ gaAnime=true; anDessine(); },6500); }
   if(!enCours&&window._anFin&&Date.now()-window._anFin<6000) h+=anSceneFin(window._anFinType==='rapport');
+  /* 9 nov. 2026 : une analyse restée plus d'un quart d'heure sans fin ni erreur (cockpit redémarré, modèle muet) : on le dit, au lieu de rien */
+  if(!enCours&&E&&!E.err&&E.depuis) h+=`<div class="an-alerte">${A3(`L'analyse lancée à ${new Date(E.depuis).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})} s'est arrêtée en route (étape : « ${esc(E.etape||'')} »). Relancez-la avec le bouton ci-dessous.`,`The analysis started at ${new Date(E.depuis).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})} stopped on the way. Start it again with the button below.`)}</div>`;
   if(!enCours&&E&&E.err) h+=`<div class="an-alerte">${A3('La dernière analyse n\'a pas abouti : ','The last analysis did not finish: ')}<span data-nolang>${esc(E.err)}</span></div>`;
   const age=C?Math.floor((Date.now()-Date.parse(C.date))/86400e3):0;
   h+=`<div class="ga-actions"><button type="button" class="ga-btn" id="st-maj" ${enCours?'disabled':''}>${C?A3('Mettre à jour la stratégie','Update the strategy'):A3('Établir la stratégie','Build the strategy')}</button>`
@@ -6587,9 +6610,12 @@ function anParfumsPub(tous){
     <div><span>${A3('À sortir : plus en stock','Take out: out of stock')}</span><b>${nf(A.stock.length)}</b><small>${money(A.stock.reduce((a,o)=>a+o.pub,0)/3)} ${A3('de pub par mois','of ads per month')}</small></div>
     <div><span>${A3('À vérifier (prix manquant dans l\'ERP)','To check (price missing in the ERP)')}</span><b>${nf(A.verif.length)}</b><small>${money(A.verif.reduce((a,o)=>a+o.pub,0)/3)} ${A3('de pub par mois','of ads per month')}</small></div>
   </div>`;
-  const pires=A.sortir.concat(A.stock).sort((a,b)=>(a.res!=null?a.res:-a.pub)-(b.res!=null?b.res:-b.pub)).slice(0,8);
-  if(pires.length) h+=`<p class="ga-st2">${A3('Ceux qui coûtent le plus','The most costly ones')}</p><div class="ga-pp">${pires.map(o=>`<div class="ga-ppr"><span class="ga-ppn"><b data-nolang>${esc(o.nom||o.sku)}</b><small data-nolang>${esc(o.marque||'')}${o.dec==='stock'?' · '+A3('plus en stock','out of stock'):''}</small></span>
-      <span class="ga-ppv"><small>${A3('pub','ads')}</small>${money(o.pub)}</span><span class="ga-ppv"><small>${A3('marge rapportée','margin brought')}</small>${o.mgE!=null?money(o.mgE):'—'}</span><span class="ga-ppv neg"><small>${A3('perte','loss')}</small>${money(o.res!=null?o.res:-o.pub)}</span></div>`).join('')}</div>`;
+  /* 9 nov. 2026 (Igal : « pourquoi on ne peut pas tous les voir, avec un filtre… ceux qui coûtent le plus en pub, ceux où il gagne le
+     plus de marge ») : TOUS les parfums, avec un filtre par décision, un tri, une recherche ; 25 lignes, puis « voir plus » */
+  h+=`<div class="pp-barre"><div class="ga-mini" id="pp-f">${[['tous',A3('Tous','All'),A.L.length],['garder',A3('À garder','Keep'),A.garder.length],['sortir',A3('À sortir','Take out'),A.sortir.length],['stock',A3('Plus en stock','Out of stock'),A.stock.length],['verif',A3('À vérifier','To check'),A.verif.length]].map(([k,l,n])=>`<button type="button" data-ppf="${k}" class="${(AN.ppf||'tous')===k?'on':''}">${l} <small>${nf(n)}</small></button>`).join('')}</div>
+    <label class="pp-tri">${A3('Trier par','Sort by')} <select id="pp-tri">${[['perte',A3('Ceux qui perdent le plus','Biggest losses')],['gain',A3('Ceux qui rapportent le plus','Biggest gains')],['pub',A3('Ceux qui coûtent le plus en pub','Highest ad spend')],['ventes',A3('Ceux qui vendent le plus (selon Google)','Most sales (per Google)')],['marge',A3('Meilleure marge par flacon','Best margin per bottle')]].map(([k,l])=>`<option value="${k}" ${(AN.pptri||'perte')===k?'selected':''}>${l}</option>`).join('')}</select></label>
+    <input type="search" id="pp-q" class="pp-q" placeholder="${esc(A3('Chercher un parfum…','Search a perfume…'))}" value="${esc(AN.ppq||'')}"></div>
+  <div id="pp-liste"></div>`;
   h+=`<div class="ga-actions"><button type="button" class="ga-btn" id="an-xl">${A3('Télécharger la liste complète (Excel)','Download the full list (Excel)')}</button>
     <span>${A3('Pour la personne qui gère les campagnes Google Ads : une ligne par parfum, avec la décision « garder » / « sortir ».','For whoever runs the Google Ads campaigns: one line per perfume, with the decision “keep” / “take out”.')}</span></div>
   <div class="ga-expl"><b>${A3('Pourquoi ce tableau ?','Why this table?')}</b>
@@ -6603,6 +6629,25 @@ function anParfumsPub(tous){
   <details class="ga-calc"><summary>${A3('Comment c\'est calculé','How it is calculated')}</summary><p class="ga-note">${A3(`Marge d'un flacon = prix du site − commission (${nf(A.com)} % + ${money2(A.fixe)}) − prix d'achat − envoi (${money(A.envoi)}) + port payé en moyenne (${money2(A.port)}). Les ventes que Google attribue à chaque parfum sont ramenées au réel (× ${nf(Math.round(A.k*100))} % : ce que la pub a vraiment vendu, divisé par ce que Google annonce). Estimation, à revoir chaque mois.`,`Margin per bottle = site price − fee (${nf(A.com)} % + ${money2(A.fixe)}) − purchase price − shipping (${money(A.envoi)}) + average shipping paid (${money2(A.port)}). Sales Google credits to each perfume are scaled to reality (× ${nf(Math.round(A.k*100))} %: what the ads really sold, divided by what Google reports). An estimate, to review every month.`)}</p></details></section>`;
   window._anXL=A;
   return h;
+}
+function anPPListe(){
+  const A=window._anXL, el=document.getElementById('pp-liste'); if(!A||!el) return;
+  const f=AN.ppf||'tous', tri=AN.pptri||'perte', q=String(AN.ppq||'').trim().toLowerCase(), n=AN.ppn||25;
+  const res=o=>o.res!=null?o.res:-o.pub;
+  let X=A.L.filter(o=>f==='tous'||o.dec===f);
+  if(q) X=X.filter(o=>((o.nom||'')+' '+(o.marque||'')+' '+(o.sku||'')).toLowerCase().includes(q));
+  /* « à vérifier » : pas de résultat connu, donc toujours en bas des tris par résultat (jamais présenté comme la pire perte) */
+  const dern=(a,b)=>(a.dec==='verif')-(b.dec==='verif');
+  const T={perte:(a,b)=>dern(a,b)||res(a)-res(b),gain:(a,b)=>dern(a,b)||res(b)-res(a),pub:(a,b)=>b.pub-a.pub,ventes:(a,b)=>b.vg-a.vg,marge:(a,b)=>(b.m??-1e9)-(a.m??-1e9)}[tri]||((a,b)=>res(a)-res(b));
+  X=X.slice().sort(T);
+  const lib={garder:A3('À garder','Keep'),sortir:A3('À sortir','Take out'),stock:A3('Plus en stock','Out of stock'),verif:A3('À vérifier','To check')};
+  el.innerHTML=X.length?`<div class="pp-tete"><span>${A3('Parfum','Perfume')}</span><span>${A3('Pub (90 j)','Ads (90 d)')}</span><span>${A3('Ventes Google','Google sales')}</span><span>${A3('Marge rapportée','Margin brought')}</span><span>${A3('Résultat','Result')}</span></div>`
+    +X.slice(0,n).map(o=>`<div class="pp-l"><span class="pp-n"><b data-nolang>${esc(o.nom||o.sku)}</b><small><i class="pp-d ${o.dec}">${lib[o.dec]}</i> <span data-nolang>${esc(o.marque||'')}</span>${o.m!=null?' · '+A3('marge/flacon','margin/bottle')+' '+money(o.m):''}</small></span>
+      <span class="pp-v">${money(o.pub)}</span><span class="pp-v">${money(o.vg)}</span><span class="pp-v">${o.mgE!=null?money(o.mgE):'—'}</span><span class="pp-v ${o.dec==='verif'?'':res(o)<0?'neg':'pos'}">${o.dec==='verif'?'—':money(res(o))}</span></div>`).join('')
+    +(X.length>n?`<button type="button" class="ga-btn sec pp-plus" id="pp-plus">${A3(`Voir plus (${nf(X.length-n)} de plus)`,`Show more (${nf(X.length-n)} more)`)}</button>`:'')
+    +`<p class="ga-note">${A3(`${nf(X.length)} parfum${X.length>1?'s':''} · total de la pub : ${money(X.reduce((a,o)=>a+o.pub,0))} sur 90 jours`,`${nf(X.length)} perfume${X.length>1?'s':''} · total ad spend: ${money(X.reduce((a,o)=>a+o.pub,0))} over 90 days`)}</p>`
+    :`<p class="ga-vide">${A3('Aucun parfum ne correspond.','No perfume matches.')}</p>`;
+  const plus=document.getElementById('pp-plus'); if(plus) plus.onclick=()=>{ AN.ppn=n+50; anPPListe(); };
 }
 function anExportPub(){ const A=window._anXL; if(!A||typeof sortieXlsx!=='function') return;
   const lib={garder:A3('Garder','Keep'),sortir:A3('Sortir de la pub','Take out of ads'),stock:A3('Sortir de la pub (plus en stock)','Take out of ads (out of stock)'),verif:A3('À vérifier','To check')};
@@ -6633,6 +6678,12 @@ majUser();
   anDessine();
   try{ $('src').innerHTML=A3('origine des commandes<br>relue toutes les 10 min','order origin<br>re-read every 10 min'); }catch(e){}
   /* une nouvelle version des factures ou des origines arrive du serveur (toutes les 8 s) : on relit et on redessine */
+  /* 9 nov. 2026 : la relève du serveur (toutes les 8 s) annonce les magasins arrivés par « ck-maj » (et non par « storage ») :
+     sans cette écoute, la vidéo restait sur la première étape et le résultat des agents n'apparaissait qu'en rechargeant */
+  const AN_CLES=['ventes-origine-v1','google-pub-v1','strategie-v1',KFACT];
+  window.addEventListener('ck-maj',e=>{ const c=(e.detail&&e.detail.cles)||[]; if(!c.some(k=>AN_CLES.includes(k))) return;
+    try{ ORI=JSON.parse(localStorage.getItem('ventes-origine-v1')||'{}')||{}; FACT=JSON.parse(localStorage.getItem(KFACT)||'[]')||[]; STRAT=JSON.parse(localStorage.getItem('strategie-v1')||'{}')||{}; }catch(_){}
+    anDessine(); });
   window.addEventListener('storage',e=>{ if(e.key==='ventes-origine-v1'||e.key==='google-pub-v1'||e.key==='strategie-v1'||e.key===KFACT){ try{ ORI=JSON.parse(localStorage.getItem('ventes-origine-v1')||'{}')||{}; FACT=JSON.parse(localStorage.getItem(KFACT)||'[]')||[]; STRAT=JSON.parse(localStorage.getItem('strategie-v1')||'{}')||{}; }catch(_){} anDessine(); } });
 })();
 

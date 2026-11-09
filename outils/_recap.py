@@ -243,6 +243,23 @@ GA_CSS = r'''
 .sc-accord b{width:40px;height:40px;border-radius:50%;background:#1baf7a;display:inline-flex;align-items:center;justify-content:center;font-size:22px;text-shadow:none}
 @keyframes scAccord{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.sc *{animation:none!important}.sc-dit span:first-child{opacity:1}}
+.pp-barre{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin:18px 0 10px}
+.pp-barre .ga-mini button small{font-weight:500;color:var(--ink-3);margin-left:2px}
+.pp-tri{font-size:12.5px;color:var(--ink-3);display:inline-flex;align-items:center;gap:6px}
+.pp-tri select,.pp-q{font:inherit;font-size:13px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 9px}
+.pp-tri select{max-width:270px}
+.pp-q{flex:1 1 180px;min-width:150px}
+.pp-tete,.pp-l{display:grid;grid-template-columns:minmax(0,1fr) 92px 112px 120px 100px;gap:10px;align-items:center}
+.pp-tete{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);padding:6px 2px;border-bottom:1px solid var(--line)}
+.pp-tete span:not(:first-child),.pp-v{text-align:right}
+.pp-l{padding:8px 2px;border-bottom:1px solid var(--line-2)}
+.pp-n b{display:block;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pp-n small{font-size:11.5px;color:var(--ink-3)}
+.pp-d{font-style:normal;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:999px;margin-right:4px}
+.pp-d.garder{background:color-mix(in srgb,#188038 14%,transparent);color:#188038}.pp-d.sortir{background:color-mix(in srgb,#d93025 12%,transparent);color:#d93025}
+.pp-d.stock{background:color-mix(in srgb,#e8710a 14%,transparent);color:#b45309}.pp-d.verif{background:var(--surface-2);color:var(--ink-3)}
+.pp-v{font-size:13.5px;font-weight:600;font-variant-numeric:tabular-nums}.pp-v.neg{color:#d93025}.pp-v.pos{color:#188038}
+.pp-plus{margin:12px auto 0;display:block}
+@media(max-width:700px){.pp-tete{display:none}.pp-l{grid-template-columns:minmax(0,1fr) auto}.pp-l .pp-v:nth-child(2),.pp-l .pp-v:nth-child(3),.pp-l .pp-v:nth-child(4){display:none}}
 .ga-free{margin:12px 0 0;font-size:12.5px;color:var(--ink-2);line-height:1.5}
 .ga-free.ko span{color:#d93025}
 .ga-top10{display:flex;flex-direction:column}

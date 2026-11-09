@@ -45,7 +45,7 @@ SESS = """([F,O,P,G,R,lg,role])=>{ localStorage.clear(); localStorage.setItem('s
   localStorage.setItem('sam-session-v1',JSON.stringify({id:'x',nom:'Essai',role,depuis:new Date().toISOString()}));
   localStorage.setItem('langue-v1',lg); localStorage.setItem('factures-v1',JSON.stringify(F)); localStorage.setItem('ventes-origine-v1',JSON.stringify(O));
   localStorage.setItem('pc-origine-v1',JSON.stringify(P)); localStorage.setItem('google-pub-v1',JSON.stringify(G)); localStorage.setItem('reglages-v1',JSON.stringify(R)); }"""
-FR = re.compile(r"\b(Chiffre d'affaires|Marge nette|Ventes des sites|Commandes en ligne|Venues de Google|Venus directement|Recherche Google|Origine inconnue|Au fil des jours|Le classement|Site par site|Tous les canaux|Ce qui reste|pub dépensée|Comment c'est compté|jours|Mois dernier|Cette année|Ce mois|commandes?|Voir les chiffres)\b|[éèêàç]")
+FR = re.compile(r"\b(Chiffre d'affaires|Marge nette|Commandes en ligne|Venus directement|Recherche Google|Origine inconnue|Tous les sites|Pub dépensée|est-ce que la pub rapporte|jours|Mois dernier|Cette année|Ce mois|commandes?|parfums|perdus|gagnés)\b|[éèêàç]")
 s = socket.socket(); s.bind(('127.0.0.1', 0)); port = s.getsockname()[1]; s.close()
 srv = subprocess.Popen(['python3', '-m', 'http.server', str(port), '--bind', '127.0.0.1'], cwd=D, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL); time.sleep(1)
 try:
@@ -65,38 +65,51 @@ try:
             pg.screenshot(path=os.environ['AN_SHOT'] + '_fr.png', full_page=True)
             pg.emulate_media(color_scheme='dark'); pg.wait_for_timeout(300); pg.screenshot(path=os.environ['AN_SHOT'] + '_sombre.png', full_page=True); pg.emulate_media(color_scheme='light')
         T = pg.inner_text('#an')
-        check('la page s\'ouvre sur « 30 jours »', pg.evaluate("()=>document.querySelector('[data-an].on').dataset.an") == 'rel:30')
-        # 2. mêmes chiffres que le Tableau de bord
+        check('la page s\'ouvre sur « 30 jours », tous les sites, onglet « Commandes en ligne »', pg.evaluate("()=>[document.querySelector('[data-an].on').dataset.an,document.querySelector('[data-ans].on').dataset.ans,document.querySelector('.ga-tab.on').dataset.anm]") == ['rel:30', 'tous', 'n'])
+        check('plus de cases « Chiffre d\'affaires / Marge nette » de tous les canaux (elles sont au Tableau de bord)', pg.locator('.an-kpi').count() == 0 and 'tous les canaux' not in T.lower(), T[:300])
+        # 2. même calcul que le Tableau de bord
         tot = pg.evaluate("()=>{ const P=rcPlage('rel:30'); const R=rcAgrege(rcLignes(),P.a,P.b); return [Math.round(R.T.ca*100)/100, Math.round(R.T.mg*100)/100]; }")
-        check('LE POINT — le chiffre d\'affaires de la page = celui du calcul du Tableau de bord (100+200+100+100+60+90+90+550 = 1 290 $)', tot[0] == 1290 and a(T, 1290), [tot, T[:300]])
         pt = ouvre(page='tableau.html')
         tb = pt.evaluate("()=>{ const P=rcPlage('rel:30'); const R=rcAgrege(rcLignes(),P.a,P.b); return [Math.round(R.T.ca*100)/100, Math.round(R.T.mg*100)/100]; }")
-        check('LE POINT — même total et même marge que tableau.html', tb == tot, [tb, tot])
+        check('LE POINT — même calcul des ventes et des marges que tableau.html', tb == tot and tot[0] == 1290, [tb, tot])
         pt.context.close()
-        # 3. origines comptées à la main
+        # 3. les onglets, comptés à la main
+        tabs = pg.locator('.ga-tab').all_inner_texts()
+        check('LE POINT — « Commandes en ligne » = 6 (la vente en boutique de Perfume City n\'est pas un site)', tabs[0].split('\n')[1].strip() == '6', tabs[0])
+        check('« Chiffre d\'affaires en ligne » = 100+200+100+100+60+90 = 650 $', a(tabs[1], 650), tabs[1])
+        check('« Commandes via Google Ads » = 2', tabs[3].split('\n')[1].strip() == '2', tabs[3])
         k = pg.evaluate("()=>{ const L=rcLignes(); const C=__an.anCommandes(L); const o={}; C.filter(x=>x.d>='2026-10-17').forEach(x=>{ o[x.fam]=(o[x.fam]||0)+1; }); return o; }")
-        check('3. origines : 1 Google Shopping, 2 Google Ads, 1 direct, 1 réseau social, 1 recherche Google, PC boutique exclue', k == {'gshop': 1, 'gads': 2, 'direct': 1, 'social': 1, 'google': 1}, k)
-        kp = pg.locator('.an-kpi').all_inner_texts()
-        check('« Ventes des sites » = 100+200+100+100+60+90 = 650 $ (la vente en boutique de Perfume City n\'est pas un site)', a(kp[2], 650), kp[2])
-        check('« Commandes en ligne » = 6, panier moyen 108 $', kp[3].split('\n')[1].strip() == '6' and a(kp[3], 108), kp[3])
-        check('« Venues de Google » = 4 commandes sur 6 = 67 %', '67 %' in kp[4] and '4 ' in kp[4], kp[4])
-        check('le classement montre Instagram sous « Réseaux sociaux »', 'Instagram 1' in T, T)
-        # 4. Google : pub vs marge
-        g = pg.locator('.an-kpi').all_inner_texts()[5:10]
-        check('LE POINT — pub dépensée sur 30 jours = 50 + 70 = 120 $ (la pub d\'il y a 40 jours n\'y est pas)', a(g[0], 120), g[0])
-        check('ventes « selon Google » = 400 $, rapport 3,3 ×', a(g[1], 400) and '3,3' in g[1], g[1])
+        check('origines : 1 Google Shopping, 2 Google Ads, 1 direct, 1 réseau social, 1 recherche Google', k == {'gshop': 1, 'gads': 2, 'direct': 1, 'social': 1, 'google': 1}, k)
+        check('les sources : Instagram écrit sous « Réseaux sociaux »', 'Instagram 1' in T, T)
+        # le petit « i » de chaque origine
+        n_i = pg.locator('.ga-bar .ga-i').count(); nb = pg.locator('.ga-bar').count()
+        pg.locator('.ga-bar .ga-i').first.hover(); pg.wait_for_timeout(150)
+        info = pg.evaluate("()=>{ const t=document.getElementById('ga-info'); return t&&t.style.display==='block'?t.textContent:''; }")
+        check('LE POINT — chaque origine a son « i », qui explique ce qu\'elle veut dire', n_i == nb and nb == 5 and 'publicit' in info.lower(), [n_i, nb, info])
+        pg.mouse.move(5, 5); pg.wait_for_timeout(100)
+        inf2 = pg.evaluate("()=>[...document.querySelectorAll('.ga-bar .ga-i')].map(b=>b.dataset.info)")
+        check('« Venus directement » est expliqué (adresse tapée, favori…)', any('adresse du site' in x for x in inf2), inf2)
+        # 4. Google : la pub rapporte-t-elle ?
+        V = pg.inner_text('.ga-verdict')
         mgAds = pg.evaluate("()=>{ const C=__an.anCommandes(rcLignes()).filter(o=>o.site==='site'&&o.fam==='gads'&&o.d>='2026-10-17'); return Math.round(C.reduce((a,o)=>a+o.mg,0)*100)/100; }")
-        check('LE POINT — « ce qui reste après la pub » = marge des commandes Google Ads − 120 $', a(g[3], round(mgAds - 120)), [mgAds, g[3]])
-        check('les fiches gratuites : 1 clic, 70 affichages', '1 clic' in g[4] and '70' in g[4], g[4])
+        check('LE POINT — le verdict = marge des commandes Google Ads − pub (50 + 70 = 120 $ ; la pub d\'il y a 40 jours n\'y est pas)', a(V, abs(round(mgAds - 120))), [mgAds, V])
+        st = pg.inner_text('.ga-stats')
+        check('« Ventes : selon Google / réelles » = 400 $ / 300 $ ; coût de la pub par commande = 60 $', a(st, 400) and a(st, 300) and a(st, 60), st)
+        check('Google Shopping gratuit : 1 clic, 70 affichages', '1 clic' in pg.inner_text('.ga-free') and '70' in pg.inner_text('.ga-free'), pg.inner_text('.ga-free'))
+        check('deux courbes cumulées (marge et pub) avec leurs étiquettes', pg.locator('#ga-c2 .ga-l').count() == 2 and pg.locator('#ga-c2 .ga-lab').count() == 2)
         check('une relecture en panne (Shopify) est dite en haut de la page', 'Access denied' in T and pg.locator('.an-alerte').count() == 1, T[:400])
-        # 5. période et infobulle
-        pg.click('[data-an="rel:7"]'); pg.wait_for_timeout(300)
-        check('5. « 7 jours » : 7 colonnes', pg.locator('.rc-col').count() == 7, pg.locator('.rc-col').count())
-        col = pg.locator('.rc-col').nth(4); col.hover(); pg.wait_for_timeout(150)
-        tip = pg.evaluate("()=>{ const t=[...document.querySelectorAll('.rc-tip')].find(x=>x.style.display==='block'); return t?t.innerText:''; }")
-        check('5. l\'infobulle dit le jour et l\'origine', 'Google' in tip, tip)
-        pg.click('[data-anm="n"]'); pg.wait_for_timeout(200)
-        check('5. la bascule « Commandes » redessine', pg.locator('[data-anm="n"].on').count() == 1)
+        # 5. période, survol, onglets, sites
+        pg.click('[data-an="rel:7"]'); pg.wait_for_timeout(1300)
+        z = pg.locator('#ga-c1 .ga-zone').bounding_box()
+        pg.mouse.move(z['x'] + z['width'] * 0.85, z['y'] + z['height'] / 2); pg.wait_for_timeout(150)
+        tip = pg.evaluate("()=>{ const t=document.getElementById('ga-tip'); return t&&t.style.display==='block'?t.innerText:''; }")
+        check('5. « 7 jours » : au survol de la courbe, une bulle dit le jour et la valeur', bool(re.search(r'\d+ nov', tip)) and '7 derniers jours' in tip, tip)
+        pg.mouse.move(5, 5)
+        pg.click('[data-anm="ca"]'); pg.wait_for_timeout(1100)
+        check('5. l\'onglet « Chiffre d\'affaires » trace sa courbe', pg.locator('.ga-tab.on').get_attribute('data-anm') == 'ca' and pg.locator('#ga-c1 .ga-l').count() >= 1)
+        pg.click('[data-an="rel:30"]'); pg.click('[data-ans="site"]'); pg.wait_for_timeout(1300)
+        check('5. le choix « perfumestrade.com » ne garde que ce site (4 commandes)', pg.locator('.ga-tab').first.inner_text().split('\n')[1].strip() == '4', pg.locator('.ga-tab').first.inner_text())
+        pg.click('[data-ans="tous"]'); pg.wait_for_timeout(300)
         # 1. accès
         for role in ('commercial', 'comptable', 'entrepot'):
             pr = ouvre(role=role)
@@ -119,7 +132,7 @@ try:
             pe = ouvre(lg=lg)
             te = pe.inner_text('main')
             fr = sorted(set(m.group(0) for m in FR.finditer(te)))
-            check(f'6. {lg} : la page est en anglais, plus un mot de français', not fr and 'where website orders come from' in te.lower() and 'Analytics' in pe.inner_text('.side'), fr[:12])
+            check(f'6. {lg} : la page est en anglais, plus un mot de français, « i » compris', not fr and 'where orders come from' in te.lower() and all('publicit' not in x and 'adresse' not in x for x in pe.evaluate("()=>[...document.querySelectorAll('.ga-i')].map(b=>b.dataset.info)")) and 'Analytics' in pe.inner_text('.side'), fr[:12])
             pe.context.close()
         check('6. aucune erreur JS', not err, err[:3])
         b.close()

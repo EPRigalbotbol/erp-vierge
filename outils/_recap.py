@@ -181,6 +181,17 @@ GA_CSS = r'''
 .ga-stats b{font-size:16px;font-variant-numeric:tabular-nums}
 .ga-stats small{font-size:11px;color:var(--ink-3)}
 .ga-attente{margin:12px 0 0;padding:9px 12px;border-radius:10px;background:var(--surface-2);font-size:13px;color:var(--ink-2);line-height:1.45}.ga-attente span{color:var(--ink-3)}
+.ga-stats4{grid-template-columns:repeat(4,minmax(0,1fr))}@media(max-width:900px){.ga-stats4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.ga-st2{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin:18px 0 6px}
+.ga-pp{display:flex;flex-direction:column}
+.ga-ppr{display:grid;grid-template-columns:minmax(0,1fr) 90px 120px 90px;gap:10px;align-items:center;padding:8px 2px;border-bottom:1px solid var(--line-2)}
+.ga-ppr:last-child{border-bottom:0}
+.ga-ppn b{display:block;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ga-ppn small{font-size:11.5px;color:var(--ink-3)}
+.ga-ppv{text-align:right;font-size:13.5px;font-weight:600;font-variant-numeric:tabular-nums}.ga-ppv small{display:block;font-size:10.5px;font-weight:500;color:var(--ink-3)}
+.ga-ppv.neg{color:#d93025}
+.ga-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:14px 0 4px;font-size:12.5px;color:var(--ink-3)}
+.ga-btn{font:inherit;font-size:13px;font-weight:600;color:#fff;background:var(--an-1);border:0;border-radius:999px;padding:9px 16px;cursor:pointer}
+.ga-btn:hover{filter:brightness(.95)}
 .ga-free{margin:12px 0 0;font-size:12.5px;color:var(--ink-2);line-height:1.5}
 .ga-free.ko span{color:#d93025}
 .ga-top10{display:flex;flex-direction:column}

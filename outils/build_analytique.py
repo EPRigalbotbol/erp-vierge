@@ -210,6 +210,8 @@ function anDessine(){
       <div class="ga-free ${pub.T.gClics?'':'ko'}"><b>${A3('Google Shopping gratuit','Free Google Shopping')}</b> · ${nf(Math.round(pub.T.gClics))} ${A3('clic'+(pub.T.gClics>1?'s':''),'click'+(pub.T.gClics>1?'s':''))} · ${nf(Math.round(pub.T.gAff))} ${A3('affichages','impressions')}${pub.T.gClics?'':` — <span>${A3('aucun clic : Google ne montre presque pas les fiches gratuites (à voir dans Merchant Center)','no clicks: Google barely shows the free listings (to check in Merchant Center)')}</span>`}</div>`;
   }
   h+=`</section></div>`;
+  /* ---- 3b. la pub, parfum par parfum (90 jours) : lesquels garder, lesquels sortir, combien Sam économiserait ---- */
+  if(AN.site==='tous'||AN.site==='site') h+=anParfumsPub(tous);
   /* (9 nov. 2026) « Les parfums qui se vendent en ligne » retiré à la demande d'Igal : sur une période courte, chaque parfum ne
      se vend qu'une ou deux fois en ligne — un classement sans intérêt. Le détail par parfum reste dans la fiche du Catalogue. */
   const lus=C.filter(o=>ok(o)&&o.lu).length, nC=C.filter(ok).length;
@@ -236,6 +238,7 @@ function anBranche(){
   const cache=()=>{ const t=document.getElementById('ga-info'); if(t) t.style.display='none'; };
   z.querySelectorAll('.ga-i').forEach(b=>{ b.onmouseenter=()=>montre(b); b.onmouseleave=cache; b.onfocus=()=>montre(b); b.onblur=cache; b.onclick=e=>{ e.stopPropagation(); montre(b); }; });
   if(!window._anInfoDoc){ window._anInfoDoc=1; document.addEventListener('click',cache); window.addEventListener('scroll',cache,{passive:true}); }
+  const xl=document.getElementById('an-xl'); if(xl) xl.onclick=anExportPub;
   const re=()=>{ gaAnime=true; anSauve(); anDessine(); };
   z.querySelectorAll('[data-an]').forEach(b=>b.onclick=()=>{ AN.sel=b.dataset.an; re(); });
   z.querySelectorAll('[data-ans]').forEach(b=>b.onclick=()=>{ AN.site=b.dataset.ans; re(); });
@@ -243,6 +246,73 @@ function anBranche(){
   z.querySelectorAll('[data-ansrc]').forEach(b=>b.onclick=()=>{ AN.src=b.dataset.ansrc; re(); });
 }
 let _anLarg=0; window.addEventListener('resize',()=>{ const w=innerWidth; if(Math.abs(w-_anLarg)<40) return; _anLarg=w; clearTimeout(window._anRz); window._anRz=setTimeout(()=>{ if(document.getElementById('ga-c1')) anDessine(); },200); });
+/* ============ LA PUB, PARFUM PAR PARFUM (9 nov. 2026) ============
+   Igal : « la liste des parfums qui rapportent assez pour mériter de la pub » et « quelle économie on pourrait faire par mois ».
+   Pour chaque fiche où Google a dépensé de l'argent ces 90 derniers jours (lu par le cockpit, google-pub-v1 › p) :
+     marge d'un flacon = prix du site − commission du site (2,9 % + 0,30 $) − prix d'achat − envoi + port payé en moyenne ;
+     ventes réelles estimées = ventes que Google lui attribue × (ventes réelles de la pub ÷ ventes selon Google, sur la même période) ;
+     ce qu'il rapporte = ventes réelles estimées × (marge ÷ prix) − ce que la pub a coûté.
+   Négatif : la pub sur ce parfum coûte plus qu'elle ne rapporte → « Sortir de la pub ». Pas en stock : « Sortir » aussi.
+   Pas de prix d'achat ou de prix dans l'ERP : « À vérifier ». L'économie par mois = la perte évitée sur 90 jours ÷ 3. */
+function anFiches(){ const M={}; let MOD={}, EXT={q:{}}; try{ MOD=JSON.parse(localStorage.getItem('fiches-modifiees-v1')||'{}')||{}; }catch(e){}
+  try{ const r=JSON.parse(localStorage.getItem('stock-externe-v1')||'null'); if(r&&r.q) EXT=r; }catch(e){}
+  Object.entries(IDX).forEach(([cle,v])=>{ const m=MOD[cle]||{}; const bc=String(v[0]||''); if(!bc) return;
+    let q=v[4]; if(EXT.q[bc]!=null) q=EXT.q[bc]; if(m.qte!=null) q=m.qte;
+    const f={cle,bc,nom:v[1],marque:v[2],pa:m.pa!=null?+m.pa:(v[3]==null?null:+v[3]),pvr:m.pvr!=null?+m.pvr:(v[6]==null?null:+v[6]),q:+q||0};
+    String(bc).split(/[^0-9A-Za-z]+/).filter(Boolean).forEach(b=>{ M[b.replace(/^0+/,'')]=f; }); });
+  return M; }
+function anAnalysePub(tous){
+  let G={}; try{ G=JSON.parse(localStorage.getItem('google-pub-v1')||'{}')||{}; }catch(e){}
+  const P=G.p; if(!P||!Array.isArray(P.L)||!P.L.length) return null;
+  const F=anFiches();
+  const site=(REG.canaux||[]).find(c=>c.id==='site')||{}, com=(+site.com>=0&&site.com!=='')?+site.com:2.9, fixe=(site.fixe!=null&&site.fixe!=='')?+site.fixe:0.3;
+  const envoi=rcEnvoi('woocommerce');
+  /* le port payé en moyenne par commande, et le rapport ventes réelles / ventes selon Google, sur les mêmes 90 jours */
+  const C=anDans(tous.filter(o=>o.site==='site'),P.a,P.b), nC=C.filter(o=>!o.ret).length;
+  const port=nC?C.reduce((a,o)=>a+o.lignes.reduce((b,v)=>b+(+v.portMt||0),0),0)/nC:0;
+  const caAds=C.filter(o=>o.fam==='gads').reduce((a,o)=>a+o.ca,0), ventesG=anPub(P.a,P.b).T.ventes;
+  const k=ventesG>0?Math.max(0.3,Math.min(1,caAds/ventesG)):0.8;
+  const L=P.L.map(r=>{ const [sku,pub,vg,conv,clics,nomG]=r; const f=F[String(sku||'').replace(/^0+/,'')]||null;
+    const o={sku,nom:f?f.nom:nomG,marque:f?f.marque:'',pub:+pub||0,vg:+vg||0,conv:+conv||0,q:f?f.q:null,pvr:f?f.pvr:null,pa:f?f.pa:null};
+    if(!f||!(o.pvr>0)||o.pa==null){ o.dec='verif'; return o; }
+    o.m=o.pvr*(1-com/100)-fixe-o.pa-envoi+port; o.taux=o.m/o.pvr;
+    o.mgE=o.vg*k*o.taux; o.res=o.mgE-o.pub;
+    o.dec=(o.q<=0)?'stock':(o.res<0?'sortir':'garder'); return o; });
+  const S=d=>L.filter(o=>o.dec===d), som=(X,c)=>X.reduce((a,o)=>a+(o[c]||0),0);
+  const sortir=S('sortir'), stock=S('stock'), garder=S('garder'), verif=S('verif');
+  /* l'économie : on évite la perte des parfums à sortir, et toute la pub des parfums plus en stock (leur marge réelle est nulle ou incertaine) */
+  const gain90=-som(sortir,'res')+Math.max(0,som(stock,'pub')-som(stock,'mgE'));
+  return {P,L,k,port,envoi,com,fixe,sortir,stock,garder,verif,gain90,pub90:som(L,'pub')};
+}
+function anParfumsPub(tous){
+  const A=anAnalysePub(tous);
+  let h=`<section class="ga-card ga-pad"><div class="ga-h"><h3>${A3('La pub, parfum par parfum','Ads, perfume by perfume')}</h3><span class="ga-src">${A3('90 derniers jours · perfumestrade.com','last 90 days · perfumestrade.com')}</span></div>`;
+  if(!A) return h+`<p class="ga-vide">${A3('Les chiffres de Google par parfum arrivent : le cockpit les lit toutes les six heures.','Google\'s per-perfume figures are on their way: the cockpit reads them every six hours.')}</p></section>`;
+  const mois=A.gain90/3, pubMois=A.pub90/3;
+  const nS=A.sortir.length+A.stock.length;
+  h+=`<div class="ga-verdict ${mois>0?'bon':'mal'}"><span class="ga-vv">${gaCnt(Math.round(mois),'$')}</span><span class="ga-vt">${A3(`par mois en plus pour Sam, en sortant de la pub ${nf(nS)} parfums qui coûtent plus qu'ils ne rapportent (sur ${money(pubMois)} de pub par mois)`,`more per month for Sam, by taking out of the ads ${nf(nS)} perfumes that cost more than they bring (out of ${money(pubMois)} of ads per month)`)}</span></div>
+  <div class="ga-stats ga-stats4">
+    <div><span>${A3('À garder dans la pub','Keep in the ads')}</span><b>${nf(A.garder.length)}</b><small>${money(A.garder.reduce((a,o)=>a+o.pub,0)/3)} ${A3('de pub par mois','of ads per month')}</small></div>
+    <div><span>${A3('À sortir : perdent de l\'argent','Take out: losing money')}</span><b>${nf(A.sortir.length)}</b><small>${money(A.sortir.reduce((a,o)=>a+o.pub,0)/3)} ${A3('de pub par mois','of ads per month')}</small></div>
+    <div><span>${A3('À sortir : plus en stock','Take out: out of stock')}</span><b>${nf(A.stock.length)}</b><small>${money(A.stock.reduce((a,o)=>a+o.pub,0)/3)} ${A3('de pub par mois','of ads per month')}</small></div>
+    <div><span>${A3('À vérifier (prix manquant dans l\'ERP)','To check (price missing in the ERP)')}</span><b>${nf(A.verif.length)}</b><small>${money(A.verif.reduce((a,o)=>a+o.pub,0)/3)} ${A3('de pub par mois','of ads per month')}</small></div>
+  </div>`;
+  const pires=A.sortir.concat(A.stock).sort((a,b)=>(a.res!=null?a.res:-a.pub)-(b.res!=null?b.res:-b.pub)).slice(0,8);
+  if(pires.length) h+=`<p class="ga-st2">${A3('Ceux qui coûtent le plus','The most costly ones')}</p><div class="ga-pp">${pires.map(o=>`<div class="ga-ppr"><span class="ga-ppn"><b data-nolang>${esc(o.nom||o.sku)}</b><small data-nolang>${esc(o.marque||'')}${o.dec==='stock'?' · '+A3('plus en stock','out of stock'):''}</small></span>
+      <span class="ga-ppv"><small>${A3('pub','ads')}</small>${money(o.pub)}</span><span class="ga-ppv"><small>${A3('marge rapportée','margin brought')}</small>${o.mgE!=null?money(o.mgE):'—'}</span><span class="ga-ppv neg"><small>${A3('perte','loss')}</small>${money(o.res!=null?o.res:-o.pub)}</span></div>`).join('')}</div>`;
+  h+=`<div class="ga-actions"><button type="button" class="ga-btn" id="an-xl">${A3('Télécharger la liste complète (Excel)','Download the full list (Excel)')}</button>
+    <span>${A3('Pour la personne qui gère les campagnes Google Ads : une ligne par parfum, avec la décision « garder » / « sortir ».','For whoever runs the Google Ads campaigns: one line per perfume, with the decision “keep” / “take out”.')}</span></div>
+  <p class="ga-note">${A3(`Marge d'un flacon = prix du site − commission (${nf(A.com)} % + ${money2(A.fixe)}) − prix d'achat − envoi (${money(A.envoi)}) + port payé en moyenne (${money2(A.port)}). Les ventes que Google attribue à chaque parfum sont ramenées au réel (× ${nf(Math.round(A.k*100))} % : ce que la pub a vraiment vendu, divisé par ce que Google annonce). Estimation, à revoir chaque mois.`,`Margin per bottle = site price − fee (${nf(A.com)} % + ${money2(A.fixe)}) − purchase price − shipping (${money(A.envoi)}) + average shipping paid (${money2(A.port)}). Sales Google credits to each perfume are scaled to reality (× ${nf(Math.round(A.k*100))} %: what the ads really sold, divided by what Google reports). An estimate, to review every month.`)}</p></section>`;
+  window._anXL=A;
+  return h;
+}
+function anExportPub(){ const A=window._anXL; if(!A||typeof sortieXlsx!=='function') return;
+  const lib={garder:A3('Garder','Keep'),sortir:A3('Sortir de la pub','Take out of ads'),stock:A3('Sortir de la pub (plus en stock)','Take out of ads (out of stock)'),verif:A3('À vérifier','To check')};
+  const ordre={sortir:0,stock:1,verif:2,garder:3};
+  const L=A.L.slice().sort((a,b)=>ordre[a.dec]-ordre[b.dec]||((a.res!=null?a.res:-a.pub)-(b.res!=null?b.res:-b.pub)));
+  sortieXlsx({titre:A3('La pub, parfum par parfum','Ads, perfume by perfume'),filtre:A.P.a+' → '+A.P.b,fichier:A3('Pub-Google-parfum-par-parfum','Google-Ads-perfume-by-perfume'),
+    colonnes:[{t:A3('Décision','Decision')},{t:A3('Code-barres (SKU)','Barcode (SKU)')},{t:A3('Parfum','Perfume')},{t:A3('Marque','Brand')},{t:A3('Stock','Stock'),y:'n'},{t:A3('Prix du site','Site price'),y:'m'},{t:A3("Prix d'achat",'Purchase price'),y:'m'},{t:A3('Marge par flacon','Margin per bottle'),y:'m'},{t:A3('Pub (90 j)','Ads (90 d)'),y:'m'},{t:A3('Ventes selon Google (90 j)','Sales per Google (90 d)'),y:'m'},{t:A3('Marge rapportée (estimée)','Margin brought (est.)'),y:'m'},{t:A3('Résultat (marge − pub)','Result (margin − ads)'),y:'m'}],
+    lignes:L.map(o=>[lib[o.dec],o.sku,o.nom||'',o.marque||'',o.q,o.pvr,o.pa,o.m!=null?Math.round(o.m*100)/100:null,o.pub,o.vg,o.mgE!=null?Math.round(o.mgE*100)/100:null,o.res!=null?Math.round(o.res*100)/100:(o.dec==='stock'?-o.pub:null)])}); }
 /* 9 nov. 2026 (Igal, sur l'écart « selon Google / réelles ») : les commandes venues de la pub, PAYÉES mais pas encore expédiées.
    Google les compte déjà ; l'ERP les comptera à leur expédition. Le cockpit en garde la liste du moment (_attente_woocommerce) :
    elle ne s'affiche que si la période choisie va jusqu'à aujourd'hui. */

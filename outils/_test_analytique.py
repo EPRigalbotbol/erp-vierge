@@ -39,7 +39,9 @@ ORIG = {'woocommerce|1': 'gshop', 'woocommerce|2': 'gads', 'woocommerce|3': 'gad
         '_shopify-pc': {'maj': '2026-11-15T13:50:00Z', 'err': 'Shopify : Access denied for customerJourneySummary field.'},
         '_attente_woocommerce': {'maj': '2026-11-15T13:50:00Z', 'L': [{'id': 31, 'd': '2026-11-15', 'mt': 110, 'o': 'gads'}, {'id': 32, 'd': '2026-11-14', 'mt': 90, 'o': 'gads'}, {'id': 33, 'd': '2026-11-14', 'mt': 50, 'o': 'direct'}]}}
 PCO = {'shopify-pc|11': 'boutique', 'shopify-pc|12': 'en ligne'}
-GPUB = {'j': {J(2): [50, 300, 20, 1000, 2, 1, 40], J(3): [70, 100, 30, 1200, 1, 0, 30], J(40): [40, 100, 10, 500, 1, 0, 10]}, '_maj': '2026-11-15T13:00:00Z', '_err': ''}
+B0 = [r for r in C if (r[6] or 0) <= 0 and r[0] and r[0].isdigit() and (r[12] or 0) > 0 and (r[7] or 0) > 0 and r[15] != cle][0]
+GPUB = {'j': {J(2): [50, 300, 20, 1000, 2, 1, 40], J(3): [70, 100, 30, 1200, 1, 0, 30], J(40): [40, 100, 10, 500, 1, 0, 10]}, '_maj': '2026-11-15T13:00:00Z', '_err': '',
+        'p': {'a': J(89), 'b': J(0), 'maj': '2026-11-15T13:00:00Z', 'L': [[bc, 50, 400, 4, 30, 'A', 1], [B0[0], 20, 100, 1, 9, 'B', 2], ['999999999999', 30, 0, 0, 12, 'Inconnu', 3]]}}
 REG = {'comV4': 1, 'canauxV': 3, 'pcCom3': 1, 'canaux': [{'id': 'site', 'nom': 'Site perfumestrade.com', 'com': 3}, {'id': 'sitegros', 'nom': 'Site wholesale.perfumestrade.com', 'com': 3},
        {'id': 'amazon', 'nom': 'Amazon', 'com': 15}, {'id': 'perfumecity', 'nom': 'Perfume City', 'com': 3}], 'envois': {'woocommerce': 0, 'woocommerce-gros': 0, 'shopify-pc': 0}}
 SESS = """([F,O,P,G,R,lg,role])=>{ localStorage.clear(); localStorage.setItem('sam-comptes-demo-v1','0');
@@ -96,6 +98,21 @@ try:
         check('LE POINT — le verdict = marge des commandes Google Ads − pub (50 + 70 = 120 $ ; la pub d\'il y a 40 jours n\'y est pas)', a(V, abs(round(mgAds - 120))), [mgAds, V])
         st = pg.inner_text('.ga-stats')
         check('« Ventes : selon Google / réelles » = 400 $ / 300 $ ; coût de la pub par commande = 60 $', a(st, 400) and a(st, 300) and a(st, 60), st)
+        # la pub, parfum par parfum
+        an = pg.evaluate("()=>{ const A=anAnalysePub(__an.anCommandes(rcLignes())); return A&&{k:A.k,L:A.L.map(o=>[o.sku,o.dec,o.m,o.mgE,o.res,o.pvr,o.pa]),gain:A.gain90}; }")
+        Lp = {x[0]: x for x in (an or {}).get('L', [])}
+        check('LE POINT — rapport ventes réelles / ventes Google sur 90 jours = 400 / 500 = 0,8', an and abs(an['k'] - 0.8) < 1e-9, an and an['k'])
+        xa = Lp.get(bc)
+        if xa:
+            m = xa[5] * (1 - 0.03) - 0.3 - xa[6]; mg = 400 * 0.8 * m / xa[5]; res = mg - 50
+            check('LE POINT — parfum A : marge d\'un flacon, marge rapportée et résultat calculés à la main', abs(xa[2] - m) < 0.01 and abs(xa[3] - mg) < 0.01 and abs(xa[4] - res) < 0.01 and xa[1] == ('garder' if res >= 0 else 'sortir'), [xa, m, mg, res])
+        else: check('parfum A trouvé', False, an)
+        check('un parfum plus en stock avec de la pub → « sortir (plus en stock) »', Lp.get(B0[0], [0, ''])[1] == 'stock', Lp.get(B0[0]))
+        check('un code inconnu de l\'ERP → « à vérifier », jamais une décision inventée', Lp.get('999999999999', [0, ''])[1] == 'verif', Lp.get('999999999999'))
+        check('la carte dit l\'économie par mois et propose la liste en Excel', pg.locator('#an-xl').count() == 1 and 'par mois en plus pour Sam' in pg.inner_text('#an'), '')
+        with pg.expect_download() as dl:
+            pg.click('#an-xl')
+        check('le bouton télécharge bien un fichier Excel', dl.value.suggested_filename.endswith('.xlsx'), dl.value.suggested_filename)
         att = pg.inner_text('.ga-attente') if pg.locator('.ga-attente').count() else ''
         check('LE POINT — « + 2 commandes de la pub payées, pas encore expédiées : 200 $ » (la commande directe n\'y est pas)', '2' in att and a(att, 200) and 'pas encore exp' in att, att)
         check('Google Shopping gratuit : 1 clic, 70 affichages', '1 clic' in pg.inner_text('.ga-free') and '70' in pg.inner_text('.ga-free'), pg.inner_text('.ga-free'))

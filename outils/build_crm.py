@@ -48,6 +48,7 @@ _IC = {
  'taches.html':'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="m8 12 3 3 5-6"/>',
  'journal.html':'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
  'tableau.html':'<rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/>',
+ 'analytique.html':'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
  'acces.html':'<path d="M12 3 4 6v6c0 4.5 3.3 8 8 9 4.7-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/>',
  'https://app.gusto.com':'<circle cx="12" cy="12" r="9"/><path d="M14.5 9a2.5 2 0 0 0-2.5-1.5c-1.4 0-2.5.8-2.5 2s1 1.7 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2A2.7 2 0 0 1 9.5 15M12 6v1.5M12 16.5V18"/>',
  'reglages.html':'<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/>',
@@ -81,6 +82,9 @@ def barre(actif):
          ('#support','?','Support technique',''),
          ('journal.html','◷','Journal',''),
          ('tableau.html','◧','Tableau de bord',''),
+         # 9 nov. 2026 (Igal) : l'analytique de tous les canaux — d'où viennent les ventes, ce que Google coûte et rapporte ;
+         # réservée aux administrateurs (Admin, Patron) : cachée à tout autre rôle (_menu.py, mn-pasadmin) (build_analytique.py)
+         ('analytique.html','◔','Analytique',''),
          # 3 nov. 2026 (Igal) : les tâches que Galou trouve dans l'ERP — « le bras droit de Sam » (build_taches.py)
          ('taches.html','☑','Tâches',''),
          ('acces.html','⛨','Accès',''),
@@ -92,7 +96,7 @@ def barre(actif):
         if lab=='Support technique': out.append('<div class="navlab" data-pilotage="1">Pilotage</div>')
         # 17 oct. 2026 (Sam) : « toute la partie Pilotage ne doit pas être vue par un Commercial » —
         # ces rubriques portent data-pilotage ; le menu les retire pour un rôle sans marges, sans accès, sans réglages (_menu.py)
-        pil=' data-pilotage="1"' if lab in ('Connecteurs','Journal','Tableau de bord','Tâches','Accès','Paie','Réglages') else ''
+        pil=' data-pilotage="1"' if lab in ('Connecteurs','Journal','Tableau de bord','Analytique','Tâches','Accès','Paie','Réglages') else ''
         cls='nv'+(' on' if lab==actif else '')+('' if href else ' soon')
         ext=bool(href) and href.startswith('http')
         a=f'<a class="{cls}"{pil}'+((f' href="{href}" target="_blank" rel="noopener" title="Ouvre Gusto dans un nouvel onglet"' if ext else f' href="{href}?v={VER}"') if href else '')+'>'
@@ -133,9 +137,11 @@ var _m=JSON.parse(localStorage.getItem('menu-perso-v1')||'null');if(_m&&((_m.ord
 /* 7 nov. 2026 (Igal : « je ne veux pas qu'un Commercial aperçoive les autres rubriques, même une seconde ») : d'après la session déjà
    en mémoire, un rôle sans marges (ni Patron, ni Admin, ni Comptable) cache Pilotage et Léa AVANT la première peinture (mn-cial) ;
    le menu confirme ou corrige ensuite avec les droits réels (_menu.py, mnPilotage) */
-var _s=JSON.parse(localStorage.getItem('sam-session-v1')||'null');if(_s&&_s.role&&!/^(patron|admin|comptable)$/.test(String(_s.role))){{document.documentElement.classList.add('mn-cial');}}}}catch(e){{}}</script>
+var _s=JSON.parse(localStorage.getItem('sam-session-v1')||'null');if(_s&&_s.role&&!/^(patron|admin|comptable)$/.test(String(_s.role))){{document.documentElement.classList.add('mn-cial');}}
+/* 9 nov. 2026 : « Analytique » est aux seuls administrateurs (Admin, Patron) — cachée avant la première peinture pour tout autre rôle */
+if(!_s||!/^(patron|admin)$/.test(String(_s.role||''))){{document.documentElement.classList.add('mn-pasadmin');}}}}catch(e){{}}</script>
 <script>/* le contenu de la page reste caché jusqu'à ce que son code l'ait dessiné (voir _serveur.py) */try{{document.documentElement.classList.add('pg-attente');setTimeout(function(){{document.documentElement.classList.remove('pg-attente');}},4000);}}catch(e){{}}</script>
-<style>.mn-attente .side nav{{visibility:hidden}} .pg-attente .main{{visibility:hidden}} html.mn-cial .side nav [data-pilotage],html.mn-cial .side nav #gl-btn{{display:none!important}}</style>
+<style>.mn-attente .side nav{{visibility:hidden}} .pg-attente .main{{visibility:hidden}} html.mn-cial .side nav [data-pilotage],html.mn-cial .side nav #gl-btn{{display:none!important}} html.mn-pasadmin .side nav a.nv[href^="analytique.html"]{{display:none!important}}</style>
 
 <title>{titre} — Perfumes Trade</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">

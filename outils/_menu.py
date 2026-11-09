@@ -141,6 +141,12 @@ function mnPilotage(){
     const nav=mnNav(); if(!nav) return;
     nav.querySelectorAll('a.nv').forEach(a=>{ const h=(a.getAttribute('href')||'').replace(/[?#].*$/,'').split('/').pop();
       if(MN_MURS[h]&&!peut(MN_MURS[h])) a.style.display='none'; });
+    /* 9 nov. 2026 (Igal) : « Analytique » n'existe que pour les administrateurs de l'ERP — rôles Admin et Patron, aucun autre
+       (pas même le Comptable). La classe mn-pasadmin est posée dès l'entête d'après la session (build_crm.py) et confirmée ici. */
+    { const s=(typeof session==='function')?session():null; const adm=!!s&&/^(admin|patron)$/.test(String(s.role||''));
+      document.documentElement.classList.toggle('mn-pasadmin',!adm);
+      nav.querySelectorAll('a.nv').forEach(a=>{ const h=(a.getAttribute('href')||'').replace(/[?#].*$/,'').split('/').pop();
+        if(h==='analytique.html'&&!adm) a.style.display='none'; }); }
     const large=!!(peut('voirMarge')||peut('acces')||peut('reglages'));
     /* 7 nov. 2026 (Igal) : le rôle réel tranche — la classe mn-cial (posée dès l'entête d'après la session, pour qu'un Commercial
        n'aperçoive jamais Pilotage ni Léa, même une seconde) est confirmée ou retirée ici */

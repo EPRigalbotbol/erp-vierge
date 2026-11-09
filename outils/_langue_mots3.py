@@ -1770,3 +1770,11 @@ MOTS3.update({
     "Message en espagnol": ["Message in Spanish", "Mensaje en español"],
     "Remettre les messages d'origine": ["Restore the original messages", "Restablecer los mensajes originales"],
 })
+
+# ---- 9 nov. 2026 : Analytique (rubrique des administrateurs, en français et en anglais seulement : l'espagnol lit l'anglais) ----
+MOTS3.update({
+    "Analytique": ["Analytics", "Analytics"],
+    "D'où viennent les ventes : tous les canaux, et pour les sites, l'origine de chaque commande (Google Shopping, Google Ads, réseaux sociaux…). Réservé aux administrateurs de l'ERP.":
+        ["Where sales come from: all channels, and for the websites, the origin of each order (Google Shopping, Google Ads, social media…). For the ERP administrators only.",
+         "Where sales come from: all channels, and for the websites, the origin of each order (Google Shopping, Google Ads, social media…). For the ERP administrators only."],
+})

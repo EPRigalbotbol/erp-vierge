@@ -106,7 +106,7 @@ try:
         pg.click('[data-rc="cemois"]'); pg.wait_for_timeout(300)
         k1 = kp()
         check('5. « Ce mois » change les chiffres (une seule vente du jour : 100 $)', k1 != k0 and '100 $' in k1, k1)
-        check('5. novembre se compare bien à octobre (la comparaison revient d\'elle-même dès que le mois d\'avant est complet)', 'vs' in k1 and 'octobre 2026' in k1 and not inc(), k1 + ' | ' + inc())
+        check('5. LE POINT — le 15 novembre se compare au 1er–15 octobre, jour pour jour, et l\'étiquette le dit (« vs 1–15 oct. 2026 »)', 'vs' in k1 and '1–15 oct. 2026' in k1 and not inc(), k1 + ' | ' + inc())
         pg.click('[data-rc="tout"]'); pg.wait_for_timeout(300)
         check('5. « Tout » réunit tous les mois : 1 370 + 275 + 100 = 1 745 $', '1 745 $' in kp(), kp())
         check('5. « Tout » : un point par mois sur la courbe (3 mois)', pg.evaluate("()=>document.querySelectorAll('#rc-c .ga-xl').length")==3, pg.evaluate("()=>[...document.querySelectorAll('#rc-c .ga-xl')].map(t=>t.textContent)"))

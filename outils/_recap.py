@@ -428,9 +428,18 @@ function rcLib(sel,P){
   if((mm=s.match(/^annee:(\d{4})$/))) return L3('Année','Year','Año')+' '+mm[1];
   return '';
 }
+/* 9 nov. 2026 (Igal : « est-ce que c'est par rapport à la date ou au mois complet ? Je veux que ça corresponde au 9 octobre ») :
+   la comparaison d'un mois ou d'une année EN COURS se fait déjà jour pour jour (1er–9 nov. contre 1er–9 oct.) ; l'étiquette le dit
+   maintenant : « 1–9 oct. 2026 » et non plus « octobre 2026 », qui laissait croire au mois complet */
+function rcLibJours(a,b){ const j=x=>{ const [Y,M,D]=x.split('-').map(Number); return new Date(Y,M-1,D); };
+  const A=j(a), B=j(b), memeMois=A.getMonth()===B.getMonth()&&A.getFullYear()===B.getFullYear();
+  if(memeMois){ const m=B.toLocaleDateString(RC_LOC(),{month:'short',year:'numeric'}); return LANG==='en'?B.toLocaleDateString('en-US',{month:'short'})+' '+A.getDate()+'–'+B.getDate()+', '+B.getFullYear():A.getDate()+'–'+B.getDate()+' '+m; }
+  const o={day:'numeric',month:'short'}; return A.toLocaleDateString(RC_LOC(),o)+' – '+B.toLocaleDateString(RC_LOC(),Object.assign({year:'numeric'},o)); }
 function rcLibPrec(sel,Q){ const s=String(sel||''); if(!Q) return '';
-  if(/^(cemois|moisdernier|mois:)/.test(s)) return rcMoisLib(+Q.a.slice(0,4),+Q.a.slice(5,7)-1);
-  if(/^(cetteannee|annee:)/.test(s)) return Q.a.slice(0,4);
+  const j=x=>{ const [Y,M,D]=x.split('-').map(Number); return new Date(Y,M-1,D); };
+  const finMois=x=>{ const d=j(x); return new Date(d.getFullYear(),d.getMonth()+1,0).getDate()===d.getDate(); };
+  if(/^(cemois|moisdernier|mois:)/.test(s)) return (Q.a.slice(8)==='01'&&finMois(Q.b))?rcMoisLib(+Q.a.slice(0,4),+Q.a.slice(5,7)-1):rcLibJours(Q.a,Q.b);
+  if(/^(cetteannee|annee:)/.test(s)) return (Q.a.slice(5)==='01-01'&&Q.b.slice(5)==='12-31')?Q.a.slice(0,4):rcLibJours(Q.a,Q.b);
   return L3('la période d\'avant','the previous period','el período anterior'); }
 /* ---- l'identité d'un canal : une couleur fixe, un nom à l'écran ---- */
 function rcId(nom){ const n=String(nom||'').toLowerCase();

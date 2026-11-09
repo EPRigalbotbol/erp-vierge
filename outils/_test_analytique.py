@@ -44,10 +44,16 @@ GPUB = {'j': {J(2): [50, 300, 20, 1000, 2, 1, 40], J(3): [70, 100, 30, 1200, 1, 
         'p': {'a': J(89), 'b': J(0), 'maj': '2026-11-15T13:00:00Z', 'L': [[bc, 50, 400, 4, 30, 'A', 1], [B0[0], 20, 100, 1, 9, 'B', 2], ['999999999999', 30, 0, 0, 12, 'Inconnu', 3]]}}
 REG = {'comV4': 1, 'canauxV': 3, 'pcCom3': 1, 'canaux': [{'id': 'site', 'nom': 'Site perfumestrade.com', 'com': 3}, {'id': 'sitegros', 'nom': 'Site wholesale.perfumestrade.com', 'com': 3},
        {'id': 'amazon', 'nom': 'Amazon', 'com': 15}, {'id': 'perfumecity', 'nom': 'Perfume City', 'com': 3}], 'envois': {'woocommerce': 0, 'woocommerce-gros': 0, 'shopify-pc': 0}}
+STRAT = {'courante': {'id': 'S1', 'date': '2026-11-01T12:00:00Z', 'faits': [False, True], 'res': {
+  'fr': {'titre': 'Stratégie de novembre', 'diagnostic': 'La pub coûte plus que la marge.', 'actions': [{'titre': 'Sortir 800 parfums de la pub', 'pourquoi': 'Ils perdent 2 859 $ par mois.', 'comment': ['Télécharger la liste', 'La donner au prestataire'], 'cout': '0 $', 'gain': '+2 859 $ par mois', 'mesure': 'pub/mois : 5 667 $ → 2 100 $', 'delai': 'cette semaine'}, {'titre': 'Emails automatiques', 'pourquoi': 'Email : 1 commande en 30 jours.'}],
+         'previsions': {'texte': 'Si la pub baisse…', 'ca': {'prudent': 20000, 'probable': 24000, 'haut': 28000}, 'marge': {'prudent': 1000, 'probable': 2500, 'haut': 4000}}, 'retire': ['Doubler le budget : coûte plus que la marge'], 'manques': ['Search Console']},
+  'en': {'titre': 'November strategy', 'diagnostic': 'Ads cost more than the margin.', 'actions': [{'titre': 'Take 800 perfumes out of ads', 'pourquoi': 'They lose $2,859 a month.'}, {'titre': 'Automatic emails'}], 'previsions': {'ca': {'prudent': 20000, 'probable': 24000, 'haut': 28000}}, 'retire': ['Double the budget'], 'manques': ['Search Console']}}},
+  'rapports': [{'id': 'R1', 'date': '2026-12-01T12:00:00Z', 'strategie': 'S1', 'res': {'fr': {'titre': 'Rapport de novembre', 'bilan': 'La marge après pub est passée de −513 $ à +900 $.', 'actions': [{'titre': 'Sortir 800 parfums', 'verdict': 'a marché', 'avant': '5 667 $', 'apres': '2 100 $', 'explication': 'La pub a baissé.'}], 'garder': ['la liste'], 'arreter': [], 'essayer': ['TikTok Shop'], 'prudence': 'Un seul mois.'},
+    'en': {'titre': 'November report', 'bilan': 'Margin after ads went from −$513 to +$900.', 'actions': [{'titre': 'Take out 800 perfumes', 'verdict': 'worked'}], 'garder': ['the list'], 'essayer': ['TikTok Shop'], 'prudence': 'One month only.'}}}], 'encours': None}
 SESS = """([F,O,P,G,R,lg,role])=>{ localStorage.clear(); localStorage.setItem('sam-comptes-demo-v1','0');
   localStorage.setItem('sam-session-v1',JSON.stringify({id:'x',nom:'Essai',role,depuis:new Date().toISOString()}));
   localStorage.setItem('langue-v1',lg); localStorage.setItem('factures-v1',JSON.stringify(F)); localStorage.setItem('ventes-origine-v1',JSON.stringify(O));
-  localStorage.setItem('pc-origine-v1',JSON.stringify(P)); localStorage.setItem('google-pub-v1',JSON.stringify(G)); localStorage.setItem('reglages-v1',JSON.stringify(R)); }"""
+  localStorage.setItem('pc-origine-v1',JSON.stringify(P)); localStorage.setItem('google-pub-v1',JSON.stringify(G)); localStorage.setItem('reglages-v1',JSON.stringify(R)); localStorage.setItem('strategie-v1',JSON.stringify(window.__ST||{})); }"""
 FR = re.compile(r"\b(Chiffre d'affaires|Marge nette|Commandes en ligne|Venus directement|Recherche Google|Origine inconnue|Tous les sites|Pub dépensée|est-ce que la pub rapporte|jours|Mois dernier|Cette année|Ce mois|commandes?|parfums|perdus|gagnés)\b|[éèêàç]")
 s = socket.socket(); s.bind(('127.0.0.1', 0)); port = s.getsockname()[1]; s.close()
 srv = subprocess.Popen(['python3', '-m', 'http.server', str(port), '--bind', '127.0.0.1'], cwd=D, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL); time.sleep(1)
@@ -60,7 +66,7 @@ try:
             pg.add_init_script("Object.defineProperty(window,'D_HG',{configurable:true,set(v){ window.__hgReel=v; },get(){ return null; }})")
             pg.clock.set_fixed_time(datetime.datetime(auj.year, auj.month, auj.day, 14, 0, tzinfo=ZoneInfo('America/New_York')))
             base = f'http://127.0.0.1:{port}/'
-            pg.goto(base + 'accueil.html'); pg.wait_for_timeout(300); pg.evaluate(SESS, [F, ORIG, PCO, GPUB, REG, lg, role])
+            pg.goto(base + 'accueil.html'); pg.wait_for_timeout(300); pg.evaluate('s=>{ window.__ST=s; }', STRAT); pg.evaluate(SESS, [F, ORIG, PCO, GPUB, REG, lg, role])
             if avant: pg.add_init_script(avant)
             pg.goto(base + page); pg.wait_for_timeout(2600); return pg
         pg = ouvre()
@@ -113,6 +119,19 @@ try:
         with pg.expect_download() as dl:
             pg.click('#an-xl')
         check('le bouton télécharge bien un fichier Excel', dl.value.suggested_filename.endswith('.xlsx'), dl.value.suggested_filename)
+        # la stratégie et le rapport du mois
+        stx = pg.inner_text('section.st')
+        check('LE POINT — la stratégie s\'affiche : titre, diagnostic, actions, prévision en fourchette, et ce que les vérificateurs ont retiré', 'Stratégie de novembre' in stx and 'Sortir 800 parfums de la pub' in stx and 'prudent' in stx.lower() and a(stx, 24000) and pg.locator('section.st details').count() >= 1, stx[:500])
+        check('l\'action déjà faite est cochée et barrée', pg.locator('[data-stf="1"]').is_checked() and 'fait' in (pg.locator('.st-acts > li').nth(1).get_attribute('class') or ''))
+        check('LE POINT — le rapport du mois s\'affiche : bilan, verdict par action, avant → après, à garder / à essayer, prudence', 'Rapport de novembre' in stx and 'a marché' in stx and '2 100 $' in stx.replace('\u202f', ' ').replace('\xa0', ' ') and 'TikTok Shop' in stx and 'Un seul mois' in stx, stx[-600:])
+        check('les deux boutons : mettre à jour la stratégie, rapport du mois', pg.locator('#st-maj').count() == 1 and pg.locator('#st-rap').count() == 1)
+        dos = pg.evaluate("()=>{ const L=rcLignes(); const d=anDossier(L,__an.anCommandes(L)); return {ca:d.trente_derniers_jours.tous_canaux.ca, cmd:d.trente_derniers_jours.sites_en_ligne.commandes, pub:d.trente_derniers_jours.google_ads.pub_depensee, prec:typeof d.trente_jours_d_avant, manq:d.donnees_manquantes.length, pp:typeof d.pub_parfum_par_parfum_90j}; }")
+        check('LE POINT — le dossier envoyé aux agents porte les vrais chiffres de la page (30 jours : 1 290 $, 6 commandes en ligne, 120 $ de pub)', dos['ca'] == 1290 and dos['cmd'] == 6 and dos['pub'] == 120 and dos['manq'] == 3 and dos['pp'] == 'object', dos)
+        envoye = []
+        pg.route('**/strategie/lance', lambda route: (envoye.append(route.request.post_data_json), route.fulfill(status=200, content_type='application/json', body='{"ok":true,"id":"S2"}')))
+        pg.evaluate("()=>{ window.confirm=()=>true; }")
+        pg.click('#st-maj'); pg.wait_for_timeout(600)
+        check('le bouton envoie le dossier au cockpit et affiche « en préparation »', len(envoye) == 1 and envoye[0]['type'] == 'strategie' and envoye[0]['dossier']['trente_derniers_jours']['tous_canaux']['ca'] == 1290 and pg.locator('.st-encours').count() == 1, envoye[:1])
         att = pg.inner_text('.ga-attente') if pg.locator('.ga-attente').count() else ''
         check('LE POINT — « + 2 commandes de la pub payées, pas encore expédiées : 200 $ » (la commande directe n\'y est pas)', '2' in att and a(att, 200) and 'pas encore exp' in att, att)
         check('Google Shopping gratuit : 1 clic, 70 affichages', '1 clic' in pg.inner_text('.ga-free') and '70' in pg.inner_text('.ga-free'), pg.inner_text('.ga-free'))

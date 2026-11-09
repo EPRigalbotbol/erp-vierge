@@ -214,6 +214,8 @@ function anDessine(){
   if(AN.site==='tous'||AN.site==='site') h+=anParfumsPub(tous);
   /* (9 nov. 2026) « Les parfums qui se vendent en ligne » retiré à la demande d'Igal : sur une période courte, chaque parfum ne
      se vend qu'une ou deux fois en ligne — un classement sans intérêt. Le détail par parfum reste dans la fiche du Catalogue. */
+  /* ---- 5. la stratégie et le rapport du mois (agents, cockpit) ---- */
+  h+=anStrategie(L,tous);
   const lus=C.filter(o=>ok(o)&&o.lu).length, nC=C.filter(ok).length;
   h+=`<p class="ga-note">${A3('Ventes et marges comptées comme dans Ventes et le Tableau de bord (commandes expédiées, remboursements déduits). L\'origine d\'une commande est notée par la boutique elle-même (WooCommerce, Shopify) ; « Google Ads » = un clic sur une publicité payante. La pub est lue chaque heure chez Google.','Sales and margins counted as in Sales and the Dashboard (shipped orders, refunds deducted). The origin of an order is recorded by the store itself (WooCommerce, Shopify); “Google Ads” = a click on a paid ad. Ad spend is read from Google every hour.')}${nC?' '+A3(`Origine connue pour ${nf(lus)} des ${nf(nC)} commandes.`,`Origin known for ${nf(lus)} of the ${nf(nC)} orders.`):''}</p>`;
   z.innerHTML=h;
@@ -239,6 +241,9 @@ function anBranche(){
   z.querySelectorAll('.ga-i').forEach(b=>{ b.onmouseenter=()=>montre(b); b.onmouseleave=cache; b.onfocus=()=>montre(b); b.onblur=cache; b.onclick=e=>{ e.stopPropagation(); montre(b); }; });
   if(!window._anInfoDoc){ window._anInfoDoc=1; document.addEventListener('click',cache); window.addEventListener('scroll',cache,{passive:true}); }
   const xl=document.getElementById('an-xl'); if(xl) xl.onclick=anExportPub;
+  const sm=document.getElementById('st-maj'); if(sm) sm.onclick=()=>{ if(confirm(A3('Lancer les agents ? Ils travaillent une à trois minutes sur les chiffres de cette page.','Start the agents? They work for one to three minutes on the figures of this page.'))) anStratLance('strategie'); };
+  const sr=document.getElementById('st-rap'); if(sr) sr.onclick=()=>{ if(confirm(A3('Préparer le rapport du mois ? Les agents comparent les chiffres du jour de la stratégie à ceux d\'aujourd\'hui.','Prepare the monthly report? The agents compare the figures from the day of the strategy with today\'s.'))) anStratLance('rapport'); };
+  z.querySelectorAll('[data-stf]').forEach(c=>c.onchange=()=>{ anStratFait(+c.dataset.stf,c.checked); c.closest('li').classList.toggle('fait',c.checked); });
   const re=()=>{ gaAnime=true; anSauve(); anDessine(); };
   z.querySelectorAll('[data-an]').forEach(b=>b.onclick=()=>{ AN.sel=b.dataset.an; re(); });
   z.querySelectorAll('[data-ans]').forEach(b=>b.onclick=()=>{ AN.site=b.dataset.ans; re(); });
@@ -246,6 +251,85 @@ function anBranche(){
   z.querySelectorAll('[data-ansrc]').forEach(b=>b.onclick=()=>{ AN.src=b.dataset.ansrc; re(); });
 }
 let _anLarg=0; window.addEventListener('resize',()=>{ const w=innerWidth; if(Math.abs(w-_anLarg)<40) return; _anLarg=w; clearTimeout(window._anRz); window._anRz=setTimeout(()=>{ if(document.getElementById('ga-c1')) anDessine(); },200); });
+/* ============ LA STRATÉGIE ET LE RAPPORT DU MOIS (9 nov. 2026) ============
+   Igal : « une partie stratégie… vérifiée par plusieurs agents… en appuyant sur un bouton », « un rapport au bout d'un mois…
+   une vraie explication de professionnel ». La page prépare un DOSSIER avec les chiffres qu'elle calcule déjà (toujours sur les
+   30 derniers jours et les 30 d'avant, quelle que soit la période affichée), l'envoie au cockpit, qui le fait travailler par ses
+   agents (strategie.js) ; le résultat revient dans le magasin strategie-v1 (administrateurs seulement) et s'affiche ici. */
+let STRAT={}; try{ STRAT=JSON.parse(localStorage.getItem('strategie-v1')||'{}')||{}; }catch(e){ STRAT={}; }
+const r0=v=>Math.round((+v||0)*100)/100;
+function anDossier(L,tous){
+  const auj=rcISO(new Date()), j=n=>rcISO(new Date(Date.now()-n*86400e3));
+  const P={a:j(29),b:auj}, Q={a:j(59),b:j(30)};
+  const fen=(X)=>{ const R=rcAgrege(L,X.a,X.b); const C=anDans(tous,X.a,X.b), G=anParFam(C), S=anSomme(C), pub=anPub(X.a,X.b).T;
+    const ads=C.filter(o=>o.site==='site'&&o.fam==='gads'), mgA=ads.reduce((a,o)=>a+o.mg,0), caA=ads.reduce((a,o)=>a+o.ca,0);
+    return { du:X.a, au:X.b,
+      tous_canaux:{ca:r0(R.T.ca),marge_nette:r0(R.T.mg),ventes:R.T.n,flacons:R.T.q},
+      par_canal:Object.values(R.G).map(o=>({canal:o.canal,ca:r0(o.ca),marge_nette:o.hist?null:r0(o.mg),ventes:o.n,perfume_city:rcId(o.canal)==='pc'?Object.fromEntries(Object.entries(o.ou||{}).map(([k,v])=>[k||'?',r0(v.ca)])):undefined})),
+      sites_en_ligne:{commandes:S.n,ca:r0(S.ca),marge_nette:r0(S.mg),par_site:Object.fromEntries(AN_SITES.map(x=>{ const Y=C.filter(o=>o.site===x.id); return [anSiteNom(x.id),{commandes:Y.filter(o=>!o.ret).length,ca:r0(Y.reduce((a,o)=>a+o.ca,0))}]; })),
+        par_origine:Object.fromEntries(Object.entries(G).map(([k,g])=>[anNomGr(k),{commandes:g.n,ca:r0(g.ca),detail:g.det}]))},
+      google_ads:{pub_depensee:r0(pub.pub),ventes_selon_google:r0(pub.ventes),clics:pub.clics,commandes_reelles_venues_de_la_pub:ads.filter(o=>!o.ret).length,ca_reel_de_la_pub:r0(caA),marge_nette_de_ces_commandes:r0(mgA),reste_apres_pub:r0(mgA-pub.pub)},
+      google_shopping_gratuit:{clics:pub.gClics,affichages:pub.gAff} }; };
+  const A=anAnalysePub(tous);
+  const G=anPubJ(), mois={}; Object.keys(G.j||{}).forEach(d=>{ const m=d.slice(0,7), r=G.j[d]||[]; const o=mois[m]=mois[m]||{pub:0,ventes_google:0}; o.pub+=+r[0]||0; o.ventes_google+=+r[1]||0; });
+  Object.values(mois).forEach(o=>{ o.pub=r0(o.pub); o.ventes_google=r0(o.ventes_google); });
+  const att=((ORI['_attente_woocommerce']||{}).L||[]).filter(x=>x.o==='gads');
+  return { date:auj, devise:'USD',
+    trente_derniers_jours:fen(P), trente_jours_d_avant:(Q.a>=RC_COMPLET?fen(Q):'incomplet (avant le 1er octobre 2026)'),
+    pub_google_par_mois:mois,
+    pub_parfum_par_parfum_90j:A?{pub_par_mois:r0(A.pub90/3),gain_par_mois_si_on_sort_les_perdants:r0(A.gain90/3),a_garder:{nombre:A.garder.length,pub_par_mois:r0(A.garder.reduce((a,o)=>a+o.pub,0)/3)},a_sortir_perdent:{nombre:A.sortir.length,pub_par_mois:r0(A.sortir.reduce((a,o)=>a+o.pub,0)/3)},a_sortir_plus_en_stock:{nombre:A.stock.length,pub_par_mois:r0(A.stock.reduce((a,o)=>a+o.pub,0)/3)},a_verifier:A.verif.length,
+      les_10_qui_perdent_le_plus:A.sortir.concat(A.stock).sort((a,b)=>(a.res??-a.pub)-(b.res??-b.pub)).slice(0,10).map(o=>({parfum:(o.marque?o.marque+' ':'')+(o.nom||o.sku),pub_90j:r0(o.pub),resultat_90j:r0(o.res??-o.pub)})),
+      les_10_qui_rapportent_le_plus:A.garder.slice().sort((a,b)=>b.res-a.res).slice(0,10).map(o=>({parfum:(o.marque?o.marque+' ':'')+(o.nom||o.sku),pub_90j:r0(o.pub),resultat_90j:r0(o.res)}))}:'pas encore lu',
+    commandes_de_la_pub_payees_pas_encore_expediees:{nombre:att.length,montant:r0(att.reduce((a,x)=>a+(+x.mt||0),0))},
+    outils_en_place:['WooCommerce (perfumestrade.com, wholesale)','Shopify (Perfume City)','Google Ads (campagnes gérées par un prestataire, « D.C. »)','Google for WooCommerce (2 837 produits envoyés à Google)','Klaviyo (emails)','WhatsApp (envoi des nouveaux arrivages aux clients favoris)','Amazon','Lightspeed (caisse)'],
+    donnees_manquantes:['Search Console non branchée : on ne connaît ni les recherches Google qui mènent au site, ni ses positions','nombre de visiteurs des sites non mesuré : pas de taux de conversion','historique des ventes du site avant octobre 2026 hors de l\'ERP (seulement la pub Google, par mois)'] };
+}
+async function anStratLance(type){
+  const st=document.getElementById('st-msg');
+  try{ const d=anDossier(rcLignes(),anCommandes(rcLignes()));
+    const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/strategie/lance',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},body:JSON.stringify({type,dossier:d})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok){ if(st) st.textContent=j.erreur||('erreur '+r.status); return; }
+    STRAT.encours={type,etape:A3('départ','starting'),depuis:new Date().toISOString()}; gaAnime=true; anDessine();
+  }catch(e){ if(st) st.textContent=A3('Le cockpit ne répond pas : ','The cockpit is not answering: ')+(e&&e.message||e); }
+}
+async function anStratFait(i,fait){
+  try{ await fetch(CK_URL+'/api/o/'+CK_ORG+'/strategie/action',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},body:JSON.stringify({i,fait})});
+    if(STRAT.courante&&STRAT.courante.faits) STRAT.courante.faits[i]=fait; }catch(e){}
+}
+const anLg=()=>LANG==='fr'?'fr':'en';
+const anDate=s=>{ try{ return new Date(s).toLocaleDateString(A3('fr-FR','en-US'),{day:'numeric',month:'long',year:'numeric'}); }catch(e){ return String(s||'').slice(0,10); } };
+const anLi=a=>(Array.isArray(a)&&a.length)?'<ul>'+a.map(x=>`<li>${esc(x)}</li>`).join('')+'</ul>':'';
+function anStrategie(L,tous){
+  const S=STRAT||{}, C=S.courante, E=S.encours, R=(S.rapports||[])[0];
+  let h=`<section class="ga-card ga-pad st"><div class="ga-h"><h3>${A3('Stratégie','Strategy')}</h3><span class="ga-src">${A3('proposée et vérifiée par cinq agents','proposed and checked by five agents')}</span></div>`;
+  h+=`<p class="st-com">${A3('Un stratège propose 3 actions au plus, appuyées sur les chiffres de cette page. Trois vérificateurs indépendants les relisent — les chiffres, la marge, la faisabilité — et une action refusée par un seul d\'entre eux est retirée. Un rédacteur écrit la version finale. Au bout d\'un mois, le « Rapport du mois » compare avant / après, action par action.','A strategist proposes up to 3 actions, based on the figures on this page. Three independent checkers review them — the figures, the margin, the feasibility — and an action refused by any one of them is dropped. An editor writes the final version. After a month, the “Monthly report” compares before / after, action by action.')}</p>`;
+  const enCours=E&&!E.err&&(Date.now()-Date.parse(E.depuis))<15*60e3;
+  if(enCours) h+=`<div class="st-encours"><span class="st-rond"></span><b>${E.type==='rapport'?A3('Le rapport du mois est en préparation','The monthly report is being prepared'):A3('La stratégie est en préparation','The strategy is being prepared')}</b> — <span data-nolang>${esc(E.etape||'')}</span>. ${A3('Une à trois minutes ; la page se met à jour toute seule.','One to three minutes; the page updates by itself.')}</div>`;
+  else if(E&&E.err) h+=`<div class="an-alerte">${A3('La dernière analyse n\'a pas abouti : ','The last analysis did not finish: ')}<span data-nolang>${esc(E.err)}</span></div>`;
+  const age=C?Math.floor((Date.now()-Date.parse(C.date))/86400e3):0;
+  h+=`<div class="ga-actions"><button type="button" class="ga-btn" id="st-maj" ${enCours?'disabled':''}>${C?A3('Mettre à jour la stratégie','Update the strategy'):A3('Établir la stratégie','Build the strategy')}</button>`
+    +(C?`<button type="button" class="ga-btn sec" id="st-rap" ${enCours?'disabled':''}>${A3('Rapport du mois','Monthly report')}</button><span>${age<28?A3(`Le rapport est plus parlant après 4 semaines (dans ${28-age} jour${28-age>1?'s':''}).`,`The report means more after 4 weeks (in ${28-age} day${28-age>1?'s':''}).`):A3('La stratégie a plus de 4 semaines : c\'est le moment du rapport.','The strategy is over 4 weeks old: time for the report.')}</span>`:'')
+    +`<span id="st-msg" class="st-msg"></span></div>`;
+  if(C&&C.res){ const X=C.res[anLg()]||C.res.fr||{};
+    h+=`<div class="st-bloc"><div class="st-t">${esc(X.titre||A3('Stratégie','Strategy'))} <small>${A3('du','of')} ${esc(anDate(C.date))}</small></div>${X.diagnostic?`<p class="st-diag">${esc(X.diagnostic)}</p>`:''}
+      <ol class="st-acts">${(X.actions||[]).map((a,i)=>`<li class="${(C.faits||[])[i]?'fait':''}"><div class="st-ah"><b>${esc(a.titre||'')}</b><label class="st-ok"><input type="checkbox" data-stf="${i}" ${(C.faits||[])[i]?'checked':''}> ${A3('Fait','Done')}</label></div>
+        ${a.pourquoi?`<p><span>${A3('Pourquoi','Why')}</span>${esc(a.pourquoi)}</p>`:''}${(a.comment||[]).length?`<div><span>${A3('Comment','How')}</span>${anLi(a.comment)}</div>`:''}
+        <div class="st-kv">${a.cout?`<div><span>${A3('Coût','Cost')}</span>${esc(a.cout)}</div>`:''}${a.gain?`<div><span>${A3('Gain attendu','Expected gain')}</span>${esc(a.gain)}</div>`:''}${a.mesure?`<div><span>${A3('Ce qu\'on mesurera dans un mois','What we will measure in a month')}</span>${esc(a.mesure)}</div>`:''}${a.delai?`<div><span>${A3('Délai','Timing')}</span>${esc(a.delai)}</div>`:''}</div></li>`).join('')}</ol>`;
+    const pv=X.previsions||{};
+    if(pv.ca||pv.marge) h+=`<div class="st-prev"><b>${A3('Les 30 prochains jours, en fourchette','The next 30 days, as a range')}</b><table><thead><tr><th></th><th>${A3('Prudent','Cautious')}</th><th>${A3('Probable','Likely')}</th><th>${A3('Haut','High')}</th></tr></thead><tbody>
+      ${pv.ca?`<tr><td>${A3("Chiffre d'affaires",'Revenue')}</td><td>${money(pv.ca.prudent)}</td><td><b>${money(pv.ca.probable)}</b></td><td>${money(pv.ca.haut)}</td></tr>`:''}${pv.marge?`<tr><td>${A3('Marge après pub','Margin after ads')}</td><td>${money(pv.marge.prudent)}</td><td><b>${money(pv.marge.probable)}</b></td><td>${money(pv.marge.haut)}</td></tr>`:''}</tbody></table>${pv.texte?`<p>${esc(pv.texte)}</p>`:''}</div>`;
+    if((X.retire||[]).length||(X.manques||[]).length) h+=`<details class="ga-calc"><summary>${A3('Ce que les vérificateurs ont retiré, et ce qui manque','What the checkers removed, and what is missing')}</summary>${(X.retire||[]).length?`<p class="ga-note"><b>${A3('Retiré','Removed')}</b></p>${anLi(X.retire)}`:''}${(X.manques||[]).length?`<p class="ga-note"><b>${A3('Données manquantes','Missing data')}</b></p>${anLi(X.manques)}`:''}</details>`;
+    h+=`</div>`; }
+  else if(!enCours) h+=`<p class="ga-vide">${A3('Pas encore de stratégie : clique sur « Établir la stratégie ».','No strategy yet: click “Build the strategy”.')}</p>`;
+  if(R&&R.res){ const Y=R.res[anLg()]||R.res.fr||{};
+    h+=`<div class="st-bloc st-rapport"><div class="st-t">${esc(Y.titre||A3('Rapport du mois','Monthly report'))} <small>${A3('du','of')} ${esc(anDate(R.date))}</small></div>${Y.bilan?`<p class="st-diag">${esc(Y.bilan)}</p>`:''}${Y.prevision_verifiee?`<p><span class="st-l">${A3('La prévision','The forecast')}</span>${esc(Y.prevision_verifiee)}</p>`:''}
+      ${(Y.actions||[]).map(a=>`<div class="st-ra"><div class="st-ah"><b>${esc(a.titre||'')}</b><span class="st-v">${esc(a.verdict||'')}</span></div>${(a.avant||a.apres)?`<p class="st-av">${esc(a.avant||'')} → <b>${esc(a.apres||'')}</b></p>`:''}${a.explication?`<p>${esc(a.explication)}</p>`:''}</div>`).join('')}
+      <div class="st-kv">${(Y.garder||[]).length?`<div><span>${A3('À garder','Keep')}</span>${anLi(Y.garder)}</div>`:''}${(Y.arreter||[]).length?`<div><span>${A3('À arrêter','Stop')}</span>${anLi(Y.arreter)}</div>`:''}${(Y.essayer||[]).length?`<div><span>${A3('À essayer ensuite','Try next')}</span>${anLi(Y.essayer)}</div>`:''}</div>
+      ${Y.prudence?`<p class="ga-prud">${esc(Y.prudence)}</p>`:''}</div>`;
+    if((S.rapports||[]).length>1) h+=`<details class="ga-calc"><summary>${A3('Rapports précédents','Previous reports')}</summary>${S.rapports.slice(1).map(x=>{ const Z=(x.res&&(x.res[anLg()]||x.res.fr))||{}; return `<p class="ga-note"><b>${esc(anDate(x.date))}</b> — ${esc(Z.bilan||'')}</p>`; }).join('')}</details>`; }
+  return h+`</section>`;
+}
 /* ============ LA PUB, PARFUM PAR PARFUM (9 nov. 2026) ============
    Igal : « la liste des parfums qui rapportent assez pour mériter de la pub » et « quelle économie on pourrait faire par mois ».
    Pour chaque fiche où Google a dépensé de l'argent ces 90 derniers jours (lu par le cockpit, google-pub-v1 › p) :
@@ -343,7 +427,7 @@ majUser();
   anDessine();
   try{ $('src').innerHTML=A3('origine des commandes<br>relue toutes les 10 min','order origin<br>re-read every 10 min'); }catch(e){}
   /* une nouvelle version des factures ou des origines arrive du serveur (toutes les 8 s) : on relit et on redessine */
-  window.addEventListener('storage',e=>{ if(e.key==='ventes-origine-v1'||e.key==='google-pub-v1'||e.key===KFACT){ try{ ORI=JSON.parse(localStorage.getItem('ventes-origine-v1')||'{}')||{}; FACT=JSON.parse(localStorage.getItem(KFACT)||'[]')||[]; }catch(_){} anDessine(); } });
+  window.addEventListener('storage',e=>{ if(e.key==='ventes-origine-v1'||e.key==='google-pub-v1'||e.key==='strategie-v1'||e.key===KFACT){ try{ ORI=JSON.parse(localStorage.getItem('ventes-origine-v1')||'{}')||{}; FACT=JSON.parse(localStorage.getItem(KFACT)||'[]')||[]; STRAT=JSON.parse(localStorage.getItem('strategie-v1')||'{}')||{}; }catch(_){} anDessine(); } });
 })();
 '''
 

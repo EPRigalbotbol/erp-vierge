@@ -206,8 +206,8 @@ function anDessine(){
         <div><span>${A3('La pub coûte, par commande','Ad cost per order')}</span><b>${nA?money(pub.T.pub/nA):'—'}</b></div>
         <div><span>${A3('Une commande de la pub rapporte','An order from the ads earns')}</span><b>${nA?money(mgA/nA):'—'}</b><small>${A3('de marge nette','net margin')}</small></div>
         <div><span>${A3('Ventes : selon Google / réelles','Sales: per Google / actual')}</span><b>${money(pub.T.ventes)} / ${money(caA)}</b><small>${nf(nA)} ${A3('commandes expédiées','shipped orders')}</small></div>
-      </div>
-      <div class="ga-free ${pub.T.gClics?'':'ko'}"><b>${A3('Google Shopping gratuit','Free Google Shopping')}</b> · ${nf(Math.round(pub.T.gClics))} ${A3('clic'+(pub.T.gClics>1?'s':''),'click'+(pub.T.gClics>1?'s':''))} · ${nf(Math.round(pub.T.gAff))} ${A3('affichages','impressions')}${pub.T.gClics?'':` — <span>${A3('aucun clic : le réglage « Checkout » de Merchant Center bloque la visibilité','no clicks: the Merchant Center “Checkout” setting limits visibility')}</span>`}</div>`;
+      </div>${anAttente(P)}
+      <div class="ga-free ${pub.T.gClics?'':'ko'}"><b>${A3('Google Shopping gratuit','Free Google Shopping')}</b> · ${nf(Math.round(pub.T.gClics))} ${A3('clic'+(pub.T.gClics>1?'s':''),'click'+(pub.T.gClics>1?'s':''))} · ${nf(Math.round(pub.T.gAff))} ${A3('affichages','impressions')}${pub.T.gClics?'':` — <span>${A3('aucun clic : Google ne montre presque pas les fiches gratuites (à voir dans Merchant Center)','no clicks: Google barely shows the free listings (to check in Merchant Center)')}</span>`}</div>`;
   }
   h+=`</section></div>`;
   /* (9 nov. 2026) « Les parfums qui se vendent en ligne » retiré à la demande d'Igal : sur une période courte, chaque parfum ne
@@ -243,6 +243,13 @@ function anBranche(){
   z.querySelectorAll('[data-ansrc]').forEach(b=>b.onclick=()=>{ AN.src=b.dataset.ansrc; re(); });
 }
 let _anLarg=0; window.addEventListener('resize',()=>{ const w=innerWidth; if(Math.abs(w-_anLarg)<40) return; _anLarg=w; clearTimeout(window._anRz); window._anRz=setTimeout(()=>{ if(document.getElementById('ga-c1')) anDessine(); },200); });
+/* 9 nov. 2026 (Igal, sur l'écart « selon Google / réelles ») : les commandes venues de la pub, PAYÉES mais pas encore expédiées.
+   Google les compte déjà ; l'ERP les comptera à leur expédition. Le cockpit en garde la liste du moment (_attente_woocommerce) :
+   elle ne s'affiche que si la période choisie va jusqu'à aujourd'hui. */
+function anAttente(P){ const A=(ORI['_attente_woocommerce']&&ORI['_attente_woocommerce'].L)||[]; if(P.b<rcISO(new Date())) return '';
+  const X=A.filter(x=>x&&x.o==='gads'); if(!X.length) return '';
+  const mt=X.reduce((a,x)=>a+(+x.mt||0),0);
+  return `<div class="ga-attente">+ <b>${nf(X.length)}</b> ${A3(X.length>1?'commandes de la pub payées, pas encore expédiées':'commande de la pub payée, pas encore expédiée',X.length>1?'orders from the ads paid, not shipped yet':'order from the ads paid, not shipped yet')} : <b>${money(mt)}</b> <span>${A3('— elles compteront dès leur expédition','— they will count once shipped')}</span></div>`; }
 /* les administrateurs de l'ERP : les rôles Admin et Patron, et eux seuls (un Comptable, qui voit les marges, n'y entre pas) */
 function anAdmin(){ const s=session(); return !!s&&/^(admin|patron)$/.test(String(s.role||'')); }
 window.__an={AN,anCommandes,anFamille,anDessine,ORI:()=>ORI};

@@ -180,6 +180,7 @@ GA_CSS = r'''
 .ga-stats span{font-size:11.5px;color:var(--ink-3);line-height:1.3}
 .ga-stats b{font-size:16px;font-variant-numeric:tabular-nums}
 .ga-stats small{font-size:11px;color:var(--ink-3)}
+.ga-attente{margin:12px 0 0;padding:9px 12px;border-radius:10px;background:var(--surface-2);font-size:13px;color:var(--ink-2);line-height:1.45}.ga-attente span{color:var(--ink-3)}
 .ga-free{margin:12px 0 0;font-size:12.5px;color:var(--ink-2);line-height:1.5}
 .ga-free.ko span{color:#d93025}
 .ga-top10{display:flex;flex-direction:column}

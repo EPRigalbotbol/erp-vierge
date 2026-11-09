@@ -36,7 +36,8 @@ F = [site(1, 1, 100, 2), site(2, 2, 100, 3), site(3, 1, 100, 4), site(4, 1, 100,
      site(9, 1, 100, 40)]
 ORIG = {'woocommerce|1': 'gshop', 'woocommerce|2': 'gads', 'woocommerce|3': 'gads', 'woocommerce|4': 'direct', 'woocommerce-gros|5': 'social:instagram',
         'shopify-pc|12': 'google', 'woocommerce|9': 'gads', '_woocommerce': {'reprise': '2026-11-09T10:00:00Z', 'maj': '2026-11-15T13:50:00Z', 'lues': 9, 'connues': 9, 'err': ''},
-        '_shopify-pc': {'maj': '2026-11-15T13:50:00Z', 'err': 'Shopify : Access denied for customerJourneySummary field.'}}
+        '_shopify-pc': {'maj': '2026-11-15T13:50:00Z', 'err': 'Shopify : Access denied for customerJourneySummary field.'},
+        '_attente_woocommerce': {'maj': '2026-11-15T13:50:00Z', 'L': [{'id': 31, 'd': '2026-11-15', 'mt': 110, 'o': 'gads'}, {'id': 32, 'd': '2026-11-14', 'mt': 90, 'o': 'gads'}, {'id': 33, 'd': '2026-11-14', 'mt': 50, 'o': 'direct'}]}}
 PCO = {'shopify-pc|11': 'boutique', 'shopify-pc|12': 'en ligne'}
 GPUB = {'j': {J(2): [50, 300, 20, 1000, 2, 1, 40], J(3): [70, 100, 30, 1200, 1, 0, 30], J(40): [40, 100, 10, 500, 1, 0, 10]}, '_maj': '2026-11-15T13:00:00Z', '_err': ''}
 REG = {'comV4': 1, 'canauxV': 3, 'pcCom3': 1, 'canaux': [{'id': 'site', 'nom': 'Site perfumestrade.com', 'com': 3}, {'id': 'sitegros', 'nom': 'Site wholesale.perfumestrade.com', 'com': 3},
@@ -95,6 +96,8 @@ try:
         check('LE POINT — le verdict = marge des commandes Google Ads − pub (50 + 70 = 120 $ ; la pub d\'il y a 40 jours n\'y est pas)', a(V, abs(round(mgAds - 120))), [mgAds, V])
         st = pg.inner_text('.ga-stats')
         check('« Ventes : selon Google / réelles » = 400 $ / 300 $ ; coût de la pub par commande = 60 $', a(st, 400) and a(st, 300) and a(st, 60), st)
+        att = pg.inner_text('.ga-attente') if pg.locator('.ga-attente').count() else ''
+        check('LE POINT — « + 2 commandes de la pub payées, pas encore expédiées : 200 $ » (la commande directe n\'y est pas)', '2' in att and a(att, 200) and 'pas encore exp' in att, att)
         check('Google Shopping gratuit : 1 clic, 70 affichages', '1 clic' in pg.inner_text('.ga-free') and '70' in pg.inner_text('.ga-free'), pg.inner_text('.ga-free'))
         check('deux courbes cumulées (marge et pub) avec leurs étiquettes', pg.locator('#ga-c2 .ga-l').count() == 2 and pg.locator('#ga-c2 .ga-lab').count() == 2)
         check('une relecture en panne (Shopify) est dite en haut de la page', 'Access denied' in T and pg.locator('.an-alerte').count() == 1, T[:400])

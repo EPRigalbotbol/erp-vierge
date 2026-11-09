@@ -770,7 +770,8 @@ function tst(p){
   if(CIBLE!=='pc') return 0;
   const k=p.bc?String(p.bc).replace(/^0+/,''):'';
   const e=(k&&TSTPC[k])||TSTPC[p.cle];
-  return e?(+e.n||0):0;
+  /* 10 nov. 2026 (Igal : « sur tous les parfums, un tester chez Perfume City, pas plus ») : le Sheet importé le 13 oct. portait 95, 72, 60… dans la colonne des testers. Un parfum a un tester, ou aucun : jamais plus, à la lecture comme à l'écriture. */
+  return e&&(+e.n>0)?1:0;
 }
 /* ce qu'on doit trouver en rayon : le vendable plus ce qui est en vitrine */
 function qtePhys(p){ return qteAtt(p)+tst(p); }
@@ -925,7 +926,7 @@ function impApplique(){
       if(remp) lit('testeurs-pc-v1',{});
       IMP.lignes.forEach(l=>{ if(l.tst==null) return;
         const k=l.bc?String(l.bc).replace(/^0+/,''):'n-'+impNorm(l.marque+l.nom+l.ml);
-        if(l.tst>0) T[k]=Object.assign({},T[k]||{},{n:l.tst,bc:l.bc||'',ref:((l.marque||'')+' '+(l.nom||'')).trim(),t:new Date().toISOString(),u:(typeof NOM_UTIL!=='undefined'?NOM_UTIL:USR)||''});
+        if(l.tst>0) T[k]=Object.assign({},T[k]||{},{n:1,   /* un tester, jamais plus, quoi que dise la colonne */ bc:l.bc||'',ref:((l.marque||'')+' '+(l.nom||'')).trim(),t:new Date().toISOString(),u:(typeof NOM_UTIL!=='undefined'?NOM_UTIL:USR)||''});
         else delete T[k]; });
       ecrit('testeurs-pc-v1',T); }
   } else {

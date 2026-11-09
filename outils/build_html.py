@@ -5484,7 +5484,7 @@ function pcDepose(p,r){
                   pa!=null?r.vend*pa:null,'non',(p.bc?'b'+p.bc:r.k),null,null]);
   if(!pcsSauve(rows)) return false;
   if(r.t){ const T=pcTesteurs();
-    T[r.k]=Object.assign({},T[r.k]||{},{n:(+(T[r.k]&&T[r.k].n||0))+r.t,
+    T[r.k]=Object.assign({},T[r.k]||{},{n:1,   /* 10 nov. 2026 (Igal) : un tester par parfum chez Perfume City, jamais plus */
       bc:p.bc||'', ref:((p.marque||'')+' '+(p.nom||'')).trim(),
       t:new Date().toISOString(), u:USR||'(non renseigné)'});
     ecrit(K_TEST,T); }

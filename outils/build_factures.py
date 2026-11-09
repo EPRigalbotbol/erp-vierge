@@ -1059,7 +1059,7 @@ function dessineApercu(){
   /* 3 nov. 2026 (Sam : « quand je reçois une nouvelle commande, j'ai besoin de savoir combien Perfume City a en stock aussi ») :
      sous la case Perfume City, son stock actuel (et son tester s'il en a un), puis ce qu'il deviendra avec la part tapée */
   const pcLigne=x=>{ try{ const v=IDX[x.cle]; if(!v||!v[0]||typeof pcsCarte!=='function') return '';
-      const o=pcsCarte()[pcsCle([v[0]])], av=o?Math.max(0,Math.round(+o.q||0)):0, t=+((pcTesteurs()[pcTestClef(v[0])]||{}).n||0);
+      const o=pcsCarte()[pcsCle([v[0]])], av=o?Math.max(0,Math.round(+o.q||0)):0, t=+((pcTesteurs()[pcTestClef(v[0])]||{}).n||0)>0?1:0;   /* un tester, jamais plus */
       const pt=x.pc>0?pcPartage(v[0],x.pc):null;
       const enStock=L3('en stock','in stock','en stock'), tester=L3('tester','tester','tester');
       return `<small class="pcs" data-nolang>${enStock} <b>${nf(av)}</b>${t?' + '+nf(t)+' '+tester:''}${pt?` → <b>${nf(av+pt.vend)}</b>${pt.t?' + 1 '+tester:''}`:''}</small>`; }catch(e){ return ''; } };
@@ -1476,7 +1476,7 @@ const K_PC_TEST='testeurs-pc-v1';
 const pcTestClef=bc=>String(bc||'').replace(/^0+/,'');
 function pcTesteurs(){ const t=lit(K_PC_TEST,{}); return (t&&typeof t==='object'&&!Array.isArray(t))?t:{}; }
 function pcPartage(bc,n){ const k=pcTestClef(bc); const deja=+((pcTesteurs()[k]||{}).n||0); const t=(deja>0||!(n>0))?0:1; return {k,t,vend:Math.max(0,n-t)}; }
-function pcTestNote(bc,ref,dt){ try{ const T=pcTesteurs(), k=pcTestClef(bc); const n=Math.max(0,+((T[k]||{}).n||0)+dt);
+function pcTestNote(bc,ref,dt){ try{ const T=pcTesteurs(), k=pcTestClef(bc); const n=Math.min(1,Math.max(0,(+((T[k]||{}).n||0)>0?1:0)+dt));   /* un tester, jamais plus (10 nov. 2026) */
     if(n) T[k]=Object.assign({},T[k]||{},{n,bc:String(bc||''),ref:ref||'',t:new Date().toISOString(),u:USR||'(non renseigné)'}); else delete T[k];
     ecrit(K_PC_TEST,T); }catch(e){} }
 /* ce qui part sur Shopify pour une ligne : le vendable ; une facture d'avant cette règle (sans pcVend) envoie tout, comme à l'époque */

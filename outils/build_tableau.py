@@ -244,7 +244,7 @@ const coulCanal=(n,i)=>estPCt(n)?'#E0457F':COUL[i%COUL.length];   /* Perfume Cit
 function blocPC(){
   const rows=(typeof pcsRows==='function'&&pcsRows())||[];
   let T={}; try{ T=lit('testeurs-pc-v1',{})||{}; }catch(e){}
-  const flac=rows.reduce((a,r)=>a+(+r[5]||0),0), vit=Object.values(T).reduce((a,v)=>a+(+(v&&v.n)||0),0);
+  const flac=rows.reduce((a,r)=>a+(+r[5]||0),0), vit=Object.values(T).reduce((a,v)=>a+((+(v&&v.n)||0)>0?1:0),0);   /* un tester par parfum, jamais plus (10 nov. 2026) */
   const capPC=rows.reduce((a,r)=>a+(r[6]!=null?(+r[5]||0)*(+r[6]):0),0);
   const enSt=rows.filter(r=>(+r[5]||0)>0).length;
   const V=entre(J30).filter(x=>estPCt(x.canal));

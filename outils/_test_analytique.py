@@ -131,7 +131,12 @@ try:
         pg.route('**/strategie/lance', lambda route: (envoye.append(route.request.post_data_json), route.fulfill(status=200, content_type='application/json', body='{"ok":true,"id":"S2"}')))
         pg.evaluate("()=>{ window.confirm=()=>true; }")
         pg.click('#st-maj'); pg.wait_for_timeout(600)
-        check('le bouton envoie le dossier au cockpit et affiche « en préparation »', len(envoye) == 1 and envoye[0]['type'] == 'strategie' and envoye[0]['dossier']['trente_derniers_jours']['tous_canaux']['ca'] == 1290 and pg.locator('.st-encours').count() == 1, envoye[:1])
+        check('le bouton envoie le dossier au cockpit et affiche « en préparation »', len(envoye) == 1 and envoye[0]['type'] == 'strategie' and envoye[0]['dossier']['trente_derniers_jours']['tous_canaux']['ca'] == 1290 and pg.locator('.sc').count() == 1, envoye[:1])
+        check('LE POINT — pendant le travail des agents : une vraie vidéo d\'équipe (quelqu\'un présente des chiffres), l\'étape en cours, le chrono', '/pub/attente/42648.mp4' in (pg.locator('.sc video').get_attribute('src') or '') and pg.locator('.sc-etapes li.on').count() == 1 and pg.locator('.sc-chrono').count() == 1)
+        pg.evaluate("()=>{ STRAT.encours={type:'strategie',etape:'trois vérificateurs relisent',depuis:new Date().toISOString()}; anDessine(); }")
+        check('à l\'étape des vérificateurs : la vidéo change (l\'équipe relit autour de la table), l\'étape 1 est cochée', '/pub/attente/46680.mp4' in (pg.locator('.sc video').get_attribute('src') or '') and pg.locator('.sc-etapes li.ok').count() == 1)
+        pg.evaluate("()=>{ STRAT.encours=null; anDessine(); }")
+        check('LE POINT — la stratégie est prête : une poignée de main « Décision prise », puis le résultat', '/pub/attente/30010.mp4' in (pg.locator('.sc video').get_attribute('src') or '') and 'Décision prise' in pg.inner_text('.sc-accord'))
         att = pg.inner_text('.ga-attente') if pg.locator('.ga-attente').count() else ''
         check('LE POINT — « + 2 commandes de la pub payées, pas encore expédiées : 200 $ » (la commande directe n\'y est pas)', '2' in att and a(att, 200) and 'pas encore exp' in att, att)
         check('Google Shopping gratuit : 1 clic, 70 affichages', '1 clic' in pg.inner_text('.ga-free') and '70' in pg.inner_text('.ga-free'), pg.inner_text('.ga-free'))

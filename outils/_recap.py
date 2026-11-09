@@ -220,6 +220,29 @@ GA_CSS = r'''
 .st-prev th,.st-prev td{padding:5px 14px 5px 0;text-align:right}.st-prev th:first-child,.st-prev td:first-child{text-align:left;color:var(--ink-3)}
 .st-prev th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
 .st-ra{padding:8px 0;border-top:1px solid var(--line-2)}.st-v{font-size:12px;font-weight:700;color:var(--an-3)}.st-av{font-variant-numeric:tabular-nums}
+.sc{position:relative;margin:12px 0 4px;border-radius:14px;overflow:hidden;aspect-ratio:16/7;min-height:230px;background:#111;box-shadow:0 8px 26px rgba(0,0,0,.18)}
+.sc-v{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;animation:scZoom 18s ease-in-out infinite alternate}
+@keyframes scZoom{from{transform:scale(1.02)}to{transform:scale(1.10)}}
+.sc-voile{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.45) 0%,rgba(0,0,0,0) 30%,rgba(0,0,0,0) 45%,rgba(0,0,0,.72) 100%)}
+.sc-haut{position:absolute;left:16px;right:16px;top:12px;display:flex;justify-content:space-between;align-items:center;color:#fff;font-size:13px;font-weight:600}
+.sc-live{display:inline-flex;align-items:center;gap:8px;background:rgba(0,0,0,.35);backdrop-filter:blur(6px);padding:6px 12px;border-radius:999px}
+.sc-live i{width:8px;height:8px;border-radius:50%;background:#ff5a4f;animation:scLive 1.4s infinite}
+@keyframes scLive{0%,100%{opacity:1}50%{opacity:.25}}
+.sc-chrono{background:rgba(0,0,0,.35);backdrop-filter:blur(6px);padding:6px 11px;border-radius:999px;font-variant-numeric:tabular-nums}
+.sc-bas{position:absolute;left:16px;right:16px;bottom:12px;color:#fff}
+.sc-dit{position:relative;height:30px;margin-bottom:8px}
+.sc-dit span{position:absolute;left:0;bottom:0;font-size:clamp(15px,2vw,20px);font-weight:600;text-shadow:0 2px 8px rgba(0,0,0,.5);opacity:0;animation:scDit calc(var(--n)*4s) calc(var(--j)*4s) infinite}
+@keyframes scDit{0%{opacity:0;transform:translateY(8px)}6%,28%{opacity:1;transform:none}34%,100%{opacity:0;transform:translateY(-6px)}}
+.sc-etapes{display:flex;gap:6px 18px;flex-wrap:wrap;list-style:none;padding:0;margin:0;counter-reset:e}
+.sc-etapes li{font-size:12.5px;color:rgba(255,255,255,.65);display:inline-flex;align-items:center;gap:7px;counter-increment:e}
+.sc-etapes li::before{content:counter(e);width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:1.5px solid rgba(255,255,255,.6)}
+.sc-etapes li.on{color:#fff;font-weight:700}.sc-etapes li.on::before{background:#fff;color:#111;border-color:#fff;animation:scPulse 1.4s infinite}
+.sc-etapes li.ok{color:rgba(255,255,255,.9)}.sc-etapes li.ok::before{content:"✓";background:#1baf7a;border-color:#1baf7a;color:#fff}
+@keyframes scPulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.6)}100%{box-shadow:0 0 0 9px rgba(255,255,255,0)}}
+.sc-accord{position:absolute;left:0;right:0;bottom:22px;display:flex;justify-content:center;align-items:center;gap:12px;color:#fff;font-size:clamp(17px,2.4vw,24px);font-weight:700;text-shadow:0 2px 10px rgba(0,0,0,.5);animation:scAccord .8s .4s both}
+.sc-accord b{width:40px;height:40px;border-radius:50%;background:#1baf7a;display:inline-flex;align-items:center;justify-content:center;font-size:22px;text-shadow:none}
+@keyframes scAccord{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.sc *{animation:none!important}.sc-dit span:first-child{opacity:1}}
 .ga-free{margin:12px 0 0;font-size:12.5px;color:var(--ink-2);line-height:1.5}
 .ga-free.ko span{color:#d93025}
 .ga-top10{display:flex;flex-direction:column}

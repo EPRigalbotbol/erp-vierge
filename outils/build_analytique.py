@@ -241,6 +241,8 @@ function anBranche(){
   z.querySelectorAll('.ga-i').forEach(b=>{ b.onmouseenter=()=>montre(b); b.onmouseleave=cache; b.onfocus=()=>montre(b); b.onblur=cache; b.onclick=e=>{ e.stopPropagation(); montre(b); }; });
   if(!window._anInfoDoc){ window._anInfoDoc=1; document.addEventListener('click',cache); window.addEventListener('scroll',cache,{passive:true}); }
   const xl=document.getElementById('an-xl'); if(xl) xl.onclick=anExportPub;
+  clearInterval(window._anChrono); const ch=document.querySelector('.sc-chrono');
+  if(ch) window._anChrono=setInterval(()=>{ const el=document.querySelector('.sc-chrono'); if(!el){ clearInterval(window._anChrono); return; } const d=Math.max(0,Math.round((Date.now()-Date.parse(el.dataset.depuis))/1000)); el.textContent=Math.floor(d/60)+':'+String(d%60).padStart(2,'0'); },1000);
   const sm=document.getElementById('st-maj'); if(sm) sm.onclick=()=>{ if(confirm(A3('Lancer les agents ? Ils travaillent une à trois minutes sur les chiffres de cette page.','Start the agents? They work for one to three minutes on the figures of this page.'))) anStratLance('strategie'); };
   const sr=document.getElementById('st-rap'); if(sr) sr.onclick=()=>{ if(confirm(A3('Préparer le rapport du mois ? Les agents comparent les chiffres du jour de la stratégie à ceux d\'aujourd\'hui.','Prepare the monthly report? The agents compare the figures from the day of the strategy with today\'s.'))) anStratLance('rapport'); };
   z.querySelectorAll('[data-stf]').forEach(c=>c.onchange=()=>{ anStratFait(+c.dataset.stf,c.checked); c.closest('li').classList.toggle('fait',c.checked); });
@@ -284,6 +286,35 @@ function anDossier(L,tous){
     outils_en_place:['WooCommerce (perfumestrade.com, wholesale)','Shopify (Perfume City)','Google Ads (campagnes gérées par un prestataire, « D.C. »)','Google for WooCommerce (2 837 produits envoyés à Google)','Klaviyo (emails)','WhatsApp (envoi des nouveaux arrivages aux clients favoris)','Amazon','Lightspeed (caisse)'],
     donnees_manquantes:['Search Console non branchée : on ne connaît ni les recherches Google qui mènent au site, ni ses positions','nombre de visiteurs des sites non mesuré : pas de taux de conversion','historique des ventes du site avant octobre 2026 hors de l\'ERP (seulement la pub Google, par mois)'] };
 }
+/* LA SALLE DE RÉUNION (9 nov. 2026). Igal : « une petite animation où on voit des gens discuter, se mettre d'accord, écrire… »,
+   puis « je veux de vrais personnages… une petite vidéo d'une vraie équipe en réunion, le temps que la décision soit prise ».
+   Pendant que les agents travaillent, une vraie vidéo d'équipe passe, et elle CHANGE avec l'étape : quelqu'un présente des
+   chiffres (le stratège propose), l'équipe relit autour de la table (les vérificateurs), on écrit (le rédacteur) ; quand la
+   stratégie est prête, une poignée de main (« décision prise »), puis le résultat. Vidéos libres de droits (Mixkit), servies
+   par le cockpit (/pub/attente). Par-dessus : l'étape, ce que l'agent est en train de faire, et le chrono. */
+const AN_VID={propose:'42648',relit:'46680',ecrit:'4809',accord:'30010',compare:'22961'};
+const anVid=id=>(typeof CK_URL!=='undefined'&&CK_URL?CK_URL:'')+'/pub/attente/'+id+'.mp4';
+function anScene(E){
+  const rap=E.type==='rapport', e=String(E.etape||'');
+  const ph=rap?(/contr[ôo]leur/i.test(e)?1:/r[ée]dacteur/i.test(e)?2:0):(/v[ée]rificateur/i.test(e)?1:/r[ée]dacteur/i.test(e)?2:0);
+  const vid=rap?[AN_VID.compare,AN_VID.relit,AN_VID.ecrit][ph]:[AN_VID.propose,AN_VID.relit,AN_VID.ecrit][ph];
+  const etapes=rap?[A3('L\'analyste compare avant / après','The analyst compares before / after'),A3('Le contrôleur vérifie chaque chiffre','The controller checks every figure'),A3('Le rédacteur écrit le rapport','The editor writes the report')]
+    :[A3('Le stratège propose','The strategist proposes'),A3('Trois vérificateurs relisent','Three checkers review'),A3('Le rédacteur écrit','The editor writes')];
+  const dits=rap?[[A3('Avant… après… action par action.','Before… after… action by action.'),A3('Qu\'est-ce qui a vraiment marché ?','What really worked?')],[A3('Chaque chiffre est recompté.','Every figure is recounted.'),A3('Pas d\'exagération.','No overstatement.')],[A3('Un rapport clair, en français et en anglais.','A clear report, in French and English.'),A3('Presque fini…','Almost done…')]]
+    :[[A3('Il étudie les chiffres de la page…','Studying the figures on this page…'),A3('3 actions au plus, chacune appuyée sur un chiffre.','Up to 3 actions, each backed by a figure.')],
+      [A3('« Ce chiffre, il sort d\'où ? »','“Where does this figure come from?”'),A3('« Ça rapporte vraiment, après la pub ? »','“Does it really pay, after ads?”'),A3('« Sam peut le faire cette semaine ? »','“Can Sam do it this week?”')],
+      [A3('Il ne garde que ce que les trois ont validé.','Keeping only what all three approved.'),A3('Il écrit en mots simples, en français et en anglais.','Writing in plain words, in French and English.')]];
+  const depuis=Math.max(0,Math.round((Date.now()-Date.parse(E.depuis))/1000));
+  return `<div class="sc"><video class="sc-v" src="${esc(anVid(vid))}" autoplay muted loop playsinline preload="auto"></video><div class="sc-voile"></div>
+    <div class="sc-haut"><span class="sc-live"><i></i>${rap?A3('Rapport du mois en préparation','Monthly report in progress'):A3('Stratégie en préparation','Strategy in progress')}</span><span data-nolang class="sc-chrono" data-depuis="${esc(E.depuis)}">${Math.floor(depuis/60)}:${String(depuis%60).padStart(2,'0')}</span></div>
+    <div class="sc-bas"><div class="sc-dit">${dits[ph].map((t,j)=>`<span style="--j:${j};--n:${dits[ph].length}">${esc(t)}</span>`).join('')}</div>
+      <ol class="sc-etapes">${etapes.map((t,i)=>`<li class="${i<ph?'ok':i===ph?'on':''}">${esc(t)}</li>`).join('')}</ol></div></div>`;
+}
+/* la décision est prise : une poignée de main quelques secondes, puis le résultat */
+function anSceneFin(rap){
+  return `<div class="sc sc-fin"><video class="sc-v" src="${esc(anVid(AN_VID.accord))}" autoplay muted playsinline preload="auto"></video><div class="sc-voile"></div>
+    <div class="sc-accord"><b>✓</b><span>${rap?A3('Le rapport est prêt','The report is ready'):A3('Décision prise : la stratégie est prête','Decision made: the strategy is ready')}</span></div></div>`;
+}
 async function anStratLance(type){
   const st=document.getElementById('st-msg');
   try{ const d=anDossier(rcLignes(),anCommandes(rcLignes()));
@@ -305,8 +336,10 @@ function anStrategie(L,tous){
   let h=`<section class="ga-card ga-pad st"><div class="ga-h"><h3>${A3('Stratégie','Strategy')}</h3><span class="ga-src">${A3('proposée et vérifiée par cinq agents','proposed and checked by five agents')}</span></div>`;
   h+=`<p class="st-com">${A3('Un stratège propose 3 actions au plus, appuyées sur les chiffres de cette page. Trois vérificateurs indépendants les relisent — les chiffres, la marge, la faisabilité — et une action refusée par un seul d\'entre eux est retirée. Un rédacteur écrit la version finale. Au bout d\'un mois, le « Rapport du mois » compare avant / après, action par action.','A strategist proposes up to 3 actions, based on the figures on this page. Three independent checkers review them — the figures, the margin, the feasibility — and an action refused by any one of them is dropped. An editor writes the final version. After a month, the “Monthly report” compares before / after, action by action.')}</p>`;
   const enCours=E&&!E.err&&(Date.now()-Date.parse(E.depuis))<15*60e3;
-  if(enCours) h+=`<div class="st-encours"><span class="st-rond"></span><b>${E.type==='rapport'?A3('Le rapport du mois est en préparation','The monthly report is being prepared'):A3('La stratégie est en préparation','The strategy is being prepared')}</b> — <span data-nolang>${esc(E.etape||'')}</span>. ${A3('Une à trois minutes ; la page se met à jour toute seule.','One to three minutes; the page updates by itself.')}</div>`;
-  else if(E&&E.err) h+=`<div class="an-alerte">${A3('La dernière analyse n\'a pas abouti : ','The last analysis did not finish: ')}<span data-nolang>${esc(E.err)}</span></div>`;
+  if(enCours){ h+=anScene(E); window._anEnCours=E.type; }
+  else if(window._anEnCours&&!(E&&E.err)){ const t=window._anEnCours; window._anEnCours=null; window._anFin=Date.now(); window._anFinType=t; setTimeout(()=>{ gaAnime=true; anDessine(); },6500); }
+  if(!enCours&&window._anFin&&Date.now()-window._anFin<6000) h+=anSceneFin(window._anFinType==='rapport');
+  if(!enCours&&E&&E.err) h+=`<div class="an-alerte">${A3('La dernière analyse n\'a pas abouti : ','The last analysis did not finish: ')}<span data-nolang>${esc(E.err)}</span></div>`;
   const age=C?Math.floor((Date.now()-Date.parse(C.date))/86400e3):0;
   h+=`<div class="ga-actions"><button type="button" class="ga-btn" id="st-maj" ${enCours?'disabled':''}>${C?A3('Mettre à jour la stratégie','Update the strategy'):A3('Établir la stratégie','Build the strategy')}</button>`
     +(C?`<button type="button" class="ga-btn sec" id="st-rap" ${enCours?'disabled':''}>${A3('Rapport du mois','Monthly report')}</button><span>${age<28?A3(`Le rapport est plus parlant après 4 semaines (dans ${28-age} jour${28-age>1?'s':''}).`,`The report means more after 4 weeks (in ${28-age} day${28-age>1?'s':''}).`):A3('La stratégie a plus de 4 semaines : c\'est le moment du rapport.','The strategy is over 4 weeks old: time for the report.')}</span>`:'')

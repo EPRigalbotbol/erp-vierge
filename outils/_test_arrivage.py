@@ -5,7 +5,7 @@
 #   2. « Préparer l'envoi » ouvre le Catalogue en cadre (#arrivage=<id>&cadre=1) : les parfums de la réception (photos), les
 #      favoris AVEC numéro (doublons de nom réunis, désinscrits et non-favoris exclus, sans numéro listés à part), leur langue ;
 #   3. le PDF est fabriqué d'avance dans chaque langue des favoris et déposé au cockpit (type « arrivage ») : un vrai PDF ;
-#   4. « WhatsApp » ouvre l'APPLICATION WhatsApp (whatsapp://send) avec le message dans la langue du client et le lien du PDF ;
+#   4. les clients se cochent (aucun au départ, « Tout cocher » / « Tout décocher ») ; « Envoyer par WhatsApp » ouvre l'APPLICATION WhatsApp (whatsapp://send) avec le message dans la langue du client et le lien du PDF ;
 #      « WhatsApp Web » ouvre web.whatsapp.com ; l'envoi est noté (envoyé ✓, journal) ;
 #   5. décocher un parfum refait le PDF (même lien) ; « ajouter aussi » la réception du même jour ajoute ses parfums ;
 #   6. « Fermer » referme le cadre ; le détail d'une réception a son bouton « Envoyer aux clients favoris » ;
@@ -106,27 +106,44 @@ try:
         t = fr.inner_text('#arrov')
         check('la fenêtre se voit en mode cadre, et liste Javier comme « sans numéro »', S['vis'] == 'visible' and 'Favoris sans numéro' in t and 'Javier' in t, (S['vis'], t[-300:]))
 
-        print('3. le PDF, prêt d\'avance dans chaque langue')
+        print('3. les clients se cochent (aucun au départ) ; le PDF est prêt d\'avance dans leurs langues')
+        S = fr.evaluate("()=>({sel:window.__ARR.get().sel.size, dis:document.getElementById('arr-envoi').disabled, lib:document.getElementById('arr-envoi').innerText})")
+        check('LE POINT — au départ aucun client n\'est coché : le bouton dit « Coche au moins un client », éteint, et aucun PDF n\'est fabriqué', S['sel'] == 0 and S['dis'] and 'Coche au moins un client' in S['lib'] and not DOCS, (S, len(DOCS)))
+        fr.click('#arr-ctous'); fr.wait_for_timeout(300)
+        S = fr.evaluate("()=>({sel:window.__ARR.get().sel.size, lib:document.getElementById('arr-envoi').innerText})")
+        check('LE POINT — « Tout cocher » : les 3 clients joignables cochés, « Envoyer par WhatsApp (3 clients) »', S['sel'] == 3 and 'Envoyer par WhatsApp (3 clients)' in S['lib'], S)
         attend(fr, "()=>{ const e=window.__ARR.get().etat; return e.es==='ok'&&e.fr==='ok'&&e.en==='ok'; }", 60000)
         par = {d['q'].get('langue'): d for d in DOCS}
         check('LE POINT — trois PDF déposés (es, fr, en), type « arrivage », 5 parfums, un vrai PDF d\'une page', set(par) == {'es', 'fr', 'en'} and all(d['q'].get('type') == 'arrivage' and d['q'].get('lignes') == '5' and d['pdf'][:5] == b'%PDF-' for d in par.values())
               and len(re.findall(rb'/Type\s*/Page[^s]', par['en']['pdf'])) == 1, [(d['num'], d['q'], len(d['pdf'] or b'')) for d in DOCS])
         check('les numéros des PDF : ARR-<réception>-<LANGUE>', par.get('es', {}).get('num') == 'ARR-MPS1-ES' and par.get('fr', {}).get('num') == 'ARR-MPS1-FR', [d['num'] for d in DOCS])
         (D / '_apercu_arrivage.pdf').write_bytes(par['fr']['pdf'])
+        fr.click('#arr-caucun'); fr.wait_for_timeout(300)
+        check('« Tout décocher » : plus personne, le bouton s\'éteint', fr.evaluate("()=>window.__ARR.get().sel.size") == 0 and fr.evaluate("()=>document.getElementById('arr-envoi').disabled"))
 
-        print('4. WhatsApp depuis l\'ordinateur')
-        fr.click('.arr-d:has-text("Carmen") [data-arrwa]'); fr.wait_for_timeout(500)
+        print('4. un seul client, puis tous à la suite')
+        fr.check('.arr-d:has-text("Carmen") input[data-arrsel]'); fr.wait_for_timeout(300)
+        check('Carmen seule cochée : « Envoyer par WhatsApp (1 client) »', 'Envoyer par WhatsApp (1 client)' in fr.inner_text('#arr-envoi'), fr.inner_text('#arr-envoi'))
+        fr.click('#arr-envoi'); fr.wait_for_timeout(500)
         u = fr.evaluate("()=>window.__arrDernier||''"); txt = urllib.parse.unquote(u.split('&text=')[-1]) if '&text=' in u else ''
-        check('LE POINT — Carmen : l\'application WhatsApp (whatsapp://send) sur son numéro, message en espagnol avec le lien du PDF espagnol',
+        check('LE POINT — Carmen seule : l\'application WhatsApp (whatsapp://send) sur son numéro, message en espagnol avec le lien du PDF espagnol',
               u.startswith('whatsapp://send?phone=17865550101&text=') and txt.startswith('Hola Carmen') and 'nuevos arribos' in txt and 'https://ck.test/d/dasy/jetonARR-MPS1-ES' in txt and 'Precios a solicitud' in txt, (u[:80], txt))
         E = fr.evaluate("()=>lit('arrivages-envoyes-v1',{})")
         J = fr.evaluate("()=>lit('crm-journal-v1',[]).map(j=>j.lib)")
-        check('l\'envoi est noté : « envoyé ✓ » sur la ligne, dans la réception et au Journal', 'Carmen' in ((E.get(fid) or {}).get('a') or {}) and 'envoyé' in fr.inner_text('.arr-d.fait') and any('nouveaux arrivages envoyés à Carmen' in j for j in J), (E, J[-1:]))
+        check('l\'envoi est noté (réception, Journal) ; le bouton dit « C\'est fait : 1 envoyé »', 'Carmen' in ((E.get(fid) or {}).get('a') or {}) and any('nouveaux arrivages envoyés à Carmen' in j for j in J) and "C'est fait : 1 envoyé" in fr.inner_text('#arr-envoi'), (E, J[-1:], fr.inner_text('#arr-envoi')))
+        fr.click('#arr-caucun'); fr.wait_for_timeout(200)
         fr.check('input[name=arrwa][value=web]'); fr.wait_for_timeout(200)
-        fr.click('.arr-d:has-text("Miky Chevalier") [data-arrwa]'); fr.wait_for_timeout(700)
-        u = fr.evaluate("()=>window.__arrDernier||''"); txt = urllib.parse.unquote(u.split('&text=')[-1]) if '&text=' in u else ''
+        fr.click('#arr-ctous'); fr.wait_for_timeout(300)
+        vus = []
+        for k in range(3):
+            fr.click('#arr-envoi'); fr.wait_for_timeout(600)
+            vus.append((fr.evaluate("()=>window.__arrDernier||''"), fr.inner_text('#arr-envoi')))
+        noms = [urllib.parse.unquote(v[0].split('&text=')[-1]).split(',')[0] for v in vus]
+        check('LE POINT — « Tout cocher » puis un clic par client : Carmen, Miky, Robert, chacun dans sa langue, « Client suivant : … (2/3) », puis « C\'est fait : 3 envoyés »',
+              noms == ['Hola Carmen', 'Bonjour Miky', 'Hello Robert'] and 'Client suivant : Miky Chevalier (2/3)' in vus[0][1] and 'Client suivant : Robert (3/3)' in vus[1][1] and "C'est fait : 3 envoyés" in vus[2][1], (noms, [v[1] for v in vus]))
+        u = vus[1][0]; txt = urllib.parse.unquote(u.split('&text=')[-1])
         check('LE POINT — « WhatsApp Web » : web.whatsapp.com, Miky en français (« veuillez trouver ci-joint nos nouveaux arrivages »)',
-              u.startswith('https://web.whatsapp.com/send?phone=33612345678&text=') and txt.startswith('Bonjour Miky') and 'Veuillez trouver ci-joint nos nouveaux arrivages' in txt and 'jetonARR-MPS1-FR' in txt, (u[:80], txt))
+              u.startswith('https://web.whatsapp.com/send?phone=33612345678&text=') and 'Veuillez trouver ci-joint nos nouveaux arrivages' in txt and 'jetonARR-MPS1-FR' in txt, (u[:80], txt))
         check('le choix « WhatsApp Web » est retenu sur cet ordinateur', fr.evaluate("()=>localStorage.getItem('arrivage-whatsapp-v1')") == 'web')
 
         print('5. décocher un parfum, ajouter la réception du même jour')
@@ -148,8 +165,8 @@ try:
         check('… qui rouvre la fenêtre d\'envoi', ('#arrivage=' + fid) in pg.evaluate("()=>(document.querySelector('#fv-ov iframe')||{}).src||''"))
 
         print('7. en anglais et en espagnol')
-        for lang, mots_p, mots in (('en', ['New arrival: send it to your favourite customers?', 'Prepare the sending', 'Later'], ['Send the new arrivals', 'Perfumes on the list', 'Favourite customers', 'Open with', 'See the PDF', 'Tick all', 'also add', 'Favourites without a number', 'Close']),
-                                   ('es', ['Nuevo arribo: ¿enviarlo a sus clientes favoritos?', 'Preparar el envío', 'Más tarde'], ['Enviar los nuevos arribos', 'Perfumes de la lista', 'Clientes favoritos', 'Abrir con', 'Ver el PDF', 'Marcar todo', 'añadir también', 'Favoritos sin número', 'Cerrar'])):
+        for lang, mots_p, mots in (('en', ['New arrival: send it to your favourite customers?', 'Prepare the sending', 'Later'], ['Send the new arrivals', 'Perfumes on the list', 'Favourite customers', 'Open with', 'See the PDF', 'Tick all', 'Untick all', 'Tick at least one customer', 'also add', 'Favourites without a number', 'Close']),
+                                   ('es', ['Nuevo arribo: ¿enviarlo a sus clientes favoritos?', 'Preparar el envío', 'Más tarde'], ['Enviar los nuevos arribos', 'Perfumes de la lista', 'Clientes favoritos', 'Abrir con', 'Ver el PDF', 'Marcar todo', 'Desmarcar todo', 'Marca al menos un cliente', 'añadir también', 'Favoritos sin número', 'Cerrar'])):
             prepare(lang, FS)
             pg.goto(base + 'factures.html'); pg.wait_for_timeout(2500)
             pg.evaluate(f"()=>proposeArrivage({json.dumps(fid)})"); pg.wait_for_timeout(400)
@@ -158,7 +175,7 @@ try:
             pg.click('#arrp-oui'); pg.wait_for_timeout(3500); fr = cadre()
             attend(fr, "()=>window.__ARR&&window.__ARR.get()&&window.__ARR.get().items.length>0", 20000)
             t = fr.inner_text('#arrov')
-            check(f'en {lang} : la fenêtre est traduite, aucun mot français', all(m in t for m in mots) and not any(f in t for f in ['Parfums de la liste', 'Clients favoris', 'Ouvrir avec', 'Voir le PDF', 'Fermer', 'sans numéro']), [m for m in mots if m not in t] or t[:300])
+            check(f'en {lang} : la fenêtre est traduite, aucun mot français', all(m in t for m in mots) and not any(f in t for f in ['Parfums de la liste', 'Clients favoris', 'Ouvrir avec', 'Voir le PDF', 'Fermer', 'sans numéro', 'Tout décocher', 'Coche au moins']), [m for m in mots if m not in t] or t[:300])
         check('aucune erreur JS', not err, err[:3])
         b.close()
 finally:

@@ -119,10 +119,12 @@ function anParFam(C){ const G={}; C.forEach(o=>{ const g=G[o.fam]=G[o.fam]||{ca:
         dépensée) et un verdict en une phrase ;
      4. les parfums qui se vendent en ligne.
    Les chiffres arrivent en comptant, les courbes se dessinent ; rien ne bouge pour qui a demandé moins d'animations. */
+/* l'évolution, écrite en clair (Igal, 9 nov. 2026, devant « 69 % ↓ 22 % » : « même moi, je ne les comprends pas ») :
+   « ↓ 22 % vs octobre 2026 » — jamais une flèche seule */
 function anDelta(a,b,lib){ if(b==null) return '';
-  const p=gaPct(a,b); if(p==null) return a?`<span class="ga-d up">${A3('nouveau','new')}</span>`:'';
+  const p=gaPct(a,b); if(p==null) return a?`<span class="ga-d up">${A3('nouveau','new')}${lib?` <span class="ga-vs">vs <span data-nolang>${esc(lib)}</span></span>`:''}</span>`:'';
   const s=p>0.5?'up':p<-0.5?'dn':'eq';
-  return `<span class="ga-d ${s}" title="${esc(A3('par rapport à ','compared with ')+lib)}">${s==='up'?'↑':s==='dn'?'↓':'='} ${nf(Math.round(Math.abs(p)))} %</span>`; }
+  return `<span class="ga-d ${s}">${s==='up'?'↑':s==='dn'?'↓':'='} ${nf(Math.round(Math.abs(p)))} %${lib?` <span class="ga-vs">vs <span data-nolang>${esc(lib)}</span></span>`:''}</span>`; }
 /* ---- les jours (ou les mois) de la période, sans les jours à venir ---- */
 function anJours(P){ const B=rcBuckets(P,[]); const auj=rcISO(new Date());
   const K=B.K.filter(k=>B.jour?k.k<=auj:k.k<=auj.slice(0,7)); return {K,jour:B.jour}; }
@@ -185,7 +187,7 @@ function anDessine(){
       ${rangs.length?`<div class="ga-bars">${rangs.map(gr=>{ const g=G[gr.k], gp=GP&&GP[gr.k]; const v=parCA?g.ca:g.n; const part=parCA?Math.max(0,g.ca)/caTot*100:g.n/nTot*100;
         return `<div class="ga-bar"><div class="ga-bn"><i style="background:${anCoul(gr.k)}"></i><span><span class="ga-bnm">${esc(anNomGr(gr.k))}${anInfo(gr.k)}</span>${det(g)}</span></div>
           <div class="ga-bt"><div class="ga-bf" style="--w:${Math.max(1.5,Math.max(0,v)/max*100).toFixed(1)}%;background:${anCoul(gr.k)}"></div></div>
-          <div class="ga-bv">${gaCnt(v,parCA?'$':'n')}<small>${nf(Math.round(part))} %${GP?' '+(gp?anDelta(parCA?g.ca:g.n,parCA?gp.ca:gp.n,lib):`<span class="ga-d up">${A3('nouveau','new')}</span>`):''}</small></div></div>`; }).join('')}</div>`
+          <div class="ga-bv">${parCA?gaCnt(v,'$'):gaCnt(v,'n')+' <span class="ga-u">'+A3('cmd','ord.')+'</span>'}<small>${nf(Math.round(part))} % ${parCA?A3('du chiffre d\'affaires','of revenue'):A3('des commandes','of orders')}</small>${GP?'<small>'+(gp?anDelta(parCA?g.ca:g.n,parCA?gp.ca:gp.n,lib):`<span class="ga-d up">${A3('nouveau','new')}</span>`)+'</small>':''}</div></div>`; }).join('')}</div>`
         :`<p class="ga-vide">${A3('Aucune commande en ligne sur cette période.','No online order in this period.')}</p>`}
     </section>`;
   /* ---- 3. Google Ads : est-ce que la pub rapporte ? (la pub tourne sur perfumestrade.com : on compare avec ce site seulement) ---- */
@@ -208,12 +210,8 @@ function anDessine(){
       <div class="ga-free ${pub.T.gClics?'':'ko'}"><b>${A3('Google Shopping gratuit','Free Google Shopping')}</b> · ${nf(Math.round(pub.T.gClics))} ${A3('clic'+(pub.T.gClics>1?'s':''),'click'+(pub.T.gClics>1?'s':''))} · ${nf(Math.round(pub.T.gAff))} ${A3('affichages','impressions')}${pub.T.gClics?'':` — <span>${A3('aucun clic : le réglage « Checkout » de Merchant Center bloque la visibilité','no clicks: the Merchant Center “Checkout” setting limits visibility')}</span>`}</div>`;
   }
   h+=`</section></div>`;
-  /* ---- 4. les parfums qui se vendent en ligne ---- */
-  const PF={}; C.forEach(o=>o.lignes.forEach(v=>{ if(!v.cle) return; const p=PF[v.cle]=PF[v.cle]||{cle:v.cle,q:0,ca:0,qG:0}; p.q+=v.q||0; p.ca+=v.mt||0; if(o.fam==='gads') p.qG+=v.q||0; }));
-  const top=Object.values(PF).filter(p=>p.q>0).sort((a,b)=>b.ca-a.ca).slice(0,10), topMax=Math.max(1,...top.map(p=>p.ca));
-  if(top.length) h+=`<section class="ga-card ga-pad"><div class="ga-h"><h3>${A3('Les parfums qui se vendent en ligne','Perfumes selling online')}</h3><span class="ga-src">${A3('les dix premiers','top ten')}</span></div>
-    <div class="ga-top10">${top.map((p,i)=>{ const r=IDX[p.cle]||[]; return `<a class="ga-pf" href="catalogue.html#fiche=${encodeURIComponent(p.cle)}"><span class="ga-rk">${i+1}</span><span class="ga-pn"><b data-nolang>${esc(r[1]||p.cle)}</b><small data-nolang>${esc(r[2]||'')}</small></span>
-      <span class="ga-pb"><i style="--w:${(p.ca/topMax*100).toFixed(1)}%"></i></span><span class="ga-pv"><b>${money(p.ca)}</b><small>${nf(p.q)} ${A3('flacon'+(p.q>1?'s':''),'bottle'+(p.q>1?'s':''))}${p.qG?' · '+nf(p.qG)+' '+A3('via Google Ads','via Google Ads'):''}</small></span></a>`; }).join('')}</div></section>`;
+  /* (9 nov. 2026) « Les parfums qui se vendent en ligne » retiré à la demande d'Igal : sur une période courte, chaque parfum ne
+     se vend qu'une ou deux fois en ligne — un classement sans intérêt. Le détail par parfum reste dans la fiche du Catalogue. */
   const lus=C.filter(o=>ok(o)&&o.lu).length, nC=C.filter(ok).length;
   h+=`<p class="ga-note">${A3('Ventes et marges comptées comme dans Ventes et le Tableau de bord (commandes expédiées, remboursements déduits). L\'origine d\'une commande est notée par la boutique elle-même (WooCommerce, Shopify) ; « Google Ads » = un clic sur une publicité payante. La pub est lue chaque heure chez Google.','Sales and margins counted as in Sales and the Dashboard (shipped orders, refunds deducted). The origin of an order is recorded by the store itself (WooCommerce, Shopify); “Google Ads” = a click on a paid ad. Ad spend is read from Google every hour.')}${nC?' '+A3(`Origine connue pour ${nf(lus)} des ${nf(nC)} commandes.`,`Origin known for ${nf(lus)} of the ${nf(nC)} orders.`):''}</p>`;
   z.innerHTML=h;

@@ -153,7 +153,7 @@ GA_CSS = r'''
 .ga-mini button{font:inherit;font-size:12px;font-weight:600;color:var(--ink-3);background:none;border:0;border-radius:6px;padding:5px 10px;cursor:pointer}
 .ga-mini button.on{background:var(--surface);color:var(--an-1);box-shadow:0 1px 2px rgba(0,0,0,.08)}
 .ga-bars{display:flex;flex-direction:column;gap:13px}
-.ga-bar{display:grid;grid-template-columns:minmax(120px,38%) minmax(0,1fr) auto;gap:12px;align-items:center}
+.ga-bar{display:grid;grid-template-columns:minmax(120px,34%) minmax(0,1fr) auto;gap:12px;align-items:center}
 .ga-bn{display:flex;align-items:flex-start;gap:9px;font-size:13.5px;font-weight:600;color:var(--ink);min-width:0}
 .ga-bn i{width:10px;height:10px;border-radius:50%;flex:none;margin-top:4px}
 .ga-bn span{min-width:0}
@@ -164,7 +164,9 @@ GA_CSS = r'''
 .ga-bn small{display:block;font-weight:400;font-size:11.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ga-bt{height:10px;background:var(--surface-2);border-radius:999px;overflow:hidden}
 .ga-bf{height:100%;width:var(--w);border-radius:999px;transition:width .9s cubic-bezier(.2,.7,.2,1)}
-.ga-bv{text-align:right;font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;min-width:74px}
+.ga-bv{text-align:right;font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;min-width:132px}
+.ga-u{font-size:11.5px;font-weight:500;color:var(--ink-3)}
+.ga-vs{font-weight:500;color:var(--ink-3)}
 .ga-bv small{display:block;font-size:11.5px;font-weight:500;color:var(--ink-3)}
 .ga-bv small .ga-d{font-size:11.5px}
 .ga-verdict{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding:12px 14px;border-radius:12px;margin:0 0 6px}

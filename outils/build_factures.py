@@ -1210,7 +1210,7 @@ function creeDepuisLigne(i){
   const marques=[...new Set(Object.values(IDX).map(v=>String(v[2]||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
   const pa0=(x.pUsd!=null?x.pUsd:x.p);
   const nb=v=>v==null||v===''?'':String(v).replace('.',',');
-  const bcN=v=>String(v||'').replace(/\D/g,'').replace(/^0+/,'');
+  const bcN=v=>{ const an=String(v||'').replace(/[^0-9A-Za-z]/g,'').toUpperCase(); return /[A-Z]/.test(an)?an:an.replace(/^0+/,''); };   /* un code avec lettres se compare entier (10 nov. 2026) */
   /* Igal, 17 oct. 2026 : « je veux qu'il puisse mettre les prix de chaque canal » — un prix par canal de vente, ceux des Réglages.
      Le site (retail) et le site de gros sont les deux prix de base de la fiche ; les autres canaux (Amazon, Perfume City…)
      gardent leur prix dans la fiche, canal par canal, comme dans le Catalogue. */
@@ -1293,7 +1293,8 @@ function creeDepuisLigne(i){
     CAN.forEach(c=>{ if(c.id==='site'||c.id==='sitegros') return; const v=num(idCan(c)); pc[c.id]=v; });
     if([pa,pvr,pvw].concat(Object.values(pc)).some(v=>Number.isNaN(v))){ msg(t3('Un prix n\'est pas un nombre.','A price is not a number.','Un precio no es un número.')); return; }
     const bc=g('ft-bc').value.replace(/\s+/g,'');
-    if(bc && !/^\d{6,20}$/.test(bc)){ msg(t3('Le code-barres ne doit contenir que des chiffres.','The barcode must contain digits only.','El código de barras solo lleva cifras.')); g('ft-bc').focus(); return; }
+    /* 10 nov. 2026 : un code fait par Sam peut porter des lettres (« 131514UNBOXED ») */
+    if(bc && !/^[0-9A-Za-z-]{4,30}$/.test(bc)){ msg(t3('Le code-barres : des chiffres et des lettres seulement (4 à 30).','The barcode: digits and letters only (4 to 30).','El código de barras: solo cifras y letras (de 4 a 30).')); g('ft-bc').focus(); return; }
     if(bc){ const dj=Object.entries(IDX).find(([,v])=>bcN(v[0])===bcN(bc)); if(dj){ msg(t3('Ce code-barres existe déjà : ','This barcode already exists: ','Este código de barras ya existe: ')+((dj[1][2]||'')+' '+(dj[1][1]||'')).trim()); g('ft-bc').focus(); return; } }
     const AJ=lit('articles-ajoutes-v1',[]); const L=Array.isArray(AJ)?AJ:[];
     const o={id:'a'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),bc:bc,nom:nom,marque:marque,ml:g('ft-ml').value.trim().replace(',','.'),type:g('ft-type').value.trim().toUpperCase(),genre:g('ft-genre').value,qte:0,pa:pa,pvr:pvr,pvw:pvw};

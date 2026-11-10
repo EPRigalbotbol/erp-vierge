@@ -799,15 +799,15 @@ const litFile=()=>{ const f=lit(KFILE,[]); return Array.isArray(f)?f:[]; };
 /* le code-barres d'une ligne → la référence du catalogue, alias compris */
 function cleDeBC(bc){
   if(!bc) return null;
-  const n=String(bc).replace(/[^0-9]/g,'').replace(/^0+/,'');
+  const n=bcK(bc);
   if(!n) return null;
   /* « 3605533286555nobox » : les mêmes chiffres que la boîte, pas la même fiche (Sam, 6 oct. 2026) */
   const mention=(typeof mentionBC==='function')?mentionBC(bc).mention:'';
-  const C=[]; for(const cle in IDX){ if(String((IDX[cle]||[])[0]||'').replace(/[^0-9]/g,'').replace(/^0+/,'')===n) C.push(cle); }
+  const C=[]; for(const cle in IDX){ if(bcK((IDX[cle]||[])[0])===n||(MOD[cle]&&MOD[cle].bc&&bcK(MOD[cle].bc)===n)) C.push(cle); }
   if(C.length){ if(typeof parMention!=='function') return C[0];
     const k=parMention(C,mention,cle=>String(((MOD[cle]||{}).bc)||(IDX[cle]||[])[0]||'').replace(/[0-9]/g,'')+' '+((MOD[cle]||{}).nom||'')+' '+((IDX[cle]||[])[1]||'')); if(k) return k; if(mention) return null; }   /* la mention : dans le code de la fiche (« …oldbox »), puis dans son nom */
   for(const cle in MOD){ const m=MOD[cle];
-    if(m&&m.bcs&&String(m.bcs).split(/[^0-9]+/).map(x=>x.replace(/^0+/,'')).includes(n)) return cle; }
+    if(m&&m.bcs&&String(m.bcs).split(/[\s,;\/]+/).map(bcK).includes(n)) return cle; }
   /* une case collée du fichier (deux codes dans la même cellule) */
   const cx=(typeof cleParBCX==='function')?cleParBCX(n):null;
   if(cx&&IDX[cx]) return cx;
@@ -2535,13 +2535,17 @@ function recap(){
   const manque=PANIER.filter(l=>l.q>stkC(l.cle,c.nom));
   const hors=PANIER.filter(l=>horsCanal(l.cle,c.id));
   const sansPrix=PANIER.filter(l=>l.p==null||!(l.p>0));
-  $('v-recap').innerHTML=`Vente de <b>${nf(u)} flacon${u>1?'s':''}</b> sur <b>${esc(c.nom)}</b> pour <b>${money2(tot)}</b>.
-    ${c.com?`${esc(c.nom)} garde ${c.com} % (${money2(tot*c.com/100)}) → il reste <b>${money2(net)}</b>. `:''}
-    <span class="vmg">Ces flacons ont coûté ${money2(pa)} → marge <b>${money2(net-pa)}</b>${tot>0?` (${pc((net-pa)/tot*100)})`:''}.</span>
-    ${$('v-stock').checked?(estPC(c.nom)?"L'inventaire de <b>Perfume City</b> sera diminué de ces quantités ; le stock central ne bouge pas.":'Le stock sera diminué de ces quantités.'):'Le stock ne bouge pas.'}
-    ${hors.length?`<br><b style="color:var(--warn)">${hors.length===1?'Ce parfum est marqué':'Ces '+hors.length+' parfums sont marqués'} « pas vendu sur ${esc(c.nom)} »</b> dans la fiche catalogue. La vente s'enregistre quand même — à corriger dans la fiche si c'est une erreur.`:''}
-    ${manque.length?`<br><b style="color:var(--crit)">${manque.length} parfum${manque.length>1?'s':''} en stock insuffisant</b> — la vente est enregistrée quand même, le stock tombe à zéro.`:''}
-    ${sansPrix.length?`<br><b style="color:var(--crit)">${sansPrix.length} ligne${sansPrix.length>1?'s':''} sans prix de vente.</b>`:''}`;
+  /* 10 nov. 2026 (photo de Sam, page Offre en anglais : « Sale de 5 bottles sur Wholesale pour… ») : le récapitulatif était écrit en
+     français puis traduit morceau par morceau — en anglais il restait à moitié français. Il s'écrit maintenant dans les trois langues. */
+  const fl=n=>nf(n)+' '+r3('flacon'+(n>1?'s':''),'bottle'+(n>1?'s':''),'frasco'+(n>1?'s':''));
+  const nc=`<span data-nolang>${esc((typeof LANG==='string'&&LANG!=='fr'&&typeof lgMot==='function'&&lgMot(c.nom))||c.nom)}</span>`, enPC=estPC(c.nom);
+  $('v-recap').innerHTML=`<span data-nolang>${'__MODE__'==='offres'?r3('Offre de','Offer of','Oferta de'):'__MODE__'==='quotes'?r3('Cote de','Quote of','Cotización de'):r3('Vente de','Sale of','Venta de')} <b>${fl(u)}</b> ${r3('sur','on','en')} <b>${nc}</b> ${r3('pour','for','por')} <b>${money2(tot)}</b>.
+    ${c.com?r3(`${nc} garde ${c.com} % (${money2(tot*c.com/100)}) → il reste <b>${money2(net)}</b>. `,`${nc} keeps ${c.com}% (${money2(tot*c.com/100)}) → <b>${money2(net)}</b> left. `,`${nc} se queda el ${c.com} % (${money2(tot*c.com/100)}) → quedan <b>${money2(net)}</b>. `):''}
+    <span class="vmg">${r3('Ces flacons ont coûté','These bottles cost','Estos frascos costaron')} ${money2(pa)} → ${r3('marge','margin','margen')} <b>${money2(net-pa)}</b>${tot>0?` (${pc((net-pa)/tot*100)})`:''}.</span>
+    ${$('v-stock').checked?(enPC?r3("L'inventaire de <b>Perfume City</b> sera diminué de ces quantités ; le stock central ne bouge pas.","The <b>Perfume City</b> inventory goes down by these quantities; the main stock does not move.","El inventario de <b>Perfume City</b> baja estas cantidades; el stock central no se mueve."):r3('Le stock sera diminué de ces quantités.','Stock goes down by these quantities.','El stock baja estas cantidades.')):r3('Le stock ne bouge pas.','Stock does not move.','El stock no se mueve.')}
+    ${hors.length?`<br><b style="color:var(--warn)">${hors.length===1?r3('Ce parfum est marqué','This perfume is marked','Este perfume está marcado'):r3('Ces '+hors.length+' parfums sont marqués','These '+hors.length+' perfumes are marked','Estos '+hors.length+' perfumes están marcados')} « ${r3('pas vendu sur','not sold on','no se vende en')} ${nc} »</b> ${r3('dans la fiche catalogue. La vente s\'enregistre quand même — à corriger dans la fiche si c\'est une erreur.','on the catalog card. The sale is saved anyway — fix the card if it is a mistake.','en la ficha del catálogo. La venta se guarda igual — corrígelo en la ficha si es un error.')}`:''}
+    ${manque.length&&!(('__MODE__'==='quotes'||'__MODE__'==='offres')&&!$('v-stock').checked)?`<br><b style="color:var(--crit)">${manque.length} ${r3('parfum'+(manque.length>1?'s':'')+' en stock insuffisant','perfume'+(manque.length>1?'s':'')+' with not enough stock','perfume'+(manque.length>1?'s':'')+' sin stock suficiente')}</b> — ${r3('la vente est enregistrée quand même, le stock tombe à zéro.','the sale is saved anyway, stock goes to zero.','la venta se guarda igual, el stock baja a cero.')}`:''}
+    ${sansPrix.length?`<br><b style="color:var(--crit)">${sansPrix.length} ${r3('ligne'+(sansPrix.length>1?'s':'')+' sans prix de vente.','line'+(sansPrix.length>1?'s':'')+' without a sale price.','línea'+(sansPrix.length>1?'s':'')+' sin precio de venta.')}</b>`:''}</span>`;
   $('v-ok').disabled = !PANIER.length || sansPrix.length>0 || (!!$('v-doc').value && !$('v-client').value.trim());
   /* un bouton gris sans explication, c'est un écran bloqué : on dit ce qui manque,
      à côté du bouton, et la case vide est cerclée de rouge */
@@ -2683,7 +2687,7 @@ function ouvreVente(){
   $('v-canal').innerHTML=CV.map(c=>`<option value="${esc(c.nom)}">${esc(nomAff(c.nom))}</option>`).join('');
   if(canalSel && CV.some(c=>c.nom===canalSel)) $('v-canal').value=canalSel;
   $('v-date').value=ajd();
-  $('v-client').value=''; $('v-num').value=numAuto($('v-date').value); vqActive('v-q'); vq().value=''; $('v-q2').value=''; $('v-msg').textContent='';
+  $('v-client').value=''; $('v-num').value=numAuto($('v-date').value); $('v-num').dataset.auto=$('v-num').value; vqActive('v-q'); vq().value=''; $('v-q2').value=''; $('v-msg').textContent='';
   if($('v-note')) $('v-note').value='';
   $('v-msg').className='msg';
   $('v-stock').checked=true;
@@ -2899,7 +2903,7 @@ $('v-client').addEventListener('change',()=>{ setTimeout(majChipsClient,250); })
 $('v-stock').onchange=recap;
 /* on change la date : le numéro proposé suit, tant qu'il n'a pas été retouché à la main */
 $('v-date').onchange=()=>{ const v=$('v-num').value.trim();
-  if(!v || /^V\d{6}-\d{3}$/.test(v)) $('v-num').value=numAuto($('v-date').value); };
+  if(!v || /^V\d{6}-\d{3}$/.test(v)){ $('v-num').value=numAuto($('v-date').value); $('v-num').dataset.auto=$('v-num').value; } };
 $('v-num').oninput=()=>{ const v=$('v-num').value.trim();
   if(v && numPris(v)){ const f=FACT.find(x=>String(x.num||'').toLowerCase()===v.toLowerCase());
     $('v-msg').textContent='Ce numéro est déjà pris (vente du '+dfr(f.d)+(f.canal?' sur '+f.canal:'')+').';
@@ -2921,11 +2925,16 @@ $('v-ok').onclick=()=>{
   _PCI=null;                                      /* l'inventaire Perfume City est relu : un autre onglet a pu le changer */
   const canal=$('v-canal').value, d=$('v-date').value||ajd();
   const client=$('v-client').value.trim();
-  const num=$('v-num').value.trim() || numAuto(d);
+  /* 10 nov. 2026 (Sam : « je clique sur Save the offer, un message apparaît et rien ne bouge ») : le numéro est proposé à l'ouverture.
+     Si quelqu'un d'autre enregistre une vente ou une cote entre-temps, il prend ce numéro, et l'enregistrement était refusé
+     (« ce numéro existe déjà ») — sur la page Offre, la case du numéro n'est même pas visible. Un numéro proposé par l'ERP, pas
+     retouché à la main, est donc simplement remplacé par le suivant libre. Un numéro tapé à la main reste contrôlé. */
+  let num=$('v-num').value.trim() || numAuto(d);
+  if(!EDIT && numPris(num) && num===($('v-num').dataset.auto||'')){ num=numAuto(d); $('v-num').value=num; $('v-num').dataset.auto=num; }
   const old=EDIT?(FACT.find(z=>z.id===EDIT.id)||EDIT):null;
   if(numPris(num)&&!(old&&String(old.num||'').toLowerCase()===num.toLowerCase())){
     const f=FACT.find(x=>String(x.num||'').toLowerCase()===num.toLowerCase());
-    $('v-msg').textContent='Le numéro '+num+' existe déjà (vente du '+dfr(f.d)+(f.canal?' sur '+f.canal:'')+'). Change-le : deux ventes ne peuvent pas porter le même numéro.';
+    $('v-msg').textContent=r3('Le numéro '+num+' existe déjà (vente du '+dfr(f.d)+(f.canal?' sur '+f.canal:'')+'). Change-le : deux ventes ne peuvent pas porter le même numéro.','Number '+num+' already exists (sale of '+dfr(f.d)+(f.canal?' on '+f.canal:'')+'). Change it: two sales cannot have the same number.','El número '+num+' ya existe (venta del '+dfr(f.d)+(f.canal?' en '+f.canal:'')+'). Cámbialo: dos ventas no pueden tener el mismo número.');
     $('v-msg').className='msg err'; $('v-num').focus(); return; }
   const VENT=lit(KVENT,{}), CLI=lit(KCLI,{}), JOU=lit(KJOU,[]);
   const lignes=[], det=[];

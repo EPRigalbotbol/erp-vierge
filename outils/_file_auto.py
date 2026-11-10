@@ -17,6 +17,9 @@ pas des index propres à chaque page, qui ne rangent pas les colonnes pareil.
 """
 
 FILE_AUTO = r"""
+/* 10 nov. 2026 : code de Sam avec lettres (« 131514UNBOXED ») — 6 chiffres ou plus : les chiffres ; sinon le code entier */
+function bcK(v){ const an=String(v==null?'':v).replace(/[^0-9A-Za-z]/g,''), d=an.replace(/[^0-9]/g,'').replace(/^0+/,'');
+  return (d.length>=6||!/[A-Za-z]/.test(an))?d:'T'+an.toUpperCase(); }
 /* ===== UN CODE-BARRES SUIVI D'UNE MENTION (Sam, 6 oct. 2026) =====
    « 3605533286555nobox » dans le Sheet et dans la caisse : les mêmes chiffres que la
    version en boîte, mais pas le même produit ni le même prix. La mention fait partie
@@ -163,12 +166,13 @@ function faContexte(){
   const parBC={}, parCle={}, parASIN={}, parFin={};
   /* un code peut porter plusieurs fiches (la boîte et la « (NOBOX) ») : on les garde toutes,
      et la mention du code départage (Sam, 6 oct. 2026) */
-  const pose=(b,cle)=>{ b=String(b||'').replace(/[^0-9]/g,'').replace(/^0+/,''); if(!b) return; (parBC[b]=parBC[b]||[]); if(!parBC[b].includes(cle)) parBC[b].push(cle);
-    if(b.length>=10){ const f=b.slice(-10); (parFin[f]=parFin[f]||[]).push([b,cle]); } };
+  const pose=(b,cle)=>{ b=bcK(b); if(!b) return; (parBC[b]=parBC[b]||[]); if(!parBC[b].includes(cle)) parBC[b].push(cle);
+    if(b.length>=10&&b[0]!=='T'){ const f=b.slice(-10); (parFin[f]=parFin[f]||[]).push([b,cle]); } };
   D_TOUS().forEach(r=>{ if(!r||!r[15]) return; parCle[r[15]]=r; pose(r[0],r[15]);
     if(Array.isArray(r[19])) r[19].forEach(x=>pose(x,r[15]));
     const asin=String(r[18]||'').trim().toUpperCase(); if(/^B0[A-Z0-9]{8}$/.test(asin)&&!parASIN[asin]) parASIN[asin]=r[15]; });
-  for(const cle in MOD){ const m=MOD[cle]; if(m&&m.bcs&&parCle[cle]) String(m.bcs).split(/[^0-9]+/).forEach(x=>pose(x,cle)); }
+  for(const cle in MOD){ const m=MOD[cle]; if(m&&m.bcs&&parCle[cle]) String(m.bcs).split(/[\s,;\/]+/).forEach(x=>pose(x,cle));
+    if(m&&m.bc&&parCle[cle]) pose(m.bc,cle); }   /* le code posé sur la fiche par Sam (10 nov. 2026) */
   let AL={}; try{ const a=lit('alias-noms-v1',{}); if(a&&typeof a==='object') AL=a; }catch(e){}
   const norm=s=>String(s==null?'':s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
   /* Amazon (24 sept. 2026) : le code arrive souvent abîmé — « 1783320424991 » (un
@@ -190,7 +194,7 @@ function faContexte(){
   const cleDe=l=>{ if(l.cle&&parCle[l.cle]) return l.cle;
     const codes=[l.bc,l.sku,l.asin].filter(Boolean);   /* l'ASIN : donné par les annonces Amazon de Sam (cockpit) */
     let mentionne=false;
-    for(const c of codes){ const n=String(c).replace(/[^0-9]/g,'').replace(/^0+/,''); if(!n||!parBC[n]) continue;
+    for(const c of codes){ const n=bcK(c); if(!n||!parBC[n]) continue;
       const mention=mentionBC(c).mention; if(mention) mentionne=true;
       const k=parMention(parBC[n],mention,cle=>{ const r=parCle[cle]||[], m=MOD[cle]||{}; return String(m.bc||r[0]||'').replace(/[0-9]/g,'')+' '+(m.nom||'')+' '+(r[13]||'')+' '+(r[1]||''); }); if(k) return k; }
     const a=AL[norm(l.des)]; if(a&&a!=='__aucun'&&parCle[a]) return a;

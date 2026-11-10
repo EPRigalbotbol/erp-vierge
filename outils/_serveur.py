@@ -464,8 +464,9 @@ function _ssMentionSite(k,c){ return _ssMention(String(k||'').replace(/[0-9]/g,'
 let _SS_PARBC=null;
 function _ssFichesDuBC(bc){
   if(!_SS_PARBC){ _ssFiche('_'); _SS_PARBC={};
-    for(const cle in _SS_IDX){ const b=String(_SS_IDX[cle].bc||'').replace(/[^0-9]/g,'').replace(/^0+/,''); if(b) (_SS_PARBC[b]=_SS_PARBC[b]||[]).push(cle); } }
-  return _SS_PARBC[String(bc||'').replace(/[^0-9]/g,'').replace(/^0+/,'')]||[];
+    for(const cle in _SS_IDX){ const b=bcK(_SS_IDX[cle].bc); if(b) (_SS_PARBC[b]=_SS_PARBC[b]||[]).push(cle); }
+    try{ const M=_ssDq('fiches-modifiees-v1',{})||{}; for(const c in M){ const b=M[c]&&M[c].bc&&_SS_IDX[c]?bcK(M[c].bc):''; if(b&&!(_SS_PARBC[b]||[]).includes(c)) (_SS_PARBC[b]=_SS_PARBC[b]||[]).push(c); } }catch(e){} }   /* + le code posé sur la fiche (bcK : _file_auto.py) */
+  return _SS_PARBC[bcK(bc)]||[];
 }
 /* la quantité à annoncer sur un site pour ce code ; null = une seule fiche, l'appelant garde la sienne */
 function _ssQteSite(bc,cote,EXPA){

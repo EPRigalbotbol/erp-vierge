@@ -517,7 +517,20 @@ const sauve=()=>ecrit(KEY,saisie);
    code-barres. Les 50 parfums SANS code-barres partageaient donc la même case : le chiffre tapé sur l'un s'affichait sur tous, et
    s'enregistrait sur le premier de la liste. Chaque ligne a maintenant sa clé : le code-barres, sinon l'identifiant de la fiche.
    L'ancienne case commune (clé vide) ne veut rien dire : elle est retirée. */
-const kc=p=>p.bc?String(p.bc):'#'+p.cle;
+/* 10 nov. 2026 (Igal : « j'ai mis 43 sur le premier, ça m'a mis 43 sur le deuxième ») : deux fiches peuvent porter le MÊME
+   code-barres (une même eau de Cologne en boîte blanche et en ancienne boîte dorée). Rangées sous ce code, elles partageaient une
+   seule case, et le chiffre tapé sur la seconde s'enregistrait sur la première. Un code-barres porté par plusieurs fiches ne sert
+   donc pas de clé : chacune prend l'identifiant de sa fiche. */
+let _BCDUP=null;
+function bcDup(){ if(_BCDUP) return _BCDUP; const n={}; P.forEach(x=>{ if(x.bc){ const b=String(x.bc); n[b]=(n[b]||0)+1; } });
+  _BCDUP=new Set(Object.keys(n).filter(b=>n[b]>1)); return _BCDUP; }
+/* la case commune d'un code-barres partagé : son chiffre revient à la (aux) fiche(s) déjà comptée(s), puis elle disparaît */
+function rangeDup(){ _BCDUP=null; let ch=false;
+  bcDup().forEach(b=>{ if(saisie[b]==null) return; const v=saisie[b];
+    P.filter(x=>String(x.bc)===b).forEach(x=>{ const m=MOD[x.cle]; if(m&&m.verif==='ok'&&m.qteC!=null&&saisie['#'+x.cle]==null) saisie['#'+x.cle]=v; });
+    delete saisie[b]; ch=true; });
+  if(ch) try{ sauve(); }catch(e){} }
+const kc=p=>(p.bc&&!bcDup().has(String(p.bc)))?String(p.bc):'#'+p.cle;
 const kSel=k=>`.cnt[data-bc="${(window.CSS&&CSS.escape)?CSS.escape(k):k}"]`;
 if(saisie&&saisie['']!=null){ delete saisie['']; try{ sauve(); }catch(e){} }
 
@@ -583,7 +596,7 @@ function filtre(){
   /* 28 sept. : avec un texte tapé, « en stock » ne cache plus un parfum à 0 — au comptage,
      c'est justement le flacon trouvé sur l'étagère que l'outil croit épuisé */
   let l=P.filter(p=>(!st||(st==='in'?(q||qteTh(p)>0):qteTh(p)===0))&&(!fv||p.v===fv)&&
-    (!q||q.split(/\s+/).filter(Boolean).every(m=>(p.nom+' '+p.marque+' '+p.bc).toLowerCase().includes(m))));
+    (!q||q.split(/\s+/).filter(Boolean).every(m=>(p.nom+' '+p.marque+' '+p.bc+' '+(p.bc0||'')).toLowerCase().includes(m))));
   if(lot>0 && !q && !fv && st==='in') l=l.slice(0,lot);
   l=trie(l);
   if(fe){
@@ -719,10 +732,13 @@ P.forEach(p=>{ const m=MOD[p.cle]; if(m&&m.verif!==undefined) p.v=m.verif; });
 /* 10 nov. 2026 (Igal : « Sam a rajouté le code-barres sur la fiche, mais l'inventaire ne le trouvait pas ») : un parfum arrivé
    sans code-barres prend celui que Sam a posé sur sa fiche du Catalogue — la recherche et la douchette le trouvent ; un chiffre
    déjà compté sous l'identifiant de la fiche suit le code-barres. */
-function bcFiche(p){ const m=MOD[p.cle]; if(p.bc||!m||!m.bc) return; const b=String(m.bc).trim(); if(!b) return;
+/* … et (10 nov.) un code-barres CHANGÉ sur la fiche l'emporte aussi sur celui du fichier : l'ancienne boîte dorée à qui Sam a donné
+   « …oldbox » se compte et se scanne sous ce code, plus sous celui de la boîte blanche. */
+function bcFiche(p){ const m=MOD[p.cle]; if(!m||!m.bc) return; const b=String(m.bc).trim(); if(!b||b===String(p.bc||'')) return;
+  if(p.bc0===undefined) p.bc0=p.bc||''; /* le code du fichier reste la clé du stock importé et des testeurs */
   p.bc=b; try{ if(saisie['#'+p.cle]!=null&&saisie[b]==null){ saisie[b]=saisie['#'+p.cle]; delete saisie['#'+p.cle]; sauve(); } }catch(e){} }
 P.forEach(p=>{ const m=MOD[p.cle]; if(!m) return; ['nom','marque','ml','type'].forEach(k=>{ if(m[k]!=null&&m[k]!=='') p[k]=(k==='type')?String(m[k]).toUpperCase():String(m[k]); }); });
-  P.forEach(bcFiche);
+  P.forEach(bcFiche); rangeDup();
 /* 6 nov. 2026 (Sam : Asad à 18,50 $ de gros au Catalogue, 18 $ dans l'Inventaire) : c'est le Catalogue qui fixe les prix.
    Le prix retail et le prix de gros changés dans la fiche se voient ici aussi — l'Inventaire ne garde plus ceux du fichier. */
 if('__CIBLE__'==='pt') P.forEach(p=>{ const m=MOD[p.cle]; if(!m) return; if(m.pvr!=null&&m.pvr!=='') p.pvr=+m.pvr; if(m.pvw!=null&&m.pvw!=='') p.pvw=+m.pvw; });
@@ -740,7 +756,7 @@ function qteTh(p){
   /* 31 oct. 2026 (Sam : « l'inventaire de Perfume City est faux ») : stock-externe-v1 est le stock de L'ENTREPÔT (import du
      Google Sheet de Sam). La page Perfume City le lisait aussi : un parfum affichait 15 (l'entrepôt) au lieu de 1 (la boutique).
      Perfume City n'a que son propre stock (pc-stock-v1). */
-  const e='__CIBLE__'==='pt'&&EXT.q?EXT.q[p.bc]:null;
+  const e='__CIBLE__'==='pt'&&EXT.q?EXT.q[p.bc0||p.bc]:null;
   if(e!=null) return +e;
   return p.qte;
 }
@@ -765,7 +781,7 @@ window.__rafraichir=()=>{ const y=window.scrollY;
    Le prix retail et le prix de gros changés dans la fiche se voient ici aussi — l'Inventaire ne garde plus ceux du fichier. */
 if('__CIBLE__'==='pt') P.forEach(p=>{ const m=MOD[p.cle]; if(!m) return; if(m.pvr!=null&&m.pvr!=='') p.pvr=+m.pvr; if(m.pvw!=null&&m.pvw!=='') p.pvw=+m.pvw; });
   if('__CIBLE__'==='pt') P=P.filter(p=>!(MOD[p.cle]&&MOD[p.cle].masque));
-  { const s=lit(KEY,{}); if(s&&typeof s==='object') saisie=s; }
+  { const s=lit(KEY,{}); if(s&&typeof s==='object') saisie=s; } rangeDup();
   { const j=lit(KJOU,[]); if(Array.isArray(j)) JOU=j; }
   try{ rend(false); }catch(e){} try{ chiffres(); }catch(e){} window.scrollTo(0,y); };
 /* UN COMPTAGE PÉRIMÉ (Sam, 30 oct. 2026 : « ce parfum, j'en ai acheté plusieurs, l'Inventaire dit 0 et
@@ -788,7 +804,7 @@ const CIBLE='__CIBLE__';
 let TSTPC={}; if(CIBLE==='pc'){ const t=lit('testeurs-pc-v1',{}); if(t&&typeof t==='object'&&!Array.isArray(t)) TSTPC=t; }
 function tst(p){
   if(CIBLE!=='pc') return 0;
-  const k=p.bc?String(p.bc).replace(/^0+/,''):'';
+  const b0=p.bc0||p.bc, k=b0?String(b0).replace(/^0+/,''):'';
   const e=(k&&TSTPC[k])||TSTPC[p.cle];
   /* 10 nov. 2026 (Igal : « sur tous les parfums, un tester chez Perfume City, pas plus ») : le Sheet importé le 13 oct. portait 95, 72, 60… dans la colonne des testers. Un parfum a un tester, ou aucun : jamais plus, à la lecture comme à l'écriture. */
   return e&&(+e.n>0)?1:0;
@@ -898,7 +914,7 @@ function impPeint(a){
   if(a.err){ el.innerHTML=`<p class="hint" style="color:var(--crit)"><b>${esc(a.err)}</b></p>`;
     $('impok').disabled=true; IMP=null; return; }
   IMP=a;
-  const connus={}; P.forEach(p=>{ if(p.bc) connus[String(p.bc).replace(/^0+/,'')]=1; });
+  const connus={}; P.forEach(p=>{ [p.bc,p.bc0].forEach(b=>{ if(b) connus[String(b).replace(/^0+/,'')]=1; }); });
   const dej=a.lignes.filter(l=>l.bc&&connus[l.bc.replace(/^0+/,'')]).length;
   const neuf=a.lignes.length-dej;
   const u=a.lignes.reduce((s,l)=>s+l.qte,0);
@@ -1111,7 +1127,13 @@ function annuleComptage(p){
    quantite ; Entree apres la quantite prepare le scan suivant. */
 const SCAN={buf:'',t0:0,el:null,val:''};
 function normScan(c){ return String(c||'').replace(/[^0-9]/g,''); }
+/* un code fait par Sam (lettres, ou chiffres + mention : « 131514UNBOXED ») : comparé tel quel, par sa clé */
+const codeSam=c=>{ const an=String(c||'').replace(/[^0-9A-Za-z]/g,''); return an.length>=4&&/[A-Za-z]/.test(an)&&/[0-9A-Za-z]{4,}/.test(an); };
 function trouveBC(code){
+  if(codeSam(code)){ const raw=String(code).replace(/[^0-9A-Za-z]/g,'').toUpperCase();
+    const p=P.find(x=>String(x.bc||'').replace(/[^0-9A-Za-z]/g,'').toUpperCase()===raw)
+      ||P.find(x=>{ const m=MOD[x.cle]; return m&&((m.bc&&String(m.bc).replace(/[^0-9A-Za-z]/g,'').toUpperCase()===raw)||(m.bcs&&String(m.bcs).split(/[\s,;\/]+/).some(y=>y.replace(/[^0-9A-Za-z]/g,'').toUpperCase()===raw))); });
+    if(p) return p; }
   const c=normScan(code); if(c.length<8) return null;
   const cands=[c, c.length===12?'0'+c:null, c.length===13&&c[0]==='0'?c.slice(1):null, c.length===14&&c[0]==='0'?c.slice(1):null].filter(Boolean);
   for(const k of cands){ const p=P.find(x=>x.bc===k); if(p) return p; }
@@ -1139,6 +1161,10 @@ function scanne(code){
   bandeau('ok',T3(`${nomP} · ${nf(qteTh(p))} attendus${dj!=null?` · déjà compté : ${dj}`:''} — tape la quantité comptée puis Entrée.`,
     `${nomP} · ${nf(qteTh(p))} expected${dj!=null?` · already counted: ${dj}`:''} — type the counted quantity, then Enter.`,
     `${nomP} · ${nf(qteTh(p))} esperados${dj!=null?` · ya contado: ${dj}`:''} — escribe la cantidad contada y pulsa Intro.`));
+  const nDup=p.bc&&bcDup().has(String(p.bc))?P.filter(x=>String(x.bc)===String(p.bc)).length:0;
+  if(nDup) $('scan').insertAdjacentHTML('beforeend','<br>'+T3(`<b>${nDup} fiches portent ce code-barres</b> — tape la quantité sur la bonne ligne (chaque fiche a sa case).`,
+    `<b>${nDup} products share this barcode</b> — type the quantity on the right line (each product has its own box).`,
+    `<b>${nDup} fichas llevan este código de barras</b> — escribe la cantidad en la línea correcta (cada ficha tiene su casilla).`));
   if(inp){ inp.focus(); inp.select(); }
 }
 document.addEventListener('keydown',e=>{
@@ -1147,7 +1173,7 @@ document.addEventListener('keydown',e=>{
     const t=e.target;
     /* rafale de douchette, ou code tape dans la recherche */
     const rafale = SCAN.buf.length>=8 && now-SCAN.t0<600;
-    const dansQ = t&&t.id==='q' && /^\d{8,14}$/.test(normScan(t.value)) && normScan(t.value).length===t.value.trim().length;
+    const dansQ = t&&t.id==='q' && ((/^\d{8,14}$/.test(normScan(t.value)) && normScan(t.value).length===t.value.trim().length) || (codeSam(t.value)&&!/\s/.test(t.value.trim())&&!!trouveBC(t.value)));
     if(rafale||dansQ){
       e.preventDefault();
       const code = rafale ? SCAN.buf : t.value;

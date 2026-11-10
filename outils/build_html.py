@@ -1378,7 +1378,7 @@ __BARRE__
     <button class="btn lspd" id="lsmaj" data-nolang><svg viewBox="0 0 16 18" aria-hidden="true"><path d="M8.6 0.4c0.3 2.6 1.9 3.9 3.6 5.7 1.8 1.9 3 4 2.6 6.6-0.5 3.2-3.1 5.3-6.6 5.3-3.8 0-6.5-2.5-6.5-6.1 0-2.5 1.3-4.3 3.3-6.2-0.1 1.6 0.4 2.8 1.5 3.3-0.4-2.3 0.2-4.6 2.1-8.6zM8.1 9.6c-1.6 1.1-2.4 2.3-2.4 3.5 0 1.5 1 2.6 2.4 2.6s2.4-1 2.4-2.5c0-1.2-0.8-2.3-2.4-3.6z"/></svg><span id="lsmaj-t">Mettre à jour Lightspeed</span></button>
     <button class="btn" id="plb" title="La liste de tout ce qui est en stock, avec le prix de gros — en PDF ou en Excel, à envoyer à un client">Price list</button>
     <button class="btn" id="maj">Mettre à jour le stock</button>
-    <button class="btn" id="psite" style="display:none">Mettre les sites à jour</button>
+    <button class="btn" id="psite" style="display:none">Mettre les sites à jour</button><style>#psite{display:none!important}</style><!-- 10 nov. 2026 : prix et stock partent tout seuls (cockpit) ; le produit sans prix est une tâche -->
     <button class="btn pri" id="add">+ Nouvel article</button>
   </div>
  </div>
@@ -3681,7 +3681,7 @@ function retireDeLaVente(p){
 }
 function siteCell(p){
   const e=siteDe(p);
-  if(!e&&retireDeLaVente(p)) return `<span class="lsv" title="Retirée de la vente (brouillon) : aucun prix sur le site. Voir « Mettre les sites à jour ».">retiré de la vente</span>`;
+  if(!e&&retireDeLaVente(p)) return `<span class="lsv" title="Retirée de la vente (brouillon) : aucun prix sur le site.">retiré de la vente</span>`;
   if(!e) return `<span class="lsv" title="Aucune fiche avec ce code-barres sur les deux sites.">pas en ligne</span>`;
   const ec=siteEcart(p);
   const un=(k)=>{ const c=e[k]; if(!c) return '<i class="lsn">—</i>';

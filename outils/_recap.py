@@ -259,6 +259,20 @@ GA_CSS = r'''
 .pp-d.stock{background:color-mix(in srgb,#e8710a 14%,transparent);color:#b45309}.pp-d.verif{background:var(--surface-2);color:var(--ink-3)}
 .pp-v{font-size:13.5px;font-weight:600;font-variant-numeric:tabular-nums}.pp-v.neg{color:#d93025}.pp-v.pos{color:#188038}
 .pp-plus{margin:12px auto 0;display:block}
+.gc-txt{font-size:14px;color:var(--ink-2);margin:4px 0 14px;max-width:680px}
+.gc-vieux{color:#b45309}.gc-alerte{font-size:13px;color:#b45309;background:color-mix(in srgb,#e8710a 10%,transparent);border-radius:8px;padding:8px 12px;margin:6px 0 12px}
+.gc-neg{color:#d93025}.gc-pos{color:#188038}
+.gc-tete,.gc-l{display:grid;grid-template-columns:minmax(0,1fr) 96px 104px 76px 112px;gap:10px;align-items:center}
+.gc-tete{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);padding:6px 2px;border-bottom:1px solid var(--line);margin-top:14px}
+.gc-tete span:not(:first-child),.gc-v{text-align:right}
+.gc-l{padding:8px 2px;border-bottom:1px solid var(--line-2)}
+.gc-n b{display:block;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gc-n small{font-size:11.5px;color:var(--ink-3)}
+.gc-e{font-style:normal;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:999px;margin-right:4px;background:var(--surface-2);color:var(--ink-3)}
+.gc-e.on{background:color-mix(in srgb,#188038 14%,transparent);color:#188038}
+.gc-v{font-size:13.5px;font-weight:600;font-variant-numeric:tabular-nums}
+.gc-etapes{font-size:13.5px;color:var(--ink-2);margin:14px 0 10px;padding-left:20px;line-height:1.6}
+.gc-code{width:100%;height:180px;font:12px/1.45 ui-monospace,Menlo,monospace;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px;margin:0 0 10px;resize:vertical}
+@media(max-width:700px){.gc-tete{display:none}.gc-l{grid-template-columns:minmax(0,1fr) auto}.gc-l .gc-v:nth-child(2),.gc-l .gc-v:nth-child(3),.gc-l .gc-v:nth-child(4){display:none}}
 @media(max-width:700px){.pp-tete{display:none}.pp-l{grid-template-columns:minmax(0,1fr) auto}.pp-l .pp-v:nth-child(2),.pp-l .pp-v:nth-child(3),.pp-l .pp-v:nth-child(4){display:none}}
 .ga-free{margin:12px 0 0;font-size:12.5px;color:var(--ink-2);line-height:1.5}
 .ga-free.ko span{color:#d93025}

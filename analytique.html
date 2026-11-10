@@ -646,6 +646,20 @@ font-size:11.5px;color:var(--ink-3);line-height:1.5}
 .pp-d.stock{background:color-mix(in srgb,#e8710a 14%,transparent);color:#b45309}.pp-d.verif{background:var(--surface-2);color:var(--ink-3)}
 .pp-v{font-size:13.5px;font-weight:600;font-variant-numeric:tabular-nums}.pp-v.neg{color:#d93025}.pp-v.pos{color:#188038}
 .pp-plus{margin:12px auto 0;display:block}
+.gc-txt{font-size:14px;color:var(--ink-2);margin:4px 0 14px;max-width:680px}
+.gc-vieux{color:#b45309}.gc-alerte{font-size:13px;color:#b45309;background:color-mix(in srgb,#e8710a 10%,transparent);border-radius:8px;padding:8px 12px;margin:6px 0 12px}
+.gc-neg{color:#d93025}.gc-pos{color:#188038}
+.gc-tete,.gc-l{display:grid;grid-template-columns:minmax(0,1fr) 96px 104px 76px 112px;gap:10px;align-items:center}
+.gc-tete{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);padding:6px 2px;border-bottom:1px solid var(--line);margin-top:14px}
+.gc-tete span:not(:first-child),.gc-v{text-align:right}
+.gc-l{padding:8px 2px;border-bottom:1px solid var(--line-2)}
+.gc-n b{display:block;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gc-n small{font-size:11.5px;color:var(--ink-3)}
+.gc-e{font-style:normal;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:999px;margin-right:4px;background:var(--surface-2);color:var(--ink-3)}
+.gc-e.on{background:color-mix(in srgb,#188038 14%,transparent);color:#188038}
+.gc-v{font-size:13.5px;font-weight:600;font-variant-numeric:tabular-nums}
+.gc-etapes{font-size:13.5px;color:var(--ink-2);margin:14px 0 10px;padding-left:20px;line-height:1.6}
+.gc-code{width:100%;height:180px;font:12px/1.45 ui-monospace,Menlo,monospace;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px;margin:0 0 10px;resize:vertical}
+@media(max-width:700px){.gc-tete{display:none}.gc-l{grid-template-columns:minmax(0,1fr) auto}.gc-l .gc-v:nth-child(2),.gc-l .gc-v:nth-child(3),.gc-l .gc-v:nth-child(4){display:none}}
 @media(max-width:700px){.pp-tete{display:none}.pp-l{grid-template-columns:minmax(0,1fr) auto}.pp-l .pp-v:nth-child(2),.pp-l .pp-v:nth-child(3),.pp-l .pp-v:nth-child(4){display:none}}
 .ga-free{margin:12px 0 0;font-size:12.5px;color:var(--ink-2);line-height:1.5}
 .ga-free.ko span{color:#d93025}
@@ -685,32 +699,32 @@ font-size:11.5px;color:var(--ink-3);line-height:1.5}
   <div class="logo"><div class="n">Perfumes Trade</div><div class="s">ERP</div></div>
   <nav>
     <div class="navlab">Produits</div>
-    <a class="nv" href="catalogue.html?v=202611101551"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>Catalogue<span class="ct nu" id="ct-catalogue">0</span></a>
-    <a class="nv" href="stock.html?v=202611101551"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg></span>Inventaire<span class="ct nu" id="ct-inventaire">0</span></a>
-    <a class="nv" href="inventaire_pc.html?v=202611101551"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h16l-1-5H5z"/><path d="M5 9v11h14V9"/><path d="M10 20v-5h4v5"/></svg></span>Inventaire Perfume City<span class="ct" id="ct-pcity"></span></a>
-    <a class="nv" href="demandes_pc.html?v=202611101551"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></span>Transfert interstore<span class="ct" id="ct-demandes"></span></a>
+    <a class="nv" href="catalogue.html?v=202611102001"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>Catalogue<span class="ct nu" id="ct-catalogue">0</span></a>
+    <a class="nv" href="stock.html?v=202611102001"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg></span>Inventaire<span class="ct nu" id="ct-inventaire">0</span></a>
+    <a class="nv" href="inventaire_pc.html?v=202611102001"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h16l-1-5H5z"/><path d="M5 9v11h14V9"/><path d="M10 20v-5h4v5"/></svg></span>Inventaire Perfume City<span class="ct" id="ct-pcity"></span></a>
+    <a class="nv" href="demandes_pc.html?v=202611102001"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></span>Transfert interstore<span class="ct" id="ct-demandes"></span></a>
     <div class="navlab">Commerce</div>
-    <a class="nv" href="quotes.html?v=202611101551"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>Cote<span class="ct" id="ct-devis"></span></a>
-    <a class="nv" href="factures.html?v=202611101551"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span>Factures<span class="ct" id="ct-factures"></span></a>
-    <a class="nv" href="ventes.html?v=202611101551"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/></svg></span>Ventes<span class="ct" id="ct-ventes"></span></a>
-    <a class="nv" href="fournisseurs.html?v=202611101551"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></svg></span>Fournisseurs<span class="ct" id="ct-fournisseurs"></span></a>
-    <a class="nv" href="etude.html?v=202611101551"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg></span>Étude de cote<span class="ct" id="ct-étude"></span></a>
-    <a class="nv" href="clients.html?v=202611101551"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></span>Clients<span class="ct nb" id="ct-clients">0</span></a>
-    <a class="nv sub" href="clients.html?v=202611101551#vip" data-id="clients-vip" data-sous="clients.html">Clients VIP</a>
-    <a class="nv" data-pilotage="1" href="connecteurs.html?v=202611101551"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10l-3-3M17 17H7l3 3"/></svg></span>Connecteurs<span class="ct" id="ct-connecteurs"></span></a>
+    <a class="nv" href="quotes.html?v=202611102001"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>Cote<span class="ct" id="ct-devis"></span></a>
+    <a class="nv" href="factures.html?v=202611102001"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span>Factures<span class="ct" id="ct-factures"></span></a>
+    <a class="nv" href="ventes.html?v=202611102001"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/></svg></span>Ventes<span class="ct" id="ct-ventes"></span></a>
+    <a class="nv" href="fournisseurs.html?v=202611102001"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></svg></span>Fournisseurs<span class="ct" id="ct-fournisseurs"></span></a>
+    <a class="nv" href="etude.html?v=202611102001"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg></span>Étude de cote<span class="ct" id="ct-étude"></span></a>
+    <a class="nv" href="clients.html?v=202611102001"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></span>Clients<span class="ct nb" id="ct-clients">0</span></a>
+    <a class="nv sub" href="clients.html?v=202611102001#vip" data-id="clients-vip" data-sous="clients.html">Clients VIP</a>
+    <a class="nv" data-pilotage="1" href="connecteurs.html?v=202611102001"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10l-3-3M17 17H7l3 3"/></svg></span>Connecteurs<span class="ct" id="ct-connecteurs"></span></a>
     <a class="nv" href="#galou" id="gl-btn" data-id="galou" onclick="if(typeof galouOuvre==='function')galouOuvre();return false"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v10H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg></span>Parler à Léa<span class="ct" id="ct-parler"></span></a>
     <div class="navlab" data-pilotage="1">Pilotage</div>
     <a class="nv" href="#support" id="aid-btn" data-id="support" onclick="if(typeof aidOuvre==='function')aidOuvre();return false"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="m9.5 9.5-4-4M14.5 9.5l4-4M14.5 14.5l4 4M9.5 14.5l-4 4"/></svg></span>Support technique<span class="ct" id="ct-support"></span></a>
-    <a class="nv" data-pilotage="1" href="journal.html?v=202611101551"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Journal<span class="ct" id="ct-journal"></span></a>
-    <a class="nv" data-pilotage="1" href="tableau.html?v=202611101551"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/></svg></span>Tableau de bord<span class="ct" id="ct-tableau"></span></a>
-    <a class="nv on" data-pilotage="1" href="analytique.html?v=202611101551"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>Analytique<span class="ct" id="ct-analytique"></span></a>
-    <a class="nv" data-pilotage="1" href="taches.html?v=202611101551"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m8 12 3 3 5-6"/></svg></span>Tâches<span class="ct" id="ct-taches"></span></a>
-    <a class="nv" data-pilotage="1" href="acces.html?v=202611101551"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.3 8 8 9 4.7-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></span>Accès<span class="ct" id="ct-accès"></span></a>
+    <a class="nv" data-pilotage="1" href="journal.html?v=202611102001"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Journal<span class="ct" id="ct-journal"></span></a>
+    <a class="nv" data-pilotage="1" href="tableau.html?v=202611102001"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/></svg></span>Tableau de bord<span class="ct" id="ct-tableau"></span></a>
+    <a class="nv on" data-pilotage="1" href="analytique.html?v=202611102001"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>Analytique<span class="ct" id="ct-analytique"></span></a>
+    <a class="nv" data-pilotage="1" href="taches.html?v=202611102001"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m8 12 3 3 5-6"/></svg></span>Tâches<span class="ct" id="ct-taches"></span></a>
+    <a class="nv" data-pilotage="1" href="acces.html?v=202611102001"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.3 8 8 9 4.7-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></span>Accès<span class="ct" id="ct-accès"></span></a>
     <a class="nv" data-pilotage="1" href="https://app.gusto.com" target="_blank" rel="noopener" title="Ouvre Gusto dans un nouvel onglet"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M14.5 9a2.5 2 0 0 0-2.5-1.5c-1.4 0-2.5.8-2.5 2s1 1.7 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2A2.7 2 0 0 1 9.5 15M12 6v1.5M12 16.5V18"/></svg></span>Paie<span class="ct" id="ct-paie"></span></a>
-    <a class="nv" data-pilotage="1" href="reglages.html?v=202611101551"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg></span>Réglages<span class="ct" id="ct-réglages"></span></a>
+    <a class="nv" data-pilotage="1" href="reglages.html?v=202611102001"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg></span>Réglages<span class="ct" id="ct-réglages"></span></a>
   </nav>
   <div class="sfoot"><div id="sfu" class="sfu"></div><span id="sfoot"></span>
-    <div class="ver" title="Si cette date n'est pas la derni&egrave;re, recharge avec Cmd+Option+R">version du 11/10/2026 à 15h51</div>
+    <div class="ver" title="Si cette date n'est pas la derni&egrave;re, recharge avec Cmd+Option+R">version du 11/10/2026 à 20h01</div>
     <div class="sfline" id="sfline"></div></div>
 </aside>
 <main class="main"><div class="wrap">
@@ -791,7 +805,7 @@ try{
 }catch(e){}
 })();
 </script>
-<script src="donnees/langue.js?v=202611101551"></script>
+<script src="donnees/langue.js?v=202611102001"></script>
 <script>
 /* le menu réglé et la langue de l'écran, AVANT le code de la page : rien ne saute, rien n'est vu dans une autre langue */
 
@@ -1756,7 +1770,7 @@ const LG_FR_PARCOURS=!/catalogue|stock|inventaire/.test(location.pathname);
 })();
 
 </script>
-<script src="donnees/produits.js?v=202611101551"></script><script src="donnees/histgros.js?v=202611101551"></script>
+<script src="donnees/produits.js?v=202611102001"></script><script src="donnees/histgros.js?v=202611102001"></script>
 <script>
 if (typeof window.D_PROD==='undefined') {
   /* Le code de la page est lancé plus tard par l'amorce (voir _serveur.py) : ce drapeau
@@ -1778,7 +1792,7 @@ if (typeof window.D_PROD==='undefined') {
 }
 </script>
 <script type="text/plain" id="page-js">
-const VER_URL='202611101551';
+const VER_URL='202611102001';
 const $=i=>document.getElementById(i);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const nf=v=>Number(v||0).toLocaleString('fr-FR');
@@ -6401,7 +6415,14 @@ function anEtat(){
   return {vu,pannes,pannesTxt:pannes.map(x=>`<span data-nolang>${esc(x.n)} — ${esc(String(x.e.err).slice(0,160))}</span>`).join('<br>')};
 }
 /* la pub Google (google-pub-v1, jour par jour : [pub, ventes Google, clics, affichages, conversions, clics gratuits, affichages gratuits]) */
-function anPubJ(){ let G={}; try{ G=JSON.parse(localStorage.getItem('google-pub-v1')||'{}')||{}; }catch(e){} return G||{}; }
+function anPubJ(){ let G={}; try{ G=JSON.parse(localStorage.getItem('google-pub-v1')||'{}')||{}; }catch(e){} G=G||{};
+  /* 10 nov. 2026 : quand le script posé dans Google Ads envoie ses chiffres (google-ads-v1), ils remplacent ceux de l'extension
+     pour la pub payante — toutes les campagnes, pas seulement Performance Max ; les fiches gratuites restent celles de l'extension */
+  const A=anAdsJ(); if(!A||!A.j||!Object.keys(A.j).length) return G;
+  const J=Object.assign({},G.j||{});
+  Object.keys(A.j).forEach(d=>{ const a=A.j[d]||[], g=J[d]||[]; J[d]=[+a[0]||0,+a[1]||0,+a[2]||0,+a[3]||0,+a[4]||0,+g[5]||0,+g[6]||0]; });
+  const R=Object.assign({},G,{j:J,_err:''}); if(A.p&&Array.isArray(A.p.L)&&A.p.L.length) R.p=A.p; return R; }
+function anAdsJ(){ try{ const A=JSON.parse(localStorage.getItem('google-ads-v1')||'null'); return (A&&typeof A==='object')?A:null; }catch(e){ return null; } }
 function anPub(a,b){ const G=anPubJ(); const J=G.j||{}; const T={pub:0,ventes:0,clics:0,aff:0,conv:0,gClics:0,gAff:0,jours:0};
   Object.keys(J).forEach(d=>{ if(d<a||d>b) return; const r=J[d]||[]; T.jours++; T.pub+=+r[0]||0; T.ventes+=+r[1]||0; T.clics+=+r[2]||0; T.aff+=+r[3]||0; T.conv+=+r[4]||0; T.gClics+=+r[5]||0; T.gAff+=+r[6]||0; });
   return {T,J,lu:Object.keys(J).length>0,err:G._err||''}; }
@@ -6470,6 +6491,7 @@ function anDessine(){
   }
   h+=`</section></div>`;
   /* ---- 3b. la pub, parfum par parfum (90 jours) : lesquels garder, lesquels sortir, combien Sam économiserait ---- */
+  if(AN.site==='tous'||AN.site==='site') h+=anCampagnes(tous);
   if(AN.site==='tous'||AN.site==='site') h+=anParfumsPub(tous);
   /* (9 nov. 2026) « Les parfums qui se vendent en ligne » retiré à la demande d'Igal : sur une période courte, chaque parfum ne
      se vend qu'une ou deux fois en ligne — un classement sans intérêt. Le détail par parfum reste dans la fiche du Catalogue. */
@@ -6500,6 +6522,7 @@ function anBranche(){
   z.querySelectorAll('.ga-i').forEach(b=>{ b.onmouseenter=()=>montre(b); b.onmouseleave=cache; b.onfocus=()=>montre(b); b.onblur=cache; b.onclick=e=>{ e.stopPropagation(); montre(b); }; });
   if(!window._anInfoDoc){ window._anInfoDoc=1; document.addEventListener('click',cache); window.addEventListener('scroll',cache,{passive:true}); }
   const xl=document.getElementById('an-xl'); if(xl) xl.onclick=anExportPub;
+  anGcBranche();
   if(document.getElementById('pp-liste')){ anPPListe();
     z.querySelectorAll('[data-ppf]').forEach(b=>b.onclick=()=>{ AN.ppf=b.dataset.ppf; AN.ppn=25; z.querySelectorAll('[data-ppf]').forEach(x=>x.classList.toggle('on',x===b)); anSauve(); anPPListe(); });
     const t=document.getElementById('pp-tri'); if(t) t.onchange=()=>{ AN.pptri=t.value; AN.ppn=25; anSauve(); anPPListe(); };
@@ -6542,11 +6565,12 @@ function anDossier(L,tous){
   return { date:auj, devise:'USD',
     trente_derniers_jours:fen(P), trente_jours_d_avant:(Q.a>=RC_COMPLET?fen(Q):'incomplet (avant le 1er octobre 2026)'),
     pub_google_par_mois:mois,
+    campagnes_google_ads:anCampDossier(tous),
     pub_parfum_par_parfum_90j:A?{pub_par_mois:r0(A.pub90/3),gain_par_mois_si_on_sort_les_perdants:r0(A.gain90/3),a_garder:{nombre:A.garder.length,pub_par_mois:r0(A.garder.reduce((a,o)=>a+o.pub,0)/3)},a_sortir_perdent:{nombre:A.sortir.length,pub_par_mois:r0(A.sortir.reduce((a,o)=>a+o.pub,0)/3)},a_sortir_plus_en_stock:{nombre:A.stock.length,pub_par_mois:r0(A.stock.reduce((a,o)=>a+o.pub,0)/3)},a_verifier:A.verif.length,
       les_10_qui_perdent_le_plus:A.sortir.concat(A.stock).sort((a,b)=>(a.res??-a.pub)-(b.res??-b.pub)).slice(0,10).map(o=>({parfum:(o.marque?o.marque+' ':'')+(o.nom||o.sku),pub_90j:r0(o.pub),resultat_90j:r0(o.res??-o.pub)})),
       les_10_qui_rapportent_le_plus:A.garder.slice().sort((a,b)=>b.res-a.res).slice(0,10).map(o=>({parfum:(o.marque?o.marque+' ':'')+(o.nom||o.sku),pub_90j:r0(o.pub),resultat_90j:r0(o.res)}))}:'pas encore lu',
     commandes_de_la_pub_payees_pas_encore_expediees:{nombre:att.length,montant:r0(att.reduce((a,x)=>a+(+x.mt||0),0))},
-    outils_en_place:['WooCommerce (perfumestrade.com, wholesale)','Shopify (Perfume City)','Google Ads (campagnes gérées par un prestataire, « D.C. »)','Google for WooCommerce (2 837 produits envoyés à Google)','Klaviyo (emails)','WhatsApp (envoi des nouveaux arrivages aux clients favoris)','Amazon','Lightspeed (caisse)'],
+    outils_en_place:['WooCommerce (perfumestrade.com, wholesale)','Shopify (Perfume City)','Google Ads (campagnes créées par un prestataire, reprises par Sam en novembre 2026 : voir campagnes_google_ads)','Google for WooCommerce (2 837 produits envoyés à Google)','Klaviyo (emails)','WhatsApp (envoi des nouveaux arrivages aux clients favoris)','Amazon','Lightspeed (caisse)'],
     donnees_manquantes:['Search Console non branchée : on ne connaît ni les recherches Google qui mènent au site, ni ses positions','nombre de visiteurs des sites non mesuré : pas de taux de conversion','historique des ventes du site avant octobre 2026 hors de l\'ERP (seulement la pub Google, par mois)'] };
 }
 /* LA SALLE DE RÉUNION (9 nov. 2026). Igal : « une petite animation où on voit des gens discuter, se mettre d'accord, écrire… »,
@@ -6628,6 +6652,76 @@ function anStrategie(L,tous){
     if((S.rapports||[]).length>1) h+=`<details class="ga-calc"><summary>${A3('Rapports précédents','Previous reports')}</summary>${S.rapports.slice(1).map(x=>{ const Z=(x.res&&(x.res[anLg()]||x.res.fr))||{}; return `<p class="ga-note"><b>${esc(anDate(x.date))}</b> — ${esc(Z.bilan||'')}</p>`; }).join('')}</details>`; }
   return h+`</section>`;
 }
+/* ============ LES CAMPAGNES GOOGLE ADS, EN DIRECT (10 nov. 2026) ============
+   Igal : « que je puisse récupérer toutes les infos en live pour l'analytique de l'ERP ». Un script posé dans le compte Google Ads
+   envoie ses chiffres au cockpit toutes les heures (google-ads-v1 ; voir googleads.js dans le cockpit). Ici, chaque campagne :
+   active ou en pause, budget par jour, objectif de rentabilité, ce qu'elle a coûté et ce que Google lui attribue sur 30 et 7 jours.
+     ventes pour 1 $ = ventes selon Google ÷ coût ;
+     résultat estimé = ventes selon Google × (ventes réelles ÷ ventes selon Google) × taux de marge moyen des parfums de la pub − coût ;
+     seuil = le « ventes pour 1 $ » en dessous duquel la campagne perd de l'argent (même calcul, à l'envers).
+   Le taux de marge et la correction « ventes réelles » viennent de l'analyse parfum par parfum (mêmes chiffres, mêmes règles). */
+function anCampCalc(tous){
+  const A=anAdsJ(); if(!A||!Array.isArray(A.c)) return null;
+  const X=(()=>{ try{ return anAnalysePub(tous); }catch(e){ return null; } })();
+  let taux=0.3, k=0.8;
+  if(X){ k=X.k; const Lt=X.L.filter(o=>o.taux!=null&&o.vg>0), sv=Lt.reduce((a,o)=>a+o.vg,0); if(sv>0) taux=Math.max(0.05,Lt.reduce((a,o)=>a+o.vg*o.taux,0)/sv); }
+  const seuil=1/(k*taux);
+  const C=A.c.map(c=>{ const m=c.m30||[0,0,0,0,0], s=c.m7||[0,0,0,0,0];
+    return {id:c.id,n:c.n,on:c.etat==='ENABLED',type:c.type,budget:c.budget,troas:c.troas,cout:+m[0]||0,vg:+m[1]||0,conv:+m[2]||0,cout7:+s[0]||0,vg7:+s[1]||0,
+      roas:(+m[0]>0)?(+m[1]||0)/(+m[0]):null,res:(+m[1]||0)*k*taux-(+m[0]||0)}; });
+  C.sort((a,b)=>(b.on-a.on)||(b.cout-a.cout));
+  return {A,C,taux,k,seuil};
+}
+function anCampDossier(tous){ const R=anCampCalc(tous); if(!R) return 'pas encore branché';
+  return {recu:R.A.maj,seuil_ventes_pour_1_dollar:Math.round(R.seuil*100)/100,
+    campagnes:R.C.filter(c=>c.on||c.cout>0).map(c=>({nom:c.n,etat:c.on?'active':'en pause',type:c.type,budget_par_jour:c.budget,objectif_ventes_pour_1_dollar:c.troas,cout_30j:Math.round(c.cout),ventes_selon_google_30j:Math.round(c.vg),ventes_pour_1_dollar:c.roas!=null?Math.round(c.roas*100)/100:null,resultat_estime_30j:Math.round(c.res),cout_7j:Math.round(c.cout7)})),
+    autres_campagnes_en_pause_sans_depense:R.C.filter(c=>!c.on&&!c.cout).length}; }
+function anDepuis(iso){ const m=Math.max(0,Math.round((Date.now()-Date.parse(iso))/60000)); if(!isFinite(m)) return '';
+  if(m<1) return A3('à l\'instant','just now'); if(m<60) return A3(`il y a ${m} min`,`${m} min ago`);
+  const h=Math.round(m/60); if(h<48) return A3(`il y a ${h} h`,`${h} h ago`); return A3(`il y a ${Math.round(h/24)} jours`,`${Math.round(h/24)} days ago`); }
+function anCampagnes(tous){
+  const R=anCampCalc(tous);
+  let h=`<section class="ga-card ga-pad" id="gc"><div class="ga-h"><h3>${A3('Les campagnes Google Ads','Google Ads campaigns')}</h3>`;
+  if(!R) return h+`<span class="ga-src">${A3('pas encore branchées','not connected yet')}</span></div>
+    <p class="gc-txt">${A3('Pour voir ici, en direct, chaque campagne (active ou en pause, budget, objectif, ce qu\'elle coûte et rapporte), un petit script se pose une fois dans le compte Google Ads. Il ne fait que lire : il ne change rien aux campagnes.','To see each campaign here, live (running or paused, budget, target, what it costs and brings), a small script is set up once in the Google Ads account. It only reads: it changes nothing in the campaigns.')}</p>
+    <button type="button" class="ga-btn" id="gc-voir">${A3('Afficher le script à coller dans Google Ads','Show the script to paste into Google Ads')}</button><div id="gc-script"></div></section>`;
+  const vieux=Date.now()-Date.parse(R.A.maj)>3*3600e3;
+  h+=`<span class="ga-src ${vieux?'gc-vieux':''}">${A3('en direct de Google Ads','live from Google Ads')} · ${A3('reçu','received')} ${anDepuis(R.A.maj)}</span></div>`;
+  if(vieux) h+=`<p class="gc-alerte">${A3('Plus de nouvelles du compte Google Ads depuis plus de 3 heures : vérifier que le script tourne toutes les heures (Outils › Actions groupées › Scripts).','No news from the Google Ads account for more than 3 hours: check that the script runs every hour (Tools › Bulk actions › Scripts).')}</p>`;
+  const V=R.C.filter(c=>c.on||c.cout>0), autres=R.C.length-V.length, nOn=R.C.filter(c=>c.on).length;
+  const tot=V.reduce((a,c)=>({cout:a.cout+c.cout,vg:a.vg+c.vg,res:a.res+c.res,b:a.b+(c.on?(+c.budget||0):0)}),{cout:0,vg:0,res:0,b:0});
+  h+=`<div class="ga-stats ga-stats4">
+    <div><span>${A3('Campagnes actives','Running campaigns')}</span><b>${nf(nOn)}</b><small>${nOn?money(tot.b)+' '+A3('de budget par jour','daily budget'):A3('aucune pub ne passe','no ad is running')}</small></div>
+    <div><span>${A3('Coût sur 30 jours','Cost over 30 days')}</span><b>${money(tot.cout)}</b><small>${A3('ventes selon Google','sales per Google')} ${money(tot.vg)}</small></div>
+    <div><span>${A3('Ventes pour 1 $ de pub','Sales per $1 of ads')}</span><b>${tot.cout>0?(tot.vg/tot.cout).toFixed(2).replace('.',A3(',','.')):'—'}</b><small>${A3('seuil de rentabilité','break-even')} ≈ ${R.seuil.toFixed(1).replace('.',A3(',','.'))}</small></div>
+    <div><span>${A3('Résultat estimé, 30 jours','Estimated result, 30 days')}</span><b class="${tot.res<0?'gc-neg':'gc-pos'}">${money(tot.res)}</b><small>${A3('marge rapportée − pub','margin brought − ads')}</small></div></div>`;
+  h+=`<div class="gc-tete"><span>${A3('Campagne','Campaign')}</span><span>${A3('Budget / jour','Budget / day')}</span><span>${A3('Coût 30 j','Cost 30 d')}</span><span>${A3('Pour 1 $','Per $1')}</span><span>${A3('Résultat 30 j','Result 30 d')}</span></div>`
+    +V.map(c=>`<div class="gc-l"><span class="gc-n"><b data-nolang>${esc(c.n)}</b><small><i class="gc-e ${c.on?'on':''}">${c.on?A3('Active','Running'):A3('En pause','Paused')}</i> <span data-nolang>${esc(gcType(c.type))}</span>${c.troas?' · '+A3('objectif','target')+' '+Math.round(c.troas*100)+' %':''}${c.cout7>0?' · '+A3('7 j','7 d')+' : '+money(c.cout7):''}</small></span>
+      <span class="gc-v">${c.budget!=null?money(c.budget):'—'}</span><span class="gc-v">${money(c.cout)}</span>
+      <span class="gc-v ${c.roas==null?'':c.roas<R.seuil?'gc-neg':'gc-pos'}">${c.roas==null?'—':c.roas.toFixed(2).replace('.',A3(',','.'))}</span>
+      <span class="gc-v ${c.cout>0?(c.res<0?'gc-neg':'gc-pos'):''}">${c.cout>0?money(c.res):'—'}</span></div>`).join('')
+    +(autres?`<p class="ga-note">${A3(`+ ${nf(autres)} autre${autres>1?'s':''} campagne${autres>1?'s':''} en pause, sans dépense sur 30 jours.`,`+ ${nf(autres)} other paused campaign${autres>1?'s':''}, no spend in 30 days.`)}</p>`:'')
+    +`<p class="ga-note">${A3(`« Pour 1 $ » = ventes que Google attribue à la campagne pour 1 $ de pub. Sous ${R.seuil.toFixed(1).replace('.',',')}, elle perd de l'argent : marge moyenne des parfums de la pub ${Math.round(R.taux*100)} %, et Google s'attribue environ ${Math.round(100/R.k)} % des ventes réelles.`,`“Per $1” = sales Google credits to the campaign for $1 of ads. Below ${R.seuil.toFixed(1)}, it loses money: average margin of advertised perfumes ${Math.round(R.taux*100)}%, and Google credits itself about ${Math.round(100/R.k)}% of actual sales.`)}</p></section>`;
+  return h;
+}
+function gcType(t){ return ({PERFORMANCE_MAX:'Performance Max',SHOPPING:'Shopping',SEARCH:A3('Recherche','Search'),DISPLAY:'Display',VIDEO:A3('Vidéo','Video'),DEMAND_GEN:'Demand Gen'})[t]||String(t||'').toLowerCase(); }
+function anGcBranche(){
+  const b=document.getElementById('gc-voir'); if(!b) return;
+  b.onclick=async()=>{ const z=document.getElementById('gc-script'); b.disabled=true;
+    try{ const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/google/script',{headers:{Authorization:'Bearer '+ckTok()}}); const j=await r.json().catch(()=>({}));
+      if(!r.ok) throw new Error(j.erreur||('HTTP '+r.status));
+      z.innerHTML=`<ol class="gc-etapes"><li>${A3('Dans Google Ads : <b>Outils</b> › <b>Actions groupées</b> › <b>Scripts</b>, puis le bouton <b>+</b> › <b>Nouveau script</b>.','In Google Ads: <b>Tools</b> › <b>Bulk actions</b> › <b>Scripts</b>, then the <b>+</b> button › <b>New script</b>.')}</li>
+        <li>${A3('Efface le texte proposé et colle celui-ci (bouton <b>Copier</b>).','Delete the suggested text and paste this one (<b>Copy</b> button).')}</li>
+        <li>${A3('Clique <b>Autoriser</b> et suis les écrans avec le compte de Sam.','Click <b>Authorize</b> and follow the screens with Sam\'s account.')}</li>
+        <li>${A3('Clique <b>Exécuter</b> une fois : les campagnes apparaissent ici dans la minute.','Click <b>Run</b> once: the campaigns show up here within a minute.')}</li>
+        <li>${A3('Règle la <b>fréquence</b> sur <b>Toutes les heures</b> et enregistre.','Set the <b>frequency</b> to <b>Hourly</b> and save.')}</li></ol>
+        <textarea class="gc-code" readonly spellcheck="false" data-nolang>${esc(j.script||'')}</textarea>
+        <button type="button" class="ga-btn" id="gc-copie">${A3('Copier','Copy')}</button>`;
+      const c=document.getElementById('gc-copie'), t=z.querySelector('textarea');
+      c.onclick=async()=>{ try{ await navigator.clipboard.writeText(t.value); }catch(e){ t.select(); document.execCommand('copy'); } c.textContent=A3('Copié ✓','Copied ✓'); };
+    }catch(e){ z.innerHTML=`<p class="gc-alerte">${A3('Le cockpit ne donne pas le script : ','The cockpit does not give the script: ')}<span data-nolang>${esc(e.message||'')}</span></p>`; b.disabled=false; }
+  };
+}
 /* ============ LA PUB, PARFUM PAR PARFUM (9 nov. 2026) ============
    Igal : « la liste des parfums qui rapportent assez pour mériter de la pub » et « quelle économie on pourrait faire par mois ».
    Pour chaque fiche où Google a dépensé de l'argent ces 90 derniers jours (lu par le cockpit, google-pub-v1 › p) :
@@ -6644,7 +6738,7 @@ function anFiches(){ const M={}; let MOD={}, EXT={q:{}}; try{ MOD=JSON.parse(loc
     String(bc).split(/[^0-9A-Za-z]+/).filter(Boolean).forEach(b=>{ M[b.replace(/^0+/,'')]=f; }); });
   return M; }
 function anAnalysePub(tous){
-  let G={}; try{ G=JSON.parse(localStorage.getItem('google-pub-v1')||'{}')||{}; }catch(e){}
+  const G=anPubJ();
   const P=G.p; if(!P||!Array.isArray(P.L)||!P.L.length) return null;
   const F=anFiches();
   const site=(REG.canaux||[]).find(c=>c.id==='site')||{}, com=(+site.com>=0&&site.com!=='')?+site.com:2.9, fixe=(site.fixe!=null&&site.fixe!=='')?+site.fixe:0.3;
@@ -6749,11 +6843,11 @@ majUser();
   /* une nouvelle version des factures ou des origines arrive du serveur (toutes les 8 s) : on relit et on redessine */
   /* 9 nov. 2026 : la relève du serveur (toutes les 8 s) annonce les magasins arrivés par « ck-maj » (et non par « storage ») :
      sans cette écoute, la vidéo restait sur la première étape et le résultat des agents n'apparaissait qu'en rechargeant */
-  const AN_CLES=['ventes-origine-v1','google-pub-v1','strategie-v1',KFACT];
+  const AN_CLES=['ventes-origine-v1','google-pub-v1','google-ads-v1','strategie-v1',KFACT];
   window.addEventListener('ck-maj',e=>{ const c=(e.detail&&e.detail.cles)||[]; if(!c.some(k=>AN_CLES.includes(k))) return;
     try{ ORI=JSON.parse(localStorage.getItem('ventes-origine-v1')||'{}')||{}; FACT=JSON.parse(localStorage.getItem(KFACT)||'[]')||[]; STRAT=JSON.parse(localStorage.getItem('strategie-v1')||'{}')||{}; }catch(_){}
     anDessine(); });
-  window.addEventListener('storage',e=>{ if(e.key==='ventes-origine-v1'||e.key==='google-pub-v1'||e.key==='strategie-v1'||e.key===KFACT){ try{ ORI=JSON.parse(localStorage.getItem('ventes-origine-v1')||'{}')||{}; FACT=JSON.parse(localStorage.getItem(KFACT)||'[]')||[]; STRAT=JSON.parse(localStorage.getItem('strategie-v1')||'{}')||{}; }catch(_){} anDessine(); } });
+  window.addEventListener('storage',e=>{ if(e.key==='ventes-origine-v1'||e.key==='google-pub-v1'||e.key==='google-ads-v1'||e.key==='strategie-v1'||e.key===KFACT){ try{ ORI=JSON.parse(localStorage.getItem('ventes-origine-v1')||'{}')||{}; FACT=JSON.parse(localStorage.getItem(KFACT)||'[]')||[]; STRAT=JSON.parse(localStorage.getItem('strategie-v1')||'{}')||{}; }catch(_){} anDessine(); } });
 })();
 
 

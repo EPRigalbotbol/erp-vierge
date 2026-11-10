@@ -859,6 +859,7 @@ opacity:0;transition:opacity .1s;z-index:5;font-family:Inter,sans-serif}
 .vlist .mg{font-family:Inter,sans-serif;font-size:11.5px;font-weight:600;color:var(--good);min-width:64px;text-align:right}
 .vlist .mg.neg,.vtab td.neg{color:var(--crit)}
 .vtab{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:4px}
+.vcli{list-style:none;margin:4px 0 0;padding:0;font-size:13px;line-height:1.45}.vcli li{padding:6px 0;border-bottom:1px solid var(--line,#eee)}
 .vtab th{text-align:left;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);padding:4px 8px;border-bottom:1px solid var(--line)}
 .vtab td{padding:6px 8px;border-bottom:1px solid var(--line-2)}
 .vtab .r{text-align:right;font-variant-numeric:tabular-nums}
@@ -4187,10 +4188,13 @@ function blocVentes(p){
       if(x.q>0&&x.p!=null){ o.pmin=o.pmin==null?x.p:Math.min(o.pmin,x.p); o.pmax=o.pmax==null?x.p:Math.max(o.pmax,x.p); } });
     return Object.values(G).sort((a,b)=>b.q-a.q||b.m-a.m); };
   const C=grp(x=>x.canal), K=grp(x=>x.client);
-  const pxPaye=o=>{ if(!(o.q>0)) return '—'; const moy=money(o.m/o.q);
-    return (o.pmin!=null&&o.pmax-o.pmin>0.004)?`${moy}<br><small class="hint">${T('de','from','de')} ${money(o.pmin)} ${T('à','to','a')} ${money(o.pmax)}</small>`:moy; };
-  const tab=(T2,tete,max,mg,px)=>`<table class="vtab"><thead><tr><th>${tete}</th><th class="r">${T('Flacons','Bottles','Frascos')}</th><th class="r">${T('Montant','Amount','Importe')}</th>${px?`<th class="r" title="${esc(T('Prix moyen payé par flacon, et la fourchette si le client n\'a pas toujours payé le même prix','Average price paid per bottle, and the range if the customer did not always pay the same price','Precio medio pagado por frasco, y el rango si el cliente no siempre pagó el mismo precio'))}">${T('Prix payé','Price paid','Precio pagado')}</th>`:''}${mg?`<th class="r">${T('Il te reste','Left for you','Te queda')}</th>`:''}<th class="r">${T('Dernière','Last','Última')}</th></tr></thead>
-    <tbody>${T2.slice(0,max).map(o=>`<tr><td data-nolang>${esc(o.n)}</td><td class="r">${nf(o.q)}</td><td class="r">${money(o.m)}</td>${px?`<td class="r">${pxPaye(o)}</td>`:''}${mg?`<td class="r ${o.mgk&&o.mg<0?'neg':''}">${o.mgk?money(o.mg):'—'}</td>`:''}<td class="r">${o.d?jourFr(o.d):'—'}</td></tr>`).join('')}
+  /* 10 nov. 2026 (Sam ne comprenait pas le tableau « Par client ») : une phrase par client */
+  const cli=o=>{ const n=o.q>0, un=Math.abs(o.q)===1, fo=n&&o.pmin!=null&&o.pmax-o.pmin>0.004;
+    return `<li><b data-nolang>${esc(o.n==='—'?T('client non noté','customer not noted','cliente no anotado'):o.n)}</b> — ${nf(o.q)} ${T(un?'flacon':'flacons',un?'bottle':'bottles',un?'frasco':'frascos')}, ${money(o.m)} ${T('au total','in total','en total')}`
+      +(n?` · <b>${money(o.m/o.q)} ${fo?T('le flacon en moyenne','per bottle on average','el frasco de media'):T('le flacon','per bottle','el frasco')}</b>${fo?` (${T('entre','between','entre')} ${money(o.pmin)} ${T('et','and','y')} ${money(o.pmax)})`:''}`:'')
+      +(o.d?` · ${T('dernier achat le','last purchase','última compra el')} ${jourFr(o.d)}`:'')+'</li>'; };
+  const tab=(T2,tete,max,mg)=>`<table class="vtab"><thead><tr><th>${tete}</th><th class="r">${T('Flacons','Bottles','Frascos')}</th><th class="r">${T('Montant','Amount','Importe')}</th>${mg?`<th class="r">${T('Il te reste','Left for you','Te queda')}</th>`:''}<th class="r">${T('Dernière','Last','Última')}</th></tr></thead>
+    <tbody>${T2.slice(0,max).map(o=>`<tr><td data-nolang>${esc(o.n)}</td><td class="r">${nf(o.q)}</td><td class="r">${money(o.m)}</td>${mg?`<td class="r ${o.mgk&&o.mg<0?'neg':''}">${o.mgk?money(o.mg):'—'}</td>`:''}<td class="r">${o.d?jourFr(o.d):'—'}</td></tr>`).join('')}
     ${T2.length>max?`<tr><td colspan="6" class="hint">… ${T('et','and','y')} ${nf(T2.length-max)} ${T('autres','more','más')}</td></tr>`:''}</tbody></table>`;
   const ligne=x=>{ const m=VMG?marge(x):null;
     return `<li${x.num?` class="vlk" data-vnum="${esc(x.num)}" title="${esc(T('Ouvrir cette vente dans Ventes','Open this sale in Sales','Abrir esta venta en Ventas'))}"`:''}><span class="d">${x.d?jourFr(x.d):'—'}${x.h?' '+esc(x.h):''}</span>
@@ -4218,7 +4222,7 @@ function blocVentes(p){
     </div>
     <div class="vdeux">
       <div><h4>${T('Par canal','By channel','Por canal')}</h4>${tab(C,T('Canal','Channel','Canal'),6,VMG)}</div>
-      <div><h4>${T('Par client','By customer','Por cliente')}</h4>${tab(K,T('Client','Customer','Cliente'),5,false,true)}</div>
+      <div><h4>${T('Par client','By customer','Por cliente')}</h4><ul class="vcli">${K.slice(0,5).map(cli).join('')}${K.length>5?`<li class="hint">… ${T('et','and','y')} ${nf(K.length-5)} ${T('autres','more','más')}</li>`:''}</ul></div>
     </div>
     <details class="vdet" id="dvdet"${FICHE&&FICHE.vDet?' open':''}><summary>${T('Le rythme et chaque vente','Pace and every sale','El ritmo y cada venta')} <small class="hint">${T('— cliquer pour agrandir','— click to expand','— clic para ampliar')} (${nf(l.length)})</small></summary>
     <h4>${T('Le rythme','The pace','El ritmo')}</h4>

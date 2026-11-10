@@ -31,6 +31,7 @@ CSS = r'''/* ===== NOUVEAUX ARRIVAGES (8 nov. 2026) : la fenêtre d'envoi, puis 
 
 .arr-d.fait{background:#f3faf5}
 .arr-dn{flex:1;min-width:0}.arr-dn small{display:block;color:var(--ink-3);font-size:12px}
+.arr-att{background:#fff8e6;border:1px solid #f0d58a;border-radius:8px;padding:8px 10px;color:#5a4a16}
 .arr-st{font-size:12.5px;color:#1e6b34;min-width:70px;text-align:right}
 .btn.arr-wa{background:#25d366;border-color:#25d366;color:#fff;font-weight:600}
 .btn.arr-wa:hover{background:#1ebe5b}
@@ -54,13 +55,14 @@ CSS = r'''/* ===== NOUVEAUX ARRIVAGES (8 nov. 2026) : la fenêtre d'envoi, puis 
 .arr-feuille .at2{font-family:ArrSerif;font-weight:600;font-size:17px;letter-spacing:.2em;text-transform:uppercase}
 .arr-feuille .at2 span{font-family:ArrSans;font-weight:400;font-size:8.5px;letter-spacing:.16em;color:#8a7a62;text-transform:uppercase}
 .arr-feuille .asans{font-family:ArrSerif;font-weight:500;font-size:15px;letter-spacing:.12em;text-transform:uppercase;color:#c9ad7f;padding:0 12px;text-align:center}
-.arr-feuille .ag{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 12px;align-content:start}
+.arr-feuille .ag{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 12px;align-content:start}
+.arr-feuille .ag.plein{flex:1;align-content:space-evenly}
 .arr-feuille .ac{text-align:center}
-.arr-feuille .aph{width:161px;height:161px;margin:0 auto;border:1px solid #ece6dc;border-radius:3px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fff}
+.arr-feuille .aph{width:170px;height:170px;margin:0 auto;border:1px solid #ece6dc;border-radius:3px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fff}
 .arr-feuille .aph img{width:100%;height:100%;object-fit:contain}
 .arr-feuille .am{font-size:8.5px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#a8854f;margin-top:7px}
-.arr-feuille .an{font-family:ArrSerif;font-weight:600;font-size:16.5px;line-height:1.08;margin-top:2px}
-.arr-feuille .ad{font-size:9px;color:#5f5a52;margin-top:3px}
+.arr-feuille .an{font-family:ArrSerif;font-weight:600;font-size:19px;line-height:1.08;margin-top:3px}
+.arr-feuille .ad{font-size:9.5px;color:#5f5a52;margin-top:3px}
 .arr-feuille .abc{font-size:9.5px;letter-spacing:.02em;margin-top:4px;display:inline-block;border-top:1px solid #ece6dc;padding-top:3px}
 .arr-feuille .acta{margin-top:auto;margin-bottom:22px;border:1px solid #c9ad7f;padding:13px 19px;text-align:center;background:#faf7f1}
 .arr-feuille .act1{font-family:ArrSerif;font-weight:600;font-size:18px;letter-spacing:.14em;text-transform:uppercase}
@@ -161,19 +163,29 @@ async function arrPhoto(a){
 const arrJour=d=>{ const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(d||'')); if(!m) return String(d||'');
   return new Date(+m[1],+m[2]-1,+m[3]).toLocaleDateString(typeof lgLocale==='function'?lgLocale():'fr-FR',{day:'numeric',month:'long',year:'numeric'}); };
 const arrTaille=m=>{ const v=parseFloat(String(m||'').replace(',','.')); return isFinite(v)&&v>0?(Math.round(v*10)/10)+' oz':String(m||''); };
-/* ---- la feuille : 12 parfums par page, la première avec le grand titre, la dernière avec « Prix sur demande » ---- */
-function arrFeuilles(items,lg,F){
+/* ---- la feuille : la première page avec le grand titre, la dernière avec « Prix sur demande » ----
+   10 nov. 2026 (Igal, PDF de 12 parfums à l'appui : « ça écrase la page complètement en bas, tout est tassé… ça ne me dérange pas
+   qu'il y ait deux pages, mais je veux que ça reste propre ») : plus de « 12 par page » d'office. La première page porte `cap1`
+   rangées de quatre (deux), les suivantes `capN` (trois) ; arrPdf MESURE chaque page une fois posée et retire une rangée tant que
+   quelque chose dépasse (un nom sur deux lignes, le cadre « Prix sur demande »…) : rien n'est jamais tassé ni recouvert. */
+function arrDecoupe(items,cap1,capN){
+  const P=[]; let i=0;
+  while(i<items.length){ const n=(P.length?capN:cap1)*4; P.push(items.slice(i,i+n)); i+=n; }
+  return P.length?P:[[]];
+}
+function arrFeuilles(items,lg,F,cap1,capN){
+  cap1=cap1||2; capN=capN||3;
   /* le trait d'union devient insécable : le photographe (html2canvas) coupait « code-barres » en « code- barres » */
-  const T=ARR_T[lg]||ARR_T.en, e=v=>esc(v).replace(/-/g,'\u2011'), logo=F.logo||'', tel=F.tel||'', N=Math.max(1,Math.ceil(items.length/12));
+  const T=ARR_T[lg]||ARR_T.en, e=v=>esc(v).replace(/-/g,'\u2011'), logo=F.logo||'', tel=F.tel||'', PG=arrDecoupe(items,cap1,capN), N=PG.length;
   const mois=new Date().toLocaleDateString(lg==='fr'?'fr-FR':lg==='es'?'es-ES':'en-US',{month:'long',year:'numeric'});
   const carte=x=>`<div class="ac"><div class="aph">${x.photo?`<img src="${x.photo}">`:`<span class="asans">${e(arrCasse(x.marque||''))}</span>`}</div><div class="am">${e(arrCasse(x.marque||''))}</div><div class="an">${e(arrCasse(x.nom||''))}</div>`
     +`<div class="ad">${e([arrTaille(x.ml),ARR_TYPE[String(x.type||'').toUpperCase()]||x.type||'',T.g[String(x.genre||'').toUpperCase()]||''].filter(Boolean).join(' · '))}</div><div class="abc">${e(String(x.bc||''))}</div></div>`;
   let h='';
-  for(let i=0;i<N;i++){ const p=items.slice(i*12,i*12+12);
+  for(let i=0;i<N;i++){ const p=PG[i], plein=p.length>4*((i?capN:cap1)-1);
     h+=`<div class="apg">`+(i===0?`<div class="ah1">${logo?`<img class="alogo" src="${logo}">`:`<div class="alogot">${e(F.enseigne||'Perfumes Trade')}</div>`}<div class="afil"><span></span><b></b><span></span></div>`
         +`<div class="atitre">${e(T.titre)}</div><div class="amois">${e(mois)}</div><p class="aintro">${e(T.intro(items.length))}</p><div class="atel">${e(T.prix)} · WhatsApp <b>${e(tel)}</b></div></div>`
       :`<div class="ah2">${logo?`<img class="alogo2" src="${logo}">`:''}<div class="at2">${e(T.titre)} <span>· ${e(mois)}</span></div></div>`)
-      +`<div class="ag">${p.map(carte).join('')}</div>`
+      +`<div class="ag${plein?' plein':''}">${p.map(carte).join('')}</div>`
       +(i===N-1?`<div class="acta"><div class="act1">${e(T.prix)}</div><div class="act2">${e(T.cta)}</div><div class="act3">WhatsApp ${e(tel)}</div></div>`:'')
       +`<div class="apied"><span>${e(F.enseigne||'')}${F.adresse?' · '+e(F.adresse):''}</span><span>${e(F.email||'')}${tel?' · '+e(tel):''}</span><span>${i+1} / ${N}</span></div></div>`; }
   return h;
@@ -190,18 +202,33 @@ async function arrPdf(items,lg){
   if(!window.html2canvas) await new Promise((ok,ko)=>{ const sc=document.createElement('script'); sc.src='lib/pdf/html2canvas.min.js'; sc.onload=ok; sc.onerror=()=>ko(new Error('Moteur PDF introuvable')); document.head.appendChild(sc); });
   await arrPolices();
   const F=((typeof REG!=='undefined'&&REG&&REG.fact)||(lit('reglages-v1',{})||{}).fact||{});
-  const z=document.createElement('div'); z.className='arr-feuille'; z.innerHTML=arrFeuilles(items,lg,F); document.body.appendChild(z);
+  const z=document.createElement('div'); z.className='arr-feuille'; document.body.appendChild(z);
+  /* une page déborde quand sa dernière carte, ou le cadre « Prix sur demande », descend sous le pied de page */
+  const deborde=pg=>{ const pied=pg.querySelector('.apied').getBoundingClientRect().top-6, C=pg.querySelectorAll('.ac'), cta=pg.querySelector('.acta');
+    const bas=C.length?C[C.length-1].getBoundingClientRect().bottom:0;
+    return cta?(cta.getBoundingClientRect().bottom>pied||bas>cta.getBoundingClientRect().top-8):bas>pied; };
+  let cap1=2, capN=3;
+  for(let essai=0;essai<5;essai++){
+    z.innerHTML=arrFeuilles(items,lg,F,cap1,capN);
+    const pgs=[...z.querySelectorAll('.apg')], d1=pgs.length&&deborde(pgs[0]), dN=pgs.slice(1).some(deborde);
+    if(d1&&cap1>1) cap1--; else if(dN&&capN>1) capN--; else break;
+  }
+  const tasse=[...z.querySelectorAll('.apg')].some(deborde);   /* vrai seulement si même une rangée par page ne tient pas (jamais vu) */
   try{
     await Promise.all([...z.querySelectorAll('img')].map(i=>i.complete?0:new Promise(r=>{ i.onload=i.onerror=r; })));
     const {jsPDF}=window.jspdf; const pdf=new jsPDF({unit:'pt',format:'letter',orientation:'portrait',compress:true});
-    const W=pdf.internal.pageSize.getWidth(), H=pdf.internal.pageSize.getHeight(); let apercu=null;
+    const W=pdf.internal.pageSize.getWidth(), H=pdf.internal.pageSize.getHeight(); let apercu=null, leger=null;
     const pages=[...z.querySelectorAll('.apg')];
     for(let n=0;n<pages.length;n++){
       const c=await window.html2canvas(pages[n],{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,width:816,height:1056,windowWidth:900});
       if(n) pdf.addPage(); pdf.addImage(c.toDataURL('image/jpeg',0.88),'JPEG',0,0,W,H);
-      if(!n){ const p=document.createElement('canvas'); p.width=1000; p.height=Math.round(1000*c.height/c.width); p.getContext('2d').drawImage(c,0,0,p.width,p.height); apercu=await new Promise(r=>p.toBlob(r,'image/png')); }
+      /* 10 nov. 2026 (Igal : « je la reçois floue… d'autres ne voient même pas l'image, ils doivent cliquer sur le lien ») : la carte
+         de WhatsApp se fabrique chez celui qui ENVOIE, au moment où le lien est collé ; une image lourde (le PNG de la page pesait
+         plus que ce que WhatsApp conseille) arrive trop tard ou en version dégradée. On dépose en plus un JPEG léger, fait pour elle. */
+      if(!n){ const p=document.createElement('canvas'); p.width=1000; p.height=Math.round(1000*c.height/c.width); p.getContext('2d').drawImage(c,0,0,p.width,p.height);
+        apercu=await new Promise(r=>p.toBlob(r,'image/png')); leger=await new Promise(r=>p.toBlob(r,'image/jpeg',0.84)); }
     }
-    return {pdf:pdf.output('blob'),png:apercu,pages:pages.length};
+    return {pdf:pdf.output('blob'),png:apercu,jpg:leger,pages:pages.length,tasse};
   } finally { z.remove(); }
 }
 async function arrDepot(lg){
@@ -215,7 +242,8 @@ async function arrDepot(lg){
     const q='?type=arrivage&enseigne='+encodeURIComponent(F.enseigne||'Perfumes Trade')+'&date='+encodeURIComponent(new Date().toLocaleDateString('en-US'))+'&lignes='+items.length+'&langue='+lg;
     const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/docs/'+encodeURIComponent(num)+q,{method:'PUT',headers:{'Content-Type':'application/pdf',Authorization:'Bearer '+ckTok()},body:r0.pdf});
     const j=await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.erreur||('PDF refusé ('+r.status+')'));
-    if(r0.png){ try{ await fetch(CK_URL+'/api/o/'+CK_ORG+'/docs/'+encodeURIComponent(num)+'/image',{method:'PUT',headers:{'Content-Type':'image/png',Authorization:'Bearer '+ckTok()},body:r0.png}); }catch(e){} }
+    for(const [ty,b] of [['image/png',r0.png],['image/jpeg',r0.jpg]]){ if(!b) continue;   /* le PNG (courrier, page), puis le JPEG léger (carte WhatsApp) */
+      try{ await fetch(CK_URL+'/api/o/'+CK_ORG+'/docs/'+encodeURIComponent(num)+'/image',{method:'PUT',headers:{'Content-Type':ty,Authorization:'Bearer '+ckTok()},body:b}); }catch(e){} }
     ARR.liens[lg]={sig,url:j.url,blob:r0.pdf}; return j.url; })();
   ARR.enCours[lg]={sig,p};
   try{ return await p; } finally { if(ARR.enCours[lg]&&ARR.enCours[lg].p===p) delete ARR.enCours[lg]; }
@@ -302,6 +330,7 @@ function arrPeint(){
     <div class="arr-tete"><b>${arrT('Clients favoris','Favourite customers','Clientes favoritos')}</b>
 </div>
     <div id="arr-etat" class="arr-etat"></div><div id="arr-dest"></div>
+    <p class="hint arr-att"><b>${arrT("Avant d'appuyer sur Envoyer dans WhatsApp, attends que l'image de la liste apparaisse au-dessus du message (deux ou trois secondes).","Before pressing Send in WhatsApp, wait until the picture of the list appears above the message (two or three seconds).","Antes de pulsar Enviar en WhatsApp, espera a que la imagen de la lista aparezca encima del mensaje (dos o tres segundos).")}</b> ${arrT("Envoyé trop vite, le client ne reçoit que le lien, ou une image floue.","Sent too fast, the customer only gets the link, or a blurry picture.","Si se envía demasiado rápido, el cliente solo recibe el enlace, o una imagen borrosa.")}</p>
     <p class="hint">${arrT("Coche les clients, puis « Envoyer par WhatsApp » : WhatsApp s'ouvre dans un onglet, pour le premier, avec le message dans sa langue et le lien du PDF. Appuie sur Envoyer dans WhatsApp, puis reviens ici pour le suivant. La première fois, WhatsApp demande de scanner un QR code avec le téléphone. Le message se change dans Réglages › Ma société.","Tick the customers, then “Send by WhatsApp”: WhatsApp opens in a tab, for the first one, with the message in their language and the PDF link. Press Send in WhatsApp, then come back here for the next one. The first time, WhatsApp asks you to scan a QR code with your phone. The message can be changed in Settings › My company.","Marca los clientes y luego « Enviar por WhatsApp »: WhatsApp se abre en una pestaña, para el primero, con el mensaje en su idioma y el enlace del PDF. Pulsa Enviar en WhatsApp y vuelve aquí para el siguiente. La primera vez, WhatsApp pide escanear un código QR con el teléfono. El mensaje se cambia en Ajustes › Mi empresa.")}</p>`;
   c.querySelectorAll('[data-arrp]').forEach(b=>b.onchange=()=>{ b.checked?ARR.choix.add(b.dataset.arrp):ARR.choix.delete(b.dataset.arrp); b.closest('.arr-p').classList.toggle('on',b.checked);
     c.querySelector('.arr-tete b').textContent=`${arrT('Parfums de la liste','Perfumes on the list','Perfumes de la lista')} (${nf(ARR.choix.size)}/${nf(ARR.items.length)})`; ARR.etat={}; arrPeintEtat(); arrPrepare(); });

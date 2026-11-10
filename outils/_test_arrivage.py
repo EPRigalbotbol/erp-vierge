@@ -36,7 +36,7 @@ CLIENTS = {
     'Javier': {'nom': 'Javier', 'vip': True},                                                                         # favori sans numéro
     'Desinscrit': {'nom': 'Desinscrit', 'vip': True, 'tel': '7865550199', 'nodiff': True},
     'Pas favori': {'nom': 'Pas favori', 'tel': '7865550100'}}
-DOCS = []
+DOCS = []; IMGS = []
 try:
     with sync_playwright() as p:
         b = p.chromium.launch(); pg = b.new_page(viewport={'width': 1400, 'height': 1000}); err = []
@@ -47,6 +47,7 @@ try:
             u = route.request.url
             m = re.search(r'/docs/([^/?]+)(/image)?(\?[^#]*)?$', u)
             if m and route.request.method == 'PUT':
+                if m.group(2): IMGS.append((m.group(1), route.request.headers.get('content-type', ''), len(route.request.post_data_buffer or b'')))
                 if not m.group(2):
                     DOCS.append({'num': m.group(1), 'q': dict(urllib.parse.parse_qsl((m.group(3) or '?')[1:])), 'pdf': route.request.post_data_buffer})
                 route.fulfill(status=200, content_type='application/json', body=json.dumps({'ok': True, 'url': 'https://ck.test/d/dasy/jeton' + m.group(1), 'pdf': 'https://ck.test/d/dasy/jeton' + m.group(1) + '.pdf'})); return
@@ -117,6 +118,8 @@ try:
         par = {d['q'].get('langue'): d for d in DOCS}
         check('LE POINT — trois PDF déposés (es, fr, en), type « arrivage », 5 parfums, un vrai PDF d\'une page', set(par) == {'es', 'fr', 'en'} and all(d['q'].get('type') == 'arrivage' and d['q'].get('lignes') == '5' and d['pdf'][:5] == b'%PDF-' for d in par.values())
               and len(re.findall(rb'/Type\s*/Page[^s]', par['en']['pdf'])) == 1, [(d['num'], d['q'], len(d['pdf'] or b'')) for d in DOCS])
+        ie = [x for x in IMGS if x[0] == 'ARR-MPS1-EN']
+        check('LE POINT — 10 nov. 2026 : pour chaque PDF, deux aperçus déposés — le PNG, puis un JPEG léger (moins de 300 Ko) pour la carte WhatsApp', [x[1] for x in ie] == ['image/png', 'image/jpeg'] and 10000 < ie[1][2] < 300000, IMGS[:6])
         check('les numéros des PDF : ARR-<réception>-<LANGUE>', par.get('es', {}).get('num') == 'ARR-MPS1-ES' and par.get('fr', {}).get('num') == 'ARR-MPS1-FR', [d['num'] for d in DOCS])
         (D / '_apercu_arrivage.pdf').write_bytes(par['fr']['pdf'])
         fr.click('#arr-caucun'); fr.wait_for_timeout(300)

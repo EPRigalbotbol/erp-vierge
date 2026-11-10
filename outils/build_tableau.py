@@ -274,7 +274,7 @@ const DOCS=FACT.filter(f=>f&&f.doc&&f.doc.type==='facture'&&(f.doc.reste||0)>0)
   .sort((a,b)=>String(a.d||'').localeCompare(String(b.d||'')));
 const duTot=DOCS.reduce((a,f)=>a+(f.doc.reste||0),0);
 const duVieux=DOCS.filter(f=>f.d&&f.d<jourMoins(30));
-const devisOuverts=FACT.filter(f=>f&&f.doc&&f.doc.type==='devis'&&!f.doc.converti);
+const devisOuverts=FACT.filter(f=>f&&f.doc&&f.doc.type==='devis'&&!f.doc.converti&&!f.doc.offre);   /* les offres (rubrique Offre) ne sont pas des cotes */
 
 /* ---- deux alertes « l'ERP ne ment pas en silence » (21 oct. 2026) ----
    1. une mise en ligne EN VENTE qui n'a pas abouti sur un canal (notée par le Catalogue dans publications-v1, retirée toute seule

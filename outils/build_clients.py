@@ -451,6 +451,7 @@ function construit(){
   /* 2. les ventes enregistrées dans l'outil : site, caisse, boutique, gros, Amazon */
   /* un nom qui n'en est pas un (« [object Object] » de la caisse, phrase d'email Amazon) ne fait pas un client */
   FACT.forEach(f=>{ if(!f||!faNomClient(f.tiers)||(f.sens!=='vente'&&f.sens!=='devis')) return; const o=get(faNomClient(f.tiers)); if(!o) return;
+    if(f.doc&&f.doc.offre) return;   /* une offre de prix (rubrique Offre) n'est ni une vente ni une cote */
     if(f.sens==='devis'||(f.doc&&f.doc.type==='devis')){ o.devis.push({src:'erp',d:f.d||'',num:(f.doc&&f.doc.num)||f.num||'',total:+((f.doc&&f.doc.total)||f.montant)||0}); return; }
     /* le statut fiscal retenu sur sa dernière facture (resale, passeport) */
     if(f.doc&&f.doc.fiscal&&!o.co.fiscal){ o.co.fiscal=f.doc.fiscal; if(f.doc.fref) o.co.fiscalRef=f.doc.fref; }

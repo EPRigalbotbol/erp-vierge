@@ -362,10 +362,13 @@ function factReg(){
   if(!F.raison) F.raison=R.societe||'DASY LLC';
   return F;
 }
-/* numéro suivant : PT-2026-0001 pour les factures, DV-2026-0001 pour les devis */
+/* numéro suivant : PT-2026-0001 pour les factures, DV-2026-0001 pour les devis, OF-2026-0001 pour les offres (10 nov. 2026) */
+/* l'offre de prix (rubrique Offre, 10 nov. 2026) : un devis marqué « offre » — même document, autre nom, jamais converti en facture */
+const OFFRE_MOT={fr:'Offre',en:'Offer',es:'Oferta'};
+const offreMot=D=>OFFRE_MOT[(D&&D.langue)||(typeof LANG!=='undefined'?LANG:'fr')]||'Offer';
 function docNum(type,d,pc){
   const F=pc?factRegPC():factReg(), an=(d||new Date().toISOString()).slice(0,4);
-  const pre=(type==='devis'?'DV':(F.prefixe||'PT').toUpperCase())+'-'+an+'-';
+  const pre=(type==='offre'?'OF':type==='devis'?'DV':(F.prefixe||'PT').toUpperCase())+'-'+an+'-';
   let n=0; FACT.forEach(f=>{ const m=f.doc&&f.doc.num&&String(f.doc.num).startsWith(pre)?+String(f.doc.num).slice(pre.length):0; if(m>n) n=m; });
   return pre+String(n+1).padStart(4,'0');
 }
@@ -464,7 +467,8 @@ function docChampsMaj(){
   const pcC=!!($('v-canal')&&canalPC($('v-canal').value));
   const F=pcC?factRegPC():factReg();
   $('v-docaide').textContent = !on ? '' :
-    $('v-doc').value==='devis' ? 'Un devis ne sort rien du stock. Il pourra être transformé en facture en un clic, quand le client confirme.'
+    ($('v-doc').value==='devis'&&typeof MODE_OFFRE!=='undefined'&&MODE_OFFRE) ? r3('Une offre de prix ne sort rien du stock et ne devient jamais une facture : quand le client veut acheter, « Faire la cote ».','A price offer takes nothing out of stock and never becomes an invoice: when the customer wants to buy, “Make the quote”.','Una oferta de precio no saca nada del stock y nunca se convierte en factura: cuando el cliente quiere comprar, «Hacer la cotización».')
+    : $('v-doc').value==='devis' ? 'Un devis ne sort rien du stock. Il pourra être transformé en facture en un clic, quand le client confirme.'
     : (pcC?'En-tête PERFUME CITY sur cette facture. ':'')
       + (F.raison&&F.adresse?'':'L\'en-tête de la facture est incomplet (raison sociale, adresse…) : Réglages › Factures et devis'+(pcC?' › Perfume City':'')+'. ')
       + (!$('v-client').value.trim()?'Indique le client : une facture sans client n\'a pas de sens.':'');
@@ -576,7 +580,8 @@ function docRef(l){
 }
 function dessineDoc(f){
   DOC=f; const D=f.doc, E=D.entete||factReg(), CLI=lit(KCLI,{}), cl=CLI[f.tiers]||{nom:f.tiers||''};
-  const st=docStatut(f), devis=D.type==='devis';
+  const st=docStatut(f), devis=D.type==='devis', offre=devis&&!!D.offre;
+  const lgO=D.langue||(typeof LANG!=='undefined'?LANG:'fr'), o3=(a,b,c)=>lgO==='en'?b:lgO==='es'?c:a;
   const lignes=(f.lignes||[]).filter(l=>l.q);
   /* ---- la langue du document ----
      La traduction de l'outil remplace les textes reconnus MOT POUR MOT. Un nœud
@@ -595,10 +600,10 @@ function dessineDoc(f){
          ${E.adresse?`<span>${esc(E.adresse)}</span>`:''}${E.tel?`<span>${esc(E.tel)}</span>`:''}${E.email?`<span>${esc(E.email)}</span>`:''}${E.insta?`<span>Instagram @${esc(String(E.insta).replace(/^@/,''))}</span>`:''}
          ${E.taxid?`<span><span class="lbl">Sales tax n°</span> ${esc(E.taxid)}</span>`:''}</div>
      </div>
-     <div class="titre"><h2>${devis?'Devis':'Facture'}</h2>
+     <div class="titre"><h2${offre?' data-nolang':''}>${offre?offreMot(D):devis?'Devis':'Facture'}</h2>
        <span class="num" data-nolang>${esc(D.num)}</span>
        <span data-nolang>${dfr(f.d)}</span>
-       ${devis?`<span>Valable 15 jours</span>`:''}</div>
+       ${offre?`<span data-nolang>${o3('Valable 30 jours','Valid for 30 days','Válida 30 días')}</span>`:devis?`<span>Valable 15 jours</span>`:''}</div>
    </div>
    <div class="parties">
      <div><h4>${devis?'Adressé à':'Facturé à'}</h4>
@@ -636,9 +641,9 @@ function dessineDoc(f){
      return `<div class="pay"><b>Pour régler</b><span data-nolang>${esc(E.zelle)}</span></div>`;
    })()}
    ${!devis&&D.reste<=0?`<div class="tampon">Payée${D.payeLe?` <span data-nolang>· ${dfr(D.payeLe)}</span>`:''}</div>`:''}
-   ${devis?`<div class="tampon devis">${st==='converti'?`<span class="lbl">Transformé en facture</span> <span data-nolang>${esc(D.convertiNum||'')}</span>`:'Devis — sans engagement de stock'}</div>`:''}
+   ${offre?`<div class="tampon devis" data-nolang>${o3('Offre de prix — sans engagement de stock','Price offer — no stock commitment','Oferta de precio — sin compromiso de stock')}</div>`:devis?`<div class="tampon devis">${st==='converti'?`<span class="lbl">Transformé en facture</span> <span data-nolang>${esc(D.convertiNum||'')}</span>`:'Devis — sans engagement de stock'}</div>`:''}
    <div class="pied"><span data-nolang>${esc(E.raison||'')}${E.adresse?' · '+esc(E.adresse):''}${E.tel?' · '+esc(E.tel):''}${E.email?' · '+esc(E.email):''}</span><br>
-     <span class="lbl">${devis?'Devis':'Facture'}</span> <span data-nolang>${esc(D.num)}</span> ·
+     ${offre?`<span data-nolang>${offreMot(D)}</span>`:`<span class="lbl">${devis?'Devis':'Facture'}</span>`} <span data-nolang>${esc(D.num)}</span> ·
      <span class="lbl">émis${devis?'':'e'} par</span> <span data-nolang>${esc(f.par||'')}</span> ·
      <span data-nolang>${dfr((D.emis||f.t||'').slice(0,10))}</span></div>`;
   /* Le document porte sa propre langue : la couche de traduction la lit sur
@@ -651,7 +656,7 @@ function dessineDoc(f){
   }catch(e){}
   $('doc-paye').style.display=devis?'none':'';
   $('doc-paye').textContent = D.reste>0 ? (D.regle>0?'Encaisser le reste':'Encaisser') : 'Voir les paiements';
-  $('doc-conv').style.display=(devis&&!D.converti)?'':'none';
+  $('doc-conv').style.display=(devis&&!D.converti&&!offre)?'':'none';
   { const bl=$('doc-lignes'); if(bl) bl.style.display=(devis&&typeof peutModifierDevis==='function'&&peutModifierDevis(f))?'':'none'; }
   $('docov').classList.add('on');
   docPagine();   /* la fenêtre doit être visible pour mesurer */
@@ -739,11 +744,13 @@ function docTexte0(f, lien){
   const T=(fr)=>{ try{ const v=(typeof lgMot==='function')?lgMot(fr,lg):null; return v||fr; }catch(e){ return fr; } };
   const L=(f.lignes||[]).filter(l=>l.q).map(l=>`• ${docRef(l)} × ${l.q} — $${dus(nbSur(l.q)*nbSur(puDoc(l)))}`).join('\n');
   const salut=lg==='fr'?'Bonjour'+(f.tiers?' '+f.tiers:'')+',':lg==='es'?'Hola'+(f.tiers?' '+f.tiers:'')+',':'Hello'+(f.tiers?' '+f.tiers:'')+',';
-  const intro=devis
+  const intro=D.offre
+    ?(lg==='fr'?'Voici notre offre de prix, valable 30 jours :':lg==='es'?'Aquí tiene nuestra oferta de precio, válida 30 días:':'Here is our price offer, valid for 30 days:')
+    :devis
     ?(lg==='fr'?'Merci pour votre demande de cotation. Voici votre devis':lg==='es'?'Gracias por su solicitud de cotización. Aquí tiene su cotización':'Thank you for your quote request. Here is your quote')
     :(lg==='fr'?'Voici votre facture':lg==='es'?'Aquí tiene su factura':'Here is your invoice');
   const total=T('Total').toUpperCase()+' : $'+dus(D.total);
-  return `${salut}\n\n${intro} *${D.num}* (${dfr(f.d)}) :\n\n${L}\n\n`
+  return `${salut}\n\n${intro}${D.offre?'':` *${D.num}* (${dfr(f.d)}) :`}\n\n${L}\n\n`
     + `${T('Sous-total')} : $${dus(D.sousTotal)}`
     + `${D.remise?'\n'+T('Remise')+' : −$'+dus(D.remise):''}`
     + `${D.frais?'\n'+T('Frais carte')+' '+D.fraisPct+' % : $'+dus(D.frais):''}\n`
@@ -829,12 +836,12 @@ function canvasPNG(cs){
   return new Promise(r=>p.toBlob(r,'image/png'));
 }
 async function docPDF(){ return (await docPret(DOC)).pdf; }
-const docNomPDF=f=>((f.doc.type==='devis'?((typeof vf==='function')?vf('Devis',f.doc.langue||LANG):'Devis'):'Facture')+'-')+String(f.doc.num).replace(/[^A-Za-z0-9._-]/g,'')+'.pdf';
+const docNomPDF=f=>((f.doc.offre?offreMot(f.doc):f.doc.type==='devis'?((typeof vf==='function')?vf('Devis',f.doc.langue||LANG):'Devis'):'Facture')+'-')+String(f.doc.num).replace(/[^A-Za-z0-9._-]/g,'')+'.pdf';
 /* le lien public du document : déposé une fois, réutilisé ensuite */
 async function docLien(f){
   if(typeof CK_URL==='undefined' || typeof ckTok!=='function' || !ckTok()) throw new Error("Pas de session serveur : le texte part sans le PDF.");
   const pr=await docPret(f); const c=pr.canvas, blob=pr.pdf; const D=f.doc, E=enteteVue(f.doc);
-  const q='?type='+(D.type||'devis')+'&enseigne='+encodeURIComponent(E.enseigne||E.raison||'')+'&date='+encodeURIComponent(dfr(f.d))
+  const q='?type='+(D.offre?'offre':(D.type||'devis'))+'&enseigne='+encodeURIComponent(E.enseigne||E.raison||'')+'&date='+encodeURIComponent(dfr(f.d))
     +'&total='+encodeURIComponent('$'+dus(D.total))+'&lignes='+((f.lignes||[]).filter(l=>l.q).length)+'&langue='+(D.langue||(typeof LANG!=='undefined'?LANG:'fr'));
   let r;
   try{ r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/docs/'+encodeURIComponent(D.num)+q,
@@ -930,11 +937,13 @@ async function boiteEnvoi(){
   catch(e){ _boite={pret:false}; }
   return _boite;
 }
-function docSujet(f){ const D=f.doc, E0=enteteVue(D); const t=(D.type==='devis'?'Devis ':'Facture ')+D.num+' — '+(E0.enseigne||E0.raison); return (typeof vf==='function')?vf(t,D.langue||LANG):t; }
+function docSujet(f){ const D=f.doc, E0=enteteVue(D); if(D.offre) return offreMot(D)+' '+D.num+' — '+(E0.enseigne||E0.raison); const t=(D.type==='devis'?'Devis ':'Facture ')+D.num+' — '+(E0.enseigne||E0.raison); return (typeof vf==='function')?vf(t,D.langue||LANG):t; }
 function docMotCourrier(f){ const t=docMotCourrier0(f); return (typeof vf==='function')?vf(t,f.doc.langue||LANG):t; }
 function docMotCourrier0(f){
   const D=f.doc, E=enteteVue(D), devis=D.type==='devis';
   const lg=D.langue||(typeof LANG!=='undefined'?LANG:'fr');
+  if(D.offre){ const c=lg==='fr'?'Bonjour,\n\nVoici notre offre de prix, valable 30 jours. Veuillez trouver le document ci-joint.':lg==='es'?'Hola,\n\nAquí tiene nuestra oferta de precio, válida 30 días. Adjunto encontrará el documento.':'Hello,\n\nHere is our price offer, valid for 30 days. Please find the document attached.';
+    return c+'\n\n'+(lg==='fr'?'Merci,':lg==='es'?'Gracias,':'Thank you,')+'\n'+(E.enseigne||E.raison)+(E.tel?' · '+E.tel:''); }
   const corps=lg==='fr'?(devis?'Bonjour,\n\nMerci pour votre demande de cotation. Veuillez trouver ci-joint le devis.':'Bonjour,\n\nVeuillez trouver ci-joint votre facture.')
     :lg==='es'?(devis?'Hola,\n\nGracias por su solicitud de cotización. Adjunto encontrará la cotización.':'Hola,\n\nAdjunto encontrará su factura.')
     :(devis?'Hello,\n\nThank you for your quote request. Please find the quote attached.':'Hello,\n\nPlease find your invoice attached.');
@@ -1132,7 +1141,7 @@ $('ed-ok').onclick=()=>{ const f=DOC; if(!f||!f.doc) return;
   $('edov').classList.remove('on'); dessineDoc(g); try{ if(typeof peintDocs==='function') peintDocs(); }catch(e){} };
 /* un devis accepté devient une facture : nouveau numéro, et cette fois le stock sort */
 $('doc-conv').onclick=()=>{
-  const f=DOC; if(!f||!f.doc||f.doc.type!=='devis'||f.doc.converti) return;
+  const f=DOC; if(!f||!f.doc||f.doc.type!=='devis'||f.doc.converti||f.doc.offre) return;
   if(!confirm(vf('Transformer le devis '+f.doc.num+' en facture ? Les quantités sortiront du stock.'))) return;
   const d=ajd(), JOU=lit(KJOU,[]), VENT=lit(KVENT,{});
   const lignes=[], det=[]; let sortis=0;
@@ -1155,7 +1164,7 @@ $('doc-conv').onclick=()=>{
 /* ---- la liste ---- */
 let DOCS_F='';
 function peintDocs(){
-  const L=FACT.filter(f=>f.doc&&(f.sens==='vente'||f.sens==='devis')).sort((a,b)=>(b.t||'').localeCompare(a.t||''));
+  const L=FACT.filter(f=>f.doc&&!f.doc.offre&&(f.sens==='vente'||f.sens==='devis')).sort((a,b)=>(b.t||'').localeCompare(a.t||''));
   const du=L.filter(f=>docStatut(f)==='apayer'||docStatut(f)==='partiel');
   const totDu=du.reduce((a,f)=>a+(f.doc.reste||0),0);
   $('docs-em').textContent=L.length?`${nf(L.length)} document${L.length>1?'s':''}${du.length?` · ${du.length} à encaisser pour ${money2(totDu)}`:''}`:'aucun encore — coche « Facture » ou « Devis » en enregistrant une vente';

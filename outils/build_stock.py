@@ -92,7 +92,7 @@ font-variant-numeric:tabular-nums}
 .nv.on{background:var(--iris-soft);color:var(--iris);font-weight:700;border-left-color:var(--iris)}
 .nv.on .ic{opacity:1}
 .nv.sub{padding:3px 10px 3px 36px;font-size:12.5px;font-weight:500}
-@media(max-height:860px) and (min-width:901px){.nv{padding-top:2px;padding-bottom:2px}.navlab{padding-top:4px;padding-bottom:3px}.side{padding-top:6px;padding-bottom:5px}.logo{padding-bottom:7px;margin-bottom:4px}}  /* portable : voir _base.css (4 nov. 2026 : un cran de plus, Transfert interstore) */
+@media(max-height:860px) and (min-width:901px){.nv{padding-top:1px;padding-bottom:1px}.navlab{padding-top:3px;padding-bottom:2px}.side{padding-top:6px;padding-bottom:5px}.logo{padding-bottom:7px;margin-bottom:4px}}  /* portable : voir _base.css (4 nov. 2026 : un cran de plus, Transfert interstore ; 10 nov. : la rubrique Offre) */
 @media(max-width:900px){.nv.sub{padding:5px 10px}}
 .nv.soon{color:var(--ink-3);font-weight:500;cursor:default;pointer-events:none}
 .nv.soon .ct{font-size:9px;letter-spacing:.08em;text-transform:uppercase;opacity:.8}
@@ -224,6 +224,7 @@ td.code{font-family:Inter,sans-serif;font-size:11.5px;color:var(--ink-3);white-s
 .pd .b{font-family:Inter,sans-serif;font-size:9.5px;letter-spacing:.12em;
 text-transform:uppercase;color:var(--ink-3)}
 .pd .n{font-size:13.5px;font-weight:500;line-height:1.3}
+.pd[data-fiche]:not([data-fiche=""]){cursor:pointer}.pd[data-fiche]:not([data-fiche=""]):hover .n{text-decoration:underline;color:var(--accent,#5b3f8c)}
 .pd .m{font-size:11.5px;color:var(--ink-3)}
 .tag{font-family:Inter,sans-serif;font-size:9.5px;padding:2px 7px;border-radius:99px;
 font-weight:500;letter-spacing:.03em;white-space:nowrap}
@@ -512,6 +513,13 @@ const PAGE=150;
 
 saisie=lit(KEY,{}); if(!saisie||typeof saisie!=='object') saisie=base(KEY,{});
 const sauve=()=>ecrit(KEY,saisie);
+/* 10 nov. 2026 (Igal : « ils ont rempli les chiffres de l'inventaire, c'est toujours Jamais vérifiée ») : le comptage était rangé par
+   code-barres. Les 50 parfums SANS code-barres partageaient donc la même case : le chiffre tapé sur l'un s'affichait sur tous, et
+   s'enregistrait sur le premier de la liste. Chaque ligne a maintenant sa clé : le code-barres, sinon l'identifiant de la fiche.
+   L'ancienne case commune (clé vide) ne veut rien dire : elle est retirée. */
+const kc=p=>p.bc?String(p.bc):'#'+p.cle;
+const kSel=k=>`.cnt[data-bc="${(window.CSS&&CSS.escape)?CSS.escape(k):k}"]`;
+if(saisie&&saisie['']!=null){ delete saisie['']; try{ sauve(); }catch(e){} }
 
 const nf=n=>n.toLocaleString('fr-FR');
 /* Le dollar (Igal, 30 sept. 2026 : « le dollar est décalé ») : une espace INSÉCABLE entre le
@@ -645,16 +653,16 @@ function ligne(p,i){
   const vit=tst(p);
   const cls=!rempli?'':(ec===0?'done':'ecart');
   const gcls=ec==null?'zero':ec>0?'pos':ec<0?'neg':'zero';
-  return `<tr class="${cls}" data-bc="${p.bc}">
+  return `<tr class="${cls}" data-bc="${esc(kc(p))}">
    <td class="no o3">${nf((i||0)+1)}</td>
-   <td><div class="pd"><span class="b">${esc(p.marque)}</span>
+   <td><div class="pd" data-fiche="${esc(p.cle||'')}" title="${esc(typeof L3==='function'?L3('Ouvrir la fiche du parfum','Open the perfume card','Abrir la ficha del perfume'):'Ouvrir la fiche du parfum')}"><span class="b">${esc(p.marque)}</span>
      <span class="n">${esc(p.nom)}</span>
      <span class="m">${[p.ml?p.ml+' oz':'',p.type].filter(Boolean).join(' · ')} &nbsp;<span class="code">${p.bc}</span></span></div></td>
    <td class="o4"><span class="tag ${vl(p.v)[1]}">${vl(p.v)[0]}</span></td>
    <td class="num">${qteAtt(p)===0?'<span style="color:var(--ink-3)">0</span>':nf(qteAtt(p))}${
        vit?`<span class="vit" title="${nf(vit)} tester${vit>1?'s':''}, non vendable${vit>1?'s':''} — à compter quand même">+${nf(vit)} tester${vit>1?'s':''}</span>`:''}</td>
    <td class="num"><input class="cnt${rempli?' filled':''}" type="number" min="0" inputmode="numeric"
-       value="${rempli?c:''}" data-bc="${p.bc}" aria-label="Quantité comptée"></td>
+       value="${rempli?c:''}" data-bc="${esc(kc(p))}" aria-label="Quantité comptée"></td>
    <td class="num"><span class="gap ${gcls}">${ec==null?'—':(ec>0?'+':'')+nf(ec)}</span></td>
    <td class="num o2"><span class="gap ${gcls}">${val==null?'—':(val>0?'+':'')+money(val)}</span></td>
    <td class="num o1" style="color:var(--ink-3)">${money(capEff(p))}</td>
@@ -708,7 +716,13 @@ let MOD=lit(KMOD,{}); if(!MOD||typeof MOD!=='object'||Array.isArray(MOD)) MOD=ba
 P.forEach(p=>{ const m=MOD[p.cle]; if(m&&m.verif!==undefined) p.v=m.verif; });
 /* 30 oct. 2026 : le nom, la marque, la contenance et le type changés dans la fiche du Catalogue se voient ici aussi
    (avant, l'Inventaire gardait « Nom (Clone de…) » quand le Catalogue disait « Nom ») */
+/* 10 nov. 2026 (Igal : « Sam a rajouté le code-barres sur la fiche, mais l'inventaire ne le trouvait pas ») : un parfum arrivé
+   sans code-barres prend celui que Sam a posé sur sa fiche du Catalogue — la recherche et la douchette le trouvent ; un chiffre
+   déjà compté sous l'identifiant de la fiche suit le code-barres. */
+function bcFiche(p){ const m=MOD[p.cle]; if(p.bc||!m||!m.bc) return; const b=String(m.bc).trim(); if(!b) return;
+  p.bc=b; try{ if(saisie['#'+p.cle]!=null&&saisie[b]==null){ saisie[b]=saisie['#'+p.cle]; delete saisie['#'+p.cle]; sauve(); } }catch(e){} }
 P.forEach(p=>{ const m=MOD[p.cle]; if(!m) return; ['nom','marque','ml','type'].forEach(k=>{ if(m[k]!=null&&m[k]!=='') p[k]=(k==='type')?String(m[k]).toUpperCase():String(m[k]); }); });
+  P.forEach(bcFiche);
 /* 6 nov. 2026 (Sam : Asad à 18,50 $ de gros au Catalogue, 18 $ dans l'Inventaire) : c'est le Catalogue qui fixe les prix.
    Le prix retail et le prix de gros changés dans la fiche se voient ici aussi — l'Inventaire ne garde plus ceux du fichier. */
 if('__CIBLE__'==='pt') P.forEach(p=>{ const m=MOD[p.cle]; if(!m) return; if(m.pvr!=null&&m.pvr!=='') p.pvr=+m.pvr; if(m.pvw!=null&&m.pvw!=='') p.pvw=+m.pvw; });
@@ -736,11 +750,17 @@ setTimeout(()=>{ try{ chiffres(); }catch(e){} },0);
 /* LE FIL EN DIRECT (1er oct. 2026) : un comptage, une vente ou un achat fait sur un autre poste
    arrive dans la seconde ; la liste se relit et se redessine sur place (jamais pendant une
    saisie : le champ qu'on est en train de remplir garde la main, un bandeau propose de recharger) */
+/* 10 nov. 2026 (Igal : « sur la partie inventaire, cliquer sur le produit et avoir le panneau latéral avec la fiche produit ») :
+   la fiche du Catalogue elle-même, en panneau à droite (comme dans la Cote) ; à sa fermeture, la liste se relit */
+document.addEventListener('click',e=>{ const d=e.target.closest&&e.target.closest('.pd[data-fiche]');
+  if(!d||!d.dataset.fiche||typeof ficheFenetre!=='function') return;
+  ficheFenetre(d.dataset.fiche,()=>{ try{ window.__rafraichir(); }catch(_){} }); });
 window.__rafraichir=()=>{ const y=window.scrollY;
   { const m=lit(KMOD,{}); if(m&&typeof m==='object'&&!Array.isArray(m)) MOD=m; }
   try{ EXT=Object.assign({q:{}},JSON.parse(localStorage.getItem('stock-externe-v1')||'{}')); }catch(e){}
   P.forEach(p=>{ const m=MOD[p.cle]; if(m&&m.verif!==undefined) p.v=m.verif; });
   P.forEach(p=>{ const m=MOD[p.cle]; if(!m) return; ['nom','marque','ml','type'].forEach(k=>{ if(m[k]!=null&&m[k]!=='') p[k]=(k==='type')?String(m[k]).toUpperCase():String(m[k]); }); });
+  P.forEach(bcFiche);
 /* 6 nov. 2026 (Sam : Asad à 18,50 $ de gros au Catalogue, 18 $ dans l'Inventaire) : c'est le Catalogue qui fixe les prix.
    Le prix retail et le prix de gros changés dans la fiche se voient ici aussi — l'Inventaire ne garde plus ceux du fichier. */
 if('__CIBLE__'==='pt') P.forEach(p=>{ const m=MOD[p.cle]; if(!m) return; if(m.pvr!=null&&m.pvr!=='') p.pvr=+m.pvr; if(m.pvw!=null&&m.pvw!=='') p.pvw=+m.pvw; });
@@ -754,7 +774,7 @@ if('__CIBLE__'==='pt') P.forEach(p=>{ const m=MOD[p.cle]; if(!m) return; if(m.pv
    réception, correction), ce comptage ne dit plus rien du rayon : la ligne montre le stock d'aujourd'hui, la case
    est vide, et le prochain comptage repart de ce stock-là. */
 /* ce que la case « compté » contient pour cette ligne — rien si le comptage est périmé */
-function cpt(p){ return comptagePerime(p)?undefined:saisie[p.bc]; }
+function cpt(p){ return comptagePerime(p)?undefined:saisie[kc(p)]; }
 function comptagePerime(p){ const m=MOD[p.cle]; return !!(m&&m.qteC!=null&&(m.qte==null||+m.qte!==+m.qteC)); }
 function qteAtt(p){ const m=MOD[p.cle];
   return (m&&m.qteC!=null&&m.qteTh0!=null&&!comptagePerime(p))?+m.qteTh0:qteTh(p); }
@@ -1114,7 +1134,7 @@ function scanne(code){
       `<b>Código ${k} desconocido</b> en el inventario — producto sin código de barras, código erróneo o referencia que no está en el archivo. Búscalo por el nombre.`));
     $('q').value=''; rend(true); $('q').focus(); return; }
   $('q').value=p.bc; rend(true);
-  const inp=document.querySelector(`.cnt[data-bc="${p.bc}"]`);
+  const inp=document.querySelector(kSel(kc(p)));
   const nomP=`<b>${esc(p.marque||'')} ${esc(p.nom||'')}${p.type?' <i class="ty" data-nolang>'+esc(p.type)+'</i>':''}</b>`, dj=inp&&inp.value!==''?esc(inp.value):null;
   bandeau('ok',T3(`${nomP} · ${nf(qteTh(p))} attendus${dj!=null?` · déjà compté : ${dj}`:''} — tape la quantité comptée puis Entrée.`,
     `${nomP} · ${nf(qteTh(p))} expected${dj!=null?` · already counted: ${dj}`:''} — type the counted quantity, then Enter.`,
@@ -1152,7 +1172,7 @@ const T_CNT={};
 /* la quantité comptée est enregistrée quand on quitte la case (Tab, clic ailleurs, Entrée) */
 document.addEventListener('change',e=>{
   if(!e.target.classList||!e.target.classList.contains('cnt')) return;
-  const bc=e.target.dataset.bc, v=e.target.value, p0=P.find(x=>x.bc===bc);
+  const bc=e.target.dataset.bc, v=e.target.value, p0=P.find(x=>kc(x)===bc);
   if(!p0) return;
   if(v!=='' && Number.isInteger(+v) && +v>=0) confirmeComptage(p0,+v);
   else if(v==='') annuleComptage(p0);
@@ -1164,7 +1184,7 @@ document.addEventListener('change',e=>{
 },true);
 /* réécrit les cellules calculées d'une ligne (théorique, écart, capital) sans recréer le champ */
 function majLigne(p){
-  const inp=document.querySelector(`.cnt[data-bc="${p.bc}"]`);
+  const inp=document.querySelector(kSel(kc(p)));
   const tr=inp?inp.closest('tr'):null; if(!tr) return;
   const c=cpt(p), rempli=c!=null&&c!=='';
   const th=qtePhys(p), ec=rempli?(+c)-th:null;
@@ -1191,14 +1211,14 @@ function majLigne(p){
 document.addEventListener('input',e=>{
   if(e.target.classList.contains('cnt')){
     const bc=e.target.dataset.bc, v=e.target.value;
-    const p0=P.find(x=>x.bc===bc);
+    const p0=P.find(x=>kc(x)===bc);
     const avait=saisie[bc]!=null&&saisie[bc]!=='';
     if(v==='') delete saisie[bc]; else saisie[bc]=v;
     sauve();
     /* on n'écrit ni dans le stock ni dans le journal à chaque touche : une saisie de
        « 120 » écrivait 6 lignes, dont « 782 → 1 » et « 782 → 12 ». On attend la fin. */
     clearTimeout(T_CNT[bc]);
-    const p=P.find(x=>x.bc===bc), tr=e.target.closest('tr');
+    const p=P.find(x=>kc(x)===bc), tr=e.target.closest('tr');
     const rempli=v!=='', ec=rempli?(+v)-qtePhys(p):null;
     e.target.classList.toggle('filled',rempli);
     tr.className=!rempli?'':(ec===0?'done':'ecart');

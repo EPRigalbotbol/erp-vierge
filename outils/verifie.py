@@ -24,7 +24,7 @@ SCRIPTS = ['build_html.py','build_stock.py','build_ventes.py','build_factures.py
            'build_etude.py','build_messages.py','build_retail.py','build_expeditions.py','build_taches.py','build_demandes_pc.py','build_analytique.py']
 PAGES = ['catalogue.html','stock.html','inventaire_pc.html','ventes.html','quotes.html','factures.html',
          'clients.html','fournisseurs.html','journal.html','tableau.html','reglages.html',
-         'connecteurs.html','acces.html','expeditions.html','taches.html','demandes_pc.html','analytique.html']
+         'connecteurs.html','acces.html','expeditions.html','taches.html','demandes_pc.html','analytique.html','offres.html']
 
 ok = []
 ko = []

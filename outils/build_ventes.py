@@ -2396,7 +2396,7 @@ function peintRes(){
 function ajoute(cle){
   const ex=PANIER.find(l=>l.cle===cle);
   if(ex) ex.q++;
-  else PANIER.push({cle,q:1,p:prixSuggere(cle,canalCour())});
+  else PANIER.push({cle,q:1,p:prixLigne(cle,canalCour())});
   vq().value=''; CANDIDATS=[]; SEL=-1; peintRes(); peintPanier(); vq().focus();
 }
 /* Le prix d'une ligne : retail, gros, ou tapé à la main (Sam, 1er oct. 2026 : « dans Record a
@@ -2419,12 +2419,31 @@ function dernierPrixClient(cle,cli){
   try{ const H=window.D_HG; if(H&&H.l&&H.c) bcs.forEach(b=>(H.l[b]||[]).forEach(r=>{ if(r&&cNorm(H.c[r[1]])===cli) prend(r[0],'',r[3],r[2]); })); }catch(e){}
   return best;
 }
+/* 10 nov. 2026 (Sam, via Igal) — LES OFFRES DE PRIX (rubrique Offre). Une offre faite à un client vaut 30 jours. Dans une cote
+   pour ce client, le parfum prend le prix de l'offre si elle est PLUS RÉCENTE que son dernier achat (règles validées par Sam). */
+const OFFRE_JOURS=30;
+function offreLimite(){ const aj=(typeof jourMiami==='function')?jourMiami():new Date().toISOString().slice(0,10);
+  return new Date(Date.parse(aj+'T12:00:00Z')-OFFRE_JOURS*864e5).toISOString().slice(0,10); }
+function offreValide(f){ return !!(f&&f.doc&&f.doc.offre&&!f.doc.archive&&String(f.d||'')>=offreLimite()); }
+function offreFin(f){ return new Date(Date.parse(String(f.d||'').slice(0,10)+'T12:00:00Z')+OFFRE_JOURS*864e5).toISOString().slice(0,10); }
+function offreClient(cle,cli){
+  if(!cli) return null; let best=null;
+  FACT.forEach(f=>{ if(!offreValide(f)||cNorm(f.tiers)!==cli) return;
+    (f.lignes||[]).forEach(l=>{ if(!l||l.cle!==cle) return; const p=(l.remise&&l.pAv!=null)?+l.pAv:(l.p==null?null:+l.p); if(p==null) return;
+      const k=String(f.d||'')+' '+String(f.h||''); if(!best||k>best.k) best={k,d:f.d||'',p,num:f.doc.num}; }); });
+  return best;
+}
+function offreGagnante(cle,cli){ const o=offreClient(cle,cli); if(!o) return null; const a=dernierPrixClient(cle,cli); return (!a||o.k>=a.k)?o:null; }
+/* le prix d'une nouvelle ligne : dans une cote, l'offre gagnante d'abord ; sinon le prix habituel du canal */
+function prixLigne(cle,canal){ try{ if(!MODE_OFFRE&&MODE_QUOTES){ const o=offreGagnante(cle,clientCour()); if(o) return o.p; } }catch(e){} return prixSuggere(cle,canal); }
 function puChips(l,i){
   const r=pvrEff(l.cle), w=pvwEff(l.cle);
   const ch=(k,lab,v,cls,titre)=>v==null?'':`<button type="button" class="puc${cls||''}${l.p!=null&&Math.abs(l.p-v)<0.005?' on':''}" data-pu="${i}" data-pk="${k}" data-pv="${v}"${titre?' title="'+esc(titre)+'"':''}><span>${lab}</span> <b data-nolang>${money2(v)}</b></button>`;
   let h=ch('r','retail',r)+ch('w','gros',w);
   try{ const cli=clientCour(), nom=$('v-client').value.trim(); const dp=cli?dernierPrixClient(l.cle,cli):null;
-    if(dp) h+=ch('c',`<span data-nolang>${esc(nom)}</span> ${r3('a payé le','paid on','pagó el')} <span data-nolang>${dfr(dp.d)}</span>`,dp.p,' dp',nom+' '+r3('a payé ce prix la dernière fois','paid this price last time','pagó este precio la última vez')+' ('+dfr(dp.d)+', '+nf(dp.q)+')'); }catch(e){}
+    if(dp) h+=ch('c',`<span data-nolang>${esc(nom)}</span> ${r3('a payé le','paid on','pagó el')} <span data-nolang>${dfr(dp.d)}</span>`,dp.p,' dp',nom+' '+r3('a payé ce prix la dernière fois','paid this price last time','pagó este precio la última vez')+' ('+dfr(dp.d)+', '+nf(dp.q)+')');
+    const of=(cli&&!MODE_OFFRE)?offreClient(l.cle,cli):null;
+    if(of) h+=ch('o',`<span data-nolang>${r3('Offre','Offer','Oferta')} ${esc(of.num)} · ${dfr(of.d)}</span>`,of.p,' dp of',r3('Prix offert à '+nom+' le '+dfr(of.d)+' (offre valable 30 jours)','Price offered to '+nom+' on '+dfr(of.d)+' (offer valid 30 days)','Precio ofrecido a '+nom+' el '+dfr(of.d)+' (oferta válida 30 días)')); }catch(e){}
   return h?`<span class="pucs">${h}</span>`:'';
 }
 function peintPanier(){
@@ -2455,7 +2474,7 @@ function peintPanier(){
   $('v-pan').querySelectorAll('input').forEach(inp=>{
     inp.oninput=()=>{
       const l=PANIER[+inp.dataset.i]; if(!l) return;
-      if(inp.dataset.f==='q') l.q=Math.max(1,Math.round(+inp.value||1)); else l.p=inp.value===''?null:+inp.value;
+      if(inp.dataset.f==='q') l.q=Math.max(1,Math.round(+inp.value||1)); else { l.p=inp.value===''?null:+inp.value; l.pm=true; }
       if(inp.dataset.f==='p') inp.parentNode.querySelectorAll('.puc').forEach(x=>x.classList.toggle('on',l.p!=null&&Math.abs(l.p-(+x.dataset.pv))<0.005));
       majMontants(); recap(); };
     /* le tableau ne se refait JAMAIS pendant la saisie : refaire le tableau sur
@@ -2473,7 +2492,7 @@ function peintPanier(){
     ficheFenetre(b.dataset.fiche,()=>{ try{ MOD=lit(KMOD,{})||{}; EXT=Object.assign({q:{}},JSON.parse(localStorage.getItem(KEXT)||'{}')); }catch(e){} peintPanier(); }); });
   $('v-q2w').hidden=PANIER.length<2;
   $('v-pan').querySelectorAll('[data-pu]').forEach(b=>b.onclick=()=>{
-    const i=+b.dataset.pu, l=PANIER[i]; if(!l) return; l.p=+b.dataset.pv;
+    const i=+b.dataset.pu, l=PANIER[i]; if(!l) return; l.p=+b.dataset.pv; l.pm=true;
     const inp=$('v-pan').querySelector(`input[data-i="${i}"][data-f="p"]`); if(inp) inp.value=l.p;
     b.parentNode.querySelectorAll('.puc').forEach(x=>x.classList.toggle('on',x===b));
     majMontants(); recap(); });
@@ -2484,7 +2503,7 @@ function majChipsClient(){
   if(!PANIER.length) return;
   PANIER.forEach((l,i)=>{ const inp=$('v-pan').querySelector(`input[data-i="${i}"][data-f="p"]`); if(!inp) return;
     const old=inp.parentNode.querySelector('.pucs'); if(old) old.remove(); inp.insertAdjacentHTML('afterend',puChips(l,i));
-    inp.parentNode.querySelectorAll('[data-pu]').forEach(b=>b.onclick=()=>{ const x=PANIER[+b.dataset.pu]; if(!x) return; x.p=+b.dataset.pv; inp.value=x.p;
+    inp.parentNode.querySelectorAll('[data-pu]').forEach(b=>b.onclick=()=>{ const x=PANIER[+b.dataset.pu]; if(!x) return; x.p=+b.dataset.pv; x.pm=true; inp.value=x.p;
       b.parentNode.querySelectorAll('.puc').forEach(y=>y.classList.toggle('on',y===b)); majMontants(); recap(); }); });
 }
 /* met à jour les montants et les totaux du panier sans recréer les champs de saisie */
@@ -2547,9 +2566,9 @@ let EDIT=null;
 let FUSION=null;
 /* les autres cotes « créées » (ni converties, ni archivées, ni Lightspeed) du même client */
 function cotesAFusionner(f){
-  if(!f||!f.doc||f.doc.type!=='devis'||f.doc.converti||f.doc.archive||f.lsq) return [];
+  if(!f||!f.doc||f.doc.type!=='devis'||f.doc.converti||f.doc.archive||f.lsq||f.doc.offre) return [];
   const k=cNorm(f.tiers); if(!k) return [];
-  return FACT.filter(x=>x&&x.id!==f.id&&x.doc&&x.doc.type==='devis'&&!x.doc.converti&&!x.doc.archive&&!x.lsq&&cNorm(x.tiers)===k)
+  return FACT.filter(x=>x&&x.id!==f.id&&x.doc&&x.doc.type==='devis'&&!x.doc.offre&&!x.doc.converti&&!x.doc.archive&&!x.lsq&&cNorm(x.tiers)===k)
     .sort((a,b)=>String(a.t||a.d||'').localeCompare(String(b.t||b.d||'')));
 }
 /* réunir les lignes : un même parfum au même prix additionne ses quantités ; sinon la ligne reste à part */
@@ -2620,7 +2639,7 @@ function ouvreModif(f){
   $('v-date').value=f.d||ajd(); $('v-client').value=f.tiers||''; $('v-num').value=f.num||'';
   if($('v-note')) $('v-note').value=(f.doc&&f.doc.note)||'';
   $('v-stock').checked=estD?false:f.stock!==false; $('v-stock').dataset.touche='1';
-  PANIER=(f.lignes||[]).filter(l=>l.cle).map(l=>({cle:l.cle,q:+l.q||0,p:(l.remise&&l.pAv!=null)?+l.pAv:(l.p==null?null:+l.p)}));
+  PANIER=(f.lignes||[]).filter(l=>l.cle).map(l=>({cle:l.cle,q:+l.q||0,p:(l.remise&&l.pAv!=null)?+l.pAv:(l.p==null?null:+l.p),pm:true}));
   const D=f.doc||{};
   $('v-doc').value=f.doc?(estD?'devis':'facture'):''; $('v-doc').dataset.touche='1';
   if(f.doc){
@@ -2868,7 +2887,7 @@ document.addEventListener('keydown',e=>{
   if($('vov').classList.contains('on')) fermeVente(false);
 });
 $('v-canal').onchange=()=>{ majAide();
-  PANIER.forEach(l=>{ if(l.pf) return; /* prix donné par la liste du client : on n'y touche pas */ const p=prixSuggere(l.cle,canalCour()); if(p!=null) l.p=p; });
+  PANIER.forEach(l=>{ if(l.pf||l.pm) return; /* prix donné par la liste du client ou posé à la main : on n'y touche pas */ const p=prixLigne(l.cle,canalCour()); if(p!=null) l.p=p; });
   /* une vente saisie ici est une facture, sur tous les canaux (Igal, 12 sept. 2026) */
   if(!$('v-doc').dataset.touche){ $('v-doc').value='facture'; try{ docChampsMaj(); }catch(e){} }
   peintPanier(); };
@@ -2919,6 +2938,7 @@ $('v-ok').onclick=()=>{
      une remise de 10 % sur 2 178 $, c'est 218 $ de marge envolés que personne ne
      verrait jamais passer. */
   const doc=docPourVente(PANIER.map(l=>({q:l.q,p:l.p})),client,d,CLI,estPC(canal)), devis=!!(doc&&doc.type==='devis');
+  if(devis&&MODE_OFFRE){ doc.offre=true; if(!old) doc.num=docNum('offre',d); }
   const PAN=(doc&&doc.remise)?repartitRemise(PANIER,doc):PANIER;
   /* modification : l'ancienne version rend d'abord ses flacons et ses lignes de ventes */
   if(old){
@@ -2958,7 +2978,7 @@ $('v-ok').onclick=()=>{
     const D0=old.doc||null;
     if(doc&&D0){ doc.num=D0.num; doc.emis=D0.emis||doc.emis; if(D0.regs) doc.regs=D0.regs; if(D0.lien) doc.lien=D0.lien; if(D0.deDevis) doc.deDevis=D0.deDevis;
       /* une cote modifiée garde ce qu'on en a fait : ses envois et son rangement dans les archives */
-      if(D0.type==='devis'){ if(D0.envoye) doc.envoye=D0.envoye; if(D0.archive) doc.archive=D0.archive; } }
+      if(D0.type==='devis'){ if(D0.envoye) doc.envoye=D0.envoye; if(D0.archive) doc.archive=D0.archive; if(D0.offre) doc.offre=true; } }
     const avant={num:old.num,client:old.tiers||'',montant:old.montant,total:D0?D0.total:old.montant,n:(old.lignes||[]).length,paie:old.paie||undefined};
     Object.assign(old,{num,canal,tiers:client,d,lignes,montant,stock:$('v-stock').checked});
     if(pcVente) old.pc=true; else delete old.pc;
@@ -2974,13 +2994,13 @@ $('v-ok').onclick=()=>{
     if(String(avant.num)!==String(num)) noteRang(num,d);
     ecrit(KFACT,FACT); ecrit(KMOD,MOD); ecrit(KVENT,VENT); ecrit(KCLI,CLI);
     JOU.push({t:new Date().toISOString(),u:USR||'(non renseigné)',act:'vente',
-      lib:(old.sens==='devis'?'devis '+(doc?doc.num:num)+' modifié':'vente modifiée — '+(doc&&doc.num?doc.num:num))+(client?' — '+client:'')+' — '+canal+(doc?' — '+(FMODES[doc.pmode]||doc.pmode):'')+(pcVente&&sortis?" — flacons sortis de l'inventaire Perfume City":'')+(venteAuto(old)?' — corrigée dans l\'ERP seulement, '+canal+' garde son ticket':''),
+      lib:(old.sens==='devis'?(doc&&doc.offre?'offre ':'devis ')+(doc?doc.num:num)+' modifié':'vente modifiée — '+(doc&&doc.num?doc.num:num))+(client?' — '+client:'')+' — '+canal+(doc?' — '+(FMODES[doc.pmode]||doc.pmode):'')+(pcVente&&sortis?" — flacons sortis de l'inventaire Perfume City":'')+(venteAuto(old)?' — corrigée dans l\'ERP seulement, '+canal+' garde son ticket':''),
       ref:num,av:money2(avant.total),ap:money2(doc?doc.total:montant),n:det.length,impact:-Math.round(montant-(+avant.montant||0)),det});
   } else {
     FACT.push(f); noteRang(num,d);
     ecrit(KFACT,FACT); ecrit(KMOD,MOD); ecrit(KVENT,VENT); ecrit(KCLI,CLI);
     JOU.push({t:new Date().toISOString(),u:USR||'(non renseigné)',act:'vente',
-      lib:(devis?'devis '+doc.num:(doc?'facture '+doc.num+' — ':'vente saisie à la main — ')+canal)+(client?' — '+client:'')+(devis?'':' — '+num)+(doc&&!devis?' — '+(FMODES[doc.pmode]||doc.pmode)+(doc.reste>0?', reste dû '+money2(doc.reste):', payée'):'')+(pcVente&&sortis?" — flacons sortis de l'inventaire Perfume City":''),
+      lib:(devis?(doc.offre?'offre ':'devis ')+doc.num:(doc?'facture '+doc.num+' — ':'vente saisie à la main — ')+canal)+(client?' — '+client:'')+(devis?'':' — '+num)+(doc&&!devis?' — '+(FMODES[doc.pmode]||doc.pmode)+(doc.reste>0?', reste dû '+money2(doc.reste):', payée'):'')+(pcVente&&sortis?" — flacons sortis de l'inventaire Perfume City":''),
       n:det.length,impact:devis?0:-Math.round(montant),det});
   }
   /* la fusion (6 nov. 2026) : la cote réunie est enregistrée, les autres s'archivent avec la mention, le journal le dit */
@@ -3089,7 +3109,7 @@ function mLit(texte){
 
 /* le prix d'une ligne lue : celui du FICHIER s'il y est (la cote du client), sinon celui de l'ERP pour le canal */
 const mPrix=l=>l.p!=null?l.p:(l.cle?prixSuggere(l.cle,mCanal()):null);
-const mPanierLigne=(l,q)=>Object.assign({cle:l.cle,q:q==null?l.q:q,p:l.p!=null?l.p:prixSuggere(l.cle,canalCour())},l.p!=null?{pf:true}:{});
+const mPanierLigne=(l,q)=>Object.assign({cle:l.cle,q:q==null?l.q:q,p:l.p!=null?l.p:prixLigne(l.cle,canalCour())},l.p!=null?{pf:true}:{});
 function mPeint(){
   const el=$('m-res');
   if(!M_L.length){ el.innerHTML=''; $('m-rap').hidden=true;
@@ -3408,7 +3428,7 @@ $('ctr-ok').onclick=async()=>{
    avoir besoin de la retaper »). C'est la même lecture que « Message client » ; les parfums
    reconnus rejoignent la vente en cours, ce qui a été ajouté à la main reste. */
 let M_VENTE=false;
-if('__MODE__'!=='quotes'){   /* MODE_QUOTES n'est défini que plus bas */
+if('__MODE__'!=='quotes'&&'__MODE__'!=='offres'){   /* MODE_QUOTES n'est défini que plus bas */
   const bl=document.createElement('button'); bl.type='button'; bl.className='btn'; bl.id='v-liste';
   bl.textContent='Importer une liste (photo, Excel, PDF)';
   $('vov').querySelector('.mh h3').after(bl);
@@ -3440,7 +3460,9 @@ majUser();
    La meme page que Ventes, reduite a un seul chemin : le client, sa liste (collee
    ou deposee), les lignes reconnues, puis le devis avec ses prix — et l'envoi. Rien
    n'est reecrit : une seule mecanique de devis dans l'outil, celle-ci. */
-const MODE_QUOTES=('__MODE__'==='quotes');
+/* 10 nov. 2026 (Sam, via Igal) : la rubrique Offre (offres.html) — la même page que la Cote, pour une offre de prix (voir plus bas) */
+var MODE_OFFRE=('__MODE__'==='offres');
+const MODE_QUOTES=('__MODE__'==='quotes')||MODE_OFFRE;
 /* ================= LES DEVIS DE LIGHTSPEED =================
    Igal, 29 sept. 2026 (après avoir ouvert Lightspeed avec moi) : « sur la Cote de l'ERP,
    que apparaissent toutes les lignes mises en devis sur Lightspeed, avec la même possibilité
@@ -3699,9 +3721,9 @@ if(MODE_QUOTES) setTimeout(()=>{
   try{ $('v-recap').before($('v-docbloc')); }catch(e){}
   const canalGros=()=>{ try{ if([...$('v-canal').options].some(o=>o.value==='Gros')){ $('v-canal').value='Gros'; majAide(); } }catch(e){} };
   const _ouvre=ouvreVente;
-  ouvreVente=function(){ _ouvre(); $('vov').querySelector('.mh h3').textContent='Nouveau devis';
+  ouvreVente=function(){ _ouvre(); $('vov').querySelector('.mh h3').textContent=MODE_OFFRE?r3('Nouvelle offre','New offer','Nueva oferta'):'Nouveau devis';
     const vd=$('v-pan').querySelector('.vide'); if(vd) vd.textContent='Aucun parfum. Tape une marque ou un nom ci-dessus, coche, ajoute.';
-    $('v-ok').textContent='Enregistrer le devis'; $('v-stock').checked=false; canalGros();
+    $('v-ok').textContent=MODE_OFFRE?r3('Enregistrer l\'offre','Save the offer','Guardar la oferta'):'Enregistrer le devis'; $('v-stock').checked=false; canalGros();
     $('vov').classList.remove('on');   /* ce n'est plus une fenetre : Echap ne doit rien fermer */
     try{ $('v-doc').value='devis'; $('v-doc').dataset.touche='1'; docChampsMaj(); }catch(e){}
     /* 20 oct. 2026 : la fenêtre n'est plus ouverte en permanence derrière un repli caché — elle s'ouvre quand on la demande
@@ -3717,14 +3739,14 @@ if(MODE_QUOTES) setTimeout(()=>{
   /* une cote enregistrée (neuve ou modifiée) : la fenêtre se referme et repart à zéro — la cote est dans la liste juste dessous */
   { const _ok=$('v-ok').onclick;
     $('v-ok').onclick=function(e){ const avant=FACT.length, edit=!!EDIT; const r=_ok.call(this,e);
-      setTimeout(()=>{ if((edit&&!EDIT)||FACT.length>avant){ try{ localStorage.removeItem('cote-brouillon'); }catch(_){} try{ ouvreVente(); }catch(_){}
+      setTimeout(()=>{ if((edit&&!EDIT)||FACT.length>avant){ try{ localStorage.removeItem(MODE_OFFRE?'offre-brouillon':'cote-brouillon'); }catch(_){} try{ ouvreVente(); }catch(_){}
         try{ const l=document.querySelector('.docs'); if(l) l.scrollIntoView({behavior:'smooth',block:'start'}); }catch(_){} } },60);
       return r; }; }
   /* 20 oct. 2026 (Igal : Sam faisait une cote, a ajouté un parfum, la page est devenue blanche et tout s'est effacé — « on ne peut pas avoir ce
      genre d'erreur ») : la cote en cours est gardée sur ce poste toutes les 3 secondes (clé locale, jamais envoyée au serveur) et remise telle
      quelle à la réouverture de la page — quoi qu'il arrive : page blanche, session expirée, onglet fermé, panne. Elle ne disparaît que
      par « Enregistrer le devis » ou « Vider » (confirmé). Au bout de 24 h on ne la reprend plus. */
-  { const KBR='cote-brouillon';
+  { const KBR=MODE_OFFRE?'offre-brouillon':'cote-brouillon';
     const brSauve=()=>{ try{
       if($('vov').hidden||EDIT) return;
       const lignes=PANIER.map(l=>Object.assign({},l)), client=$('v-client').value, note=$('v-note')?$('v-note').value:'';
@@ -3737,7 +3759,7 @@ if(MODE_QUOTES) setTimeout(()=>{
   }
   /* en haut de la page, deux gestes : une cote à la main, ou le message du client collé */
   { const nv=$('nv'), mb=$('msgb');
-    if(nv){ nv.textContent='+ Nouveau devis'; nv.title=''; nv.onclick=window.coteNouvelle; }
+    if(nv){ nv.textContent=MODE_OFFRE?r3('+ Nouvelle offre','+ New offer','+ Nueva oferta'):'+ Nouveau devis'; nv.title=''; nv.onclick=window.coteNouvelle; }
     if(mb){ mb.textContent='Coller un message du client'; mb.title='';
       mb.onclick=()=>{ mOuvre(); try{ if([...$('m-canal').options].some(o=>o.value==='Gros')) $('m-canal').value='Gros'; }catch(e){} mPeint(); }; } }
   /* le raccourci : coller ou deposer la liste du client, qui remplit les lignes */
@@ -3746,7 +3768,7 @@ if(MODE_QUOTES) setTimeout(()=>{
   $('vov').querySelector('.mh h3').after(bl);
   bl.onclick=()=>{ const cl=$('v-client').value.trim(); mOuvre(); $('m-client').value=cl;
     try{ if([...$('m-canal').options].some(o=>o.value==='Gros')) $('m-canal').value='Gros'; }catch(e){} mPeint(); };
-  $('m-devis').textContent='Mettre ces parfums dans le devis →';
+  $('m-devis').textContent=MODE_OFFRE?r3('Mettre ces parfums dans l\'offre →','Put these perfumes in the offer →','Poner estos perfumes en la oferta →'):'Mettre ces parfums dans le devis →';
   /* les lignes reconnues REJOIGNENT le devis en cours : ce que Sam a deja ajoute
      a la main n'est pas perdu, et un parfum deja present voit sa quantite s'ajouter */
   $('m-devis').onclick=()=>{
@@ -3757,14 +3779,14 @@ if(MODE_QUOTES) setTimeout(()=>{
     if(client && !$('v-client').value.trim()) $('v-client').value=client;
     pris.forEach(l=>{ const e=PANIER.find(x=>x.cle===l.cle); if(e){ e.q+=l.q; if(l.p!=null){ e.p=l.p; e.pf=true; } } else PANIER.push(mPanierLigne(l)); });
     peintPanier();
-    $('v-msg').textContent='Rempli depuis le message du client — vérifie les prix avant d\'émettre le devis.';
+    $('v-msg').textContent=MODE_OFFRE?r3('Rempli depuis le message du client — pose les prix de l\'offre.','Filled from the customer\'s message — set the offer prices.','Rellenado desde el mensaje del cliente — pon los precios de la oferta.'):'Rempli depuis le message du client — vérifie les prix avant d\'émettre le devis.';
     try{ $('vov').scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){}
     setTimeout(()=>$('v-pan').querySelector('input[data-f="p"]')?.focus(),360);
   };
   /* « Annuler » vide le devis en cours au lieu de fermer une fenetre qui n'en est plus une */
   $('v-ann').textContent='Vider';
-  $('v-ann').onclick=()=>{ if(EDIT){ if(confirm(vf('Abandonner les modifications ? Le devis reste comme avant.'))) ouvreVente(); return; }
-    if(!PANIER.length || confirm(vf('Vider ce devis ? Rien ne sera enregistré.'))){ try{ localStorage.removeItem('cote-brouillon'); }catch(e){} ouvreVente(); } };
+  $('v-ann').onclick=()=>{ if(EDIT){ if(confirm(MODE_OFFRE?r3('Abandonner les modifications ? L\'offre reste comme avant.','Drop the changes? The offer stays as it was.','¿Descartar los cambios? La oferta queda como estaba.'):vf('Abandonner les modifications ? Le devis reste comme avant.'))) ouvreVente(); return; }
+    if(!PANIER.length || confirm(MODE_OFFRE?r3('Vider cette offre ? Rien ne sera enregistré.','Clear this offer? Nothing will be saved.','¿Vaciar esta oferta? No se guardará nada.'):vf('Vider ce devis ? Rien ne sera enregistré.'))){ try{ localStorage.removeItem(MODE_OFFRE?'offre-brouillon':'cote-brouillon'); }catch(e){} ouvreVente(); } };
   $('vx').onclick=null;
   /* ---- le sélectionneur de parfums ----
      Il tape « Paco Rabanne » : TOUS les Paco Rabanne s'affichent, rangés, avec le prix
@@ -3801,7 +3823,7 @@ if(MODE_QUOTES) setTimeout(()=>{
         ${vignette(cle)}
         <b>${esc(v[2]||'')} ${esc(v[1]||'')}${tyBadge(cle)}${v[3]?' <span style="font-weight:500;color:var(--ink-2)">'+esc(v[3])+' oz</span>':''}</b>
         <span>stock <i>${nf(st)}</i></span></div>`; }).join('')
-      +`<div class="cpied"><button type="button" class="btn pri" id="v-cadd" ${COCHES.size?'':'disabled'}>Ajouter ${COCHES.size?COCHES.size+' ':''}au devis</button>
+      +`<div class="cpied"><button type="button" class="btn pri" id="v-cadd" ${COCHES.size?'':'disabled'}>${MODE_OFFRE?r3('Ajouter','Add','Añadir'):'Ajouter'} ${COCHES.size?COCHES.size+' ':''}${MODE_OFFRE?r3('à l\'offre','to the offer','a la oferta'):'au devis'}</button>
         <button type="button" class="btn" id="v-ctous">Tout cocher</button>
         <em>${CANDIDATS.length} parfum${CANDIDATS.length>1?'s':''} trouvé${CANDIDATS.length>1?'s':''} — coche, puis ajoute</em></div>`;
     el.classList.add('on');
@@ -3811,7 +3833,7 @@ if(MODE_QUOTES) setTimeout(()=>{
   };
   function ajouteCoches(){
     const L=CANDIDATS.filter(c=>COCHES.has(c)); if(!L.length) return;
-    L.forEach(cle=>{ if(!PANIER.some(l=>l.cle===cle)) PANIER.push({cle,q:1,p:prixSuggere(cle,canalCour())}); });
+    L.forEach(cle=>{ if(!PANIER.some(l=>l.cle===cle)) PANIER.push({cle,q:1,p:prixLigne(cle,canalCour())}); });
     COCHES.clear(); vq().value=''; CANDIDATS=[]; SEL=-1; peintRes(); peintPanier(); vq().focus();
   }
   /* Entrée : ce qui est coché part dans le devis ; rien de coché, le parfum surligné y va seul */
@@ -3838,13 +3860,13 @@ if(MODE_QUOTES) setTimeout(()=>{
   ouvreVente();
   $('v-note-w').hidden=false;
   /* un message collé dans Ventes (« Faire un devis ») arrive ici : fenêtre des messages ouverte, parfums reconnus */
-  try{ const brut=localStorage.getItem('cote-depuis-message');
+  if(!MODE_OFFRE) try{ const brut=localStorage.getItem('cote-depuis-message');
     if(brut){ localStorage.removeItem('cote-depuis-message'); const o=JSON.parse(brut);
       if(o&&o.txt&&Date.now()-(+o.t||0)<10*60e3){ mOuvre(); $('m-txt').value=o.txt; $('m-client').value=o.client||'';
         try{ if([...$('m-canal').options].some(x=>x.value==='Gros')) $('m-canal').value='Gros'; }catch(e){}
         mLit($('m-txt').value); mPeint(); } } }catch(e){}
   /* le brouillon d'une cote en cours est remis ici, APRÈS l'ouverture initiale de la fenêtre (qui la remet à zéro) */
-  { const KBR='cote-brouillon';
+  { const KBR=MODE_OFFRE?'offre-brouillon':'cote-brouillon';
   if(!$('msgov').classList.contains('on')) try{ const br=JSON.parse(localStorage.getItem(KBR)||'null');
       if(br&&Date.now()-(+br.t||0)<24*3600e3&&Array.isArray(br.lignes)&&(br.lignes.length||String(br.client||'').trim()||String(br.note||'').trim())){
         COTE_VOULUE=true; ouvreVente();
@@ -3852,7 +3874,9 @@ if(MODE_QUOTES) setTimeout(()=>{
         $('v-client').value=br.client||''; if($('v-note')) $('v-note').value=br.note||'';
         try{ if(br.canal&&[...$('v-canal').options].some(o=>o.value===br.canal)) $('v-canal').value=br.canal; majAide(); }catch(e){}
         peintPanier(); try{ recap(); }catch(e){}
-        $('v-msg').textContent=r3('Cote en cours retrouvée (brouillon gardé sur cet ordinateur) — vérifie-la, puis enregistre-la ou clique « Vider ».','Quote in progress recovered (draft kept on this computer) — check it, then save it or click “Clear”.','Cotización en curso recuperada (borrador guardado en este ordenador) — revísala y guárdala, o pulsa «Vaciar».'); } } catch(e){} }
+        $('v-msg').textContent=MODE_OFFRE?r3('Offre en cours retrouvée (brouillon gardé sur cet ordinateur) — vérifie-la, puis enregistre-la ou clique « Vider ».','Offer in progress recovered (draft kept on this computer) — check it, then save it or click “Clear”.','Oferta en curso recuperada (borrador guardado en este ordenador) — revísala, luego guárdala o haz clic en «Vaciar».')
+          :(br.offre?r3('Cote faite depuis l\'offre '+br.offre+' — les parfums sont aux prix de l\'offre : ajuste les quantités, puis enregistre.','Quote made from offer '+br.offre+' — perfumes are at the offer prices: adjust the quantities, then save.','Cotización hecha desde la oferta '+br.offre+' — los perfumes están a los precios de la oferta: ajusta las cantidades y guarda.')
+          :r3('Cote en cours retrouvée (brouillon gardé sur cet ordinateur) — vérifie-la, puis enregistre-la ou clique « Vider ».','Quote in progress recovered (draft kept on this computer) — check it, then save it or click “Clear”.','Cotización en curso recuperada (borrador guardado en este ordenador) — revísala y guárdala, o pulsa «Vaciar».')); } } catch(e){} }
   /* ---- la liste des devis, comme dans la caisse Lightspeed que Sam connaît ----
      Filtres (état, client, numéro), une ligne par devis : numéro et heure, client
      avec son email, créé par, note, total, état. La ligne se déplie sur ses lignes
@@ -3863,7 +3887,7 @@ if(MODE_QUOTES) setTimeout(()=>{
   const etatDe=f=>f.doc.archive?'archive':(f.doc.converti?'converti':'devis');
   const LIB_ET={devis:'Créé',converti:'Converti en facture',archive:'Archivé'};
   peintDocs=function(){
-    const L=FACT.filter(f=>f.doc&&f.doc.type==='devis'&&!f.lsq).sort((a,b)=>(b.t||'').localeCompare(a.t||''));
+    const L=FACT.filter(f=>f.doc&&f.doc.type==='devis'&&!f.lsq&&!f.doc.offre).sort((a,b)=>(b.t||'').localeCompare(a.t||''));
     const V=L.filter(f=>{ const e=etatDe(f);
       if(Q_F.etat==='devis'&&e!=='devis') return false; if(Q_F.etat==='converti'&&e!=='converti') return false; if(Q_F.etat==='archive'&&e!=='archive') return false;
       if(Q_F.cli&&!cNorm(f.tiers||'').includes(cNorm(Q_F.cli))) return false;
@@ -3931,8 +3955,93 @@ if(MODE_QUOTES) setTimeout(()=>{
       else if(a==='mail') setTimeout(()=>$('doc-mail').click(),150);
     });
   };
+  /* ================= LA RUBRIQUE OFFRE (10 nov. 2026) =================
+     Sam, via Igal : « Carmen demande un parfum qu'elle n'a jamais acheté : Sam lui fait une offre de prix ; le jour où elle veut
+     une vraie cote, la cote prend le prix de l'offre ». La même page que la Cote ; une offre est un document « devis » marqué
+     offre (n° OF-…) : elle ne vend rien, ne sort rien du stock, ne devient jamais une facture. Règles validées par Sam : une
+     offre vaut 30 jours ; entre une offre et un achat, le plus récent gagne ; « Faire la cote » prépare la cote aux prix de l'offre. */
+  if(!MODE_OFFRE){
+    /* dans une cote : le client choisi (ou changé) remet au prix de son offre les lignes dont personne n'a fixé le prix */
+    let _tc=null; const repr=()=>{ clearTimeout(_tc); _tc=setTimeout(()=>{ let n=0;
+      PANIER.forEach(l=>{ if(l.pf||l.pm) return; const p=prixLigne(l.cle,canalCour()); if(p!=null&&p!==l.p){ l.p=p; n++; } });
+      if(n) peintPanier(); },350); };
+    $('v-client').addEventListener('input',repr); $('v-client').addEventListener('change',repr);
+  }
+  window.faireLaCote=function(f){
+    const L=(f.lignes||[]).filter(l=>l&&l.cle&&l.q&&IDX[l.cle]).map(l=>({cle:l.cle,q:+l.q||1,p:(l.remise&&l.pAv!=null)?+l.pAv:(l.p==null?null:+l.p),pf:true}));
+    if(!L.length) return;
+    try{ const br=JSON.parse(localStorage.getItem('cote-brouillon')||'null');
+      if(br&&Date.now()-(+br.t||0)<24*3600e3&&Array.isArray(br.lignes)&&br.lignes.length
+        &&!confirm(r3('Une cote est déjà en cours sur cet ordinateur (non enregistrée). La remplacer par la cote de l\'offre '+f.doc.num+' ?','A quote is already in progress on this computer (not saved). Replace it with the quote from offer '+f.doc.num+'?','Ya hay una cotización en curso en este ordenador (sin guardar). ¿Reemplazarla por la cotización de la oferta '+f.doc.num+'?'))) return; }catch(e){}
+    try{ localStorage.setItem('cote-brouillon',JSON.stringify({t:Date.now(),client:f.tiers||'',note:'',canal:f.canal||'Gros',lignes:L,offre:f.doc.num})); }catch(e){ return; }
+    try{ const J=lit(KJOU,[]); J.push({t:new Date().toISOString(),u:USR||'(non renseigné)',act:'vente',lib:'cote préparée depuis l\'offre '+f.doc.num+(f.tiers?' — '+f.tiers:''),n:0,impact:0,det:[]}); ecrit(KJOU,J); }catch(e){}
+    location.href='quotes.html';
+  };
+  if(MODE_OFFRE){
+    var O_F={etat:'cours',cli:'',num:''}, O_OUVERT='';
+    const etatO=f=>f.doc.archive?'archive':(offreValide(f)?'cours':'expire');
+    peintDocs=function(){
+      const LIB={cours:r3('En cours','Active','Vigente'),expire:r3('Expirée','Expired','Vencida'),archive:r3('Archivée','Archived','Archivada')};
+      const L=FACT.filter(f=>f.doc&&f.doc.type==='devis'&&f.doc.offre).sort((a,b)=>(b.t||'').localeCompare(a.t||''));
+      const V=L.filter(f=>{ const e=etatO(f); if(O_F.etat&&e!==O_F.etat) return false;
+        if(O_F.cli&&!cNorm(f.tiers||'').includes(cNorm(O_F.cli))) return false;
+        if(O_F.num&&!String(f.doc.num||'').toLowerCase().includes(O_F.num.toLowerCase())) return false; return true; });
+      $('docs-em').setAttribute('data-nolang','');
+      $('docs-em').textContent=L.length?r3(`${nf(V.length)} offre${V.length>1?'s':''}${V.length!==L.length?' · '+nf(L.length)+' au total':''}`,`${nf(V.length)} offer${V.length>1?'s':''}${V.length!==L.length?' · '+nf(L.length)+' in all':''}`,`${nf(V.length)} oferta${V.length>1?'s':''}${V.length!==L.length?' · '+nf(L.length)+' en total':''}`):r3('aucune encore','none yet','ninguna todavía');
+      const h=document.querySelector('.docs h2.sec'); if(h){ h.firstChild.textContent=r3('Offres ','Offers ','Ofertas '); h.setAttribute('data-nolang',''); }
+      $('docs-table').setAttribute('data-nolang','');
+      $('docs-table').innerHTML=`<div class="qf">
+          <div class="fld"><label>${r3('État','Status','Estado')}</label><select id="q-etat"><option value="cours">${LIB.cours} (${r3('30 jours','30 days','30 días')})</option><option value="expire">${LIB.expire}</option><option value="archive">${LIB.archive}</option><option value="">${r3('Toutes les offres','All offers','Todas las ofertas')}</option></select></div>
+          <div class="fld"><label>${r3('Client','Customer','Cliente')}</label><input id="q-cli" placeholder="${r3('Chercher un client','Search a customer','Buscar un cliente')}" value="${esc(O_F.cli)}"></div>
+          <div class="fld"><label>${r3('Offre','Offer','Oferta')}</label><input id="q-num" placeholder="${r3('N° d\'offre','Offer no.','N.º de oferta')}" value="${esc(O_F.num)}"></div></div>`
+        +(!L.length?`<p class="ecr">${r3('Une offre, c\'est un prix proposé à un client pour des parfums, valable 30 jours. Quand il demande une cote, elle reprend ces prix. « + Nouvelle offre » en haut de la page.','An offer is a price proposed to a customer for perfumes, valid for 30 days. When they ask for a quote, it takes these prices. “+ New offer” at the top of the page.','Una oferta es un precio propuesto a un cliente para perfumes, válido 30 días. Cuando pide una cotización, toma estos precios. «+ Nueva oferta» arriba de la página.')}</p>`
+        :!V.length?`<p class="ecr">${r3('Aucune offre dans cette catégorie.','No offer in this category.','Ninguna oferta en esta categoría.')}</p>`
+        :`<table class="ql"><thead><tr><th></th><th>${r3('Offre','Offer','Oferta')}</th><th>${r3('Client','Customer','Cliente')}</th><th>${r3('Créée par','Created by','Creada por')}</th><th>${r3('Parfums','Perfumes','Perfumes')}</th><th>${r3('Valable jusqu\'au','Valid until','Válida hasta')}</th><th>${r3('État','Status','Estado')}</th></tr></thead><tbody>
+        ${V.slice(0,80).map(f=>{ const e=etatO(f), on=O_OUVERT===f.id, D=f.doc, lignes=(f.lignes||[]).filter(l=>l.q);
+          const heure=f.h||(f.t?heureMiami(f.t):'');
+          const ligne=`<tr class="qr ${on?'on':''}" data-q="${esc(f.id)}"><td class="chev">${on?'⌄':'›'}</td>
+            <td class="num"><b>${esc(D.num)}</b><small>${dfr(f.d)}${heure?', '+esc(heure):''}</small></td>
+            <td><b>${esc(f.tiers||'—')}</b></td><td>${esc(f.par||'—')}</td><td>${nf(lignes.length)}</td>
+            <td>${dfr(offreFin(f))}</td><td><span class="et ${e==='cours'?'devis':e==='archive'?'archive':'converti'}">${LIB[e]}</span></td></tr>`;
+          if(!on) return ligne;
+          return ligne+`<tr class="qd"><td colspan="7"><div class="qdet"><div>
+              ${lignes.map(l=>`<div class="lg"><span>${nf(l.q)}</span><span><b>${esc(l.ref)}${tyVu(l)}</b><br><small>${esc(l.bc||'')}</small></span><span>@ ${money2((l.remise&&l.pAv!=null)?l.pAv:l.p)}</span><span class="r"><b>${money2((l.q||0)*(l.p||0))}</b></span></div>`).join('')}
+              ${D.note?`<div class="note"><b>${r3('Note','Note','Nota')}</b> — ${esc(D.note)}</div>`:''}
+              <div class="note">${e==='cours'?r3(`Valable jusqu'au ${dfr(offreFin(f))} : une cote faite pour ${esc(f.tiers||'ce client')} reprend ces prix (sauf s'il a acheté le parfum depuis).`,`Valid until ${dfr(offreFin(f))}: a quote made for ${esc(f.tiers||'this customer')} takes these prices (unless they bought the perfume since).`,`Válida hasta el ${dfr(offreFin(f))}: una cotización hecha para ${esc(f.tiers||'este cliente')} toma estos precios (salvo si compró el perfume después).`)
+                :e==='expire'?r3('Offre expirée : une cote ne reprend plus ces prix toute seule. « Faire la cote » les reprend quand même.','Offer expired: a quote no longer takes these prices by itself. “Make the quote” still takes them.','Oferta vencida: una cotización ya no toma estos precios sola. «Hacer la cotización» los toma igualmente.')
+                :r3('Offre archivée : plus prise en compte dans les cotes.','Archived offer: no longer used in quotes.','Oferta archivada: ya no se tiene en cuenta en las cotizaciones.')}</div>
+              ${(D.envoye||[]).length?`<div class="note">${r3('Envoyée par e-mail à','Sent by email to','Enviada por e-mail a')} ${esc(D.envoye.map(x=>x.a).join(', '))}</div>`:''}
+            </div><div class="btns">
+              ${e!=='archive'?`<button class="btn pri" data-qa="cote" data-q="${esc(f.id)}">${r3('Faire la cote','Make the quote','Hacer la cotización')}</button>`:''}
+              <button class="btn" data-qa="modif" data-q="${esc(f.id)}">${r3('Modifier','Edit','Modificar')}</button>
+              <button class="btn" data-qa="wa" data-q="${esc(f.id)}">${r3('Envoyer par WhatsApp','Send by WhatsApp','Enviar por WhatsApp')}</button>
+              <button class="btn" data-qa="mail" data-q="${esc(f.id)}">${r3('Envoyer par e-mail','Send by email','Enviar por e-mail')}</button>
+              <button class="btn" data-qa="voir" data-q="${esc(f.id)}">${r3('Voir / imprimer l\'offre','View / print the offer','Ver / imprimir la oferta')}</button>
+              ${e==='archive'?`<button class="btn" data-qa="desarch" data-q="${esc(f.id)}">${r3('Désarchiver','Unarchive','Desarchivar')}</button>`:`<button class="btn" data-qa="arch" data-q="${esc(f.id)}">${r3('Archiver','Archive','Archivar')}</button>`}
+              <button class="btn" data-qa="sup" data-q="${esc(f.id)}">${r3('Supprimer','Delete','Eliminar')}</button>
+            </div></div></td></tr>`; }).join('')}</tbody></table>`);
+      $('q-etat').value=O_F.etat;
+      $('q-etat').onchange=()=>{ O_F.etat=$('q-etat').value; peintDocs(); };
+      $('q-cli').oninput=()=>{ O_F.cli=$('q-cli').value; peintDocs(); $('q-cli').focus(); const v=$('q-cli').value; $('q-cli').setSelectionRange(v.length,v.length); };
+      $('q-num').oninput=()=>{ O_F.num=$('q-num').value; peintDocs(); $('q-num').focus(); const v=$('q-num').value; $('q-num').setSelectionRange(v.length,v.length); };
+      $('docs-table').querySelectorAll('tr.qr').forEach(tr=>tr.onclick=()=>{ O_OUVERT=O_OUVERT===tr.dataset.q?'':tr.dataset.q; peintDocs(); });
+      $('docs-table').querySelectorAll('[data-qa]').forEach(b=>b.onclick=ev=>{ ev.stopPropagation();
+        const f=FACT.find(x=>x.id===b.dataset.q); if(!f) return; const a=b.dataset.qa;
+        const jou=lib=>{ try{ const J=lit(KJOU,[]); J.push({t:new Date().toISOString(),u:USR||'(non renseigné)',act:'vente',lib,n:0,impact:0,det:[]}); ecrit(KJOU,J); }catch(e){} };
+        if(a==='cote') return faireLaCote(f);
+        if(a==='sup'){ if(!confirm(r3('Supprimer l\'offre '+f.doc.num+(f.tiers?' ('+f.tiers+')':'')+' ?\n\nElle disparaîtra pour tout le monde. Cela ne peut pas être annulé.','Delete offer '+f.doc.num+(f.tiers?' ('+f.tiers+')':'')+'?\n\nIt will disappear for everyone. This cannot be undone.','¿Eliminar la oferta '+f.doc.num+(f.tiers?' ('+f.tiers+')':'')+'?\n\nDesaparecerá para todos. No se puede deshacer.'))) return;
+          const i=FACT.findIndex(x=>x.id===f.id); if(i>=0) FACT.splice(i,1); ecrit(KFACT,FACT); jou('offre '+f.doc.num+' supprimée'+(f.tiers?' — '+f.tiers:''));
+          if(O_OUVERT===f.id) O_OUVERT=''; peintDocs(); return; }
+        if(a==='arch'||a==='desarch'){ docMaj(f,x=>{ if(a==='arch') x.doc.archive=true; else delete x.doc.archive; }); jou('offre '+f.doc.num+(a==='arch'?' archivée':' désarchivée')+(f.tiers?' — '+f.tiers:'')); peintDocs(); return; }
+        if(a==='modif'){ ouvreModif(f); return; }
+        dessineDoc(FACT.find(x=>x.id===f.id)||f);
+        if(a==='wa') setTimeout(()=>$('doc-wa').click(),150);
+        else if(a==='mail') setTimeout(()=>$('doc-mail').click(),150);
+      });
+    };
+  }
   try{ DOCS_F='devis'; peintDocs(); }catch(e){}
-  try{ lscInit(); }catch(e){ try{ console.error('cotes Lightspeed :',e); }catch(_){} }
+  if(!MODE_OFFRE) try{ lscInit(); }catch(e){ try{ console.error('cotes Lightspeed :',e); }catch(_){} }
   /* le devis emis et refermé : on repart propre pour le suivant */
   $('doc-x').addEventListener('click',()=>{ try{ ouvreVente(); }catch(e){} });
   /* depuis le document ouvert d'une cote : « Modifier les parfums et les prix » le rouvre dans le formulaire */
@@ -3985,3 +4094,12 @@ html = coquille("Devis", "Devis",
 html = html.replace('__IDX__', _IDX)
 open('quotes.html','w').write(html)
 print('quotes.html', len(html)//1024, 'Ko')
+
+# 10 nov. 2026 (Sam, via Igal) : la rubrique Offre — la même page que la Cote, pour une offre de prix à un client
+html = coquille("Offre", "Offre",
+    "Proposer un prix à un client pour des parfums, valable 30 jours. Quand il demande une cote, elle reprend le prix de l'offre "
+    "(si l'offre est plus récente que son dernier achat). Une offre ne vend rien et ne sort rien du stock.",
+    CSS + CSS_QUOTES, CORPS.replace('__ACCEPT__', _lire.ACCEPT), JS.replace('__NOMS__', _noms.NOMS).replace('__MODE__', 'offres'), donnees=('produits','clients','retail','histgros'))
+html = html.replace('__IDX__', _IDX)
+open('offres.html','w').write(html)
+print('offres.html', len(html)//1024, 'Ko')

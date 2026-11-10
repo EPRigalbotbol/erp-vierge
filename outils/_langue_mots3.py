@@ -1778,3 +1778,13 @@ MOTS3.update({
         ["Where website orders come from, and what Google ads really bring in. For the ERP administrators only.",
          "Where website orders come from, and what Google ads really bring in. For the ERP administrators only."],
 })
+
+# 10 nov. 2026 : la rubrique Offre (offre de prix à un client, valable 30 jours)
+MOTS3.update({
+    "Offre": ["Offer", "Oferta"],
+    "offre": ["offer", "oferta"],
+    "Offres": ["Offers", "Ofertas"],
+    "Proposer un prix à un client pour des parfums, valable 30 jours. Quand il demande une cote, elle reprend le prix de l'offre (si l'offre est plus récente que son dernier achat). Une offre ne vend rien et ne sort rien du stock.":
+        ["Propose a price to a customer for perfumes, valid for 30 days. When they ask for a quote, it takes the offer price (if the offer is more recent than their last purchase). An offer sells nothing and takes nothing out of stock.",
+         "Proponer un precio a un cliente para perfumes, válido 30 días. Cuando pide una cotización, toma el precio de la oferta (si la oferta es más reciente que su última compra). Una oferta no vende nada y no saca nada del stock."],
+})

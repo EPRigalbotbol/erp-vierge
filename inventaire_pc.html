@@ -129,7 +129,7 @@ font-variant-numeric:tabular-nums}
 .nv.on{background:var(--iris-soft);color:var(--iris);font-weight:700;border-left-color:var(--iris)}
 .nv.on .ic{opacity:1}
 .nv.sub{padding:3px 10px 3px 36px;font-size:12.5px;font-weight:500}
-@media(max-height:860px) and (min-width:901px){.nv{padding-top:2px;padding-bottom:2px}.navlab{padding-top:4px;padding-bottom:3px}.side{padding-top:6px;padding-bottom:5px}.logo{padding-bottom:7px;margin-bottom:4px}}  /* portable : voir _base.css (4 nov. 2026 : un cran de plus, Transfert interstore) */
+@media(max-height:860px) and (min-width:901px){.nv{padding-top:1px;padding-bottom:1px}.navlab{padding-top:3px;padding-bottom:2px}.side{padding-top:6px;padding-bottom:5px}.logo{padding-bottom:7px;margin-bottom:4px}}  /* portable : voir _base.css (4 nov. 2026 : un cran de plus, Transfert interstore ; 10 nov. : la rubrique Offre) */
 @media(max-width:900px){.nv.sub{padding:5px 10px}}
 .nv.soon{color:var(--ink-3);font-weight:500;cursor:default;pointer-events:none}
 .nv.soon .ct{font-size:9px;letter-spacing:.08em;text-transform:uppercase;opacity:.8}
@@ -261,6 +261,7 @@ td.code{font-family:Inter,sans-serif;font-size:11.5px;color:var(--ink-3);white-s
 .pd .b{font-family:Inter,sans-serif;font-size:9.5px;letter-spacing:.12em;
 text-transform:uppercase;color:var(--ink-3)}
 .pd .n{font-size:13.5px;font-weight:500;line-height:1.3}
+.pd[data-fiche]:not([data-fiche=""]){cursor:pointer}.pd[data-fiche]:not([data-fiche=""]):hover .n{text-decoration:underline;color:var(--accent,#5b3f8c)}
 .pd .m{font-size:11.5px;color:var(--ink-3)}
 .tag{font-family:Inter,sans-serif;font-size:9.5px;padding:2px 7px;border-radius:99px;
 font-weight:500;letter-spacing:.03em;white-space:nowrap}
@@ -422,32 +423,33 @@ color:var(--iris);margin-bottom:3px}
   <div class="logo"><div class="n">Perfumes Trade</div><div class="s">ERP</div></div>
   <nav>
     <span class="navlab">Produits</span>
-<a class="nv" href="catalogue.html?v=202611102100"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>Catalogue<span class="ct nu" id="ct-catalogue">0</span></a>
-    <a class="nv" href="stock.html?v=202611102100"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg></span>Inventaire<span class="ct nu" id="ct-inventaire">0</span></a>
-    <a class="nv on" href="inventaire_pc.html?v=202611102100"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h16l-1-5H5z"/><path d="M5 9v11h14V9"/><path d="M10 20v-5h4v5"/></svg></span>Inventaire Perfume City<span class="ct" id="ct-pcity"></span></a>
-    <a class="nv" href="demandes_pc.html?v=202611102100"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></span>Transfert interstore<span class="ct" id="ct-demandes"></span></a>
+<a class="nv" href="catalogue.html?v=202611102142"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>Catalogue<span class="ct nu" id="ct-catalogue">0</span></a>
+    <a class="nv" href="stock.html?v=202611102142"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg></span>Inventaire<span class="ct nu" id="ct-inventaire">0</span></a>
+    <a class="nv on" href="inventaire_pc.html?v=202611102142"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h16l-1-5H5z"/><path d="M5 9v11h14V9"/><path d="M10 20v-5h4v5"/></svg></span>Inventaire Perfume City<span class="ct" id="ct-pcity"></span></a>
+    <a class="nv" href="demandes_pc.html?v=202611102142"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></span>Transfert interstore<span class="ct" id="ct-demandes"></span></a>
     <div class="navlab">Commerce</div>
-    <a class="nv" href="quotes.html?v=202611102100"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>Cote<span class="ct" id="ct-devis"></span></a>
-    <a class="nv" href="factures.html?v=202611102100"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span>Factures<span class="ct" id="ct-factures"></span></a>
-    <a class="nv" href="ventes.html?v=202611102100"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/></svg></span>Ventes<span class="ct" id="ct-ventes"></span></a>
-    <a class="nv" href="fournisseurs.html?v=202611102100"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></svg></span>Fournisseurs<span class="ct" id="ct-fournisseurs"></span></a>
-    <a class="nv" href="etude.html?v=202611102100"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg></span>Étude de cote<span class="ct" id="ct-étude"></span></a>
-    <a class="nv" href="clients.html?v=202611102100"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></span>Clients<span class="ct nb" id="ct-clients">0</span></a>
-    <a class="nv sub" href="clients.html?v=202611102100#vip" data-id="clients-vip" data-sous="clients.html">Clients VIP</a>
-    <a class="nv" data-pilotage="1" href="connecteurs.html?v=202611102100"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10l-3-3M17 17H7l3 3"/></svg></span>Connecteurs<span class="ct" id="ct-connecteurs"></span></a>
+    <a class="nv" href="quotes.html?v=202611102142"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>Cote<span class="ct" id="ct-devis"></span></a>
+    <a class="nv" href="offres.html?v=202611102142"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="8" cy="8" r="1.5"/></svg></span>Offre<span class="ct" id="ct-offre"></span></a>
+    <a class="nv" href="factures.html?v=202611102142"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span>Factures<span class="ct" id="ct-factures"></span></a>
+    <a class="nv" href="ventes.html?v=202611102142"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/></svg></span>Ventes<span class="ct" id="ct-ventes"></span></a>
+    <a class="nv" href="fournisseurs.html?v=202611102142"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></svg></span>Fournisseurs<span class="ct" id="ct-fournisseurs"></span></a>
+    <a class="nv" href="etude.html?v=202611102142"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg></span>Étude de cote<span class="ct" id="ct-étude"></span></a>
+    <a class="nv" href="clients.html?v=202611102142"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></span>Clients<span class="ct nb" id="ct-clients">0</span></a>
+    <a class="nv sub" href="clients.html?v=202611102142#vip" data-id="clients-vip" data-sous="clients.html">Clients VIP</a>
+    <a class="nv" data-pilotage="1" href="connecteurs.html?v=202611102142"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10l-3-3M17 17H7l3 3"/></svg></span>Connecteurs<span class="ct" id="ct-connecteurs"></span></a>
     <a class="nv" href="#galou" id="gl-btn" data-id="galou" onclick="if(typeof galouOuvre==='function')galouOuvre();return false"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v10H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg></span>Parler à Léa<span class="ct" id="ct-parler"></span></a>
     <div class="navlab" data-pilotage="1">Pilotage</div>
     <a class="nv" href="#support" id="aid-btn" data-id="support" onclick="if(typeof aidOuvre==='function')aidOuvre();return false"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="m9.5 9.5-4-4M14.5 9.5l4-4M14.5 14.5l4 4M9.5 14.5l-4 4"/></svg></span>Support technique<span class="ct" id="ct-support"></span></a>
-    <a class="nv" data-pilotage="1" href="journal.html?v=202611102100"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Journal<span class="ct" id="ct-journal"></span></a>
-    <a class="nv" data-pilotage="1" href="tableau.html?v=202611102100"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/></svg></span>Tableau de bord<span class="ct" id="ct-tableau"></span></a>
-    <a class="nv" data-pilotage="1" href="analytique.html?v=202611102100"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>Analytique<span class="ct" id="ct-analytique"></span></a>
-    <a class="nv" data-pilotage="1" href="taches.html?v=202611102100"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m8 12 3 3 5-6"/></svg></span>Tâches<span class="ct" id="ct-taches"></span></a>
-    <a class="nv" data-pilotage="1" href="acces.html?v=202611102100"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.3 8 8 9 4.7-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></span>Accès<span class="ct" id="ct-accès"></span></a>
+    <a class="nv" data-pilotage="1" href="journal.html?v=202611102142"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Journal<span class="ct" id="ct-journal"></span></a>
+    <a class="nv" data-pilotage="1" href="tableau.html?v=202611102142"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/></svg></span>Tableau de bord<span class="ct" id="ct-tableau"></span></a>
+    <a class="nv" data-pilotage="1" href="analytique.html?v=202611102142"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>Analytique<span class="ct" id="ct-analytique"></span></a>
+    <a class="nv" data-pilotage="1" href="taches.html?v=202611102142"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m8 12 3 3 5-6"/></svg></span>Tâches<span class="ct" id="ct-taches"></span></a>
+    <a class="nv" data-pilotage="1" href="acces.html?v=202611102142"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.3 8 8 9 4.7-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></span>Accès<span class="ct" id="ct-accès"></span></a>
     <a class="nv" data-pilotage="1" href="https://app.gusto.com" target="_blank" rel="noopener" title="Ouvre Gusto dans un nouvel onglet"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M14.5 9a2.5 2 0 0 0-2.5-1.5c-1.4 0-2.5.8-2.5 2s1 1.7 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2A2.7 2 0 0 1 9.5 15M12 6v1.5M12 16.5V18"/></svg></span>Paie<span class="ct" id="ct-paie"></span></a>
-    <a class="nv" data-pilotage="1" href="reglages.html?v=202611102100"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg></span>Réglages<span class="ct" id="ct-réglages"></span></a>
+    <a class="nv" data-pilotage="1" href="reglages.html?v=202611102142"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg></span>Réglages<span class="ct" id="ct-réglages"></span></a>
   </nav>
   <div class="sfoot"><div id="sfu" class="sfu"></div><span id="sfoot">0 références · 0 en stock · 0 unités</span>
-  <div class="ver" title="Si cette date n'est pas la derni&egrave;re, recharge avec Cmd+Option+R">version du 11/10/2026 à 21h00</div>
+  <div class="ver" title="Si cette date n'est pas la derni&egrave;re, recharge avec Cmd+Option+R">version du 11/10/2026 à 21h42</div>
     <div class="sfline" id="sfline"></div></div>
 </aside>
 
@@ -674,7 +676,7 @@ try{
 }catch(e){}
 })();
 </script>
-<script src="donnees/langue.js?v=202611102100"></script>
+<script src="donnees/langue.js?v=202611102142"></script>
 <script>
 /* le menu réglé et la langue de l'écran, AVANT le code de la page : rien ne saute, rien n'est vu dans une autre langue */
 
@@ -1639,7 +1641,7 @@ const LG_FR_PARCOURS=!/catalogue|stock|inventaire/.test(location.pathname);
 })();
 
 </script>
-<script src="donnees/inventaire_pc.js?v=202611102100"></script><script>
+<script src="donnees/inventaire_pc.js?v=202611102142"></script><script>
 if (typeof window.D_INV_PC==='undefined') {
   /* Le code de la page est lancé plus tard par l'amorce (voir _serveur.py) : ce drapeau
      l'empêche de démarrer sur des données absentes — sinon la page enchaîne les erreurs
@@ -5321,7 +5323,7 @@ if('pc'==='pt'){ try{
 }catch(e){} }
 const PAL={};
 const KEY='comptage-pc-v1';
-const VER_URL='202611102100';
+const VER_URL='202611102142';
 const $=i=>document.getElementById(i);
 const VL={ok:['Vérifiée','ok'],non:['Jamais vérifiée','non'],doute:['À vérifier','doute']};
 const vl=v=>VL[v]||VL.non;
@@ -5330,6 +5332,13 @@ const PAGE=150;
 
 saisie=lit(KEY,{}); if(!saisie||typeof saisie!=='object') saisie=base(KEY,{});
 const sauve=()=>ecrit(KEY,saisie);
+/* 10 nov. 2026 (Igal : « ils ont rempli les chiffres de l'inventaire, c'est toujours Jamais vérifiée ») : le comptage était rangé par
+   code-barres. Les 50 parfums SANS code-barres partageaient donc la même case : le chiffre tapé sur l'un s'affichait sur tous, et
+   s'enregistrait sur le premier de la liste. Chaque ligne a maintenant sa clé : le code-barres, sinon l'identifiant de la fiche.
+   L'ancienne case commune (clé vide) ne veut rien dire : elle est retirée. */
+const kc=p=>p.bc?String(p.bc):'#'+p.cle;
+const kSel=k=>`.cnt[data-bc="${(window.CSS&&CSS.escape)?CSS.escape(k):k}"]`;
+if(saisie&&saisie['']!=null){ delete saisie['']; try{ sauve(); }catch(e){} }
 
 const nf=n=>n.toLocaleString('fr-FR');
 /* Le dollar (Igal, 30 sept. 2026 : « le dollar est décalé ») : une espace INSÉCABLE entre le
@@ -5463,16 +5472,16 @@ function ligne(p,i){
   const vit=tst(p);
   const cls=!rempli?'':(ec===0?'done':'ecart');
   const gcls=ec==null?'zero':ec>0?'pos':ec<0?'neg':'zero';
-  return `<tr class="${cls}" data-bc="${p.bc}">
+  return `<tr class="${cls}" data-bc="${esc(kc(p))}">
    <td class="no o3">${nf((i||0)+1)}</td>
-   <td><div class="pd"><span class="b">${esc(p.marque)}</span>
+   <td><div class="pd" data-fiche="${esc(p.cle||'')}" title="${esc(typeof L3==='function'?L3('Ouvrir la fiche du parfum','Open the perfume card','Abrir la ficha del perfume'):'Ouvrir la fiche du parfum')}"><span class="b">${esc(p.marque)}</span>
      <span class="n">${esc(p.nom)}</span>
      <span class="m">${[p.ml?p.ml+' oz':'',p.type].filter(Boolean).join(' · ')} &nbsp;<span class="code">${p.bc}</span></span></div></td>
    <td class="o4"><span class="tag ${vl(p.v)[1]}">${vl(p.v)[0]}</span></td>
    <td class="num">${qteAtt(p)===0?'<span style="color:var(--ink-3)">0</span>':nf(qteAtt(p))}${
        vit?`<span class="vit" title="${nf(vit)} tester${vit>1?'s':''}, non vendable${vit>1?'s':''} — à compter quand même">+${nf(vit)} tester${vit>1?'s':''}</span>`:''}</td>
    <td class="num"><input class="cnt${rempli?' filled':''}" type="number" min="0" inputmode="numeric"
-       value="${rempli?c:''}" data-bc="${p.bc}" aria-label="Quantité comptée"></td>
+       value="${rempli?c:''}" data-bc="${esc(kc(p))}" aria-label="Quantité comptée"></td>
    <td class="num"><span class="gap ${gcls}">${ec==null?'—':(ec>0?'+':'')+nf(ec)}</span></td>
    <td class="num o2"><span class="gap ${gcls}">${val==null?'—':(val>0?'+':'')+money(val)}</span></td>
    <td class="num o1" style="color:var(--ink-3)">${money(capEff(p))}</td>
@@ -5526,7 +5535,13 @@ let MOD=lit(KMOD,{}); if(!MOD||typeof MOD!=='object'||Array.isArray(MOD)) MOD=ba
 P.forEach(p=>{ const m=MOD[p.cle]; if(m&&m.verif!==undefined) p.v=m.verif; });
 /* 30 oct. 2026 : le nom, la marque, la contenance et le type changés dans la fiche du Catalogue se voient ici aussi
    (avant, l'Inventaire gardait « Nom (Clone de…) » quand le Catalogue disait « Nom ») */
+/* 10 nov. 2026 (Igal : « Sam a rajouté le code-barres sur la fiche, mais l'inventaire ne le trouvait pas ») : un parfum arrivé
+   sans code-barres prend celui que Sam a posé sur sa fiche du Catalogue — la recherche et la douchette le trouvent ; un chiffre
+   déjà compté sous l'identifiant de la fiche suit le code-barres. */
+function bcFiche(p){ const m=MOD[p.cle]; if(p.bc||!m||!m.bc) return; const b=String(m.bc).trim(); if(!b) return;
+  p.bc=b; try{ if(saisie['#'+p.cle]!=null&&saisie[b]==null){ saisie[b]=saisie['#'+p.cle]; delete saisie['#'+p.cle]; sauve(); } }catch(e){} }
 P.forEach(p=>{ const m=MOD[p.cle]; if(!m) return; ['nom','marque','ml','type'].forEach(k=>{ if(m[k]!=null&&m[k]!=='') p[k]=(k==='type')?String(m[k]).toUpperCase():String(m[k]); }); });
+  P.forEach(bcFiche);
 /* 6 nov. 2026 (Sam : Asad à 18,50 $ de gros au Catalogue, 18 $ dans l'Inventaire) : c'est le Catalogue qui fixe les prix.
    Le prix retail et le prix de gros changés dans la fiche se voient ici aussi — l'Inventaire ne garde plus ceux du fichier. */
 if('pc'==='pt') P.forEach(p=>{ const m=MOD[p.cle]; if(!m) return; if(m.pvr!=null&&m.pvr!=='') p.pvr=+m.pvr; if(m.pvw!=null&&m.pvw!=='') p.pvw=+m.pvw; });
@@ -5554,11 +5569,17 @@ setTimeout(()=>{ try{ chiffres(); }catch(e){} },0);
 /* LE FIL EN DIRECT (1er oct. 2026) : un comptage, une vente ou un achat fait sur un autre poste
    arrive dans la seconde ; la liste se relit et se redessine sur place (jamais pendant une
    saisie : le champ qu'on est en train de remplir garde la main, un bandeau propose de recharger) */
+/* 10 nov. 2026 (Igal : « sur la partie inventaire, cliquer sur le produit et avoir le panneau latéral avec la fiche produit ») :
+   la fiche du Catalogue elle-même, en panneau à droite (comme dans la Cote) ; à sa fermeture, la liste se relit */
+document.addEventListener('click',e=>{ const d=e.target.closest&&e.target.closest('.pd[data-fiche]');
+  if(!d||!d.dataset.fiche||typeof ficheFenetre!=='function') return;
+  ficheFenetre(d.dataset.fiche,()=>{ try{ window.__rafraichir(); }catch(_){} }); });
 window.__rafraichir=()=>{ const y=window.scrollY;
   { const m=lit(KMOD,{}); if(m&&typeof m==='object'&&!Array.isArray(m)) MOD=m; }
   try{ EXT=Object.assign({q:{}},JSON.parse(localStorage.getItem('stock-externe-v1')||'{}')); }catch(e){}
   P.forEach(p=>{ const m=MOD[p.cle]; if(m&&m.verif!==undefined) p.v=m.verif; });
   P.forEach(p=>{ const m=MOD[p.cle]; if(!m) return; ['nom','marque','ml','type'].forEach(k=>{ if(m[k]!=null&&m[k]!=='') p[k]=(k==='type')?String(m[k]).toUpperCase():String(m[k]); }); });
+  P.forEach(bcFiche);
 /* 6 nov. 2026 (Sam : Asad à 18,50 $ de gros au Catalogue, 18 $ dans l'Inventaire) : c'est le Catalogue qui fixe les prix.
    Le prix retail et le prix de gros changés dans la fiche se voient ici aussi — l'Inventaire ne garde plus ceux du fichier. */
 if('pc'==='pt') P.forEach(p=>{ const m=MOD[p.cle]; if(!m) return; if(m.pvr!=null&&m.pvr!=='') p.pvr=+m.pvr; if(m.pvw!=null&&m.pvw!=='') p.pvw=+m.pvw; });
@@ -5572,7 +5593,7 @@ if('pc'==='pt') P.forEach(p=>{ const m=MOD[p.cle]; if(!m) return; if(m.pvr!=null
    réception, correction), ce comptage ne dit plus rien du rayon : la ligne montre le stock d'aujourd'hui, la case
    est vide, et le prochain comptage repart de ce stock-là. */
 /* ce que la case « compté » contient pour cette ligne — rien si le comptage est périmé */
-function cpt(p){ return comptagePerime(p)?undefined:saisie[p.bc]; }
+function cpt(p){ return comptagePerime(p)?undefined:saisie[kc(p)]; }
 function comptagePerime(p){ const m=MOD[p.cle]; return !!(m&&m.qteC!=null&&(m.qte==null||+m.qte!==+m.qteC)); }
 function qteAtt(p){ const m=MOD[p.cle];
   return (m&&m.qteC!=null&&m.qteTh0!=null&&!comptagePerime(p))?+m.qteTh0:qteTh(p); }
@@ -5932,7 +5953,7 @@ function scanne(code){
       `<b>Código ${k} desconocido</b> en el inventario — producto sin código de barras, código erróneo o referencia que no está en el archivo. Búscalo por el nombre.`));
     $('q').value=''; rend(true); $('q').focus(); return; }
   $('q').value=p.bc; rend(true);
-  const inp=document.querySelector(`.cnt[data-bc="${p.bc}"]`);
+  const inp=document.querySelector(kSel(kc(p)));
   const nomP=`<b>${esc(p.marque||'')} ${esc(p.nom||'')}${p.type?' <i class="ty" data-nolang>'+esc(p.type)+'</i>':''}</b>`, dj=inp&&inp.value!==''?esc(inp.value):null;
   bandeau('ok',T3(`${nomP} · ${nf(qteTh(p))} attendus${dj!=null?` · déjà compté : ${dj}`:''} — tape la quantité comptée puis Entrée.`,
     `${nomP} · ${nf(qteTh(p))} expected${dj!=null?` · already counted: ${dj}`:''} — type the counted quantity, then Enter.`,
@@ -5970,7 +5991,7 @@ const T_CNT={};
 /* la quantité comptée est enregistrée quand on quitte la case (Tab, clic ailleurs, Entrée) */
 document.addEventListener('change',e=>{
   if(!e.target.classList||!e.target.classList.contains('cnt')) return;
-  const bc=e.target.dataset.bc, v=e.target.value, p0=P.find(x=>x.bc===bc);
+  const bc=e.target.dataset.bc, v=e.target.value, p0=P.find(x=>kc(x)===bc);
   if(!p0) return;
   if(v!=='' && Number.isInteger(+v) && +v>=0) confirmeComptage(p0,+v);
   else if(v==='') annuleComptage(p0);
@@ -5982,7 +6003,7 @@ document.addEventListener('change',e=>{
 },true);
 /* réécrit les cellules calculées d'une ligne (théorique, écart, capital) sans recréer le champ */
 function majLigne(p){
-  const inp=document.querySelector(`.cnt[data-bc="${p.bc}"]`);
+  const inp=document.querySelector(kSel(kc(p)));
   const tr=inp?inp.closest('tr'):null; if(!tr) return;
   const c=cpt(p), rempli=c!=null&&c!=='';
   const th=qtePhys(p), ec=rempli?(+c)-th:null;
@@ -6009,14 +6030,14 @@ function majLigne(p){
 document.addEventListener('input',e=>{
   if(e.target.classList.contains('cnt')){
     const bc=e.target.dataset.bc, v=e.target.value;
-    const p0=P.find(x=>x.bc===bc);
+    const p0=P.find(x=>kc(x)===bc);
     const avait=saisie[bc]!=null&&saisie[bc]!=='';
     if(v==='') delete saisie[bc]; else saisie[bc]=v;
     sauve();
     /* on n'écrit ni dans le stock ni dans le journal à chaque touche : une saisie de
        « 120 » écrivait 6 lignes, dont « 782 → 1 » et « 782 → 12 ». On attend la fin. */
     clearTimeout(T_CNT[bc]);
-    const p=P.find(x=>x.bc===bc), tr=e.target.closest('tr');
+    const p=P.find(x=>kc(x)===bc), tr=e.target.closest('tr');
     const rempli=v!=='', ec=rempli?(+v)-qtePhys(p):null;
     e.target.classList.toggle('filled',rempli);
     tr.className=!rempli?'':(ec===0?'done':'ecart');

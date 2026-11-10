@@ -35,6 +35,7 @@ _IC = {
  'stock.html':'<path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/>',
  'inventaire_pc.html':'<path d="M4 9h16l-1-5H5z"/><path d="M5 9v11h14V9"/><path d="M10 20v-5h4v5"/>',
  'quotes.html':'<path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
+ 'offres.html':'<path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="8" cy="8" r="1.5"/>',
  'factures.html':'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
  'ventes.html':'<path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/>',
  'fournisseurs.html':'<path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/>',
@@ -63,6 +64,8 @@ def barre(actif):
          # 4 nov. 2026 (Igal) : les transferts de parfums entre Perfume City et Perfumes Trade — « Transfert interstore » (build_demandes_pc.py)
          ('demandes_pc.html','⇆','Transfert interstore',''),
          ('quotes.html','◇','Devis',''),
+         # 10 nov. 2026 (Sam, via Igal) : l'offre de prix à un client, valable 30 jours ; la cote reprend son prix (build_ventes.py)
+         ('offres.html','◇','Offre',''),
          ('factures.html','▧','Factures',''),
          ('ventes.html','◔','Ventes',''),
          # Statut shipping : en veille depuis le 2 oct. 2026 (Sam n'en voit pas l'utilité) —

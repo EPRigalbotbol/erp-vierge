@@ -324,7 +324,7 @@ setInterval(()=>{ if(_SY_PERIMEE) return; if(_SY_ATT.size&&!_SY_ENVOI.size){ _SY
      - jamais pour un petit envoi en route depuis moins de 4 s : il continue tout seul (keepalive) ;
      - oui pour un envoi qui n'est pas parti (serveur injoignable), trop gros pour continuer, ou bloqué.
    Ce qui l'a retenue est noté (ck-blocage) pour pouvoir le relire si cela se reproduit. */
-const _SY_DERIVES=new Set(['stock-erp-v1','ventes-vues-v1','diffusion-erp-v1']);
+const _SY_DERIVES=new Set(['stock-erp-v1','ventes-vues-v1','diffusion-erp-v1','prix-erp-v1']);
 const _syRetient=()=>{ const r=[];
   _SY_ATT.forEach((e,k)=>{ if(!_SY_DERIVES.has(k)) r.push(k); });
   _SY_ENVOI.forEach(k=>{ if(_SY_DERIVES.has(k)||r.includes(k)) return;

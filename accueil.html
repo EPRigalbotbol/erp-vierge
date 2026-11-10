@@ -1694,7 +1694,7 @@ setInterval(()=>{ if(_SY_PERIMEE) return; if(_SY_ATT.size&&!_SY_ENVOI.size){ _SY
      - jamais pour un petit envoi en route depuis moins de 4 s : il continue tout seul (keepalive) ;
      - oui pour un envoi qui n'est pas parti (serveur injoignable), trop gros pour continuer, ou bloqué.
    Ce qui l'a retenue est noté (ck-blocage) pour pouvoir le relire si cela se reproduit. */
-const _SY_DERIVES=new Set(['stock-erp-v1','ventes-vues-v1','diffusion-erp-v1']);
+const _SY_DERIVES=new Set(['stock-erp-v1','ventes-vues-v1','diffusion-erp-v1','prix-erp-v1']);
 const _syRetient=()=>{ const r=[];
   _SY_ATT.forEach((e,k)=>{ if(!_SY_DERIVES.has(k)) r.push(k); });
   _SY_ENVOI.forEach(k=>{ if(_SY_DERIVES.has(k)||r.includes(k)) return;
@@ -2628,7 +2628,7 @@ setTimeout(()=>{ try{ const c=document.getElementById('ct-taches'); if(!c||!glPe
   fetch(CK_URL+'/api/o/'+CK_ORG+'/galou/taches',{headers:{Authorization:'Bearer '+ckTok()}}).then(r=>r.ok?r.json():null).then(j=>{ if(!j) return; const n=(j.a_faire||[]).length; c.textContent=n?String(n):''; c.className=n?'ct nb':'ct'; }).catch(()=>{}); }catch(e){} },2500);
 
 
-const VER_URL='202611100707';
+const VER_URL='202611101503';
 /* Les trois boutons de langue de la porte. On ne passe pas par lgChange : il
    écrit une ligne au journal au nom du compte connecté, et ici personne ne l'est
    encore. On change la langue, on l'enregistre, on retraduit l'écran. */

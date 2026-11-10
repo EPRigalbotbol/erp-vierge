@@ -7221,6 +7221,7 @@ $('fseuil').addEventListener('input',()=>{
   paint(); majSeuil();
 });
 alignePrixAnciens();
+{ const sc=document.createElement('script'); sc.src='lib/prixsites.js?v=__VER__'; document.head.appendChild(sc); }   /* les prix des fiches publiés pour les sites (_prixsites.py) */
 render();
 majSeuil();
 /* catalogue.html?q=… (lien depuis une autre page) et, depuis le 25 oct. 2026, catalogue.html?photo=0 (le tableau
@@ -7347,5 +7348,6 @@ for k,v in {'__NCLI__':str(_ncli),'__TOTAL__':n(S['total']),'__ENSTOCK__':n(S['e
 for i in range(1,10):
     out=out.replace(f'__A{i}__', n(S['an'].get(str(i),0)))
 open('catalogue.html','w').write(enligne(out))
+import _prixsites; _prixsites.ecrit('.')   # lib/prixsites.js : les prix des fiches publiés pour le cockpit
 import _arrivage; _arrivage.ecrit('.')   # lib/arrivage.js : la fenêtre des nouveaux arrivages (chargée à la demande)
 import os;print('catalogue.html',round(os.path.getsize('catalogue.html')/1024),'Ko')

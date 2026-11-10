@@ -295,7 +295,11 @@ const calcDiff=()=>(function(){
   const cles=o=>Object.keys(o||{}).filter(k=>k[0]!=='_');
   const OK={site:cles(SITE).some(k=>SITE[k]&&SITE[k].d), sitegros:cles(SITE).some(k=>SITE[k]&&SITE[k].g), perfumecity:!!S&&cles(S).length>0};
   const S0={}; cles(SITE).forEach(k=>{ S0[k.replace(/^0+/,'')]=k; });
-  const siteCle=p=>{ const b=String(p.bc||'').replace(/[^0-9]/g,''); if(!b) return null; if(SITE[b]) return b; return S0[b.replace(/^0+/,'')]||null; };
+  /* 10 nov. 2026 : un code avec des lettres (« …oldbox ») a son propre produit sur le site ; une ancienne boîte pas encore créée n'y est pas */
+  const SL={}; cles(SITE).forEach(k=>{ if(/[A-Za-z]/.test(k)) SL[k.replace(/^0+/,'').toLowerCase()]=k; });
+  const siteCle=p=>{ const brut=String(p.bc||'').replace(/[^0-9A-Za-z]/g,''), b=brut.replace(/[^0-9]/g,'');
+    if(/[A-Za-z]/.test(brut)){ const kl=SL[brut.replace(/^0+/,'').toLowerCase()]; if(kl) return kl; if(/oldbox/i.test(brut)) return null; }
+    if(!b) return null; if(SITE[b]) return b; return S0[b.replace(/^0+/,'')]||null; };
   const s0=x=>String(x||'').replace(/[^0-9A-Za-z]/g,'').replace(/^0+/,'');
   function statut(p,id){
     const off=(MOD[p.cle]||{}).pcOff; if((Array.isArray(off)&&off.includes(id))||!p.bc||!OK[id]) return 'na';

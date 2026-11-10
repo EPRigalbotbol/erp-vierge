@@ -3338,9 +3338,7 @@ function alignePrixOutil(base,cid,v){
    deviennent le prix retail / gros du Catalogue */
 function alignePrixAnciens(){
   try{
-    /* 9 nov. 2026 : plus « une seule fois ». À chaque ouverture du Catalogue par le Patron ou l'admin, un prix « manuel »
-       resté sur le canal d'un site (posé avant le correctif, ou par une page ancienne restée ouverte sur un autre poste) devient le prix
-       du Catalogue. Sans prix manuel, rien n'est écrit. */
+    /* 9 nov. 2026 : à chaque ouverture (Patron, admin), un prix « manuel » resté sur un site devient le prix du Catalogue */
     if(!peutPrixSite()) return;
     let n=0;
     Object.keys(MOD).forEach(id=>{ const m=MOD[id]; if(!m||!m.pc||typeof m.pc!=='object') return;
@@ -3399,8 +3397,8 @@ function surSite(p,c,v){
 /* la fiche retirée de la vente de ce côté (brouillon), ou null — le code peut avoir perdu son 0 du début */
 function retireCote(p,cote){
   const R=SITE._retires&&SITE._retires[cote]; if(!R||!p||!p.bc) return null;
-  const b=String(p.bc).replace(/[^0-9]/g,'').replace(/^0+/,'');
-  const k=Object.keys(R).find(x=>x.replace(/^0+/,'')===b);
+  const {brut,b,let_,sep}=siteCodes(p), bl=brut.replace(/^0+/,'').toLowerCase(), b0=b.replace(/^0+/,'');
+  const k=(let_?Object.keys(R).find(x=>x.replace(/^0+/,'').toLowerCase()===bl):null)||(sep?null:Object.keys(R).find(x=>x.replace(/^0+/,'')===b0));
   return k?{k,f:R[k]}:null;
 }
 /* le prix tapé sur une fiche retirée : le bouton s'allume dès qu'il y a un prix */
@@ -3639,8 +3637,15 @@ let SITE={}; { const s=lit(KSITE,{}); if(s&&typeof s==='object'&&!Array.isArray(
 /* Le site a parfois perdu le 0 du début du code-barres (085715169587 y est rangé
    85715169587) : 66 parfums le 24 sept. On retrouve la fiche avec ou sans ces zéros. */
 let _SITE0=null;
-const siteCle=(p)=>{ if(!p||!p.bc) return null; const b=String(p.bc).replace(/[^0-9]/g,''); if(!b) return null; if(SITE[b]) return b;
-  if(!_SITE0){ _SITE0={}; Object.keys(SITE).forEach(k=>{ if(!k.startsWith('_')) _SITE0[k.replace(/^0+/,'')]=k; }); }
+/* 10 nov. 2026 (Sam : même code-barres, ancienne et nouvelle boîte, deux prix) : un code avec des lettres (« …oldbox ») a SON produit
+   sur le site ; une ancienne boîte pas encore créée n'y est pas, elle ne se rabat jamais sur le produit de l'autre boîte. */
+const siteCodes=(p)=>{ const brut=String((p&&p.bc)||'').replace(/[^0-9A-Za-z]/g,''), b=brut.replace(/[^0-9]/g,'');
+  const let_=/[A-Za-z]/.test(brut), sep=let_&&typeof mentionBC==='function'&&typeof FA_SEPAREES!=='undefined'&&FA_SEPAREES.has(mentionBC(brut).mention);
+  return {brut,b,let_,sep}; };
+const siteCle=(p)=>{ if(!p||!p.bc) return null; const {brut,b,let_,sep}=siteCodes(p); if(!brut) return null;
+  if(!_SITE0){ _SITE0={}; Object.keys(SITE).forEach(k=>{ if(k.startsWith('_')) return; _SITE0[k.replace(/^0+/,'')]=k; if(/[A-Za-z]/.test(k)) _SITE0['~'+k.replace(/^0+/,'').toLowerCase()]=k; }); }
+  if(let_){ if(SITE[brut]) return brut; const kl=_SITE0['~'+brut.replace(/^0+/,'').toLowerCase()]; if(kl) return kl; if(sep) return null; }
+  if(!b) return null; if(SITE[b]) return b;
   return _SITE0[b.replace(/^0+/,'')]||null; };
 const siteDe=(p)=>{ const k=siteCle(p); return k?(SITE[k]||null):null; };
 /* Quel site fait foi ? Le DÉTAIL, parce que c'est lui qui vend au client. Prendre
@@ -3668,8 +3673,11 @@ function siteEcart(p){
 let _RETS=null;
 function retireDeLaVente(p){
   const R=SITE._retires; if(!R||!p||!p.bc) return false;
-  if(!_RETS||_RETS.ref!==R){ const s=new Set(); ['d','g'].forEach(c=>Object.keys(R[c]||{}).forEach(k=>s.add(k.replace(/^0+/,'')))); _RETS={ref:R,s}; }
-  return _RETS.s.has(String(p.bc).replace(/[^0-9]/g,'').replace(/^0+/,''));
+  if(!_RETS||_RETS.ref!==R){ const s=new Set(); ['d','g'].forEach(c=>Object.keys(R[c]||{}).forEach(k=>s.add(k.replace(/^0+/,'').toLowerCase()))); _RETS={ref:R,s}; }
+  const {brut,b,let_,sep}=siteCodes(p);
+  if(let_&&_RETS.s.has(brut.replace(/^0+/,'').toLowerCase())) return true;
+  if(sep) return false;
+  return _RETS.s.has(b.replace(/^0+/,''));
 }
 function siteCell(p){
   const e=siteDe(p);
@@ -3708,7 +3716,7 @@ function qteSiteDe(P,c,EXPA){
   if(!P||!P.length) return 0; if(P.length===1) return qv(P[0]);
   const men=(typeof nomMention==='function')?nomMention:(()=>'' );
   const m=c?men(c.nom||''):'';
-  const avec=P.filter(x=>men((x.nom||'')+' '+(x.nomSrc||''))===m);
+  const avec=P.filter(x=>men(String(x.bc||'').replace(/[0-9]/g,'')+' '+(x.nom||'')+' '+(x.nomSrc||''))===m);
   return (avec.length?avec:P).reduce((a,x)=>a+qv(x),0);
 }
 /* les fiches de l'ERP qui partagent le code du site de cette fiche */
@@ -4527,7 +4535,8 @@ function dessineFiche0(){
         const fG=COTE_SITE[c.id]?((siteDe(p)||{})[COTE_SITE[c.id]]):null;
         /* 5 nov. 2026 (Igal) : le détail a toujours la même ligne — prix retail à gauche, case « prix barré » à droite ; le mode une-case reste au gros */
         const uni=!!(fG&&fG.pr!==undefined&&(fG.ps!=null?fG.ps:fG.pr)!=null&&c.id==='sitegros');
-        let {v,man,src}=prixCanal(p,c); if(uni){ v=fG.ps!=null?fG.ps:fG.pr; }
+        /* 10 nov. 2026 (Igal : « le Catalogue dit 53,76 $, la fiche dit 85 $ ») : la case affiche le prix de gros de la FICHE, plus celui du site */
+        let {v,man,src}=prixCanal(p,c); if(uni&&v==null){ v=fG.ps!=null?fG.ps:fG.pr; }
         const t=margeNette(p,c,v), chg=FICHE.brouillon.pc&&FICHE.brouillon.pc[c.id]!==undefined;
         const frais=v!=null?r2(v*(c.com||0)/100):null, reste=(v!=null&&p.pa!=null)?r2(v-(frais||0)-p.pa):null;
         const calc = !VMG ? '' : v==null ? `<span class="calc vide">Pas de prix : tape-le.</span>`
@@ -4648,15 +4657,13 @@ $('ddb').addEventListener('input',e=>{
   const t=e.target;
   if(t.dataset.sb!==undefined||t.dataset.sp!==undefined){ majEnvoi(t.dataset.sb||t.dataset.sp); return; }
   if(t.dataset.sr!==undefined||t.dataset.srp!==undefined){ marqueSite(); return; }
-  /* 9 nov. 2026 (Igal : un parfum mis à 20 $ dans la case « Site perfumestrade.com » de la fiche, le site est passé à 20 $
-     mais le Catalogue est resté à 16 $). Règle du 6 nov. : le prix du Catalogue fixe tout. Pour les deux sites, la case du canal
-     n'est donc pas un prix « manuel » à part : c'est le prix retail (site) ou le prix de gros (site de gros) lui-même. */
+  /* 9 nov. 2026 : la case d'un site EST le prix retail / de gros de la fiche (plus de prix « manuel » à part) */
   if(t.dataset.pc==='site'||t.dataset.pc==='sitegros'){
     const id=t.dataset.pc, base=cur[FICHE.pos], k=id==='site'?'pvr':'pvw', c=canaux().find(x=>x.id===id)||{};
     const v = t.value===''? null : r2(+t.value/(1+(c.maj||0)/100));
     FICHE.brouillon[k]=v; if((base[k]??null)===(v??null)) delete FICHE.brouillon[k];
     const pc=Object.assign({},FICHE.brouillon.pc||{});
-    if((base.pc||{})[id]!=null) pc[id]=null; else delete pc[id];   /* un ancien prix « manuel » du site est effacé : c'est le prix de l'outil qui compte */
+    if((base.pc||{})[id]!=null) pc[id]=null; else delete pc[id];
     if(Object.keys(pc).length) FICHE.brouillon.pc=pc; else delete FICHE.brouillon.pc;
     redessineApres();
     return;
@@ -5877,8 +5884,9 @@ function trouve(bc){
   const M=(typeof mentionBC==='function')?mentionBC(bc):{digits:String(bc).replace(/[^0-9]/g,''),mention:''};
   bc=M.digits||String(bc);
   const nu=bc.replace(/^0+/,'');
-  const C=T.filter(x=>x.bc && String(x.bc).replace(/^0+/,'')===nu);
-  if(C.length){ const p=(typeof parMention==='function')?parMention(C,M.mention,x=>x.nom+' '+(x.nomSrc||'')):C[0]; if(p) return p; if(M.mention) return null; }
+  const chif=x=>{ const s=String(x.bc); return /^\d{8,}[A-Za-z]+$/.test(s)?s.replace(/[^0-9]/g,''):s; };
+  const C=T.filter(x=>x.bc && chif(x).replace(/^0+/,'')===nu);
+  if(C.length){ const p=(typeof parMention==='function')?parMention(C,M.mention,x=>String(x.bc).replace(/[0-9]/g,'')+' '+x.nom+' '+(x.nomSrc||'')):C[0]; if(p) return p; if(M.mention) return null; }
   if(M.mention) return null;
   return T.find(x=>x.bcs && bcsDe(x).includes(nu))
     || T.find(x=>(bcExtra()[x.cle]||[]).includes(nu)) || null;
@@ -7018,7 +7026,7 @@ function lsmTrouve(I,sku){
   const M=(typeof mentionBC==='function')?mentionBC(sku):{digits:String(sku).replace(/[^0-9]/g,''),mention:''};
   const nu=String(M.digits||'').replace(/^0+/,''); if(!nu) return null;
   const C=I[nu]||[]; if(!C.length) return null;
-  if(typeof parMention==='function') return parMention(C,M.mention,x=>x.nom+' '+(x.nomSrc||''))||null;
+  if(typeof parMention==='function') return parMention(C,M.mention,x=>String(x.bc||'').replace(/[0-9]/g,'')+' '+x.nom+' '+(x.nomSrc||''))||null;
   return M.mention?null:C[0];
 }
 /* rapproche chaque produit de la caisse d'une fiche : par équivalence confirmée, sinon par code-barres ; puis les garde-fous */

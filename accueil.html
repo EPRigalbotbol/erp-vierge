@@ -1795,7 +1795,9 @@ function _ssAExpedierCalc(){
 function _ssReserve(){
   const R=((_ssDq('site-reserve-v1',null)||{}).q)||{}, m={};
   for(const bc in R){ let reste=Math.round(+R[bc])||0; if(reste<=0) continue;
-    const cles=_ssFichesDuBC(bc); if(!cles.length) continue;
+    let cles=_ssFichesDuBC(bc); if(!cles.length) continue;
+    /* un code partagé (boîte / ancienne boîte…) : la commande en attente retient les flacons de la fiche qui porte la même mention que le produit du site */
+    if(cles.length>1){ const S=_ssDq('site-stock-v1',{})||{}, ks=_ssCleSite(bc), e=ks&&S[ks], ms=_ssMentionSite(ks||bc,e&&(e.d||e.g)); const a=cles.filter(x=>_ssMentionFiche(x)===ms); if(a.length) cles=a; }
     for(const c of cles){ if(reste<=0) break; const r=_ssQte(c,{}); const dispo=r?r.q:0; const pris=Math.min(reste,dispo);
       if(pris>0){ m[c]=(m[c]||0)+pris; reste-=pris; } }
     if(reste>0) m[cles[0]]=(m[cles[0]]||0)+reste; }
@@ -1820,7 +1822,15 @@ function _ssQte(cle,EXPA){
    la fiche de l'ERP qui porte la même mention ; sinon les fiches sans mention ; et si
    plusieurs restent (ancien / nouveau packaging), leur somme — c'est ce que le site peut
    vendre sous ce code. */
-const _ssMention=n=>/no\s*-?\s*box|unbox|\(\s*nb\s*\)/i.test(String(n||''))?'NOBOX':(/tester|testeur|probador/i.test(String(n||''))?'TESTER':'');
+/* 10 nov. 2026 : + « OLDBOX » (l'ancienne boîte, un produit à part sur les sites — même règle que _file_auto.py) */
+const _ssMention=n=>/no\s*-?\s*box|unbox|\(\s*nb\s*\)/i.test(String(n||''))?'NOBOX':(/tester|testeur|probador/i.test(String(n||''))?'TESTER':(/\boldbox\b/i.test(String(n||''))?'OLDBOX':''));
+/* la mention d'une fiche : dans son code (« …oldbox », même corrigé dans l'ERP), sinon dans son nom (corrigé, sinon d'origine) */
+function _ssMentionFiche(cle){
+  const M=_ssDq('fiches-modifiees-v1',{})||{}, m=M[cle]||{}, f=(_SS_IDX&&_SS_IDX[cle])||{};
+  return _ssMention(String(m.bc||f.bc||'').replace(/[0-9]/g,''))||_ssMention((m.nom||'')+' '+(f.nom||''));
+}
+/* la mention d'un produit du SITE : dans son code (« …oldbox »), sinon dans son nom */
+function _ssMentionSite(k,c){ return _ssMention(String(k||'').replace(/[0-9]/g,''))||(c?_ssMention(c.nom||''):''); }
 let _SS_PARBC=null;
 function _ssFichesDuBC(bc){
   if(!_SS_PARBC){ _ssFiche('_'); _SS_PARBC={};
@@ -1831,8 +1841,8 @@ function _ssFichesDuBC(bc){
 function _ssQteSite(bc,cote,EXPA){
   const cles=_ssFichesDuBC(bc); if(cles.length<2) return null;
   const S=_ssDq('site-stock-v1',{})||{}; const k=_ssCleSite(bc); const e=k&&S[k]; const c=e&&(e[cote]||e.d||e.g);
-  const m=c?_ssMention(c.nom||''):'';
-  const avec=cles.filter(x=>_ssMention((_SS_IDX[x]||{}).nom||'')===m);
+  const m=_ssMentionSite(k,c);
+  const avec=cles.filter(x=>_ssMentionFiche(x)===m);
   const P=avec.length?avec:cles;
   let q=0; P.forEach(x=>{ const r=_ssQte(x,EXPA); if(r) q+=r.q; });
   return q;
@@ -1842,9 +1852,11 @@ function _ssCleSite(bc){
   const S=_ssDq('site-stock-v1',{})||{}; if(S[bc]) return bc;
   const k=String(bc).replace(/^0+/,'');
   if(_SS_MEMO){                                   /* en masse : l'index sans les 0 du début est fait une seule fois */
-    let I=_SS_MEMO['#sans0']; if(!I){ I=_SS_MEMO['#sans0']={}; for(const x in S){ if(x.startsWith('_')) continue; const z=x.replace(/^0+/,''); if(!(z in I)) I[z]=x; } }
-    return I[k]||null; }
+    let I=_SS_MEMO['#sans0']; if(!I){ I=_SS_MEMO['#sans0']={}; for(const x in S){ if(x.startsWith('_')) continue; const z=x.replace(/^0+/,''); if(!(z in I)) I[z]=x;
+        if(/[A-Za-z]/.test(z)){ const zl='~'+z.toLowerCase(); if(!(zl in I)) I[zl]=x; } } }   /* un code avec des lettres (« …oldbox ») : la casse du site ne compte pas */
+    return I[k]||(/[A-Za-z]/.test(k)?I['~'+k.toLowerCase()]:null)||null; }
   for(const x in S){ if(!x.startsWith('_')&&x.replace(/^0+/,'')===k) return x; }
+  if(/[A-Za-z]/.test(k)){ const kl=k.toLowerCase(); for(const x in S){ if(!x.startsWith('_')&&x.replace(/^0+/,'').toLowerCase()===kl) return x; } }
   return null;
 }
 _apresEcrit.push((cle,val,avant)=>{
@@ -2616,7 +2628,7 @@ setTimeout(()=>{ try{ const c=document.getElementById('ct-taches'); if(!c||!glPe
   fetch(CK_URL+'/api/o/'+CK_ORG+'/galou/taches',{headers:{Authorization:'Bearer '+ckTok()}}).then(r=>r.ok?r.json():null).then(j=>{ if(!j) return; const n=(j.a_faire||[]).length; c.textContent=n?String(n):''; c.className=n?'ct nb':'ct'; }).catch(()=>{}); }catch(e){} },2500);
 
 
-const VER_URL='202611092319';
+const VER_URL='202611100020';
 /* Les trois boutons de langue de la porte. On ne passe pas par lgChange : il
    écrit une ligne au journal au nom du compte connecté, et ici personne ne l'est
    encore. On change la langue, on l'enregistre, on retraduit l'écran. */

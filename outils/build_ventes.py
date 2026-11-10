@@ -805,7 +805,7 @@ function cleDeBC(bc){
   const mention=(typeof mentionBC==='function')?mentionBC(bc).mention:'';
   const C=[]; for(const cle in IDX){ if(String((IDX[cle]||[])[0]||'').replace(/[^0-9]/g,'').replace(/^0+/,'')===n) C.push(cle); }
   if(C.length){ if(typeof parMention!=='function') return C[0];
-    const k=parMention(C,mention,cle=>(IDX[cle]||[])[1]); if(k) return k; if(mention) return null; }
+    const k=parMention(C,mention,cle=>String(((MOD[cle]||{}).bc)||(IDX[cle]||[])[0]||'').replace(/[0-9]/g,'')+' '+((MOD[cle]||{}).nom||'')+' '+((IDX[cle]||[])[1]||'')); if(k) return k; if(mention) return null; }   /* la mention : dans le code de la fiche (« …oldbox »), puis dans son nom */
   for(const cle in MOD){ const m=MOD[cle];
     if(m&&m.bcs&&String(m.bcs).split(/[^0-9]+/).map(x=>x.replace(/^0+/,'')).includes(n)) return cle; }
   /* une case collée du fichier (deux codes dans la même cellule) */

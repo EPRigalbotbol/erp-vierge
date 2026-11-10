@@ -22,7 +22,11 @@ FILE_AUTO = r"""
    version en boîte, mais pas le même produit ni le même prix. La mention fait partie
    de l'identité : on ne confond jamais « nobox » avec la boîte, ni « tester » avec le
    flacon. La fiche porte la mention entre parenthèses à la suite du nom : « … (NOBOX) ». */
-const FA_MENTIONS=[['NOBOX',/no\s*-?\s*box|unbox|sans\s*bo[iî]te|\(\s*nb\s*\)/i],['TESTER',/tester|testeur|probador/i]];
+/* 10 nov. 2026 (Sam) : « oldbox », l'ancienne boîte — même code-barres, autre prix, produit À PART sur les sites (FA_SEPAREES). Seul le mot « oldbox » collé au code compte : un nom « … old box » ne change rien (six fiches s'appellent déjà ainsi). */
+const FA_MENTIONS=[['NOBOX',/no\s*-?\s*box|unbox|sans\s*bo[iî]te|\(\s*nb\s*\)/i],['TESTER',/tester|testeur|probador/i],['OLDBOX',/\boldbox\b/i]];
+const FA_SEPAREES=new Set(['OLDBOX']);
+/* la mention d'une FICHE : celle de son code (« …oldbox »), sinon celle de son nom */
+function mentionFiche(bc,nom){ return mentionBC(bc).mention||nomMention(nom); }
 function mentionBC(code){
   const s=String(code==null?'':code).trim();
   const digits=s.replace(/[^0-9]/g,''), lettres=s.replace(/[0-9]/g,'');
@@ -188,7 +192,7 @@ function faContexte(){
     let mentionne=false;
     for(const c of codes){ const n=String(c).replace(/[^0-9]/g,'').replace(/^0+/,''); if(!n||!parBC[n]) continue;
       const mention=mentionBC(c).mention; if(mention) mentionne=true;
-      const k=parMention(parBC[n],mention,cle=>((parCle[cle]||[])[13]||'')+' '+((parCle[cle]||[])[1]||'')); if(k) return k; }
+      const k=parMention(parBC[n],mention,cle=>{ const r=parCle[cle]||[], m=MOD[cle]||{}; return String(m.bc||r[0]||'').replace(/[0-9]/g,'')+' '+(m.nom||'')+' '+(r[13]||'')+' '+(r[1]||''); }); if(k) return k; }
     const a=AL[norm(l.des)]; if(a&&a!=='__aucun'&&parCle[a]) return a;
     /* un code « …nobox » sans fiche (NOBOX) ne se rabat pas sur la boîte : Sam tranche */
     if(mentionne) return null;

@@ -656,6 +656,10 @@ font-size:11.5px;color:var(--ink-3);line-height:1.5}
 .ga-rep{stroke:#e37400;stroke-width:1.2;stroke-dasharray:3 3;opacity:.75}
 .ga-rep-p{fill:#e37400}.ga-rep-n{fill:#fff;font-size:9px;font-weight:700}
 .ga-tip-j{margin-top:6px;padding-top:6px;border-top:1px solid var(--line)}.ga-tip-j p{margin:2px 0;font-size:12px;display:flex;gap:6px;align-items:baseline}.ga-tip-j i{width:7px;height:7px;border-radius:50%;background:#e37400;flex:none}
+.vis-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px 22px;margin:14px 0 6px}
+.vis-t b{display:block;font-size:13px;margin-bottom:4px}.vis-t table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+.vis-t th{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);text-align:left;padding:4px 6px 4px 0;border-bottom:1px solid var(--line)}
+.vis-t td{padding:4px 6px 4px 0;border-bottom:1px solid var(--line-2);color:var(--ink-2);overflow-wrap:anywhere}.vis-t .n{text-align:right;white-space:nowrap}
 .pp-barre{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin:18px 0 10px}
 .pp-barre .ga-mini button small{font-weight:500;color:var(--ink-3);margin-left:2px}
 .pp-tri{font-size:12.5px;color:var(--ink-3);display:inline-flex;align-items:center;gap:6px}
@@ -725,33 +729,33 @@ font-size:11.5px;color:var(--ink-3);line-height:1.5}
   <div class="logo"><div class="n">Perfumes Trade</div><div class="s">ERP</div></div>
   <nav>
     <div class="navlab">Produits</div>
-    <a class="nv" href="catalogue.html?v=202611111045"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>Catalogue<span class="ct nu" id="ct-catalogue">0</span></a>
-    <a class="nv" href="stock.html?v=202611111045"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg></span>Inventaire<span class="ct nu" id="ct-inventaire">0</span></a>
-    <a class="nv" href="inventaire_pc.html?v=202611111045"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h16l-1-5H5z"/><path d="M5 9v11h14V9"/><path d="M10 20v-5h4v5"/></svg></span>Inventaire Perfume City<span class="ct" id="ct-pcity"></span></a>
-    <a class="nv" href="demandes_pc.html?v=202611111045"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></span>Transfert interstore<span class="ct" id="ct-demandes"></span></a>
+    <a class="nv" href="catalogue.html?v=202611111126"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>Catalogue<span class="ct nu" id="ct-catalogue">0</span></a>
+    <a class="nv" href="stock.html?v=202611111126"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg></span>Inventaire<span class="ct nu" id="ct-inventaire">0</span></a>
+    <a class="nv" href="inventaire_pc.html?v=202611111126"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h16l-1-5H5z"/><path d="M5 9v11h14V9"/><path d="M10 20v-5h4v5"/></svg></span>Inventaire Perfume City<span class="ct" id="ct-pcity"></span></a>
+    <a class="nv" href="demandes_pc.html?v=202611111126"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></span>Transfert interstore<span class="ct" id="ct-demandes"></span></a>
     <div class="navlab">Commerce</div>
-    <a class="nv" href="quotes.html?v=202611111045"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>Cote<span class="ct" id="ct-devis"></span></a>
-    <a class="nv" href="offres.html?v=202611111045"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="8" cy="8" r="1.5"/></svg></span>Offre<span class="ct" id="ct-offre"></span></a>
-    <a class="nv" href="factures.html?v=202611111045"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span>Factures<span class="ct" id="ct-factures"></span></a>
-    <a class="nv" href="ventes.html?v=202611111045"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/></svg></span>Ventes<span class="ct" id="ct-ventes"></span></a>
-    <a class="nv" href="fournisseurs.html?v=202611111045"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></svg></span>Fournisseurs<span class="ct" id="ct-fournisseurs"></span></a>
-    <a class="nv" href="etude.html?v=202611111045"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg></span>Étude de cote<span class="ct" id="ct-étude"></span></a>
-    <a class="nv" href="clients.html?v=202611111045"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></span>Clients<span class="ct nb" id="ct-clients">0</span></a>
-    <a class="nv sub" href="clients.html?v=202611111045#vip" data-id="clients-vip" data-sous="clients.html">Clients VIP</a>
-    <a class="nv" data-pilotage="1" href="connecteurs.html?v=202611111045"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10l-3-3M17 17H7l3 3"/></svg></span>Connecteurs<span class="ct" id="ct-connecteurs"></span></a>
+    <a class="nv" href="quotes.html?v=202611111126"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>Cote<span class="ct" id="ct-devis"></span></a>
+    <a class="nv" href="offres.html?v=202611111126"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="8" cy="8" r="1.5"/></svg></span>Offre<span class="ct" id="ct-offre"></span></a>
+    <a class="nv" href="factures.html?v=202611111126"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span>Factures<span class="ct" id="ct-factures"></span></a>
+    <a class="nv" href="ventes.html?v=202611111126"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/></svg></span>Ventes<span class="ct" id="ct-ventes"></span></a>
+    <a class="nv" href="fournisseurs.html?v=202611111126"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></svg></span>Fournisseurs<span class="ct" id="ct-fournisseurs"></span></a>
+    <a class="nv" href="etude.html?v=202611111126"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg></span>Étude de cote<span class="ct" id="ct-étude"></span></a>
+    <a class="nv" href="clients.html?v=202611111126"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></span>Clients<span class="ct nb" id="ct-clients">0</span></a>
+    <a class="nv sub" href="clients.html?v=202611111126#vip" data-id="clients-vip" data-sous="clients.html">Clients VIP</a>
+    <a class="nv" data-pilotage="1" href="connecteurs.html?v=202611111126"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10l-3-3M17 17H7l3 3"/></svg></span>Connecteurs<span class="ct" id="ct-connecteurs"></span></a>
     <a class="nv" href="#galou" id="gl-btn" data-id="galou" onclick="if(typeof galouOuvre==='function')galouOuvre();return false"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v10H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg></span>Parler à Léa<span class="ct" id="ct-parler"></span></a>
     <div class="navlab" data-pilotage="1">Pilotage</div>
     <a class="nv" href="#support" id="aid-btn" data-id="support" onclick="if(typeof aidOuvre==='function')aidOuvre();return false"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="m9.5 9.5-4-4M14.5 9.5l4-4M14.5 14.5l4 4M9.5 14.5l-4 4"/></svg></span>Support technique<span class="ct" id="ct-support"></span></a>
-    <a class="nv" data-pilotage="1" href="journal.html?v=202611111045"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Journal<span class="ct" id="ct-journal"></span></a>
-    <a class="nv" data-pilotage="1" href="tableau.html?v=202611111045"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/></svg></span>Tableau de bord<span class="ct" id="ct-tableau"></span></a>
-    <a class="nv on" data-pilotage="1" href="analytique.html?v=202611111045"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>Analytique<span class="ct" id="ct-analytique"></span></a>
-    <a class="nv" data-pilotage="1" href="taches.html?v=202611111045"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m8 12 3 3 5-6"/></svg></span>Tâches<span class="ct" id="ct-taches"></span></a>
-    <a class="nv" data-pilotage="1" href="acces.html?v=202611111045"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.3 8 8 9 4.7-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></span>Accès<span class="ct" id="ct-accès"></span></a>
+    <a class="nv" data-pilotage="1" href="journal.html?v=202611111126"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Journal<span class="ct" id="ct-journal"></span></a>
+    <a class="nv" data-pilotage="1" href="tableau.html?v=202611111126"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/></svg></span>Tableau de bord<span class="ct" id="ct-tableau"></span></a>
+    <a class="nv on" data-pilotage="1" href="analytique.html?v=202611111126"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>Analytique<span class="ct" id="ct-analytique"></span></a>
+    <a class="nv" data-pilotage="1" href="taches.html?v=202611111126"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m8 12 3 3 5-6"/></svg></span>Tâches<span class="ct" id="ct-taches"></span></a>
+    <a class="nv" data-pilotage="1" href="acces.html?v=202611111126"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.3 8 8 9 4.7-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></span>Accès<span class="ct" id="ct-accès"></span></a>
     <a class="nv" data-pilotage="1" href="https://app.gusto.com" target="_blank" rel="noopener" title="Ouvre Gusto dans un nouvel onglet"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M14.5 9a2.5 2 0 0 0-2.5-1.5c-1.4 0-2.5.8-2.5 2s1 1.7 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2A2.7 2 0 0 1 9.5 15M12 6v1.5M12 16.5V18"/></svg></span>Paie<span class="ct" id="ct-paie"></span></a>
-    <a class="nv" data-pilotage="1" href="reglages.html?v=202611111045"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg></span>Réglages<span class="ct" id="ct-réglages"></span></a>
+    <a class="nv" data-pilotage="1" href="reglages.html?v=202611111126"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg></span>Réglages<span class="ct" id="ct-réglages"></span></a>
   </nav>
   <div class="sfoot"><div id="sfu" class="sfu"></div><span id="sfoot"></span>
-    <div class="ver" title="Si cette date n'est pas la derni&egrave;re, recharge avec Cmd+Option+R">version du 11/11/2026 à 10h45</div>
+    <div class="ver" title="Si cette date n'est pas la derni&egrave;re, recharge avec Cmd+Option+R">version du 11/11/2026 à 11h26</div>
     <div class="sfline" id="sfline"></div></div>
 </aside>
 <main class="main"><div class="wrap">
@@ -832,7 +836,7 @@ try{
 }catch(e){}
 })();
 </script>
-<script src="donnees/langue.js?v=202611111045"></script>
+<script src="donnees/langue.js?v=202611111126"></script>
 <script>
 /* le menu réglé et la langue de l'écran, AVANT le code de la page : rien ne saute, rien n'est vu dans une autre langue */
 
@@ -1802,7 +1806,7 @@ const LG_FR_PARCOURS=!/catalogue|stock|inventaire/.test(location.pathname);
 })();
 
 </script>
-<script src="donnees/produits.js?v=202611111045"></script><script src="donnees/histgros.js?v=202611111045"></script>
+<script src="donnees/produits.js?v=202611111126"></script><script src="donnees/histgros.js?v=202611111126"></script>
 <script>
 if (typeof window.D_PROD==='undefined') {
   /* Le code de la page est lancé plus tard par l'amorce (voir _serveur.py) : ce drapeau
@@ -1824,7 +1828,7 @@ if (typeof window.D_PROD==='undefined') {
 }
 </script>
 <script type="text/plain" id="page-js">
-const VER_URL='202611111045';
+const VER_URL='202611111126';
 const $=i=>document.getElementById(i);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const nf=v=>Number(v||0).toLocaleString('fr-FR');
@@ -6529,6 +6533,8 @@ function anDessine(){
       <div class="ga-free ${pub.T.gClics?'':'ko'}"><b>${A3('Google Shopping gratuit','Free Google Shopping')}</b> · ${nf(Math.round(pub.T.gClics))} ${A3('clic'+(pub.T.gClics>1?'s':''),'click'+(pub.T.gClics>1?'s':''))} · ${nf(Math.round(pub.T.gAff))} ${A3('affichages','impressions')}${pub.T.gClics?'':` — <span>${A3('aucun clic : Google ne montre presque pas les fiches gratuites (à voir dans Merchant Center)','no clicks: Google barely shows the free listings (to check in Merchant Center)')}</span>`}</div>`;
   }
   h+=`</section></div>`;
+  /* ---- 3a. les visites et les recherches Google, en direct (robot Google, 11 nov. 2026) ---- */
+  if(AN.site==='tous'||AN.site==='site') h+=anVisites();
   /* ---- 3b. la pub, parfum par parfum (90 jours) : lesquels garder, lesquels sortir, combien Sam économiserait ---- */
   if(AN.site==='tous'||AN.site==='site') h+=anCampagnes(tous);
   if(AN.site==='tous'||AN.site==='site') h+=anParfumsPub(tous);
@@ -6818,6 +6824,39 @@ function anReperes(B,P){
   anJP().forEach(e=>{ const d=anJourMiami(e.t); if(d<P.a||d>P.b) return; const i=idx[B.jour?d:d.slice(0,7)]; if(i==null) return; (R[i]=R[i]||[]).push(e); });
   return R;
 }
+/* ============ LES VISITES ET LES RECHERCHES GOOGLE (11 nov. 2026) ============
+   Igal : « être relié en live tout le temps ». Le robot Google du cockpit (googlerobot.js, lecture seule) lit toutes les heures
+   Google Analytics (visites de perfumestrade.com, d'où elles viennent, qui achète) et Search Console (ce que les gens tapent dans
+   Google avant d'arriver). Rangé dans « google-sources-v1 ». Ici : les 30 derniers jours comparés aux 30 d'avant, jour pour jour. */
+const anSrcG=()=>{ try{ return JSON.parse(localStorage.getItem('google-sources-v1')||'null'); }catch(e){ return null; } };
+function anVisites(){
+  const G=anSrcG();
+  let h=`<section class="ga-card ga-pad" id="vis"><div class="ga-h"><h3>${A3('Les visites du site et les recherches Google','Website visits and Google searches')}</h3>`;
+  if(!G) return h+`<span class="ga-src">${A3('pas encore branché','not connected yet')}</span></div><p class="gc-txt">${A3('Le robot Google (lecture seule) lira ici Google Analytics et Search Console toutes les heures, dès que sa clé sera déposée et qu\'il sera ajouté comme lecteur.','The Google robot (read only) will read Google Analytics and Search Console here every hour, as soon as its key is in place and it is added as a reader.')}</p></section>`;
+  const A=G.ga||{}, S=G.sc||{};
+  h+=`<span class="ga-src">${A3('en direct · Google Analytics et Search Console','live · Google Analytics and Search Console')} · ${A3('lu','read')} ${anDepuis(G.maj)}</span></div>`;
+  if(A.err) h+=`<p class="gc-alerte">Google Analytics : <span data-nolang>${esc(A.err)}</span></p>`;
+  if(S.err) h+=`<p class="gc-alerte">Search Console : <span data-nolang>${esc(S.err)}</span></p>`;
+  const auj=rcISO(new Date()), j=n=>rcISO(new Date(Date.now()-n*86400e3));
+  const som=(J,a,b,k)=>Object.keys(J||{}).filter(d=>d>=a&&d<=b).reduce((t,d)=>t+(+(J[d]||[])[k]||0),0);
+  const a0=j(29),a1=auj,b0=j(59),b1=j(30);
+  const ses=som(A.jours,a0,a1,0), sesP=som(A.jours,b0,b1,0), ach=som(A.jours,a0,a1,2), achP=som(A.jours,b0,b1,2);
+  const cl=som(S.jours,a0,a1,0), clP=som(S.jours,b0,b1,0);
+  const ev=(x,y)=>y>0?`<small class="${x>=y?'st-up':'st-down'}">${x>=y?'+':''}${Math.round((x-y)/y*100)} % ${A3('vs 30 jours d\'avant','vs previous 30 days')}</small>`:'';
+  h+=`<div class="ga-stats ga-stats4">
+    <div><span>${A3('Sur le site en ce moment','On the site right now')}</span><b>${nf(A.live||0)}</b><small>${A3('visiteurs','visitors')}</small></div>
+    <div><span>${A3('Visites, 30 jours','Visits, 30 days')}</span><b>${nf(ses)}</b>${ev(ses,sesP)}</div>
+    <div><span>${A3('Visiteurs qui achètent','Visitors who buy')}</span><b>${ses?(Math.round(ach/ses*1000)/10).toLocaleString(A3('fr-FR','en-US')):'0'} %</b><small>${nf(ach)} ${A3('achats','purchases')}</small></div>
+    <div><span>${A3('Clics gratuits depuis Google','Free clicks from Google')}</span><b>${nf(cl)}</b>${ev(cl,clP)}</div></div>`;
+  const tab=(tit,ent,L)=>L&&L.length?`<div class="vis-t"><b>${tit}</b><table><thead><tr>${ent.map((e,i)=>`<th class="${i?'n':''}">${e}</th>`).join('')}</tr></thead><tbody>${L.map(r=>`<tr>${r.map((c,i)=>`<td class="${i?'n':''}" ${i?'':'data-nolang'}>${esc(String(c))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:'';
+  h+=`<div class="vis-g">`
+    +tab(A3('D\'où viennent les visites (30 jours)','Where visits come from (30 days)'),[A3('Source','Source'),A3('Visites','Visits'),A3('Achats','Purchases')],(A.sources||[]).slice(0,8).map(r=>[r[0],nf(r[1]),nf(r[2])]))
+    +tab(A3('Ce que les gens tapent dans Google (28 jours)','What people type in Google (28 days)'),[A3('Recherche','Search'),A3('Clics','Clicks'),A3('Position','Position')],(S.requetes||[]).slice(0,10).map(r=>[r[0],nf(r[1]),(Math.round(r[3]*10)/10).toLocaleString(A3('fr-FR','en-US'))]))
+    +tab(A3('Pays des visiteurs (30 jours)','Visitors\' countries (30 days)'),[A3('Pays','Country'),A3('Visites','Visits'),A3('Achats','Purchases')],(A.pays||[]).slice(0,8).map(r=>[r[0],nf(r[1]),nf(r[2])]))
+    +`</div>`;
+  h+=`<p class="ga-note">${A3('« Position » : la place moyenne du site dans Google pour cette recherche (1 = premier). Les achats sont ceux que Google Analytics voit ; les ventes de référence restent celles de l\'ERP, en haut de la page.','“Position”: the site\'s average rank in Google for that search (1 = first). Purchases are those Google Analytics sees; the reference sales remain the ERP\'s, at the top of the page.')}</p>`;
+  return h+`</section>`;
+}
 function anDepuis(iso){ const m=Math.max(0,Math.round((Date.now()-Date.parse(iso))/60000)); if(!isFinite(m)) return '';
   if(m<1) return A3('à l\'instant','just now'); if(m<60) return A3(`il y a ${m} min`,`${m} min ago`);
   const h=Math.round(m/60); if(h<48) return A3(`il y a ${h} h`,`${h} h ago`); return A3(`il y a ${Math.round(h/24)} jours`,`${Math.round(h/24)} days ago`); }
@@ -6986,11 +7025,11 @@ majUser();
   /* une nouvelle version des factures ou des origines arrive du serveur (toutes les 8 s) : on relit et on redessine */
   /* 9 nov. 2026 : la relève du serveur (toutes les 8 s) annonce les magasins arrivés par « ck-maj » (et non par « storage ») :
      sans cette écoute, la vidéo restait sur la première étape et le résultat des agents n'apparaissait qu'en rechargeant */
-  const AN_CLES=['ventes-origine-v1','google-pub-v1','google-ads-v1','strategie-v1','journal-pub-v1','gads-etiquettes-v1',KFACT];
+  const AN_CLES=['ventes-origine-v1','google-pub-v1','google-ads-v1','strategie-v1','journal-pub-v1','gads-etiquettes-v1','google-sources-v1',KFACT];
   window.addEventListener('ck-maj',e=>{ const c=(e.detail&&e.detail.cles)||[]; if(!c.some(k=>AN_CLES.includes(k))) return;
     try{ ORI=JSON.parse(localStorage.getItem('ventes-origine-v1')||'{}')||{}; FACT=JSON.parse(localStorage.getItem(KFACT)||'[]')||[]; STRAT=JSON.parse(localStorage.getItem('strategie-v1')||'{}')||{}; }catch(_){}
     anDessine(); });
-  window.addEventListener('storage',e=>{ if(e.key==='ventes-origine-v1'||e.key==='google-pub-v1'||e.key==='google-ads-v1'||e.key==='strategie-v1'||e.key==='journal-pub-v1'||e.key==='gads-etiquettes-v1'||e.key===KFACT){ try{ ORI=JSON.parse(localStorage.getItem('ventes-origine-v1')||'{}')||{}; FACT=JSON.parse(localStorage.getItem(KFACT)||'[]')||[]; STRAT=JSON.parse(localStorage.getItem('strategie-v1')||'{}')||{}; }catch(_){} anDessine(); } });
+  window.addEventListener('storage',e=>{ if(e.key==='ventes-origine-v1'||e.key==='google-pub-v1'||e.key==='google-ads-v1'||e.key==='strategie-v1'||e.key==='journal-pub-v1'||e.key==='gads-etiquettes-v1'||e.key==='google-sources-v1'||e.key===KFACT){ try{ ORI=JSON.parse(localStorage.getItem('ventes-origine-v1')||'{}')||{}; FACT=JSON.parse(localStorage.getItem(KFACT)||'[]')||[]; STRAT=JSON.parse(localStorage.getItem('strategie-v1')||'{}')||{}; }catch(_){} anDessine(); } });
 })();
 
 

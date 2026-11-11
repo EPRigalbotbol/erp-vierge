@@ -268,6 +268,10 @@ GA_CSS = r'''
 .ga-rep{stroke:#e37400;stroke-width:1.2;stroke-dasharray:3 3;opacity:.75}
 .ga-rep-p{fill:#e37400}.ga-rep-n{fill:#fff;font-size:9px;font-weight:700}
 .ga-tip-j{margin-top:6px;padding-top:6px;border-top:1px solid var(--line)}.ga-tip-j p{margin:2px 0;font-size:12px;display:flex;gap:6px;align-items:baseline}.ga-tip-j i{width:7px;height:7px;border-radius:50%;background:#e37400;flex:none}
+.vis-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px 22px;margin:14px 0 6px}
+.vis-t b{display:block;font-size:13px;margin-bottom:4px}.vis-t table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+.vis-t th{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);text-align:left;padding:4px 6px 4px 0;border-bottom:1px solid var(--line)}
+.vis-t td{padding:4px 6px 4px 0;border-bottom:1px solid var(--line-2);color:var(--ink-2);overflow-wrap:anywhere}.vis-t .n{text-align:right;white-space:nowrap}
 .pp-barre{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin:18px 0 10px}
 .pp-barre .ga-mini button small{font-weight:500;color:var(--ink-3);margin-left:2px}
 .pp-tri{font-size:12.5px;color:var(--ink-3);display:inline-flex;align-items:center;gap:6px}

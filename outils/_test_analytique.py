@@ -249,6 +249,13 @@ try:
         check('un repère ajouté à la main part au cockpit et s\'affiche en haut du journal', notes == [{'quoi': 'Sam lance une promo WhatsApp'}] and 'Sam lance une promo WhatsApp' in pj.locator('#jp .jp-l li').first.inner_text(), notes)
         pj.evaluate("()=>{ localStorage.setItem('google-ads-v1',JSON.stringify({maj:new Date().toISOString(),v:1,c:[],j:{}})); window.dispatchEvent(new CustomEvent('ck-maj',{detail:{cles:['google-ads-v1']}})); }"); pj.wait_for_timeout(1200)
         check('un script Google Ads encore en version 1 : le journal dit de le remplacer (pour voir les changements faits dans Google Ads)', 'version 2' in pj.inner_text('#jp'), pj.inner_text('#jp')[:300])
+        check('robot Google pas encore branché : la carte « visites » le dit', 'pas encore branché' in pj.inner_text('#vis'), pj.inner_text('#vis')[:200])
+        pj.evaluate("""d=>{ localStorage.setItem('google-sources-v1',JSON.stringify({maj:new Date().toISOString(),ga:{live:140,jours:{[d]:[420,380,9,812.5]},sources:[['google / cpc',5000,60,5400]],pays:[['Puerto Rico',300,4,310]]},sc:{jours:{[d]:[4,900,18.4]},requetes:[['tobacco touch perfume',3,120,6.24]],err:"le robot n'a pas encore accès — il faut l'ajouter comme lecteur"}}));
+          window.dispatchEvent(new CustomEvent('ck-maj',{detail:{cles:['google-sources-v1']}})); }""", hier)
+        pj.wait_for_timeout(1300)
+        vt = pj.inner_text('#vis')
+        check('LE POINT — en direct de Google : visiteurs en ce moment (140), visites 30 jours (420), achats, sources, recherches tapées dans Google, pays (Porto Rico)', '140' in vt and '420' in vt and 'google / cpc' in vt and 'tobacco touch perfume' in vt and 'Puerto Rico' in vt and '6,2' in vt, vt[:700])
+        check('un accès refusé chez Google est dit en clair sur la carte', 'pas encore accès' in vt, vt[:300])
         pj.context.close()
         # 7 bis. 11 nov. 2026 : le point bleu bat aussi tant qu'une stratégie est ACTIVE (« connectée »), sur toutes les pages
         pt = ouvre(page='tableau.html')

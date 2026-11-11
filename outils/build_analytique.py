@@ -217,6 +217,8 @@ function anDessine(){
       <div class="ga-free ${pub.T.gClics?'':'ko'}"><b>${A3('Google Shopping gratuit','Free Google Shopping')}</b> · ${nf(Math.round(pub.T.gClics))} ${A3('clic'+(pub.T.gClics>1?'s':''),'click'+(pub.T.gClics>1?'s':''))} · ${nf(Math.round(pub.T.gAff))} ${A3('affichages','impressions')}${pub.T.gClics?'':` — <span>${A3('aucun clic : Google ne montre presque pas les fiches gratuites (à voir dans Merchant Center)','no clicks: Google barely shows the free listings (to check in Merchant Center)')}</span>`}</div>`;
   }
   h+=`</section></div>`;
+  /* ---- 3a. les visites et les recherches Google, en direct (robot Google, 11 nov. 2026) ---- */
+  if(AN.site==='tous'||AN.site==='site') h+=anVisites();
   /* ---- 3b. la pub, parfum par parfum (90 jours) : lesquels garder, lesquels sortir, combien Sam économiserait ---- */
   if(AN.site==='tous'||AN.site==='site') h+=anCampagnes(tous);
   if(AN.site==='tous'||AN.site==='site') h+=anParfumsPub(tous);
@@ -506,6 +508,39 @@ function anReperes(B,P){
   anJP().forEach(e=>{ const d=anJourMiami(e.t); if(d<P.a||d>P.b) return; const i=idx[B.jour?d:d.slice(0,7)]; if(i==null) return; (R[i]=R[i]||[]).push(e); });
   return R;
 }
+/* ============ LES VISITES ET LES RECHERCHES GOOGLE (11 nov. 2026) ============
+   Igal : « être relié en live tout le temps ». Le robot Google du cockpit (googlerobot.js, lecture seule) lit toutes les heures
+   Google Analytics (visites de perfumestrade.com, d'où elles viennent, qui achète) et Search Console (ce que les gens tapent dans
+   Google avant d'arriver). Rangé dans « google-sources-v1 ». Ici : les 30 derniers jours comparés aux 30 d'avant, jour pour jour. */
+const anSrcG=()=>{ try{ return JSON.parse(localStorage.getItem('google-sources-v1')||'null'); }catch(e){ return null; } };
+function anVisites(){
+  const G=anSrcG();
+  let h=`<section class="ga-card ga-pad" id="vis"><div class="ga-h"><h3>${A3('Les visites du site et les recherches Google','Website visits and Google searches')}</h3>`;
+  if(!G) return h+`<span class="ga-src">${A3('pas encore branché','not connected yet')}</span></div><p class="gc-txt">${A3('Le robot Google (lecture seule) lira ici Google Analytics et Search Console toutes les heures, dès que sa clé sera déposée et qu\'il sera ajouté comme lecteur.','The Google robot (read only) will read Google Analytics and Search Console here every hour, as soon as its key is in place and it is added as a reader.')}</p></section>`;
+  const A=G.ga||{}, S=G.sc||{};
+  h+=`<span class="ga-src">${A3('en direct · Google Analytics et Search Console','live · Google Analytics and Search Console')} · ${A3('lu','read')} ${anDepuis(G.maj)}</span></div>`;
+  if(A.err) h+=`<p class="gc-alerte">Google Analytics : <span data-nolang>${esc(A.err)}</span></p>`;
+  if(S.err) h+=`<p class="gc-alerte">Search Console : <span data-nolang>${esc(S.err)}</span></p>`;
+  const auj=rcISO(new Date()), j=n=>rcISO(new Date(Date.now()-n*86400e3));
+  const som=(J,a,b,k)=>Object.keys(J||{}).filter(d=>d>=a&&d<=b).reduce((t,d)=>t+(+(J[d]||[])[k]||0),0);
+  const a0=j(29),a1=auj,b0=j(59),b1=j(30);
+  const ses=som(A.jours,a0,a1,0), sesP=som(A.jours,b0,b1,0), ach=som(A.jours,a0,a1,2), achP=som(A.jours,b0,b1,2);
+  const cl=som(S.jours,a0,a1,0), clP=som(S.jours,b0,b1,0);
+  const ev=(x,y)=>y>0?`<small class="${x>=y?'st-up':'st-down'}">${x>=y?'+':''}${Math.round((x-y)/y*100)} % ${A3('vs 30 jours d\'avant','vs previous 30 days')}</small>`:'';
+  h+=`<div class="ga-stats ga-stats4">
+    <div><span>${A3('Sur le site en ce moment','On the site right now')}</span><b>${nf(A.live||0)}</b><small>${A3('visiteurs','visitors')}</small></div>
+    <div><span>${A3('Visites, 30 jours','Visits, 30 days')}</span><b>${nf(ses)}</b>${ev(ses,sesP)}</div>
+    <div><span>${A3('Visiteurs qui achètent','Visitors who buy')}</span><b>${ses?(Math.round(ach/ses*1000)/10).toLocaleString(A3('fr-FR','en-US')):'0'} %</b><small>${nf(ach)} ${A3('achats','purchases')}</small></div>
+    <div><span>${A3('Clics gratuits depuis Google','Free clicks from Google')}</span><b>${nf(cl)}</b>${ev(cl,clP)}</div></div>`;
+  const tab=(tit,ent,L)=>L&&L.length?`<div class="vis-t"><b>${tit}</b><table><thead><tr>${ent.map((e,i)=>`<th class="${i?'n':''}">${e}</th>`).join('')}</tr></thead><tbody>${L.map(r=>`<tr>${r.map((c,i)=>`<td class="${i?'n':''}" ${i?'':'data-nolang'}>${esc(String(c))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:'';
+  h+=`<div class="vis-g">`
+    +tab(A3('D\'où viennent les visites (30 jours)','Where visits come from (30 days)'),[A3('Source','Source'),A3('Visites','Visits'),A3('Achats','Purchases')],(A.sources||[]).slice(0,8).map(r=>[r[0],nf(r[1]),nf(r[2])]))
+    +tab(A3('Ce que les gens tapent dans Google (28 jours)','What people type in Google (28 days)'),[A3('Recherche','Search'),A3('Clics','Clicks'),A3('Position','Position')],(S.requetes||[]).slice(0,10).map(r=>[r[0],nf(r[1]),(Math.round(r[3]*10)/10).toLocaleString(A3('fr-FR','en-US'))]))
+    +tab(A3('Pays des visiteurs (30 jours)','Visitors\' countries (30 days)'),[A3('Pays','Country'),A3('Visites','Visits'),A3('Achats','Purchases')],(A.pays||[]).slice(0,8).map(r=>[r[0],nf(r[1]),nf(r[2])]))
+    +`</div>`;
+  h+=`<p class="ga-note">${A3('« Position » : la place moyenne du site dans Google pour cette recherche (1 = premier). Les achats sont ceux que Google Analytics voit ; les ventes de référence restent celles de l\'ERP, en haut de la page.','“Position”: the site\'s average rank in Google for that search (1 = first). Purchases are those Google Analytics sees; the reference sales remain the ERP\'s, at the top of the page.')}</p>`;
+  return h+`</section>`;
+}
 function anDepuis(iso){ const m=Math.max(0,Math.round((Date.now()-Date.parse(iso))/60000)); if(!isFinite(m)) return '';
   if(m<1) return A3('à l\'instant','just now'); if(m<60) return A3(`il y a ${m} min`,`${m} min ago`);
   const h=Math.round(m/60); if(h<48) return A3(`il y a ${h} h`,`${h} h ago`); return A3(`il y a ${Math.round(h/24)} jours`,`${Math.round(h/24)} days ago`); }
@@ -674,11 +709,11 @@ majUser();
   /* une nouvelle version des factures ou des origines arrive du serveur (toutes les 8 s) : on relit et on redessine */
   /* 9 nov. 2026 : la relève du serveur (toutes les 8 s) annonce les magasins arrivés par « ck-maj » (et non par « storage ») :
      sans cette écoute, la vidéo restait sur la première étape et le résultat des agents n'apparaissait qu'en rechargeant */
-  const AN_CLES=['ventes-origine-v1','google-pub-v1','google-ads-v1','strategie-v1','journal-pub-v1','gads-etiquettes-v1',KFACT];
+  const AN_CLES=['ventes-origine-v1','google-pub-v1','google-ads-v1','strategie-v1','journal-pub-v1','gads-etiquettes-v1','google-sources-v1',KFACT];
   window.addEventListener('ck-maj',e=>{ const c=(e.detail&&e.detail.cles)||[]; if(!c.some(k=>AN_CLES.includes(k))) return;
     try{ ORI=JSON.parse(localStorage.getItem('ventes-origine-v1')||'{}')||{}; FACT=JSON.parse(localStorage.getItem(KFACT)||'[]')||[]; STRAT=JSON.parse(localStorage.getItem('strategie-v1')||'{}')||{}; }catch(_){}
     anDessine(); });
-  window.addEventListener('storage',e=>{ if(e.key==='ventes-origine-v1'||e.key==='google-pub-v1'||e.key==='google-ads-v1'||e.key==='strategie-v1'||e.key==='journal-pub-v1'||e.key==='gads-etiquettes-v1'||e.key===KFACT){ try{ ORI=JSON.parse(localStorage.getItem('ventes-origine-v1')||'{}')||{}; FACT=JSON.parse(localStorage.getItem(KFACT)||'[]')||[]; STRAT=JSON.parse(localStorage.getItem('strategie-v1')||'{}')||{}; }catch(_){} anDessine(); } });
+  window.addEventListener('storage',e=>{ if(e.key==='ventes-origine-v1'||e.key==='google-pub-v1'||e.key==='google-ads-v1'||e.key==='strategie-v1'||e.key==='journal-pub-v1'||e.key==='gads-etiquettes-v1'||e.key==='google-sources-v1'||e.key===KFACT){ try{ ORI=JSON.parse(localStorage.getItem('ventes-origine-v1')||'{}')||{}; FACT=JSON.parse(localStorage.getItem(KFACT)||'[]')||[]; STRAT=JSON.parse(localStorage.getItem('strategie-v1')||'{}')||{}; }catch(_){} anDessine(); } });
 })();
 '''
 

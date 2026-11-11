@@ -223,6 +223,33 @@ try:
             c3 = pt.evaluate("()=>{ const p=document.querySelector('.side nav a.nv[href^=\"analytique.html\"] .mn-st'); return p?p.className:''; }")
             check(f'{lg} : une fois la page Analytique ouverte, le point vert s\'éteint', c3 == 'mn-st', c3)
             pt.context.close()
+        # 8. 11 nov. 2026 — la sélection pub (« ne garder que les gagnants ») et le journal des actions
+        pj = ouvre()
+        envoi = []
+        pj.route('**/google/etiquettes', lambda route: (envoi.append(route.request.post_data_json), route.fulfill(status=200, content_type='application/json', body=json.dumps({'ok': True, 'n': {'garder': 1, 'stock': 1, 'verif': 1}, 'flux': 'https://cockpit.exemple/gads/dasy/j/etiquettes.csv'}))))
+        sel = pj.inner_text('.sel-pub')
+        check('LE POINT — le bloc « Ne garder en pub que les gagnants » dit combien sortent (perdants, plus en stock) et qu\'ils restent en vente sur le site', 'Ne garder en pub que les 1 gagnants' in sel and 'plus en stock' in sel and 'restent en vente sur le site' in sel, sel)
+        pj.click('#sel-env'); pj.wait_for_timeout(500)
+        Lenv = dict((x[0], x[1]) for x in (envoi[0]['L'] if envoi else []))
+        check('LE POINT — le bouton envoie au cockpit la décision de CHAQUE parfum (garder / plus en stock / à vérifier)', len(envoi) == 1 and Lenv.get(bc) == 'garder' and Lenv.get(B0[0]) == 'stock' and Lenv.get('999999999999') == 'verif', envoi)
+        check('après l\'envoi : « ✓ Envoyé le … » et le bouton devient « Renvoyer la sélection à jour »', 'Envoyé le' in pj.inner_text('.sel-ok') and 'Renvoyer' in pj.inner_text('#sel-env'), pj.inner_text('.sel-pub'))
+        check('sans journal encore : la page dit que la première action notée sera la sélection pub', 'première action' in pj.inner_text('#jp'))
+        hier = (auj - datetime.timedelta(days=1)).isoformat()
+        pj.evaluate("""d=>{ localStorage.setItem('journal-pub-v1',JSON.stringify({L:[
+          {t:d+'T19:32:05.000Z',src:'gads',quoi:'budget : modification — « PMax Gagnants »',detail:'budget : 45 $ → 30 $ par jour',par:'igal@exemple.com'},
+          {t:d+'T15:00:00.000Z',src:'erp',quoi:'Sélection pub : seuls les 1 parfums gagnants restent en pub',detail:'1 sortis (plus en stock)',par:'Sam'}]}));
+          window.dispatchEvent(new CustomEvent('ck-maj',{detail:{cles:['journal-pub-v1']}})); }""", hier)
+        pj.wait_for_timeout(1500)
+        jt = pj.inner_text('#jp')
+        check('LE POINT — le journal liste les actions, la plus récente en haut, avec l\'heure de Miami (14:32), la source et le détail', pj.locator('#jp .jp-l li').count() == 2 and '14:32' in pj.locator('#jp .jp-l li').first.inner_text() and 'Google Ads' in pj.locator('#jp .jp-l li').first.inner_text() and '45 $ → 30 $' in jt, jt[:600])
+        check('LE POINT — le jour de ces actions porte un repère sur la courbe du haut (2 événements ce jour-là)', pj.locator('#ga-c1 .ga-rep').count() == 1 and pj.locator('#ga-c1 .ga-rep-n').text_content() == '2', pj.locator('#ga-c1 .ga-rep').count())
+        notes = []
+        pj.route('**/journal-pub', lambda route: (notes.append(route.request.post_data_json), route.fulfill(status=200, content_type='application/json', body='{"ok":true}')))
+        pj.fill('#jp-quoi', 'Sam lance une promo WhatsApp'); pj.click('#jp-ok'); pj.wait_for_timeout(500)
+        check('un repère ajouté à la main part au cockpit et s\'affiche en haut du journal', notes == [{'quoi': 'Sam lance une promo WhatsApp'}] and 'Sam lance une promo WhatsApp' in pj.locator('#jp .jp-l li').first.inner_text(), notes)
+        pj.evaluate("()=>{ localStorage.setItem('google-ads-v1',JSON.stringify({maj:new Date().toISOString(),v:1,c:[],j:{}})); window.dispatchEvent(new CustomEvent('ck-maj',{detail:{cles:['google-ads-v1']}})); }"); pj.wait_for_timeout(1200)
+        check('un script Google Ads encore en version 1 : le journal dit de le remplacer (pour voir les changements faits dans Google Ads)', 'version 2' in pj.inner_text('#jp'), pj.inner_text('#jp')[:300])
+        pj.context.close()
         # 7 bis. 11 nov. 2026 : le point bleu bat aussi tant qu'une stratégie est ACTIVE (« connectée »), sur toutes les pages
         pt = ouvre(page='tableau.html')
         pt.evaluate("()=>{ const S=JSON.parse(localStorage.getItem('strategie-v1')); S.courante.active={date:new Date().toISOString(),par:'Igal',fin:new Date(Date.now()+30*86400e3).toISOString()}; localStorage.setItem('strategie-v1',JSON.stringify(S)); window.dispatchEvent(new CustomEvent('ck-maj',{detail:{cles:['strategie-v1']}})); }")

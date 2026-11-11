@@ -224,13 +224,17 @@ function anDessine(){
      se vend qu'une ou deux fois en ligne — un classement sans intérêt. Le détail par parfum reste dans la fiche du Catalogue. */
   /* ---- 5. la stratégie et le rapport du mois (agents, cockpit) ---- */
   h+=anStrategie(L,tous);
+  /* ---- 6. le journal des actions (11 nov. 2026) ---- */
+  h+=anJournal();
   const lus=C.filter(o=>ok(o)&&o.lu).length, nC=C.filter(ok).length;
   h+=`<p class="ga-note">${A3('Ventes et marges comptées comme dans Ventes et le Tableau de bord (commandes expédiées, remboursements déduits). L\'origine d\'une commande est notée par la boutique elle-même (WooCommerce, Shopify) ; « Google Ads » = un clic sur une publicité payante. La pub est lue chaque heure chez Google.','Sales and margins counted as in Sales and the Dashboard (shipped orders, refunds deducted). The origin of an order is recorded by the store itself (WooCommerce, Shopify); “Google Ads” = a click on a paid ad. Ad spend is read from Google every hour.')}${nC?' '+A3(`Origine connue pour ${nf(lus)} des ${nf(nC)} commandes.`,`Origin known for ${nf(lus)} of the ${nf(nC)} orders.`):''}</p>`;
   z.innerHTML=h;
   /* les courbes, une fois la page posée (il faut la largeur réelle des cartes) */
   const m=M.find(x=>x.k===AN.met);
   const cur=anSerieK(B,C,m.val), prev=CP?anSeriePrec(B,Q,CP,m.val):null;
-  gaCourbe(document.getElementById('ga-c1'),B.K,[{v:cur,c:'var(--an-1)',nom:m.nom,nomTip:rcLib(AN.sel,P),aire:true}].concat(prev?[{v:prev,c:'var(--ga-prec)',nom:lib,nomTip:lib,pointille:true}]:[]),m.f,{id:'a',h:270,titre:m.nom});
+  const REP=anReperes(B,P);
+  gaCourbe(document.getElementById('ga-c1'),B.K,[{v:cur,c:'var(--an-1)',nom:m.nom,nomTip:rcLib(AN.sel,P),aire:true}].concat(prev?[{v:prev,c:'var(--ga-prec)',nom:lib,nomTip:lib,pointille:true}]:[]),m.f,{id:'a',h:270,titre:m.nom,reperes:REP,
+    tipPlus:i=>(REP[i]||[]).length?`<div class="ga-tip-j">${REP[i].slice(0,4).map(e=>`<p><i></i>${esc(e.quoi)}</p>`).join('')}${REP[i].length>4?`<p>+ ${REP[i].length-4}</p>`:''}</div>`:''});
   if(ads){ const cum=a=>{ let s=0; return a.map(v=>s+=v); };
     const pubJ=B.K.map(k=>{ let s=0; Object.keys(ads.pub.J).forEach(d=>{ if((B.jour?d:d.slice(0,7))===k.k&&d>=P.a&&d<=P.b) s+=+(ads.pub.J[d]||[])[0]||0; }); return s; });
     const mgJ=anSerieK(B,ads.A,o=>o.mg);
@@ -259,6 +263,10 @@ function anBranche(){
   const sm=document.getElementById('st-maj'); if(sm) sm.onclick=()=>{ const C=(STRAT||{}).courante, act=C&&C.active&&Date.now()<Date.parse(C.active.fin); if(confirm((act?A3('Attention : la stratégie actuelle est ACTIVE (mesure en cours). Une nouvelle stratégie la remplacera et il faudra l\'activer à nouveau.\n\n','Warning: the current strategy is ACTIVE (measurement in progress). A new strategy will replace it and will need to be activated again.\n\n'):'')+A3('Lancer les agents ? Ils travaillent quelques minutes sur les chiffres de cette page.','Start the agents? They work for a few minutes on the figures of this page.'))) anStratLance('strategie'); };
   const sr=document.getElementById('st-rap'); if(sr) sr.onclick=()=>{ if(confirm(A3('Préparer le rapport du mois ? Les agents comparent les chiffres du jour de la stratégie à ceux d\'aujourd\'hui.','Prepare the monthly report? The agents compare the figures from the day of the strategy with today\'s.'))) anStratLance('rapport'); };
   z.querySelectorAll('[data-stf]').forEach(b=>b.onclick=()=>{ const f=b.dataset.f==='1'; if(!f&&!confirm(A3('Remettre cette action « à faire » ?','Set this action back to “to do”?'))) return; anStratFait(+b.dataset.stf,f); });
+  const se=document.getElementById('sel-env'); if(se) se.onclick=()=>{ const A=window._anXL; if(A&&confirm(A3(`Ne garder en pub que les ${A.garder.length} parfums gagnants ?\n\nLes ${A.sortir.length} qui font perdre de l'argent et les ${A.stock.length} plus en stock sortent de la pub payante (ils restent en vente sur le site). C'est noté au journal.`,`Keep only the ${A.garder.length} winning perfumes in the ads?\n\nThe ${A.sortir.length} losing money and the ${A.stock.length} out of stock leave the paid ads (they stay for sale on the website). It is written in the log.`))) anSelEnvoie(); };
+  const jo=document.getElementById('jp-ok'); if(jo) jo.onclick=anJPAjoute;
+  const jq=document.getElementById('jp-quoi'); if(jq) jq.onkeydown=e=>{ if(e.key==='Enter') anJPAjoute(); };
+  const jm=document.getElementById('jp-plus'); if(jm) jm.onclick=()=>{ AN.jpn=(AN.jpn||15)+30; gaAnime=false; anDessine(); };
   const sa=document.getElementById('st-active'); if(sa) sa.onclick=()=>{ if(confirm(A3('Activer la stratégie ? Les 30 jours de mesure commencent maintenant.','Activate the strategy? The 30-day measurement starts now.'))) anStratActive(); };
   const re=()=>{ gaAnime=true; anSauve(); anDessine(); };
   z.querySelectorAll('[data-an]').forEach(b=>b.onclick=()=>{ AN.sel=b.dataset.an; re(); });
@@ -441,6 +449,63 @@ function anCampDossier(tous){ const R=anCampCalc(tous); if(!R) return 'pas encor
   return {recu:R.A.maj,seuil_ventes_pour_1_dollar:Math.round(R.seuil*100)/100,
     campagnes:R.C.filter(c=>c.on||c.cout>0).map(c=>({nom:c.n,etat:c.on?'active':'en pause',type:c.type,budget_par_jour:c.budget,objectif_ventes_pour_1_dollar:c.troas,cout_30j:Math.round(c.cout),ventes_selon_google_30j:Math.round(c.vg),ventes_pour_1_dollar:c.roas!=null?Math.round(c.roas*100)/100:null,resultat_estime_30j:Math.round(c.res),cout_7j:Math.round(c.cout7)})),
     autres_campagnes_en_pause_sans_depense:R.C.filter(c=>!c.on&&!c.cout).length}; }
+/* ============ LA SÉLECTION PUB (11 nov. 2026) ============
+   Igal : « supprimer les produits qu'on n'a pas en stock, ceux qui nous font perdre de l'argent, et se concentrer sur ceux qui nous
+   font gagner ». Rien n'est supprimé du site ni de Google Shopping gratuit : la décision de chaque parfum part chez Google comme
+   étiquette (custom_label_4 : pt_garder, pt_sortir, pt_sans_stock, pt_a_verifier) par un flux que Merchant Center relit chaque jour ;
+   la campagne, réglée sur « pt_garder », ne paie plus que pour les gagnants. L'envoi est la première ligne du journal. */
+const anEtiq=()=>{ try{ return JSON.parse(localStorage.getItem('gads-etiquettes-v1')||'null'); }catch(e){ return null; } };
+function anSelection(A){
+  const E=anEtiq();
+  let h=`<div class="sel-pub"><div><b>${A3(`Ne garder en pub que les ${nf(A.garder.length)} gagnants`,`Keep only the ${nf(A.garder.length)} winners in the ads`)}</b>
+    <p>${A3(`${nf(A.sortir.length)} parfums qui font perdre de l'argent et ${nf(A.stock.length)} plus en stock sortent de la pub payante. Ils restent en vente sur le site et dans Google Shopping gratuit.`,`${nf(A.sortir.length)} perfumes losing money and ${nf(A.stock.length)} out of stock leave the paid ads. They stay for sale on the website and in free Google Shopping.`)}</p>`;
+  if(E&&E.maj) h+=`<p class="sel-ok">✓ ${A3('Envoyé','Sent')} ${esc(anQuand(E.maj))}${E.par?' · '+esc(E.par):''} — ${nf((E.n||{}).garder||0)} ${A3('gagnants gardés','winners kept')}</p>`;
+  return h+`</div><button type="button" class="ga-btn" id="sel-env">${E&&E.maj?A3('Renvoyer la sélection à jour','Send the updated selection'):A3('Ne garder en pub que les gagnants','Keep only the winners in the ads')}</button><span id="sel-msg" class="st-msg"></span></div>`;
+}
+async function anSelEnvoie(){
+  const A=window._anXL, m=document.getElementById('sel-msg'); if(!A) return;
+  const L=A.L.filter(o=>o.sku).map(o=>[o.sku,o.dec]);
+  try{ const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/google/etiquettes',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},body:JSON.stringify({L})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok){ if(m) m.textContent=j.erreur||('erreur '+r.status); return; }
+    const s=session()||{}; try{ localStorage.setItem('gads-etiquettes-v1',JSON.stringify({maj:new Date().toISOString(),par:s.nom||'',n:j.n})); }catch(e){}
+    window._anFlux=j.flux||''; gaAnime=false; anDessine();
+  }catch(e){ if(m) m.textContent=A3('Le cockpit ne répond pas : ','The cockpit is not answering: ')+(e&&e.message||e); }
+}
+/* ============ LE JOURNAL (11 nov. 2026) ============
+   Igal : « un journal avec les horaires, sur l'analytique, des actions qui ont été faites ». Il se remplit tout seul (journalpub.js
+   dans le cockpit) : l'ERP, la stratégie, et l'historique des modifications de Google Ads lu par le script ; plus un repère à la main.
+   Chaque jour qui a un événement porte un petit repère sur la courbe du haut. Heures de Miami. */
+const anJP=()=>{ try{ const J=JSON.parse(localStorage.getItem('journal-pub-v1')||'null'); return (J&&Array.isArray(J.L))?J.L:[]; }catch(e){ return []; } };
+const AN_SRC={erp:['ERP','ERP'],gads:['Google Ads','Google Ads'],strategie:['Stratégie','Strategy'],main:['Repère','Note']};
+const anHeure=iso=>{ try{ return new Date(iso).toLocaleString(A3('fr-FR','en-US'),{timeZone:'America/New_York',day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }catch(e){ return String(iso||''); } };
+const anJourMiami=iso=>{ try{ return new Date(iso).toLocaleDateString('en-CA',{timeZone:'America/New_York'}); }catch(e){ return String(iso||'').slice(0,10); } };
+function anJournal(){
+  const L=anJP(), A=anAdsJ(), n=Math.max(15,AN.jpn||15);
+  let h=`<section class="ga-card ga-pad" id="jp"><div class="ga-h"><h3>${A3('Journal des actions','Action log')}</h3><span class="ga-src">${A3('se remplit tout seul : ERP, stratégie, Google Ads · heures de Miami','fills itself: ERP, strategy, Google Ads · Miami time')}</span></div>`;
+  if(A&&(+A.v||1)<2) h+=`<p class="gc-alerte">${A3('Pour voir ici les changements faits dans Google Ads (budget, campagne activée ou en pause…), le script du compte Google Ads doit être remplacé par sa version 2 : section « Les campagnes Google Ads » › « Afficher le script ».','To see here the changes made in Google Ads (budget, campaign on or paused…), the script in the Google Ads account must be replaced by version 2: section “Google Ads campaigns” › “Show the script”.')}</p>`;
+  h+=`<div class="jp-ajout"><input type="text" id="jp-quoi" maxlength="200" placeholder="${esc(A3('Ajouter un repère : « Sam lance une promo WhatsApp »…','Add a note: “Sam starts a WhatsApp promo”…'))}"><button type="button" class="ga-btn sec" id="jp-ok">${A3('Ajouter','Add')}</button><span id="jp-msg" class="st-msg"></span></div>`;
+  if(!L.length) return h+`<p class="ga-vide">${A3('Rien encore : la première action notée sera l\'envoi de la sélection pub.','Nothing yet: the first action recorded will be sending the ads selection.')}</p></section>`;
+  h+=`<ol class="jp-l">${L.slice(0,n).map(e=>`<li class="jp-${esc(e.src)}"><span class="jp-t" data-nolang>${esc(anHeure(e.t))}</span><span class="jp-s">${A3(...(AN_SRC[e.src]||AN_SRC.erp))}</span><div class="jp-q"><b data-nolang>${esc(e.quoi)}</b>${e.detail?`<small data-nolang>${esc(e.detail)}</small>`:''}</div><span class="jp-p" data-nolang>${esc(e.par||'')}</span></li>`).join('')}</ol>`;
+  if(L.length>n) h+=`<button type="button" class="ga-btn sec" id="jp-plus">${A3(`Voir plus (${nf(L.length-n)})`,`Show more (${nf(L.length-n)})`)}</button>`;
+  return h+`</section>`;
+}
+async function anJPAjoute(){
+  const i=document.getElementById('jp-quoi'), m=document.getElementById('jp-msg'); const q=(i&&i.value||'').trim(); if(!q) return;
+  try{ const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/journal-pub',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},body:JSON.stringify({quoi:q})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok){ if(m) m.textContent=j.erreur||('erreur '+r.status); return; }
+    const s=session()||{}; let J={L:[]}; try{ J=JSON.parse(localStorage.getItem('journal-pub-v1')||'{"L":[]}')||{L:[]}; }catch(e){}
+    J.L=[{t:new Date().toISOString(),src:'main',quoi:q,par:s.nom||''}].concat(J.L||[]); try{ localStorage.setItem('journal-pub-v1',JSON.stringify(J)); }catch(e){}
+    gaAnime=false; anDessine();
+  }catch(e){ if(m) m.textContent=A3('Le cockpit ne répond pas : ','The cockpit is not answering: ')+(e&&e.message||e); }
+}
+/* les repères de la courbe : pour chaque point (jour ou mois), les événements du journal qui y tombent */
+function anReperes(B,P){
+  const idx={}; B.K.forEach((k,i)=>idx[k.k]=i); const R={};
+  anJP().forEach(e=>{ const d=anJourMiami(e.t); if(d<P.a||d>P.b) return; const i=idx[B.jour?d:d.slice(0,7)]; if(i==null) return; (R[i]=R[i]||[]).push(e); });
+  return R;
+}
 function anDepuis(iso){ const m=Math.max(0,Math.round((Date.now()-Date.parse(iso))/60000)); if(!isFinite(m)) return '';
   if(m<1) return A3('à l\'instant','just now'); if(m<60) return A3(`il y a ${m} min`,`${m} min ago`);
   const h=Math.round(m/60); if(h<48) return A3(`il y a ${h} h`,`${h} h ago`); return A3(`il y a ${Math.round(h/24)} jours`,`${Math.round(h/24)} days ago`); }
@@ -544,7 +609,8 @@ function anParfumsPub(tous){
     <label class="pp-tri">${A3('Trier par','Sort by')} <select id="pp-tri">${[['perte',A3('Ceux qui perdent le plus','Biggest losses')],['gain',A3('Ceux qui rapportent le plus','Biggest gains')],['pub',A3('Ceux qui coûtent le plus en pub','Highest ad spend')],['ventes',A3('Ceux qui vendent le plus (selon Google)','Most sales (per Google)')],['marge',A3('Meilleure marge par flacon','Best margin per bottle')]].map(([k,l])=>`<option value="${k}" ${(AN.pptri||'perte')===k?'selected':''}>${l}</option>`).join('')}</select></label>
     <input type="search" id="pp-q" class="pp-q" placeholder="${esc(A3('Chercher un parfum…','Search a perfume…'))}" value="${esc(AN.ppq||'')}"></div>
   <div id="pp-liste"></div>`;
-  h+=`<div class="ga-actions"><button type="button" class="ga-btn" id="an-xl">${A3('Télécharger la liste complète (Excel)','Download the full list (Excel)')}</button>
+  h+=anSelection(A);
+  h+=`<div class="ga-actions"><button type="button" class="ga-btn sec" id="an-xl">${A3('Télécharger la liste complète (Excel)','Download the full list (Excel)')}</button>
     <span>${A3('Pour la personne qui gère les campagnes Google Ads : une ligne par parfum, avec la décision « garder » / « sortir ».','For whoever runs the Google Ads campaigns: one line per perfume, with the decision “keep” / “take out”.')}</span></div>
   <div class="ga-expl"><b>${A3('Pourquoi ce tableau ?','Why this table?')}</b>
     <p>${A3('Google Ads fait payer Sam à chaque clic sur un parfum, même quand le client n\'achète pas. Ce tableau regarde, parfum par parfum, ce que Google a dépensé ces 90 derniers jours, et ce que ce parfum a vraiment rapporté en marge.','Google Ads charges Sam for every click on a perfume, even when the customer does not buy. This table looks, perfume by perfume, at what Google spent over the last 90 days, and at the margin that perfume really brought in.')}</p>
@@ -552,7 +618,7 @@ function anParfumsPub(tous){
       <li>${A3('<b>À sortir</b> : la pub coûte plus que ce que le parfum rapporte. On arrête de payer Google pour lui. <b>Il reste en vente sur le site</b> : seulement, Google ne le met plus en avant.','<b>Take out</b>: the ads cost more than the perfume brings in. Stop paying Google for it. <b>It stays for sale on the website</b>: Google just stops promoting it.')}</li>
       <li>${A3('<b>Plus en stock</b> : Google dépense encore pour un parfum qu\'on ne peut pas vendre. À sortir tout de suite.','<b>Out of stock</b>: Google still spends on a perfume we cannot sell. Take it out right away.')}</li>
       <li>${A3('<b>À vérifier</b> : il manque le prix ou le prix d\'achat dans l\'ERP ; on ne peut pas trancher.','<b>To check</b>: the price or purchase price is missing in the ERP, so no decision can be made.')}</li></ul>
-    <p><b>${A3('Que faire ?','What to do?')}</b> ${A3('Télécharger la liste (bouton ci-dessus) et la donner à la personne qui gère les campagnes Google Ads, pour qu\'elle retire de la pub les parfums « à sortir ». Revenir ici chaque mois : le tableau se met à jour tout seul.','Download the list (button above) and give it to whoever runs the Google Ads campaigns, so they remove the “take out” perfumes from the ads. Come back every month: the table updates by itself.')}</p>
+    <p><b>${A3('Que faire ?','What to do?')}</b> ${A3('Appuyer sur « Ne garder en pub que les gagnants » : la décision part chez Google (Merchant Center la relit chaque jour), et c\'est noté au journal avec l\'heure. Revenir ici chaque mois et renvoyer : le tableau se met à jour tout seul.','Press “Keep only the winners in the ads”: the decision goes to Google (Merchant Center re-reads it every day), and it is written in the log with the time. Come back every month and send again: the table updates by itself.')}</p>
     <p class="ga-prud">${A3('C\'est une estimation : quelques ventes peuvent venir d\'un client qui a d\'abord vu un autre parfum en pub. Le plus sûr est d\'essayer 4 semaines, puis de comparer ici.','This is an estimate: a few sales may come from a customer who first saw another perfume in an ad. The safest is to try for 4 weeks, then compare here.')}</p></div>
   <details class="ga-calc"><summary>${A3('Comment c\'est calculé','How it is calculated')}</summary><p class="ga-note">${A3(`Marge d'un flacon = prix du site − commission (${nf(A.com)} % + ${money2(A.fixe)}) − prix d'achat − envoi (${money(A.envoi)}) + port payé en moyenne (${money2(A.port)}). Les ventes que Google attribue à chaque parfum sont ramenées au réel (× ${nf(Math.round(A.k*100))} % : ce que la pub a vraiment vendu, divisé par ce que Google annonce). Estimation, à revoir chaque mois.`,`Margin per bottle = site price − fee (${nf(A.com)} % + ${money2(A.fixe)}) − purchase price − shipping (${money(A.envoi)}) + average shipping paid (${money2(A.port)}). Sales Google credits to each perfume are scaled to reality (× ${nf(Math.round(A.k*100))} %: what the ads really sold, divided by what Google reports). An estimate, to review every month.`)}</p></details></section>`;
   window._anXL=A;
@@ -608,11 +674,11 @@ majUser();
   /* une nouvelle version des factures ou des origines arrive du serveur (toutes les 8 s) : on relit et on redessine */
   /* 9 nov. 2026 : la relève du serveur (toutes les 8 s) annonce les magasins arrivés par « ck-maj » (et non par « storage ») :
      sans cette écoute, la vidéo restait sur la première étape et le résultat des agents n'apparaissait qu'en rechargeant */
-  const AN_CLES=['ventes-origine-v1','google-pub-v1','google-ads-v1','strategie-v1',KFACT];
+  const AN_CLES=['ventes-origine-v1','google-pub-v1','google-ads-v1','strategie-v1','journal-pub-v1','gads-etiquettes-v1',KFACT];
   window.addEventListener('ck-maj',e=>{ const c=(e.detail&&e.detail.cles)||[]; if(!c.some(k=>AN_CLES.includes(k))) return;
     try{ ORI=JSON.parse(localStorage.getItem('ventes-origine-v1')||'{}')||{}; FACT=JSON.parse(localStorage.getItem(KFACT)||'[]')||[]; STRAT=JSON.parse(localStorage.getItem('strategie-v1')||'{}')||{}; }catch(_){}
     anDessine(); });
-  window.addEventListener('storage',e=>{ if(e.key==='ventes-origine-v1'||e.key==='google-pub-v1'||e.key==='google-ads-v1'||e.key==='strategie-v1'||e.key===KFACT){ try{ ORI=JSON.parse(localStorage.getItem('ventes-origine-v1')||'{}')||{}; FACT=JSON.parse(localStorage.getItem(KFACT)||'[]')||[]; STRAT=JSON.parse(localStorage.getItem('strategie-v1')||'{}')||{}; }catch(_){} anDessine(); } });
+  window.addEventListener('storage',e=>{ if(e.key==='ventes-origine-v1'||e.key==='google-pub-v1'||e.key==='google-ads-v1'||e.key==='strategie-v1'||e.key==='journal-pub-v1'||e.key==='gads-etiquettes-v1'||e.key===KFACT){ try{ ORI=JSON.parse(localStorage.getItem('ventes-origine-v1')||'{}')||{}; FACT=JSON.parse(localStorage.getItem(KFACT)||'[]')||[]; STRAT=JSON.parse(localStorage.getItem('strategie-v1')||'{}')||{}; }catch(_){} anDessine(); } });
 })();
 '''
 

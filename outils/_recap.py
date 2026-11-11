@@ -252,6 +252,22 @@ GA_CSS = r'''
 .sc-accord b{width:32px;height:32px;border-radius:50%;background:#1baf7a;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:18px}
 @keyframes scAccord{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.sc *{animation:none!important;transition:none!important}}
+.sel-pub{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;margin:16px 0 6px;padding:14px 16px;border:1.5px solid #1a73e8;border-radius:12px;background:rgba(26,115,232,.05)}
+.sel-pub>div{flex:1 1 320px}.sel-pub p{margin:4px 0 0;font-size:13px;color:var(--ink-2)}.sel-pub b{font-size:15px}
+.sel-pub .sel-ok{color:#188038;font-weight:700}
+.jp-ajout{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0 14px}
+.jp-ajout input{flex:1 1 260px;font:inherit;font-size:13.5px;padding:8px 11px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink)}
+.jp-l{list-style:none;margin:0;padding:0;border-top:1px solid var(--line-2)}
+.jp-l li{display:grid;grid-template-columns:150px 92px 1fr auto;gap:4px 12px;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--line-2);font-size:13.5px}
+.jp-t{color:var(--ink-3);font-variant-numeric:tabular-nums;font-size:12.5px}
+.jp-s{font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;justify-self:start;background:var(--surface-2,#eef0f3);color:var(--ink-2)}
+.jp-gads .jp-s{background:rgba(26,115,232,.12);color:#1a73e8}.jp-strategie .jp-s{background:rgba(24,128,56,.12);color:#188038}.jp-main .jp-s{background:rgba(227,116,0,.12);color:#b45f06}
+.jp-q b{font-weight:600;color:var(--ink)}.jp-q small{display:block;color:var(--ink-3);font-size:12.5px;margin-top:2px}
+.jp-p{font-size:12px;color:var(--ink-3)}
+@media(max-width:640px){.jp-l li{grid-template-columns:1fr auto}.jp-q{grid-column:1/-1}.jp-p{display:none}}
+.ga-rep{stroke:#e37400;stroke-width:1.2;stroke-dasharray:3 3;opacity:.75}
+.ga-rep-p{fill:#e37400}.ga-rep-n{fill:#fff;font-size:9px;font-weight:700}
+.ga-tip-j{margin-top:6px;padding-top:6px;border-top:1px solid var(--line)}.ga-tip-j p{margin:2px 0;font-size:12px;display:flex;gap:6px;align-items:baseline}.ga-tip-j i{width:7px;height:7px;border-radius:50%;background:#e37400;flex:none}
 .pp-barre{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin:18px 0 10px}
 .pp-barre .ga-mini button small{font-weight:500;color:var(--ink-3);margin-left:2px}
 .pp-tri{font-size:12.5px;color:var(--ink-3);display:inline-flex;align-items:center;gap:6px}
@@ -357,6 +373,8 @@ function gaCourbe(el,K,series,f,opt={}){
       svg+=`<path class="ga-aire" d="${da}" fill="url(#gaG${opt.id||''}${j})"/>`; }
     svg+=`<path class="ga-l ${s.pointille?'prec':''}" d="${dl}" style="stroke:${s.c}"/>`;
     if(s.etiquette&&segs.length){ const S=segs[segs.length-1], p=S[S.length-1]; svg+=`<circle class="ga-fin" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="4" style="fill:${s.c}"/>`; } });
+  /* 11 nov. 2026 : les repères du journal (une action faite ce jour-là) — un trait pointillé et un point en haut, le détail au survol */
+  if(opt.reperes) Object.keys(opt.reperes).forEach(i=>{ const X=x(+i).toFixed(1), k=opt.reperes[i].length; svg+=`<line class="ga-rep" x1="${X}" x2="${X}" y1="${h0+8}" y2="${H-b}"/><circle class="ga-rep-p" cx="${X}" cy="${h0+6}" r="${k>1?6:4.5}"/>${k>1?`<text class="ga-rep-n" x="${X}" y="${h0+9}" text-anchor="middle">${k}</text>`:''}`; });
   svg+=`<line class="ga-vx" x1="0" x2="0" y1="${h0}" y2="${H-b}" style="display:none"/>`+series.map((s,j)=>`<circle class="ga-pt" data-j="${j}" r="5" style="fill:${s.c};display:none"/>`).join('')
     +`<rect class="ga-zone" x="${g}" y="${h0}" width="${W-g-d}" height="${H-h0-b}" fill="transparent"/></svg>`;
   /* les étiquettes au bout des courbes (Google Ads : « Marge 7 642 $ », « Pub 8 155 $ ») */

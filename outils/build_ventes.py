@@ -522,7 +522,7 @@ body.quotes #vx{display:none}
 body.quotes #v-liste{margin-left:auto;background:var(--iris);color:#fff;border-color:var(--iris)}
 body.quotes #v-stock,body.quotes #v-stock+span{display:none}
 body.quotes #v-num,body.quotes #v-num+*{display:none}
-body.offre #v-docbloc{display:none}
+body.offre #v-docbloc,body.offre .fld:has(>#v-canal){display:none}
 body.quotes #v-ok{background:var(--iris);color:#fff;border-color:var(--iris)}
 body.quotes #m-att{display:none}
 body.quotes .hact #nv{background:var(--iris);color:#fff;border-color:var(--iris)}
@@ -3735,10 +3735,11 @@ if(MODE_QUOTES) setTimeout(()=>{
      ce qu'on fait d'abord ici, c'est choisir les parfums et poser les prix */
   try{ $('v-recap').before($('v-docbloc')); }catch(e){}
   /* 11 nov. 2026 (Igal : « sur l'offre, enlève toute cette partie, elle sert à rien : une offre ne peut pas être payée ») : la page Offre
-     ne montre plus paiement, réglé, remise, frais d'envoi, langue, taux et sales tax. L'offre donne un prix par flacon, rien d'autre :
+     ne montre plus paiement, réglé, remise, frais d'envoi, langue, taux et sales tax — ni le canal de vente (toujours Gros). L'offre donne un prix par flacon, rien d'autre :
      ces réglages sont remis à zéro à l'enregistrement (pas de taxe, pas de remise, pas de frais), et la langue suit la fiche du client. */
   if(MODE_OFFRE){ document.body.classList.add('offre');
     window.offreNeutre=()=>{ try{ ['v-remval','v-remlib','v-port','v-taux','v-frais','v-fref','v-pregle'].forEach(i=>{ const e=$(i); if(e) e.value=''; });
+      if([...$('v-canal').options].some(o=>o.value==='Gros')) $('v-canal').value='Gros';
       $('v-doc').value='devis'; $('v-pmode').value='zelle'; $('v-pstat').value='apayer'; $('v-fiscal').value='resale'; docChampsMaj(); }catch(e){} }; }
   const canalGros=()=>{ try{ if([...$('v-canal').options].some(o=>o.value==='Gros')){ $('v-canal').value='Gros'; majAide(); } }catch(e){} };
   const _ouvre=ouvreVente;

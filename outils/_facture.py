@@ -528,7 +528,8 @@ function docPourVente(lignes,client,d,CLI,pc){
   const o=Object.assign(docOpts(),{pstat:type==='devis'?'apayer':$('v-pstat').value});
   const c=calcDoc(lignes,o);
   /* le statut fiscal et le mode habituel se retiennent sur la fiche du client (CLI est l'objet que la vente enregistre) */
-  if(client&&CLI){ CLI[client]=Object.assign({nom:client},CLI[client]||{},
+  /* une offre ne touche pas la fiche : ses réglages de paiement sont neutres (11 nov. 2026) */
+  if(client&&CLI&&!(typeof MODE_OFFRE!=='undefined'&&MODE_OFFRE)){ CLI[client]=Object.assign({nom:client},CLI[client]||{},
     {fiscal:o.fiscal,fiscalRef:o.fref,pmode:o.pmode,langue:o.langue||undefined}); }
   /* La langue est figée ici, comme l'en-tête : une facture rouverte dans six mois
      doit se relire exactement comme le client l'a reçue, même si l'écran a changé
@@ -608,7 +609,7 @@ function dessineDoc(f){
    <div class="parties">
      <div><h4>${devis?'Adressé à':'Facturé à'}</h4>
        <div data-nolang><b>${esc(cl.raison||cl.nom||'')}</b>${[cl.raison&&cl.nom!==cl.raison?cl.nom:'',cl.adresse,cl.tel,cl.email].filter(Boolean).map(esc).join('<br>')}</div></div>
-     <div><h4>Conditions</h4><div><span class="lbl">Paiement</span> : <b class="inl">${esc(FMODES[D.pmode]||D.pmode)}</b>${D.fiscal!=='taxable'&&D.fref?`<br><span class="lbl">${D.fiscal==='etranger'?'Passeport':'Resale certificate'}</span> : <span data-nolang>${esc(D.fref)}</span>`:''}${D.note?`<br><span class="lbl">Note</span> : <span data-nolang>${esc(D.note)}</span>`:''}</div></div>
+     ${offre?(D.note?`<div><h4>Note</h4><div data-nolang>${esc(D.note)}</div></div>`:''):`<div><h4>Conditions</h4><div><span class="lbl">Paiement</span> : <b class="inl">${esc(FMODES[D.pmode]||D.pmode)}</b>${D.fiscal!=='taxable'&&D.fref?`<br><span class="lbl">${D.fiscal==='etranger'?'Passeport':'Resale certificate'}</span> : <span data-nolang>${esc(D.fref)}</span>`:''}${D.note?`<br><span class="lbl">Note</span> : <span data-nolang>${esc(D.note)}</span>`:''}</div></div>`}
    </div>
    <table><thead><tr><th>#</th><th>Article</th><th class="r">Qté</th><th class="r">Prix unit.</th><th class="r">Montant</th></tr></thead>
    <tbody>${lignes.map((l,i)=>{ /* remise répartie à l'enregistrement : la ligne garde le prix
@@ -620,7 +621,7 @@ function dessineDoc(f){
      <div><span>Sous-total</span><b>$${dus(D.sousTotal)}</b></div>
      ${D.remise?`<div class="rem"><span><span class="lbl">Remise</span>${D.remType==='pct'?' '+D.remVal+' %':''}${D.remLib?` — <span data-nolang>${esc(D.remLib)}</span>`:''}</span><b>−$${dus(D.remise)}</b></div>`:''}
      ${D.frais?`<div><span><span class="lbl">Frais carte</span> ${D.fraisPct} %</span><b>$${dus(D.frais)}</b></div>`:''}
-     <div><span>${D.taux?`<span class="lbl">Sales tax</span> ${D.taux} %`:'Sales tax — exonéré'}</span><b>$${dus(D.taxe)}</b></div>
+     ${offre?'':`<div><span>${D.taux?`<span class="lbl">Sales tax</span> ${D.taux} %`:'Sales tax — exonéré'}</span><b>$${dus(D.taxe)}</b></div>`}
      ${D.port?`<div><span><span class="lbl">Frais d'envoi</span></span><b>$${dus(D.port)}</b></div>`:''}
      <div class="tt"><span>Total</span><b>$${dus(D.total)}</b></div>
      ${!devis&&D.regle>0&&D.reste>0?`<div><span>Reçu</span><b>$${dus(D.regle)}</b></div>`:''}
@@ -637,7 +638,7 @@ function dessineDoc(f){
         quelque chose à payer — devis compris, puisqu'un devis reste toujours dû. */
      const aPayer = devis || D.reste>0;
      const parVirement = (D.pmode==='zelle'||D.pmode==='virement');
-     if(!aPayer || !parVirement || !E.zelle) return '';
+     if(offre || !aPayer || !parVirement || !E.zelle) return '';
      return `<div class="pay"><b>Pour régler</b><span data-nolang>${esc(E.zelle)}</span></div>`;
    })()}
    ${!devis&&D.reste<=0?`<div class="tampon">Payée${D.payeLe?` <span data-nolang>· ${dfr(D.payeLe)}</span>`:''}</div>`:''}

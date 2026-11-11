@@ -522,6 +522,7 @@ body.quotes #vx{display:none}
 body.quotes #v-liste{margin-left:auto;background:var(--iris);color:#fff;border-color:var(--iris)}
 body.quotes #v-stock,body.quotes #v-stock+span{display:none}
 body.quotes #v-num,body.quotes #v-num+*{display:none}
+body.offre #v-docbloc{display:none}
 body.quotes #v-ok{background:var(--iris);color:#fff;border-color:var(--iris)}
 body.quotes #m-att{display:none}
 body.quotes .hact #nv{background:var(--iris);color:#fff;border-color:var(--iris)}
@@ -2919,6 +2920,7 @@ vq().onkeydown=e=>{
 { const h=$('v-q'); $('v-q2').oninput=h.oninput; $('v-q2').onkeydown=h.onkeydown;
   ['v-q','v-q2'].forEach(id=>$(id).addEventListener('focus',()=>vqActive(id))); }
 $('v-ok').onclick=()=>{
+  if(typeof MODE_OFFRE!=='undefined'&&MODE_OFFRE) offreNeutre();
   if(!PANIER.length) return;
   /* 10 nov. 2026 (Sam, page Offre : « l'offre ne se save pas et ça ne se ferme pas ») : avant d'enregistrer, le stock est relu sur le
      serveur, pour ne pas SORTIR des flacons d'une copie périmée. Tant qu'un autre envoi de la page est en route (stock annoncé aux
@@ -3732,6 +3734,12 @@ if(MODE_QUOTES) setTimeout(()=>{
   /* les reglages du document (paiement, remise, taxe) passent SOUS les lignes :
      ce qu'on fait d'abord ici, c'est choisir les parfums et poser les prix */
   try{ $('v-recap').before($('v-docbloc')); }catch(e){}
+  /* 11 nov. 2026 (Igal : « sur l'offre, enlève toute cette partie, elle sert à rien : une offre ne peut pas être payée ») : la page Offre
+     ne montre plus paiement, réglé, remise, frais d'envoi, langue, taux et sales tax. L'offre donne un prix par flacon, rien d'autre :
+     ces réglages sont remis à zéro à l'enregistrement (pas de taxe, pas de remise, pas de frais), et la langue suit la fiche du client. */
+  if(MODE_OFFRE){ document.body.classList.add('offre');
+    window.offreNeutre=()=>{ try{ ['v-remval','v-remlib','v-port','v-taux','v-frais','v-fref','v-pregle'].forEach(i=>{ const e=$(i); if(e) e.value=''; });
+      $('v-doc').value='devis'; $('v-pmode').value='zelle'; $('v-pstat').value='apayer'; $('v-fiscal').value='resale'; docChampsMaj(); }catch(e){} }; }
   const canalGros=()=>{ try{ if([...$('v-canal').options].some(o=>o.value==='Gros')){ $('v-canal').value='Gros'; majAide(); } }catch(e){} };
   const _ouvre=ouvreVente;
   ouvreVente=function(){ _ouvre(); $('vov').querySelector('.mh h3').textContent=MODE_OFFRE?r3('Nouvelle offre','New offer','Nueva oferta'):'Nouveau devis';

@@ -528,12 +528,13 @@ body.quotes #m-att{display:none}
 body.quotes .hact #nv{background:var(--iris);color:#fff;border-color:var(--iris)}
 /* le sélectionneur : la liste des parfums trouvés reste posée sous le champ, avec
    des cases à cocher — on coche ce qu'on veut et on ajoute d'un coup */
-body.quotes #v-res{position:static;max-height:380px;margin-top:6px;box-shadow:none}
-body.quotes #v-res div.cand{display:flex;align-items:center;gap:12px;padding:7px 12px}
+body.quotes #v-res{position:static;max-height:560px;margin-top:6px;box-shadow:none}
+body.quotes #v-res div.cand{display:flex;align-items:center;gap:14px;padding:10px 14px;min-height:92px}
+body.quotes #v-res .vig{width:76px;height:76px;border-radius:9px}
 body.quotes #v-res div.cand input{width:17px;height:17px;margin:0;flex:none;accent-color:var(--iris)}
 .vig{width:46px;height:46px;flex:none;border-radius:7px;background:#fff;border:1px solid var(--line-2);object-fit:contain;padding:2px}
 .vig.miss{display:flex;align-items:center;justify-content:center;color:var(--ink-3);font-size:10px}
-body.quotes .pan td .vig{width:38px;height:38px;vertical-align:middle;margin-right:9px;float:left}
+body.quotes .pan td .vig{width:52px;height:52px;vertical-align:middle;margin-right:9px;float:left}
 body.quotes #v-res div.cand b{flex:1;display:inline;font-weight:600}
 body.quotes #v-res div.cand span{flex:none;font-size:12px;color:var(--ink-3);white-space:nowrap}
 body.quotes #v-res div.cand span i{font-style:normal;color:var(--ink);font-weight:600}
@@ -2491,7 +2492,7 @@ function peintPanier(){
      sur le catalogue » — la fiche du Catalogue elle-même, en panneau à droite ; à sa fermeture, les prix qu'elle a pu changer sont relus */
   $('v-pan').querySelectorAll('[data-fiche]').forEach(b=>b.onclick=()=>{ if(typeof ficheFenetre!=='function') return;
     ficheFenetre(b.dataset.fiche,()=>{ try{ MOD=lit(KMOD,{})||{}; EXT=Object.assign({q:{}},JSON.parse(localStorage.getItem(KEXT)||'{}')); }catch(e){} peintPanier(); }); });
-  $('v-q2w').hidden=PANIER.length<2;
+  $('v-q2w').hidden=PANIER.length<1;   /* 11 nov. 2026 (Igal) : la recherche du bas, dès le premier parfum ajouté */
   $('v-pan').querySelectorAll('[data-pu]').forEach(b=>b.onclick=()=>{
     const i=+b.dataset.pu, l=PANIER[i]; if(!l) return; l.p=+b.dataset.pv; l.pm=true;
     const inp=$('v-pan').querySelector(`input[data-i="${i}"][data-f="p"]`); if(inp) inp.value=l.p;
@@ -3734,7 +3735,8 @@ if(MODE_QUOTES) setTimeout(()=>{
   /* les reglages du document (paiement, remise, taxe) passent SOUS les lignes :
      ce qu'on fait d'abord ici, c'est choisir les parfums et poser les prix */
   try{ $('v-recap').before($('v-docbloc')); }catch(e){}
-  /* 11 nov. 2026 (Igal : « sur l'offre, enlève toute cette partie, elle sert à rien : une offre ne peut pas être payée ») : la page Offre
+  /* Photos de la liste à cocher : 76 px, lignes plus hautes (Igal, 11 nov. 2026 : « les photos un peu plus grandes, des lignes plus larges »).
+     11 nov. 2026 (Igal : « sur l'offre, enlève toute cette partie, elle sert à rien : une offre ne peut pas être payée ») : la page Offre
      ne montre plus paiement, réglé, remise, frais d'envoi, langue, taux et sales tax — ni le canal de vente (toujours Gros). L'offre donne un prix par flacon, rien d'autre :
      ces réglages sont remis à zéro à l'enregistrement (pas de taxe, pas de remise, pas de frais), et la langue suit la fiche du client. */
   if(MODE_OFFRE){ document.body.classList.add('offre');

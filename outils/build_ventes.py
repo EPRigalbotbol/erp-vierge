@@ -3843,36 +3843,42 @@ if(MODE_QUOTES) setTimeout(()=>{
     const rang=c=>mots.every(m=>(IDX[c][2]||'').toLowerCase().includes(m))?0:mots.every(m=>(IDX[c][1]||'').toLowerCase().includes(m))?1:2;
     return R.sort((a,b)=>rang(a)-rang(b)||nom(a).localeCompare(nom(b))||(+IDX[a][3]||0)-(+IDX[b][3]||0));
   };
+  /* 11 nov. 2026 (Igal : « j'ai sélectionné des parfums ; quand je change de marque, ils ont disparu, ils ne sont pas sur l'offre ») :
+     cocher ne faisait que préparer une sélection, qu'il fallait encore « Ajouter » — en tapant une autre marque, elle était perdue.
+     Désormais COCHER = METTRE DANS L'OFFRE (ou la cote), tout de suite : la ligne apparaît dessous, et elle y reste quand on cherche
+     une autre marque. Décocher la retire. La case dit toujours si le parfum est dans l'offre. */
+  const dansDoc=cle=>PANIER.some(l=>l.cle===cle);
+  const motDoc=()=>MODE_OFFRE?r3('l\'offre','the offer','la oferta'):r3('la cote','the quote','la cotización');
+  function basculeDoc(cle){
+    const i=PANIER.findIndex(l=>l.cle===cle);
+    if(i>=0) PANIER.splice(i,1); else PANIER.push({cle,q:1,p:prixLigne(cle,canalCour())});
+    peintPanier(); try{ recap(); }catch(e){} try{ if(window.__brSauve) window.__brSauve(); }catch(e){} peintRes();
+  }
   peintRes=function(){
     const el=$('v-res');
     if(!CANDIDATS.length){ el.classList.remove('on'); el.innerHTML=''; COCHES.clear(); return; }
-    const CAND=new Set(CANDIDATS); [...COCHES].forEach(c=>{ if(!CAND.has(c)) COCHES.delete(c); });
-    const gros=CANAUX_VENTE().find(c=>c.id==='gros')||canalCour();
-    el.innerHTML=CANDIDATS.map((cle,i)=>{ const v=IDX[cle], st=qteEff(cle), on=COCHES.has(cle);
+    COCHES.clear();
+    const nDans=CANDIDATS.filter(dansDoc).length;
+    el.innerHTML=CANDIDATS.map((cle,i)=>{ const v=IDX[cle], st=qteEff(cle), on=dansDoc(cle);
       return `<div class="cand ${on?'coche':''} ${i===SEL?'sel':''}" data-cle="${esc(cle)}"><input type="checkbox" ${on?'checked':''} tabindex="-1">
         ${vignette(cle)}
         <b>${esc(v[2]||'')} ${esc(v[1]||'')}${tyBadge(cle)}${v[3]?' <span style="font-weight:500;color:var(--ink-2)">'+esc(v[3])+' oz</span>':''}</b>
         <button type="button" class="vfbtn" data-vfc="${esc(cle)}">${r3('Voir la fiche','See the sheet','Ver la ficha')} ↗</button>
         <span>stock <i>${nf(st)}</i></span></div>`; }).join('')
-      +`<div class="cpied"><button type="button" class="btn pri" id="v-cadd" ${COCHES.size?'':'disabled'}>${MODE_OFFRE?r3('Ajouter','Add','Añadir'):'Ajouter'} ${COCHES.size?COCHES.size+' ':''}${MODE_OFFRE?r3('à l\'offre','to the offer','a la oferta'):'au devis'}</button>
-        <button type="button" class="btn" id="v-ctous">Tout cocher</button>
-        <em>${CANDIDATS.length} parfum${CANDIDATS.length>1?'s':''} trouvé${CANDIDATS.length>1?'s':''} — coche, puis ajoute</em></div>`;
+      +`<div class="cpied"><button type="button" class="btn pri" id="v-cadd">${r3('✓ Fermer la liste','✓ Close the list','✓ Cerrar la lista')}</button>
+        <button type="button" class="btn" id="v-ctous">${r3('Tout cocher','Tick all','Marcar todo')}</button>
+        <em>${r3(`${CANDIDATS.length} parfum${CANDIDATS.length>1?'s':''} trouvé${CANDIDATS.length>1?'s':''} — coché = dans ${motDoc()}`,`${CANDIDATS.length} perfume${CANDIDATS.length>1?'s':''} found — ticked = in ${motDoc()}`,`${CANDIDATS.length} perfume${CANDIDATS.length>1?'s':''} encontrado${CANDIDATS.length>1?'s':''} — marcado = en ${motDoc()}`)}${nDans?` (${nDans})`:''}</em></div>`;
     el.classList.add('on');
-    el.querySelectorAll('[data-cle]').forEach(d=>d.onclick=()=>{ const c=d.dataset.cle; if(COCHES.has(c)) COCHES.delete(c); else COCHES.add(c); peintRes(); });
+    el.querySelectorAll('[data-cle]').forEach(d=>d.onclick=()=>basculeDoc(d.dataset.cle));
     /* 11 nov. 2026 (Igal : « quand on choisit un parfum, sur sa ligne, “voir la fiche” ») : la fiche du Catalogue s'ouvre en panneau
        à droite, sans cocher ni décocher la ligne ; la liste reste telle quelle à la fermeture */
     el.querySelectorAll('[data-vfc]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); e.preventDefault(); if(typeof ficheFenetre!=='function') return;
       ficheFenetre(b.dataset.vfc,()=>{ try{ MOD=lit(KMOD,{})||{}; EXT=Object.assign({q:{}},JSON.parse(localStorage.getItem(KEXT)||'{}')); }catch(_){} peintRes(); }); });
     $('v-cadd').onclick=()=>ajouteCoches();
-    $('v-ctous').onclick=()=>{ CANDIDATS.forEach(c=>COCHES.add(c)); peintRes(); };
+    $('v-ctous').onclick=()=>{ CANDIDATS.forEach(c=>{ if(!dansDoc(c)) PANIER.push({cle:c,q:1,p:prixLigne(c,canalCour())}); }); peintPanier(); try{ recap(); }catch(e){} peintRes(); };
   };
-  function ajouteCoches(){
-    const L=CANDIDATS.filter(c=>COCHES.has(c)); if(!L.length) return;
-    L.forEach(cle=>{ if(!PANIER.some(l=>l.cle===cle)) PANIER.push({cle,q:1,p:prixLigne(cle,canalCour())}); });
-    COCHES.clear(); vq().value=''; CANDIDATS=[]; SEL=-1; peintRes(); peintPanier(); vq().focus();
-  }
-  /* Entrée : ce qui est coché part dans le devis ; rien de coché, le parfum surligné y va seul */
-  ['v-q','v-q2'].forEach(id=>$(id).addEventListener('keydown',e=>{ if(e.key==='Enter'&&COCHES.size){ e.stopImmediatePropagation(); e.preventDefault(); ajouteCoches(); } },true));
+  /* « Fermer la liste » : les parfums cochés sont déjà dans le document ; on vide la recherche pour la suivante */
+  function ajouteCoches(){ vq().value=''; CANDIDATS=[]; SEL=-1; peintRes(); vq().focus(); }
   /* ---- les lignes du devis : prix d'achat, tarif de gros, et LE prix qu'il propose ---- */
   const _peintPanier=peintPanier;
   peintPanier=function(){

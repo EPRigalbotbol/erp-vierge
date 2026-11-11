@@ -1,6 +1,6 @@
-# Changer les prix d'un parfum SUR LES SITES depuis la fiche du Catalogue (24 sept. 2026 ; refait le 5 nov. 2026).
-# 5 nov. 2026 (Igal) : « je ne veux plus que cette case rouge existe… la seule chose que je veux qui existe, c'est prix barré » :
-# sur perfumestrade.com le client paie LE PRIX RETAIL de la fiche ; la boîte du site n'a qu'une case, le prix barré (promo).
+# Changer les prix d'un parfum SUR LES SITES depuis la fiche du Catalogue (24 sept. 2026 ; refait le 5 nov., puis le 11 nov. 2026).
+# 11 nov. 2026 (Sam, via Igal) : « plus de prix barré » — une ligne par canal : LE prix, « ✓ En ligne », le bouton. Le client paie le
+# prix de la ligne ; un prix barré qui traîne sur le site est enlevé à l'Enregistrer.
 # Igal : « au lieu de 64 je mets 63, et ça le modifie directement sur le site ; seul Sam,
 # en tant que dirigeant, peut le faire » — puis : « le prix barré et la promo, qu'on
 # puisse gérer les deux sans aller dans WooCommerce ». Le cockpit est simulé : on
@@ -70,112 +70,62 @@ try:
             # 12 oct. 2026 (Igal : « on a déjà Enregistrer en bas ») : plus de bouton dans la boîte — c'est l'Enregistrer du bas qui envoie
             sauve(1200)
 
-        print('1. la ligne du détail : le prix retail à gauche, UNE case « prix barré » à droite, rien d\'autre')
+        print('1. la ligne du détail : UN prix, « ✓ En ligne », pas de prix barré')
         ouvre()
-        bx = boite('site'); ln = pg.locator('[data-cn="site"]')
-        check('LE POINT — une seule case dans la boîte, le prix barré, vide (pas de promo sur le site)',
-              bx.count() == 1 and bx.locator('[data-sb]').count() == 1 and bx.locator('[data-sb]').input_value() == '' and bx.locator('[data-sp]').count() == 0, bx.inner_text() if bx.count() else '—')
-        check('LE POINT — plus de case rouge, plus de « payé par le client », plus de lien « mettre le prix de l\'outil », plus de « + ajouter un prix promo »',
-              ln.locator('.sbw').count() == 0 and 'payé par le client' not in ln.inner_text() and ln.locator('[data-prend]').count() == 0 and pg.locator('[data-promo-ouvre]').count() == 0, ln.inner_text())
-        check('le prix retail de la fiche est à gauche, dans sa case', abs(float(pg.locator('input[data-pc="site"]').input_value()) - PVR) < 0.001)
+        ln = pg.locator('[data-cn="site"]')
+        check('LE POINT — aucune case « prix barré » visible, aucun texte d\'explication', 'barré' not in ln.inner_text().lower() and 'le client paie' not in ln.inner_text().lower() and ln.locator('input:visible').count() == 1, ln.inner_text())
+        check('le prix retail de la fiche est dans SA case', abs(float(pg.locator('input[data-pc="site"]').input_value()) - PVR) < 0.001)
+        check('« ✓ En ligne » et « Retirer de la vente »', 'En ligne' in ln.inner_text() and ln.locator('[data-retv="site"]').count() == 1, ln.inner_text())
         check('rien de changé : rien en attente', pg.evaluate("boitesEnAttente().length") == 0)
-        S = lsite(); S[BC]['g']['pr'] = PVW + 2; site(S); ouvre()
-        gx = boite('sitegros')
-        # 10 nov. 2026 (Igal, capture à l'appui : « la ligne du Catalogue dit 53,76 $, la fiche dit 85 $ ») : la case affiche le prix de gros
-        # de la FICHE, plus celui du site ; un site qui dit autre chose est « en attente » : l'Enregistrer l'y remet
-        check('LE POINT — gros : toujours UNE seule case, et elle affiche le prix de gros de la fiche (celui du Catalogue), pas celui du site', gx.locator('[data-sb]').count() == 1 and abs(float(gx.locator('[data-sb]').input_value()) - PVW) < 0.001
-              and pg.locator('[data-cn="sitegros"] [data-pc]').count() == 0 and pg.locator('[data-cn="sitegros"] .sbw').count() == 0, pg.locator('[data-cn="sitegros"]').inner_text())
-        check('le site de gros dit un autre prix : il est « en attente », l\'Enregistrer y remettra le prix de la fiche', pg.evaluate("boitesEnAttente().map(x=>x.cid)") == ['sitegros'])
-        site(SITE0); ouvre(); bx = boite('site')
-
-        print('2. Sam tape un prix barré : le site reçoit barré + promo = le prix retail')
-        barre = round(PVR + 60, 2)
-        met('site', barre=barre)
-        check('la boîte est « en attente » : l\'Enregistrer du bas va l\'envoyer', pg.evaluate("boitesEnAttente().length") == 1)
-        envoie('site')
-        check('une confirmation dit que le client paiera le prix retail', any('Le client paiera' in d and 'prix retail' in d for d in dialogs), dialogs)
-        check('LE POINT — UN envoi : barré = ce que Sam a tapé, promo = le prix retail de la fiche',
-              len(envois) == 1 and envois[0]['quel'] == '' and abs(envois[0]['barre'] - barre) < 0.001 and abs(envois[0]['promo'] - PVR) < 0.001 and envois[0]['attendu'] == {'barre': PVR, 'promo': None}, envois)
+        print('2. le gros : une case, le prix de gros de la fiche')
+        S = lsite(); S[BC]['g']['pr'] = round(PVW + 3, 2); site(S); ouvre()
+        gx = pg.locator('[data-cn="sitegros"]')
+        check('gros : UNE case, avec le prix de gros de la fiche (pas celui du site)', gx.locator('input[data-sb]').count() == 1 and abs(float(gx.locator('input[data-sb]').input_value()) - PVW) < 0.001, gx.inner_text())
+        check('le site de gros dit un autre prix : en attente', pg.evaluate("boitesEnAttente().map(x=>x.cid)") == ['sitegros'])
+        envois.clear(); dialogs.clear(); sauve()
+        check('envoyé avec quel=gros, le prix du gros, sans promo', len(envois) == 1 and envois[0]['quel'] == 'gros' and abs(envois[0]['barre'] - PVW) < 0.001 and envois[0].get('promo') in ('', None), envois)
+        print('3. changer le prix retail')
+        nouveau = round(PVR + 7, 2)
+        ouvre(); envois.clear(); dialogs.clear(); retail(nouveau)
+        check('la ligne est en attente', pg.evaluate("boitesEnAttente().length") == 1)
+        sauve()
+        check('LE POINT — UN envoi : le nouveau prix, sans promo (pas de prix barré)', len(envois) == 1 and abs(envois[0]['barre'] - nouveau) < 0.001 and envois[0]['promo'] == '', envois)
+        check('la confirmation dit ce que le client paiera', any('Le client paiera' in d for d in dialogs), dialogs)
         S = lsite()
-        check('l\'outil range les nouveaux prix du site', abs(S[BC]['d']['pr'] - barre) < 0.001 and abs(S[BC]['d']['ps'] - PVR) < 0.001, S[BC]['d'])
-        M = pg.evaluate("JSON.parse(localStorage.getItem('fiches-modifiees-v1')||'{}')")
-        cle = pg.evaluate("bc=>cur.find(p=>String(p.bc)===bc).id", BC)
-        check('le prix retail de l\'outil n\'a pas bougé, pas de prix manuel du canal', abs(M.get(cle, {}).get('pvr', PVR) - PVR) < 0.001 and 'site' not in (M.get(cle, {}).get('pc') or {}), M.get(cle))
-        J = pg.evaluate("JSON.parse(localStorage.getItem('crm-journal-v1')||'[]').map(j=>j.lib)")
+        check('l\'outil range le nouveau prix du site, sans promo', abs(S[BC]['d']['pr'] - nouveau) < 0.001 and S[BC]['d']['ps'] is None, S[BC]['d'])
+        J = pg.evaluate("lit('crm-journal-v1',[]).map(j=>j.lib)")
         check('le journal : « prix changés sur le site perfumestrade.com »', any('prix changés sur le site perfumestrade.com' in l for l in J), J[-2:])
-        ouvre()
-        check('la fiche rouverte montre le prix barré dans sa case', abs(float(boite('site').locator('[data-sb]').input_value()) - barre) < 0.001)
-
-        print('3. Sam change le prix RETAIL de la fiche : le site suit (promo = nouveau retail, même prix barré)')
-        envois.clear(); dialogs.clear()
-        nouveau = round(PVR - 4, 2)
-        retail(nouveau)
-        check('le prix payé sur le site n\'est plus le retail : en attente', pg.evaluate("boitesEnAttente().length") == 1)
-        sauve(1500)
-        check('LE POINT — le site reçoit barré inchangé, promo = le nouveau retail', len(envois) == 1 and abs(envois[0]['barre'] - barre) < 0.001 and abs(envois[0]['promo'] - nouveau) < 0.001, envois)
-        M = pg.evaluate("JSON.parse(localStorage.getItem('fiches-modifiees-v1')||'{}')")
-        check('et le retail de l\'outil est le nouveau', abs(M.get(cle, {}).get('pvr', 0) - nouveau) < 0.001, M.get(cle))
-        check('le site aussi', abs(lsite()[BC]['d']['ps'] - nouveau) < 0.001)
-
-        print('4. les garde-fous : un prix barré pas plus haut que le retail = pas de promo ; sous le prix d\'achat = prévenu, pas bloqué')
+        print('4. LE CAS DE SAM : un ancien prix barré sur le site (barré 90, le client paie le retail)')
+        S = lsite(); S[BC]['d']['pr'] = 90; S[BC]['d']['ps'] = nouveau; site(S)
         ouvre(); envois.clear(); dialogs.clear()
-        met('site', barre=round(nouveau - 10, 2)); envoie('site')
-        check('barré plus bas que le retail : envoyé SANS promo, le client paie le retail, et la fenêtre le dit',
-              len(envois) == 1 and envois[0]['promo'] == '' and abs(envois[0]['barre'] - nouveau) < 0.001 and any('ne compte pas' in d for d in dialogs), (envois, dialogs))
-        ouvre(); envois.clear(); dialogs.clear()
-        retail(round(PA / 10, 2)); sauve(1500)
-        # 9 oct. 2026 (Igal : « ne refuse jamais, pour Sam et moi ») : sous le prix d'achat, le Patron est prévenu mais pas bloqué
-        check('le client paierait moins que le prix d\'achat : prévenu (« Tu vends à perte »), pas bloqué', any('moins que le prix d\'achat' in d and 'à perte' in d for d in dialogs) and len(envois) == 1, dialogs)
-        pg.evaluate("()=>{ const M=JSON.parse(localStorage.getItem('fiches-modifiees-v1')||'{}'); for(const k in M){ if(M[k]&&M[k].pvr!=null) M[k].pvr=%s; } localStorage.setItem('fiches-modifiees-v1',JSON.stringify(M)); }" % nouveau)
+        check('LE POINT — à l\'ouverture, la fiche sait qu\'il faut enlever le prix barré : en attente', pg.evaluate("boitesEnAttente().map(x=>x.cid)") == ['site'])
+        sauve()
+        check('LE POINT — envoyé : le prix payé, promo vide — le prix barré disparaît du site', len(envois) == 1 and abs(envois[0]['barre'] - nouveau) < 0.001 and envois[0]['promo'] == '', envois)
+        check('l\'outil range : plus de prix barré', lsite()[BC]['d']['ps'] is None and abs(lsite()[BC]['d']['pr'] - nouveau) < 0.001, lsite()[BC]['d'])
+        print('5. sous le prix d\'achat : prévenu, pas bloqué')
+        ouvre(); envois.clear(); dialogs.clear(); retail(round(PA - 1, 2)); sauve()
+        check('« Tu vends à perte », et ça part quand même', any('moins que le prix d\'achat' in d and 'à perte' in d for d in dialogs) and len(envois) == 1, dialogs)
         S = lsite(); S[BC]['d']['pr'] = nouveau; S[BC]['d']['ps'] = None; site(S)
-
-        print('5. le site a changé entre-temps : le cockpit refuse, l\'outil montre les vrais prix')
+        print('6. le site a changé entre-temps : refus, l\'outil range les vrais prix')
         ouvre(); envois.clear(); dialogs.clear()
         reponse['s'] = 409; reponse['j'] = {'erreur': 'Les prix ont changé sur le site entre-temps : prix barré 90.00 $, promo 61.50 $.', 'avant': {'barre': 90, 'promo': 61.5}}
-        met('site', barre=round(nouveau + 30, 2)); envoie('site')
+        retail(round(nouveau + 1, 2)); sauve()
         check('le refus est dit', any('changé sur le site entre-temps' in d for d in dialogs), dialogs)
-        S = lsite()
-        check('l\'outil range les vrais prix du site (90 / 61,50)', S[BC]['d']['pr'] == 90 and S[BC]['d']['ps'] == 61.5, S[BC]['d'])
+        check('l\'outil range les vrais prix du site (90 / 61,50)', lsite()[BC]['d']['pr'] == 90 and lsite()[BC]['d']['ps'] == 61.5, lsite()[BC]['d'])
         reponse['s'] = 200; reponse['j'] = None
-
-        print('6. arrêter la promo : la case prix barré vidée')
-        ouvre(); envois.clear(); dialogs.clear()
-        met('site', barre=''); envoie('site')
-        check('envoyé avec promo vide ("") et barré = le prix retail — le cockpit arrête la promo', len(envois) == 1 and envois[0]['promo'] == '' and abs(envois[0]['barre'] - nouveau) < 0.001, envois)
-        check('l\'outil range : plus de promo', lsite()[BC]['d']['ps'] is None)
-
-        print('7. le site de gros')
-        envois.clear(); dialogs.clear()
-        met('sitegros', barre=round(PVW - 1, 2)); envoie('sitegros')
-        check('envoyé avec quel=gros, le prix du gros', len(envois) == 1 and envois[0]['quel'] == 'gros' and abs(envois[0]['barre'] - (PVW - 1)) < 0.001, envois)
-        check('LE GROS n\'a PAS de prix barré : un seul champ « prix de vente », pas de promo (Igal, 12 oct.)',
-              boite('sitegros').locator('[data-sp]').count() == 0 and 'promo' not in boite('sitegros').inner_text().lower() and 'prix de vente' in boite('sitegros').inner_text().lower(), boite('sitegros').inner_text())
-        check('et son envoi n\'emporte aucune promo', envois and envois[0]['quel'] == 'gros' and envois[0].get('promo') in ('', None), envois)
-
-        print('8. le 0 perdu au début du code-barres')
-        S = lsite(); site({BC.lstrip('0'): S[BC]})
-        ouvre(); envois.clear(); dialogs.clear()
-        check('la carte retrouve la fiche du site', boite('site').count() == 1)
-        met('site', barre=round(nouveau + 9, 2)); envoie('site')
+        print('7. le 0 perdu au début du code-barres')
+        S = lsite(); S[BC]['d']['pr'] = nouveau; S[BC]['d']['ps'] = None; site({BC.lstrip('0'): S[BC]})
+        ouvre(); envois.clear(); dialogs.clear(); retail(round(nouveau + 2, 2)); sauve()
         check('le code envoyé est celui du SITE (sans le 0)', envois and envois[0]['bc'] == BC.lstrip('0'), envois)
         site(S)
-
-        print('8b. LE CAS DE SAM (12 oct., relu le 5 nov.) : 58 $ de retail avec un prix barré 65 → le site vend 58, barré 65')
-        S = lsite(); S[BC]['d']['pr'] = 35; S[BC]['d']['ps'] = 29; site(S)
-        ouvre(); envois.clear(); dialogs.clear()
-        met('site', barre=65); retail(58)
-        sauve(1500)
-        check('LE POINT — barré 65 et promo 58 partent', len(envois) == 1 and envois[0]['barre'] == 65 and envois[0]['promo'] == 58, envois)
-        check('et le site range 65 / 58 (la ligne barrée est là)', lsite()[BC]['d']['pr'] == 65 and lsite()[BC]['d']['ps'] == 58, lsite()[BC]['d'])
-
-        print('9. seul le dirigeant, et seulement en ligne')
+        print('8. seul le dirigeant, et seulement en ligne')
         pose('commercial'); ouvre()
-        t = pg.locator('[data-cn="site"]').inner_text().lower()
-        check('commercial : pas de cases, seulement « prix barré 65 » en lecture seule, pas de « payé par le client »', boite('site').count() == 0 and 'prix barré' in t and 'payé par le client' not in t, t)
+        t = pg.locator('[data-cn="site"]')
+        check('commercial : « ✓ En ligne » sans bouton, rien à envoyer', 'En ligne' in t.inner_text() and t.locator('button').count() == 0 and pg.locator('[data-sbx]').count() == 0, t.inner_text())
         pose('patron'); pg.evaluate("localStorage.removeItem('ck-token')"); ouvre()
-        check('hors ligne : pas de cases', boite('site').count() == 0)
+        check('hors ligne : aucun bouton de mise en ligne / retrait', pg.locator('[data-cn="site"] button').count() == 0)
         check('aucune erreur JS', not err, err[:3])
         b.close()
 finally:
     srv.terminate()
-print(f"\n{ok} ok, {len(ko)} KO", ko)
+print(f'\n{ok} ok, {len(ko)} KO', ko); raise SystemExit(1 if ko else 0)

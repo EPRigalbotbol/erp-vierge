@@ -792,8 +792,10 @@ if('__CIBLE__'==='pt') P.forEach(p=>{ const m=MOD[p.cle]; if(!m) return; if(m.pv
 /* ce que la case « compté » contient pour cette ligne — rien si le comptage est périmé */
 function cpt(p){ return comptagePerime(p)?undefined:saisie[kc(p)]; }
 function comptagePerime(p){ const m=MOD[p.cle]; return !!(m&&m.qteC!=null&&(m.qte==null||+m.qte!==+m.qteC)); }
-function qteAtt(p){ const m=MOD[p.cle];
-  return (m&&m.qteC!=null&&m.qteTh0!=null&&!comptagePerime(p))?+m.qteTh0:qteTh(p); }
+/* 11 nov. 2026 (Igal : « quand c'est vérifié, enlève le chiffre théorique, ça me sert à rien ») : la colonne « Théorique » montrait, après
+   le comptage, le chiffre d'AVANT (le Google Sheet : 73 quand on en a compté 52). Elle montre maintenant le stock réel. L'ancien chiffre
+   reste seulement au Journal (« quantité corrigée par comptage : 73 → 52 »). */
+function qteAtt(p){ return qteTh(p); }
 /* ---- Les flacons de vitrine (Perfume City) ----
    Quand Perfumes Trade sort 5 flacons pour la boutique, un part en vitrine comme
    testeur : 4 sont vendables, mais 5 sont physiquement là. Le stock compte le

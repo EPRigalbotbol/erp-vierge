@@ -2452,14 +2452,8 @@ async function lanceMel(sel,res,mode,prog,arret){
     +(T.cree?`<br><small>${mode==='publie'?(window.__melPcStock?'Elles sont en vente.':'Celles des sites perfumestrade.com sont en vente ; chez Perfume City, en brouillon.'):"Elles sont en brouillon : pour les publier sur les sites perfumestrade.com, utilise « Remettre en vente » dans l'onglet « Sans prix sur le site » ; chez Perfume City, publie-les dans Shopify."}</small>`:'')
     +(pb.length?'<br><small>'+pb.slice(0,8).map(esc).join('<br>')+(pb.length>8?'<br>… et '+(pb.length-8)+' autre(s)':'')+'</small>':'')+'</div>';
 }
-/* ---------------------------------------------------------------------------
-   ALERTES « PAS EN LIGNE » (Igal, 21 oct. 2026 : « l'ERP ne doit jamais mentir sans le dire » — Coach FLORAL était resté en brouillon
-   chez Perfume City et absent du site retail, et personne ne l'a su avant que Sam regarde la fiche).
-   Chaque fois qu'une mise en ligne EN VENTE n'aboutit pas sur un canal (refus, erreur, brouillon, pas de prix, pas de stock…), on le
-   note ici, par parfum et par canal, avec la raison. Le tableau de bord les affiche tant que le parfum n'est pas vraiment en vente.
-   Elles se retirent toutes seules dès que le relevé du canal montre le parfum en vente (majDiff), ou à la main depuis le tableau de bord.
-   Ce n'est PAS la liste des parfums « pas diffusés » : ceux-là, on a choisi de ne pas les publier (le filtre Diffusion les montre).
---------------------------------------------------------------------------- */
+/* ALERTES « PAS EN LIGNE » (21 oct. 2026) : une mise en vente qui n'aboutit pas sur un canal est notée ici (parfum, canal, raison) ;
+   le tableau de bord l'affiche jusqu'à ce que le relevé du canal montre le parfum en vente. */
 const KPUB='publications-v1';
 const pubCle=p=>{ const b=String((p&&p.bc)||'').replace(/[^0-9A-Za-z]/g,'').replace(/^0+/,''); return b||String((p&&p.id)||''); };
 function pubLit(){ let o=null; try{ o=lit(KPUB,{}); }catch(e){} return (o&&typeof o==='object'&&!Array.isArray(o))?o:{}; }
@@ -2501,8 +2495,7 @@ function melRange(id,cote,l,p){
 document.addEventListener('click',async e=>{ const b=e.target.closest&&e.target.closest('[data-pcpub]'); if(!b) return;
   const p=(typeof FICHE!=='undefined'&&FICHE&&cur[FICHE.pos])||null; if(!p||!melOk()) return;
   const qpc=qtePCde(p);
-  if(!(qpc>0)){ alert(vf('Perfume City n\'a pas ce parfum dans son inventaire (0) : donne-lui d\'abord des flacons (facture d\'achat ou transfert), puis mets-le en vente.')); return; }
-  if(!confirm('Mettre « '+((p.marque||'')+' '+(p.nom||'')).trim()+' » en vente chez Perfume City, avec '+nf(qpc)+' en stock (son inventaire) ?')) return;
+  if(!confirm('Mettre « '+((p.marque||'')+' '+(p.nom||'')).trim()+' » en vente chez Perfume City, avec '+nf(qpc)+' en stock (son inventaire) ?'+(!(qpc>0)?'\n\n'+avertZero(true):''))) return;
   if(!demandeUser(false,'mettre un produit en vente chez Perfume City',()=>{})) return;
   b.disabled=true; b.textContent='Envoi…';
   const dit=(t,cls)=>{ const d=$('dst'); if(d){ d.textContent=t; d.className='st'+(cls?' '+cls:''); } };
@@ -2517,11 +2510,15 @@ document.addEventListener('click',async e=>{ const b=e.target.closest&&e.target.
     else dit('En vente et visible chez Perfume City, stock '+j.stock+(j.canaux?' ('+j.canaux+' canal/canaux)':'')+'.','ok');
   }catch(err){ b.disabled=false; b.textContent='Mettre en vente'; dit('Pas mis en vente : '+((err&&err.message)||''),''); }
 });
-/* le bouton « Mettre en ligne » de la fiche, quand le parfum n'est pas sur ce site.
-   31 oct. 2026 (Igal : « cette fenêtre m'empêche de voir les autres prix, je ne peux pas la bouger, change de méthode ») : plus de
-   fenêtre par-dessus la fiche. Le parfum est créé EN VENTE sur ce site, au prix que la ligne du canal montre (celui qu'on règle dans
-   la fiche), avec UNE validation ; ce qui se passe s'écrit à côté du bouton. Mêmes garde-fous que « Mettre en ligne » : en stock,
-   code-barres, prix au-dessus du prix d'achat (Patron : avertissement), jamais recréé s'il existe. */
+/* stock à zéro : on prévient, on ne refuse plus (Igal, 11 nov. 2026) */
+function avertZero(pc){
+  const A=pc?L3('le stock de Perfume City',"Perfume City's stock",'el stock de Perfume City'):L3('ton stock','your stock','tu stock'),
+    W=pc?L3("dans l'Inventaire Perfume City",'in the Perfume City inventory','en el inventario de Perfume City'):L3("sur la fiche ou dans l'Inventaire",'on the sheet or in the Inventory','en la ficha o en el Inventario');
+  return L3(`⚠ ATTENTION : ${A} est à zéro. Tu vas mettre en vente un produit sans stock (affiché « épuisé »).\n\nAs-tu reçu de la marchandise ? Si oui, mets le vrai stock ${W}.`,
+    `⚠ CAREFUL: ${A} is zero. You are putting on sale a product with no stock (shown “sold out”).\n\nHave you received goods? If so, enter the real stock ${W}.`,
+    `⚠ ATENCIÓN: ${A} está a cero. Vas a poner en venta un producto sin stock (mostrado «agotado»).\n\n¿Has recibido mercancía? Si es así, pon el stock real ${W}.`);
+}
+/* « Mettre en ligne » de la fiche (31 oct. 2026) : créé EN VENTE au prix de la ligne du canal, une validation, résultat à côté du bouton. */
 document.addEventListener('click',async e=>{ const b=e.target.closest&&e.target.closest('[data-mel1]'); if(!b) return;
   const p=(typeof FICHE!=='undefined'&&FICHE&&cur[FICHE.pos])||null; if(!p) return;
   const id=b.dataset.mel1, c=(REG.canaux||[]).find(x=>x.id===id)||{id,base:id==='sitegros'?'pvw':'pvr',maj:0};
@@ -2530,9 +2527,9 @@ document.addEventListener('click',async e=>{ const b=e.target.closest&&e.target.
   const br=FICHE.brouillon&&FICHE.brouillon.pc&&FICHE.brouillon.pc[id];
   const v=r2(br!=null&&br!==''?+br:prixCanal(p,c).v);
   if(!(v>0)){ out('Pas de prix pour ce site : écris-le dans la case de la ligne, puis recommence.'); return; }
-  if(!(p.qte>0)){ out('Pas de stock : rien à mettre en vente.'); return; }
   const perte=p.pa!=null&&v<p.pa;
-  if(!confirm((p.marque||'')+' '+(p.nom||'')+'\n\nMettre EN VENTE sur '+MEL_CANAL[id].nom+' à '+money2(v)+' ?'+(perte?'\n\nAttention : c\'est moins que le prix d\'achat.':''))) return;
+  const q0=id==='perfumecity'?qtePCde(p):p.qte;
+  if(!confirm((p.marque||'')+' '+(p.nom||'')+'\n\n'+L3('Mettre EN VENTE sur ','Put ON SALE on ','Poner EN VENTA en ')+MEL_CANAL[id].nom+L3(' à ',' at ',' a ')+money2(v)+' ?'+(perte?'\n\n'+L3('Attention : c\'est moins que le prix d\'achat.','Careful: this is less than the purchase price.','Atención: es menos que el precio de compra.'):'')+(!(q0>0)?'\n\n'+avertZero(id==='perfumecity'):''))) return;
   if(!demandeUser(false,'mettre un parfum en ligne',()=>{})) return;
   b.disabled=true; b.textContent='…';
   if(id==='perfumecity'){ try{ const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/shopify/droits',{headers:{Authorization:'Bearer '+ckTok()}}); const j=await r.json(); window.__melPcStock=!!(j&&j.stock); }catch(x){} }
@@ -4553,7 +4550,7 @@ function dessineFiche0(){
           /* une seule ligne : ce que le client paie ; les cases (prix barré, promo, envoyer) sous « régler » */
           const e=siteDe(p), f=e&&e[COTE_SITE[c.id]];
           const box=surSite(p,c,v);
-          paie = !f ? (retireCote(p,COTE_SITE[c.id])&&peutPrixSite() ? `<div class="sbd">${box}</div>` : `<div class="azp"><small>${L3(retireCote(p,COTE_SITE[c.id])?'retirée de la vente':'pas sur ce site',retireCote(p,COTE_SITE[c.id])?'taken off sale':'not on this site',retireCote(p,COTE_SITE[c.id])?'retirada de la venta':'no está en este sitio')}</small>${!retireCote(p,COTE_SITE[c.id])&&peutPrixSite()&&p.qte>0&&melOk()?`<button class="lnk" data-mel1="${c.id}">Mettre en ligne</button>`:''}</div>`)
+          paie = !f ? (retireCote(p,COTE_SITE[c.id])&&peutPrixSite() ? `<div class="sbd">${box}</div>` : `<div class="azp"><small>${L3(retireCote(p,COTE_SITE[c.id])?'retirée de la vente':'pas sur ce site',retireCote(p,COTE_SITE[c.id])?'taken off sale':'not on this site',retireCote(p,COTE_SITE[c.id])?'retirada de la venta':'no está en este sitio')}</small>${!retireCote(p,COTE_SITE[c.id])&&peutPrixSite()&&melOk()?`<button class="lnk" data-mel1="${c.id}">Mettre en ligne</button>`:''}</div>`)
             /* Igal, 11 oct. 2026 : « je veux que tu me les laisses ouvertes » — les cases restent visibles */
             : `<div class="sbd">${box}</div>`; }
         else if(c.id==='amazon'){ const az=prixAmazonDe(p);
@@ -4561,9 +4558,9 @@ function dessineFiche0(){
               ${v!=null&&Math.abs(v-az.prix)>=0.005?`<div class="sbw">⚠ ${L3('Amazon vend à','Amazon sells at','Amazon vende a')} <b>${money2(az.prix)}</b>, ${L3('pas','not','no')} <b>${money2(v)}</b>. <button class="lnk" data-prend="amazon" data-pv="${az.prix}">${L3('prendre le prix Amazon','use the Amazon price','usar el precio de Amazon')}</button></div>`:''}</div>`
             : `<div class="azp"><span class="sbt">sur Amazon</span><small>${L3('prix inconnu : importe le rapport des annonces dans le cockpit','unknown price: import the listings report in the cockpit','precio desconocido: importa el informe de anuncios en el cockpit')}</small></div>`; }
         else if(c.id==='perfumecity'){ const sh=prixShopifyDe(p);
-          paie = !sh ? `<div class="azp"><span class="sbt">sur Shopify</span><small>${L3('pas trouvé : le code-barres n\'est pas sur Shopify','not found: the barcode is not on Shopify','no encontrado: el código de barras no está en Shopify')}</small>${peutPrixSite()&&p.qte>0&&melOk()?`<button class="lnk" data-mel1="perfumecity">${L3('Mettre en ligne','Put online','Poner en línea')}</button>`:''}</div>`
+          paie = !sh ? `<div class="azp"><span class="sbt">sur Shopify</span><small>${L3('pas trouvé : le code-barres n\'est pas sur Shopify','not found: the barcode is not on Shopify','no encontrado: el código de barras no está en Shopify')}</small>${peutPrixSite()&&melOk()?`<button class="lnk" data-mel1="perfumecity">${L3('Mettre en ligne','Put online','Poner en línea')}</button>`:''}</div>`
             : sh.amb ? `<div class="azp"><span class="sbt">sur Shopify</span><small class="sbw">⚠ ${L3('ce code-barres est sur plusieurs produits de Shopify : à corriger là-bas','this barcode is on several Shopify products: fix it there','este código está en varios productos de Shopify: corrígelo allí')}</small></div>`
-            : `<div class="azp"><span class="sbt">sur Shopify</span><b data-nolang>${money2(sh.prix)}</b>${sh.actif?(peutPrixSite()&&(qtePCde(p)>0||p.qte>0)&&melOk()?`<button class="lnk" data-pcpub="${esc(p.bc||'')}" title="${L3('Repose le stock de l\'inventaire Perfume City et publie le produit sur les canaux de vente de la boutique','Re-posts the Perfume City inventory stock and publishes the product on the shop\'s sales channels','Vuelve a poner el stock del inventario Perfume City y publica el producto en los canales de la tienda')}">${L3('Publier / stock '+nf(qtePCde(p)),'Publish / stock '+nf(qtePCde(p)),'Publicar / stock '+nf(qtePCde(p)))}</button>`:''):`<small>${L3('brouillon','draft','borrador')}</small>${peutPrixSite()&&(qtePCde(p)>0||p.qte>0)&&melOk()?`<button class="lnk" data-pcpub="${esc(p.bc||'')}">${L3('Mettre en vente (stock Perfume City : '+nf(qtePCde(p))+')','Put on sale (Perfume City stock: '+nf(qtePCde(p))+')','Poner en venta (stock Perfume City: '+nf(qtePCde(p))+')')}</button>`:''}`}${sh.barre?`<small>${L3('barré','was','tachado')} ${money2(sh.barre)}</small>`:''}
+            : `<div class="azp"><span class="sbt">sur Shopify</span><b data-nolang>${money2(sh.prix)}</b>${sh.actif?(peutPrixSite()&&melOk()?`<button class="lnk" data-pcpub="${esc(p.bc||'')}" title="${L3('Repose le stock de l\'inventaire Perfume City et publie le produit sur les canaux de vente de la boutique','Re-posts the Perfume City inventory stock and publishes the product on the shop\'s sales channels','Vuelve a poner el stock del inventario Perfume City y publica el producto en los canales de la tienda')}">${L3('Publier / stock '+nf(qtePCde(p)),'Publish / stock '+nf(qtePCde(p)),'Publicar / stock '+nf(qtePCde(p)))}</button>`:''):`<small>${L3('brouillon','draft','borrador')}</small>${peutPrixSite()&&melOk()?`<button class="lnk" data-pcpub="${esc(p.bc||'')}">${L3('Mettre en vente (stock Perfume City : '+nf(qtePCde(p))+')','Put on sale (Perfume City stock: '+nf(qtePCde(p))+')','Poner en venta (stock Perfume City: '+nf(qtePCde(p))+')')}</button>`:''}`}${sh.barre?`<small>${L3('barré','was','tachado')} ${money2(sh.barre)}</small>`:''}
               ${v!=null&&Math.abs(v-sh.prix)>=0.005?`<div class="sbw">⚠ ${L3('Shopify vend à','Shopify sells at','Shopify vende a')} <b>${money2(sh.prix)}</b>, ${L3('pas','not','no')} <b>${money2(v)}</b>. ${prixPCOk()?`<span>${L3('Enregistrer envoie le nouveau prix à Shopify.','Save sends the new price to Shopify.','Guardar envía el nuevo precio a Shopify.')}</span> `:''}<button class="lnk" data-prend="perfumecity" data-pv="${sh.prix}">${L3('prendre le prix Shopify','use the Shopify price','usar el precio de Shopify')}</button></div>`:''}</div>`; }
         else paie=`<div class="azp"><small>${L3('ventes non reliées','sales not connected','ventas no conectadas')}</small></div>`;
         if(uni) return `<div class="cn uni" data-cn="${c.id}">

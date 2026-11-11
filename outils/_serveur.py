@@ -585,6 +585,21 @@ function _ssPublie(){
       const qs=_ssQteSite(bc,'d',E0);        /* un code partagé : la somme des fiches concernées */
       q[s]=Math.max(0,qs==null?Math.round(v):qs);
     });
+    /* LES PARFUMS AJOUTÉS DANS L'ERP (11 nov. 2026). Les fiches créées à la main ou depuis le site (« articles-ajoutes-v1 »)
+       n'étaient pas dans ce tableau : le cockpit ne les connaissait pas, donc le retrait à 0 les laissait en ligne en rupture.
+       Google Shopping testait leur lien de paiement direct, tombait sur « rupture » et refusait le lien. Leur quantité
+       (celle de la fiche modifiée si Sam l'a changée, sinon la saisie externe, sinon celle de l'ajout) est publiée comme les autres. */
+    const AJ=_ssDq('articles-ajoutes-v1',[])||[];
+    (Array.isArray(AJ)?AJ:[]).forEach((a,i)=>{
+      if(!a) return;
+      const m=M[a.id||('a'+i)]||{};
+      const bc=String(m.bc||a.bc||'').trim(); if(!bc) return;
+      const s=_ssCleSite(bc); if(!s||(s in q)) return;   /* déjà publié par sa fiche modifiée : on ne double pas */
+      let v=null;
+      if(m.qte!=null) v=+m.qte; else { const e=E.q&&E.q[bc]; v=e!=null?+e:+a.qte; }
+      if(v==null||!Number.isFinite(v)) return;
+      vus.add(s); q[s]=Math.max(0,Math.round(v));
+    });
     return vus.size?q:null;
     });
     if(!q) return;
@@ -593,7 +608,7 @@ function _ssPublie(){
 }
 _apresEcrit.push((cle)=>{
   if(!_SY_ON||!_ssAllume()) return;
-  if(cle==='fiches-modifiees-v1'||cle==='stock-externe-v1'){ clearTimeout(_SS_PUB); _SS_PUB=setTimeout(_ssPublie,3000); }
+  if(cle==='fiches-modifiees-v1'||cle==='stock-externe-v1'||cle==='articles-ajoutes-v1'){ clearTimeout(_SS_PUB); _SS_PUB=setTimeout(_ssPublie,3000); }
 });
 if(_SY_ON){ setTimeout(_ssPublie,9000); }
 /* les commandes en attente de paiement ont changé (lues par le cockpit) : les parfums concernés repartent */

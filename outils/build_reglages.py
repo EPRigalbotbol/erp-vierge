@@ -297,6 +297,16 @@ CORPS = r'''
             '<p>Une vente Amazon, de la caisse ou d\'un des deux sites baisse aussitôt le stock des autres sites, même la nuit, sans attendre qu\'une page de l\'ERP soit ouverte. Les commandes à expédier ne sont plus proposées sur les sites.</p>'
             + agit('perfumestrade.com — stock', 'wholesale.perfumestrade.com — stock') + '<div id="d-stsites"></div>', etat_id='e-stsites', sid='sec-stsites') + r'''
 </section>
+
+<section class="rg">
+''' + ligne('Retrait automatique à 0 en stock', 'Retirer automatiquement des sites les parfums à 0 en stock (et les remettre en vente quand le stock revient)',
+            '<input type="checkbox" id="r-zero">',
+            '<p>Coché : un parfum qui tombe à 0 est retiré tout seul de perfumestrade.com et du site de gros '
+            '(brouillon : plus visible, rien n\'est effacé). Dès que son stock remonte — achat, transfert, comptage — il est remis en vente tout seul, au même prix.</p>'
+            '<p>Un parfum que tu retires toi-même (« Retirer de la vente ») ne revient jamais tout seul. Décoché : plus rien n\'est retiré automatiquement — '
+            'c\'est l\'arrêt d\'urgence. Perfume City (Shopify) n\'est pas concerné : un parfum à 0 y reste « épuisé ».</p>'
+            + agit('perfumestrade.com', 'wholesale.perfumestrade.com') + '<div id="d-zero"></div>', etat_id='e-zero', sid='sec-zero') + r'''
+</section>
 </div>
 </div>
 
@@ -611,6 +621,23 @@ $('r-stsites').addEventListener('change',()=>{
   peintStSites();
 });
 try{ peintStSites(); }catch(e){}
+
+/* ---- le retrait automatique à 0 en stock (Igal, 11 nov. 2026) : le cockpit relit ce réglage à chaque égalisation ---- */
+function peintZero(){
+  const on=REG.retraitZero===true; $('r-zero').checked=on;
+  const J=(lit(KJOU_R,[])||[]).filter(j=>j&&/à 0 en stock retiré|revenu\(s\) en stock remis/.test(j.lib||'')).slice(-5).reverse();
+  $('e-zero').innerHTML=on?'<span class="pt bon"></span><b>Allumé.</b>':'<span class="pt"></span><b>Éteint</b> : '+L3("rien n'est retiré automatiquement.",'nothing is taken offline automatically.','no se retira nada automáticamente.');
+  $('d-zero').innerHTML=J.length?L3('Derniers passages :','Latest runs:','Últimas pasadas:')+'<br>'+J.map(j=>`<span data-nolang>${esc(new Date(j.t).toLocaleString('en-US',{timeZone:'America/New_York',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}))}</span> — ${esc(j.lib)}`).join('<br>'):'';
+}
+$('r-zero').addEventListener('change',()=>{
+  const on=$('r-zero').checked;
+  if(on&&!confirm(L3("À partir de maintenant, chaque parfum à 0 en stock est retiré tout seul des deux sites, et remis en vente dès que son stock revient.\n\nAllumer ?","From now on, every perfume at 0 in stock is taken off both websites automatically, and put back on sale as soon as its stock returns.\n\nTurn on?","A partir de ahora, cada perfume con 0 en stock se retira solo de las dos webs, y vuelve a la venta en cuanto vuelve su stock.\n\n¿Encender?"))){ $('r-zero').checked=false; return; }
+  const avant=REG.retraitZero===true;
+  REG.retraitZero=on; sauve();
+  logReg('retraitZero','retrait automatique des parfums à 0 en stock',avant?'allumé':'éteint',on?'allumé':'éteint');
+  peintZero();
+});
+try{ peintZero(); }catch(e){}
 
 /* ---- les frais de carte Lightspeed (25 oct. 2026) : 2,6 % par défaut, sur la part carte des ventes de la caisse ---- */
 { const el=$('r-cartels'); if(el){ const lu=()=>{ const v=REG.carteLS; return (v==null||v===''||isNaN(+v))?2.6:+v; }; el.value=lu();

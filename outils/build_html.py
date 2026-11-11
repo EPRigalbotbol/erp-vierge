@@ -2496,7 +2496,8 @@ function melRange(id,cote,l,p){
 document.addEventListener('click',async e=>{ const b=e.target.closest&&e.target.closest('[data-pcpub]'); if(!b) return;
   const p=(typeof FICHE!=='undefined'&&FICHE&&cur[FICHE.pos])||null; if(!p||!melOk()) return;
   const qpc=qtePCde(p);
-  if(!confirm('Mettre « '+((p.marque||'')+' '+(p.nom||'')).trim()+' » en vente chez Perfume City, avec '+nf(qpc)+' en stock (son inventaire) ?'+(!(qpc>0)?'\n\n'+avertZero(true):''))) return;
+  if(!(qpc>0)){ alert(refusZero(true)); return; }
+  if(!confirm('Mettre « '+((p.marque||'')+' '+(p.nom||'')).trim()+' » en vente chez Perfume City, avec '+nf(qpc)+' en stock (son inventaire) ?')) return;
   if(!demandeUser(false,'mettre un produit en vente chez Perfume City',()=>{})) return;
   b.disabled=true; b.textContent='Envoi…';
   const dit=(t,cls)=>{ const d=$('dst'); if(d){ d.textContent=t; d.className='st'+(cls?' '+cls:''); } };
@@ -2511,13 +2512,14 @@ document.addEventListener('click',async e=>{ const b=e.target.closest&&e.target.
     else dit('En vente et visible chez Perfume City, stock '+j.stock+(j.canaux?' ('+j.canaux+' canal/canaux)':'')+'.','ok');
   }catch(err){ b.disabled=false; b.textContent='Mettre en vente'; dit('Pas mis en vente : '+((err&&err.message)||''),''); }
 });
-/* stock à zéro : on prévient, on ne refuse plus (Igal, 11 nov. 2026) */
-function avertZero(pc){
-  const A=pc?L3('le stock de Perfume City',"Perfume City's stock",'el stock de Perfume City'):L3('ton stock','your stock','tu stock'),
-    W=pc?L3("dans l'Inventaire Perfume City",'in the Perfume City inventory','en el inventario de Perfume City'):L3("sur la fiche ou dans l'Inventaire",'on the sheet or in the Inventory','en la ficha o en el Inventario');
-  return L3(`⚠ ATTENTION : ${A} est à zéro. Tu vas mettre en vente un produit sans stock (affiché « épuisé »).\n\nAs-tu reçu de la marchandise ? Si oui, mets le vrai stock ${W}.`,
-    `⚠ CAREFUL: ${A} is zero. You are putting on sale a product with no stock (shown “sold out”).\n\nHave you received goods? If so, enter the real stock ${W}.`,
-    `⚠ ATENCIÓN: ${A} está a cero. Vas a poner en venta un producto sin stock (mostrado «agotado»).\n\n¿Has recibido mercancía? Si es así, pon el stock real ${W}.`);
+/* stock à zéro : on ne met pas en ligne (Igal, 11 nov. 2026 : avec le retrait automatique, il serait retiré aussitôt) */
+function refusZero(pc){
+  return pc?L3("Perfume City n'a pas ce parfum en stock (0) : il n'est pas mis en ligne. Mets d'abord le vrai stock dans l'Inventaire Perfume City (ou fais un transfert), puis « Mettre en ligne ».",
+      "Perfume City has none of this perfume (0): it is not put online. First enter the real stock in the Perfume City inventory (or make a transfer), then “Put online”.",
+      "Perfume City no tiene este perfume (0): no se pone en línea. Pon primero el stock real en el inventario de Perfume City (o haz una transferencia), luego «Poner en línea».")
+    :L3("Ce parfum est à 0 en stock : il n'est pas mis en ligne. Dès que tu auras du stock (fiche ou Inventaire), il sera remis en vente tout seul s'il a été retiré automatiquement ; sinon, clique alors « Mettre en ligne ».",
+      "This perfume is at 0 in stock: it is not put online. As soon as you have stock (sheet or Inventory), it goes back on sale by itself if it was taken off automatically; otherwise click “Put online” then.",
+      "Este perfume está a 0 en stock: no se pone en línea. En cuanto tengas stock (ficha o Inventario), vuelve a la venta solo si se retiró automáticamente; si no, haz clic entonces en «Poner en línea».");
 }
 /* « Mettre en ligne » de la fiche (31 oct. 2026) : créé EN VENTE au prix de la ligne du canal, une validation, résultat à côté du bouton. */
 document.addEventListener('click',async e=>{ const b=e.target.closest&&e.target.closest('[data-mel1]'); if(!b) return;
@@ -2530,7 +2532,8 @@ document.addEventListener('click',async e=>{ const b=e.target.closest&&e.target.
   if(!(v>0)){ out('Pas de prix pour ce site : écris-le dans la case de la ligne, puis recommence.'); return; }
   const perte=p.pa!=null&&v<p.pa;
   const q0=id==='perfumecity'?qtePCde(p):p.qte;
-  if(!confirm((p.marque||'')+' '+(p.nom||'')+'\n\n'+L3('Mettre EN VENTE sur ','Put ON SALE on ','Poner EN VENTA en ')+MEL_CANAL[id].nom+L3(' à ',' at ',' a ')+money2(v)+' ?'+(perte?'\n\n'+L3('Attention : c\'est moins que le prix d\'achat.','Careful: this is less than the purchase price.','Atención: es menos que el precio de compra.'):'')+(!(q0>0)?'\n\n'+avertZero(id==='perfumecity'):''))) return;
+  if(!(q0>0)){ alert(refusZero(id==='perfumecity')); return; }
+  if(!confirm((p.marque||'')+' '+(p.nom||'')+'\n\n'+L3('Mettre EN VENTE sur ','Put ON SALE on ','Poner EN VENTA en ')+MEL_CANAL[id].nom+L3(' à ',' at ',' a ')+money2(v)+' ?'+(perte?'\n\n'+L3('Attention : c\'est moins que le prix d\'achat.','Careful: this is less than the purchase price.','Atención: es menos que el precio de compra.'):''))) return;
   if(!demandeUser(false,'mettre un parfum en ligne',()=>{})) return;
   b.disabled=true; b.textContent='…';
   if(id==='perfumecity'){ try{ const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/shopify/droits',{headers:{Authorization:'Bearer '+ckTok()}}); const j=await r.json(); window.__melPcStock=!!(j&&j.stock); }catch(x){} }
@@ -4500,7 +4503,7 @@ function dessineFiche0(){
            parfum n'est PAS en vente sur ce canal ET que son stock pour ce canal est à 0 (Perfume City : son inventaire ; les sites : le stock de l'ERP) */
         const q0=!((c.id==='perfumecity'?qtePCde(p):p.qte)>0);
         const EN=`<span class="enl">✓ ${L3('En ligne','Online','En línea')}</span>`+(q0?`<span class="z0">${L3('0 en stock','0 in stock','0 en stock')}</span>`:''),
-          HORS=q0?`<span class="hors">${L3('Retiré de la vente : 0 en stock','Off sale: 0 in stock','Retirado de la venta: 0 en stock')}</span>`:`<span class="hors">${L3('Pas en ligne','Not online','No en línea')}</span>`;
+          HORS=q0?`<span class="hors">${L3('Retiré de la vente : 0 en stock','Off sale: 0 in stock','Retirado de la venta: 0 en stock')}${rf&&rf.f&&rf.f.auto?' · '+L3('revient tout seul','comes back by itself','vuelve solo'):''}</span>`:`<span class="hors">${L3('Pas en ligne','Not online','No en línea')}</span>`;
         const RET=`<button class="retv" data-retv="${c.id}">${L3('Retirer de la vente','Take offline','Retirar de la venta')}</button>`, MEL=a=>`<button class="melv" ${a}>${L3('Mettre en ligne','Put online','Poner en línea')}</button>`;
         let st='';
         if(cote) st=fG?EN+(ecr?RET:''):HORS+(ecr?MEL(rf?`data-remet="${c.id}"`:`data-mel1="${c.id}"`):'');
@@ -5013,6 +5016,7 @@ $('ddb').addEventListener('change',e=>{ if(e.target&&e.target.id==='dphf'&&e.tar
 /* « Mettre en ligne » d'une fiche retirée de la vente du site (11 nov. 2026) : elle repasse en vente au prix de la ligne (même chemin que « Remettre en vente ») */
 document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('[data-remet]'); if(!b||!FICHE) return;
   const base=cur[FICHE.pos], cid=b.dataset.remet, rf=base&&retireCote(base,COTE_SITE[cid]); if(!rf) return;
+  if(!(base.qte>0)){ alert(refusZero(false)); return; }
   try{ document.activeElement&&document.activeElement.blur(); }catch(_){}
   FICHE.repForce=Object.assign({},FICHE.repForce,{[base.id+'|'+cid]:true}); dessineFiche(); $('dok').click(); });
 /* « Retirer de la vente » (11 nov. 2026) : le site passe la fiche en brouillon (rien n'est effacé), Perfume City aussi */

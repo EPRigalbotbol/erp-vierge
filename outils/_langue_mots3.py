@@ -1788,3 +1788,17 @@ MOTS3.update({
         ["Propose a price to a customer for perfumes, valid for 30 days. When they ask for a quote, it takes the offer price (if the offer is more recent than their last purchase). An offer sells nothing and takes nothing out of stock.",
          "Proponer un precio a un cliente para perfumes, válido 30 días. Cuando pide una cotización, toma el precio de la oferta (si la oferta es más reciente que su última compra). Una oferta no vende nada y no saca nada del stock."],
 })
+
+# 11 nov. 2026 : Réglages › Retrait automatique à 0 en stock
+MOTS3.update({
+    "Retrait automatique à 0 en stock": ["Automatic removal at 0 in stock", "Retirada automática con 0 en stock"],
+    "Retirer automatiquement des sites les parfums à 0 en stock (et les remettre en vente quand le stock revient)":
+        ["Automatically take perfumes at 0 in stock off the websites (and put them back on sale when stock returns)",
+         "Retirar automáticamente de las webs los perfumes con 0 en stock (y volver a ponerlos en venta cuando vuelve el stock)"],
+    "Coché : un parfum qui tombe à 0 est retiré tout seul de perfumestrade.com et du site de gros (brouillon : plus visible, rien n'est effacé). Dès que son stock remonte — achat, transfert, comptage — il est remis en vente tout seul, au même prix.":
+        ["Ticked: a perfume that drops to 0 is taken off perfumestrade.com and the wholesale site automatically (draft: no longer visible, nothing is deleted). As soon as its stock goes back up — purchase, transfer, count — it is put back on sale automatically, at the same price.",
+         "Marcado: un perfume que baja a 0 se retira solo de perfumestrade.com y de la web mayorista (borrador: ya no se ve, no se borra nada). En cuanto su stock vuelve a subir — compra, transferencia, conteo — vuelve a la venta solo, al mismo precio."],
+    "Un parfum que tu retires toi-même (« Retirer de la vente ») ne revient jamais tout seul. Décoché : plus rien n'est retiré automatiquement — c'est l'arrêt d'urgence. Perfume City (Shopify) n'est pas concerné : un parfum à 0 y reste « épuisé ».":
+        ["A perfume you take offline yourself (“Take offline”) never comes back on its own. Unticked: nothing is taken offline automatically any more — it is the emergency stop. Perfume City (Shopify) is not affected: a perfume at 0 stays “sold out” there.",
+         "Un perfume que retiras tú mismo («Retirar de la venta») nunca vuelve solo. Desmarcado: ya no se retira nada automáticamente — es la parada de emergencia. Perfume City (Shopify) no está afectado: un perfume con 0 sigue «agotado» allí."],
+})

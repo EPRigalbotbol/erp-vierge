@@ -70,6 +70,58 @@ const AN_INFO={
   inconnu:['La boutique n\'a pas noté d\'où venait le client : navigateur qui bloque le suivi, commande trop ancienne, ou commande passée depuis l\'administration du site.','The store did not record where the customer came from: a browser blocking tracking, an order that is too old, or an order placed from the site\'s admin.']};
 const anInfo=k=>{ const t=AN_INFO[k]; return t?`<button type="button" class="ga-i" data-info="${esc(A3(t[0],t[1]))}" aria-label="${esc(A3('Qu\'est-ce que c\'est ?','What is this?'))}">i</button>`:''; };
 const anGr=k=>AN_GR.find(g=>g.k===k)||AN_GR[AN_GR.length-1];
+/* 11 nov. 2026 — Igal : « que toutes les informations sur cette page comportent un petit i » (commandes, chiffre d'affaires,
+   marges, visites, recherches Google, d'où viennent les visites…). Une seule liste ici : chaque intitulé de la page (onglets, titres
+   de carte, cases de chiffres, tableaux) reçoit son « i » après chaque dessin. _test_analytique.py vérifie qu'aucun n'en manque. */
+const AN_AIDE=[
+  [/^Commandes en ligne$|^Online orders$/,'Les commandes passées sur les sites (perfumestrade.com, le site de gros, Perfume City en ligne) pendant la période, remboursements déduits — comptées comme dans Ventes.','Orders placed on the websites (perfumestrade.com, the wholesale site, Perfume City online) during the period, refunds deducted — counted as in Sales.'],
+  [/^Chiffre d'affaires en ligne$|^Online revenue$/,'Ce que les clients en ligne ont payé pour les parfums, hors taxes et hors port, remboursements déduits.','What online customers paid for the perfumes, excluding taxes and shipping, refunds deducted.'],
+  [/^Marge nette en ligne$|^Online net margin$/,'Chiffre d\'affaires − prix d\'achat − commission du site et de la carte − 8 $ d\'envoi par commande. La pub n\'est PAS déduite ici.','Revenue − purchase price − website and card fees − $8 shipping per order. Ads are NOT deducted here.'],
+  [/^Commandes via Google Ads$|^Orders via Google Ads$/,'Les commandes dont la boutique a noté qu\'elles viennent d\'un clic sur une publicité Google payée par Sam.','Orders the store recorded as coming from a click on a Google ad paid for by Sam.'],
+  [/^D'où viennent les commandes$|^Where orders come from$/,'Pour chaque commande en ligne, la boutique note par où le client est arrivé (pub, Google gratuit, email…). Chaque ligne a son propre « i ».','For each online order, the store records how the customer arrived (ads, free Google, email…). Each line has its own “i”.'],
+  [/^Google Ads : est-ce que la pub rapporte \?$|^Google Ads: do the ads pay off\?$/,'La marge des commandes venues de la pub, moins ce que la pub a coûté. Négatif : la pub coûte plus qu\'elle ne rapporte.','The margin of orders that came from the ads, minus what the ads cost. Negative: the ads cost more than they bring.'],
+  [/^Google Shopping gratuit$|^Free Google Shopping$/,'Les fiches produits GRATUITES de Google (onglet Shopping, photos de produits) : clics et affichages, sans rien payer.','Google\'s FREE product listings (Shopping tab, product photos): clicks and views, at no cost.'],
+  [/^Les campagnes Google Ads$|^Google Ads campaigns$/,'Chaque campagne du compte Google Ads, lue toutes les heures par le script posé dans le compte (lecture seule) : état, budget, coût, ventes.','Each campaign in the Google Ads account, read every hour by the script in the account (read only): status, budget, cost, sales.'],
+  [/^La pub, parfum par parfum$|^Ads, perfume by perfume$/,'Pour chaque parfum passé en pub ces 90 jours : ce que Google a dépensé, et la marge qu\'il a vraiment rapportée.','For each perfume advertised over the last 90 days: what Google spent, and the margin it really brought in.'],
+  [/^Stratégie$|^Strategy$/,'Un plan de 3 actions au plus, proposé et vérifié par des agents IA à partir des chiffres de cette page, puis mesuré sur 30 jours après « Activer ».','A plan of up to 3 actions, proposed and checked by AI agents from the figures on this page, then measured over 30 days after “Activate”.'],
+  [/^Journal des actions$|^Action log$/,'Tout ce qui a été fait (ERP, stratégie, Google Ads, repères à la main), à l\'heure de Miami, pour relier un changement à un résultat sur la courbe.','Everything that was done (ERP, strategy, Google Ads, manual notes), in Miami time, to link a change to a result on the chart.'],
+  [/^Les visites du site et les recherches Google$|^Website visits and Google searches$/,'Lu toutes les heures dans Google Analytics et Search Console par le robot en lecture seule. Concerne perfumestrade.com.','Read every hour from Google Analytics and Search Console by the read-only robot. Covers perfumestrade.com.'],
+  [/^Campagnes actives$|^Running campaigns$/,'Les campagnes qui diffusent en ce moment, et la somme de leurs budgets par jour.','Campaigns running right now, and the total of their daily budgets.'],
+  [/^Coût sur 30 jours$|^Cost over 30 days$/,'Ce que Google a facturé pour la pub ces 30 derniers jours.','What Google charged for ads over the last 30 days.'],
+  [/^Résultat estimé, 30 jours$|^Estimated result, 30 days$/,'Les ventes que Google annonce, ramenées au réel, × la marge moyenne des parfums − le coût de la pub. Positif : la pub rapporte.','Sales Google reports, adjusted to reality, × the average perfume margin − the ad cost. Positive: the ads pay off.'],
+  [/^Ventes pour 1 \$ de pub$|^Sales per \$1 of ads$/,'Combien de dollars de ventes chaque dollar de pub a ramenés. Avec la marge de Sam, il faut environ 2,8 pour ne rien perdre.','How many dollars of sales each dollar of ads brought. With Sam\'s margin, about 2.8 is needed just to break even.'],
+  [/^La pub coûte, par commande$|^Ad cost per order$/,'Le coût de la pub divisé par le nombre de commandes venues de la pub.','The ad cost divided by the number of orders that came from the ads.'],
+  [/^Une commande de la pub rapporte$|^An order from the ads earns$/,'La marge nette moyenne d\'une commande venue de la pub, avant de payer la pub.','The average net margin of an order that came from the ads, before paying for the ads.'],
+  [/^Ventes : selon Google \/ réelles$|^Sales: per Google \/ actual$/,'Google s\'attribue souvent plus de ventes qu\'il n\'en fait. À gauche, ce que Google annonce ; à droite, les commandes vraiment venues de la pub dans l\'ERP.','Google often claims more sales than it makes. Left: what Google reports; right: the orders that really came from the ads in the ERP.'],
+  [/^Sur le site en ce moment$|^On the site right now$/,'Les visiteurs actifs sur perfumestrade.com dans les 30 dernières minutes (Google Analytics).','Visitors active on perfumestrade.com in the last 30 minutes (Google Analytics).'],
+  [/^Visites, 30 jours$|^Visits, 30 days$/,'Le nombre de visites du site sur 30 jours. Attention : une partie peut venir de robots (beaucoup de visites « directes » sans achat).','The number of site visits over 30 days. Careful: some may come from bots (many “direct” visits with no purchase).'],
+  [/^Visiteurs qui achètent$|^Visitors who buy$/,'Achats ÷ visites, sur 30 jours. En e-commerce, 1 à 3 % est courant.','Purchases ÷ visits, over 30 days. In e-commerce, 1 to 3% is common.'],
+  [/^Clics gratuits depuis Google$|^Free clicks from Google$/,'Les clics sur les résultats normaux de Google (pas la pub), d\'après Search Console, sur 30 jours.','Clicks on Google\'s regular results (not ads), per Search Console, over 30 days.'],
+  [/^D'où viennent les visites \(30 jours\)$|^Where visits come from \(30 days\)$/,'« google / cpc » = la pub Google payante ; « google / organic » = Google gratuit ; « (direct) / (none) » = adresse tapée, favori… ou robots ; « chatgpt.com » = venu de ChatGPT.','“google / cpc” = paid Google ads; “google / organic” = free Google; “(direct) / (none)” = typed address, bookmark… or bots; “chatgpt.com” = came from ChatGPT.'],
+  [/^Ce que les gens tapent dans Google \(28 jours\)$|^What people type in Google \(28 days\)$/,'Les recherches Google qui ont fait apparaître le site, les clics, et la place moyenne du site (1 = premier résultat).','The Google searches that showed the site, the clicks, and the site\'s average rank (1 = first result).'],
+  [/^Pays des visiteurs \(30 jours\)$|^Visitors' countries \(30 days\)$/,'D\'où viennent les visiteurs du site ; les achats sont ceux que voit Google Analytics.','Where the site\'s visitors come from; purchases are those Google Analytics sees.'],
+  [/^À garder dans la pub$|^Keep in the ads$|^À garder$|^Keep$/,'Les parfums qui rapportent plus que leur pub : on continue.','Perfumes that bring in more than their ads cost: keep going.'],
+  [/^À sortir : perdent de l'argent$|^Take out: losing money$/,'La pub coûte plus que la marge que ces parfums rapportent. Ils restent en vente sur le site.','The ads cost more than the margin these perfumes bring. They stay for sale on the site.'],
+  [/^À sortir : plus en stock$|^Take out: out of stock$/,'Google dépense encore pour des parfums à 0 en stock.','Google still spends on perfumes with 0 in stock.'],
+  [/^À vérifier \(prix manquant dans l'ERP\)$|^To check \(price missing in the ERP\)$/,'Il manque le prix ou le prix d\'achat dans l\'ERP : impossible de trancher.','The price or purchase price is missing in the ERP: no decision possible.'],
+  [/^Ne garder en pub que les |^Keep only the .* winners in the ads$/,'Envoie chez Google la décision de chaque parfum (étiquette custom_label_4). La campagne réglée sur « pt_garder » ne paie plus que pour les gagnants. Rien n\'est supprimé du site.','Sends Google each perfume\'s decision (custom_label_4 label). The campaign set to “pt_garder” only pays for the winners. Nothing is removed from the site.'],
+  [/^Pourquoi$|^Why$/,'La raison de l\'action, appuyée sur un chiffre de cette page.','The reason for the action, backed by a figure on this page.'],
+  [/^Comment$|^How$/,'Les étapes, dans l\'ordre.','The steps, in order.'],
+  [/^Coût$|^Cost$/,'Ce que l\'action coûte (pub, temps, remise).','What the action costs (ads, time, discount).'],
+  [/^Gain attendu$|^Expected gain$/,'Ce que l\'action devrait rapporter en marge, estimé par les agents.','The margin the action should bring, estimated by the agents.'],
+  [/^Ce qu'on mesurera dans un mois$|^What we will measure in a month$/,'Le chiffre qui dira dans 30 jours si l\'action a marché.','The figure that will tell in 30 days whether the action worked.'],
+  [/^Délai$|^Timing$/,'Quand l\'action doit être faite.','When the action should be done.'],
+  [/^À arrêter$|^Stop$/,'Ce que le rapport du mois conseille d\'arrêter.','What the monthly report advises to stop.'],
+  [/^À essayer ensuite$|^Try next$/,'Ce que le rapport du mois conseille d\'essayer ensuite.','What the monthly report advises to try next.'],
+  [/^Objectif du mois$|^Goal for the month$/,'Le but chiffré de la stratégie sur 30 jours.','The strategy\'s figure-based goal over 30 days.']];
+const AN_AIDE_SEL='.ga-tab .ga-tl, .ga-h > h3, .ga-stats > div > span:first-child, .ga-free > b, .vis-t > b, .sel-pub > div > b:first-child, .st-acts > li > p > span, .st-acts > li > div:not(.st-etat):not(.st-ah):not(.st-kv) > span, .st-kv > div > span, .st-obj > span';
+function anAides(z){
+  z.querySelectorAll(AN_AIDE_SEL).forEach(el=>{ if(el.querySelector('.ga-i')) return;
+    const t=el.textContent.replace(/\s+/g,' ').trim(); const a=AN_AIDE.find(x=>x[0].test(t)); if(!a) return;
+    const b=document.createElement('span'); b.className='ga-i'; b.setAttribute('role','button'); b.tabIndex=0; b.dataset.info=A3(a[1],a[2]); b.setAttribute('aria-label',A3('Qu\'est-ce que c\'est ?','What is this?')); b.textContent='i';
+    el.appendChild(document.createTextNode(' ')); el.appendChild(b); });
+}
+
 const anCoul=k=>`var(--an-${anGr(k).c})`;
 const anNomGr=k=>{ const g=anGr(k); return A3(g.fr,g.en); };
 const GOOGLE=new Set(['gshop','gads','google']);
@@ -244,7 +296,7 @@ function anDessine(){
   /* les barres se remplissent */
   if(GA_MOUV&&gaAnime){ z.querySelectorAll('.ga-bf,.ga-pb i').forEach(b=>{ b.style.width='0'; }); requestAnimationFrame(()=>requestAnimationFrame(()=>z.querySelectorAll('.ga-bf,.ga-pb i').forEach(b=>{ b.style.width=''; }))); }
   gaCompte(z);
-  anBranche(); gaAnime=false;
+  anAides(z); anBranche(); gaAnime=false;
 }
 function anBranche(){
   const z=document.getElementById('an'); if(!z) return;
@@ -257,9 +309,9 @@ function anBranche(){
   const xl=document.getElementById('an-xl'); if(xl) xl.onclick=anExportPub;
   anGcBranche();
   if(document.getElementById('pp-liste')){ anPPListe();
-    z.querySelectorAll('[data-ppf]').forEach(b=>b.onclick=()=>{ AN.ppf=b.dataset.ppf; AN.ppn=25; z.querySelectorAll('[data-ppf]').forEach(x=>x.classList.toggle('on',x===b)); anSauve(); anPPListe(); });
-    const t=document.getElementById('pp-tri'); if(t) t.onchange=()=>{ AN.pptri=t.value; AN.ppn=25; anSauve(); anPPListe(); };
-    const q=document.getElementById('pp-q'); if(q) q.oninput=()=>{ AN.ppq=q.value; AN.ppn=25; anPPListe(); }; }
+    z.querySelectorAll('[data-ppf]').forEach(b=>b.onclick=()=>{ AN.ppf=b.dataset.ppf; AN.ppn=8; z.querySelectorAll('[data-ppf]').forEach(x=>x.classList.toggle('on',x===b)); anSauve(); anPPListe(); });
+    const t=document.getElementById('pp-tri'); if(t) t.onchange=()=>{ AN.pptri=t.value; AN.ppn=8; anSauve(); anPPListe(); };
+    const q=document.getElementById('pp-q'); if(q) q.oninput=()=>{ AN.ppq=q.value; AN.ppn=8; anPPListe(); }; }
   clearInterval(window._anChrono); const ch=document.querySelector('.sc-chrono');
   if(ch) window._anChrono=setInterval(()=>{ const el=document.querySelector('.sc-chrono'); if(!el){ clearInterval(window._anChrono); return; } const d=Math.max(0,Math.round((Date.now()-Date.parse(el.dataset.depuis))/1000)); el.textContent=Math.floor(d/60)+':'+String(d%60).padStart(2,'0'); const E=(STRAT||{}).encours, b=document.querySelector('.sc-barre i'); if(E&&b){ const v=anPct(E); b.style.width=v+'%'; b.parentNode.setAttribute('aria-valuenow',v); } },1000);
   const sm=document.getElementById('st-maj'); if(sm) sm.onclick=()=>{ const C=(STRAT||{}).courante, act=C&&C.active&&Date.now()<Date.parse(C.active.fin); if(confirm((act?A3('Attention : la stratégie actuelle est ACTIVE (mesure en cours). Une nouvelle stratégie la remplacera et il faudra l\'activer à nouveau.\n\n','Warning: the current strategy is ACTIVE (measurement in progress). A new strategy will replace it and will need to be activated again.\n\n'):'')+A3('Lancer les agents ? Ils travaillent quelques minutes sur les chiffres de cette page.','Start the agents? They work for a few minutes on the figures of this page.'))) anStratLance('strategie'); };
@@ -474,7 +526,8 @@ function anSelection(A){
 }
 async function anSelEnvoie(){
   const A=window._anXL, m=document.getElementById('sel-msg'); if(!A) return;
-  const L=A.L.filter(o=>o.sku).map(o=>[o.sku,o.dec]);
+  /* [code-barres, décision, gagnant] : « gagnant » sert au cockpit à remettre en pub un ancien gagnant quand son stock revient */
+  const L=A.L.filter(o=>o.sku).map(o=>[o.sku,o.dec,(o.res!=null&&o.res>=0)?1:0]);
   try{ const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/google/etiquettes',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},body:JSON.stringify({L})});
     const j=await r.json().catch(()=>({}));
     if(!r.ok){ if(m) m.textContent=j.erreur||('erreur '+r.status); return; }
@@ -655,21 +708,21 @@ function anParfumsPub(tous){
   h+=anSelection(A);
   h+=`<div class="ga-actions"><button type="button" class="ga-btn sec" id="an-xl">${A3('Télécharger la liste complète (Excel)','Download the full list (Excel)')}</button>
     <span>${A3('Pour la personne qui gère les campagnes Google Ads : une ligne par parfum, avec la décision « garder » / « sortir ».','For whoever runs the Google Ads campaigns: one line per perfume, with the decision “keep” / “take out”.')}</span></div>
-  <div class="ga-expl"><b>${A3('Pourquoi ce tableau ?','Why this table?')}</b>
+  <details class="ga-expl"><summary>${A3('Pourquoi ce tableau ? Que faire ?','Why this table? What to do?')}</summary>
     <p>${A3('Google Ads fait payer Sam à chaque clic sur un parfum, même quand le client n\'achète pas. Ce tableau regarde, parfum par parfum, ce que Google a dépensé ces 90 derniers jours, et ce que ce parfum a vraiment rapporté en marge.','Google Ads charges Sam for every click on a perfume, even when the customer does not buy. This table looks, perfume by perfume, at what Google spent over the last 90 days, and at the margin that perfume really brought in.')}</p>
     <ul><li>${A3('<b>À garder</b> : le parfum rapporte plus que sa pub. On continue.','<b>Keep</b>: the perfume brings in more than its ads cost. Keep going.')}</li>
       <li>${A3('<b>À sortir</b> : la pub coûte plus que ce que le parfum rapporte. On arrête de payer Google pour lui. <b>Il reste en vente sur le site</b> : seulement, Google ne le met plus en avant.','<b>Take out</b>: the ads cost more than the perfume brings in. Stop paying Google for it. <b>It stays for sale on the website</b>: Google just stops promoting it.')}</li>
       <li>${A3('<b>Plus en stock</b> : Google dépense encore pour un parfum qu\'on ne peut pas vendre. À sortir tout de suite.','<b>Out of stock</b>: Google still spends on a perfume we cannot sell. Take it out right away.')}</li>
       <li>${A3('<b>À vérifier</b> : il manque le prix ou le prix d\'achat dans l\'ERP ; on ne peut pas trancher.','<b>To check</b>: the price or purchase price is missing in the ERP, so no decision can be made.')}</li></ul>
     <p><b>${A3('Que faire ?','What to do?')}</b> ${A3('Appuyer sur « Ne garder en pub que les gagnants » : la décision part chez Google (Merchant Center la relit chaque jour), et c\'est noté au journal avec l\'heure. Revenir ici chaque mois et renvoyer : le tableau se met à jour tout seul.','Press “Keep only the winners in the ads”: the decision goes to Google (Merchant Center re-reads it every day), and it is written in the log with the time. Come back every month and send again: the table updates by itself.')}</p>
-    <p class="ga-prud">${A3('C\'est une estimation : quelques ventes peuvent venir d\'un client qui a d\'abord vu un autre parfum en pub. Le plus sûr est d\'essayer 4 semaines, puis de comparer ici.','This is an estimate: a few sales may come from a customer who first saw another perfume in an ad. The safest is to try for 4 weeks, then compare here.')}</p></div>
+    <p class="ga-prud">${A3('C\'est une estimation : quelques ventes peuvent venir d\'un client qui a d\'abord vu un autre parfum en pub. Le plus sûr est d\'essayer 4 semaines, puis de comparer ici.','This is an estimate: a few sales may come from a customer who first saw another perfume in an ad. The safest is to try for 4 weeks, then compare here.')}</p></details>
   <details class="ga-calc"><summary>${A3('Comment c\'est calculé','How it is calculated')}</summary><p class="ga-note">${A3(`Marge d'un flacon = prix du site − commission (${nf(A.com)} % + ${money2(A.fixe)}) − prix d'achat − envoi (${money(A.envoi)}) + port payé en moyenne (${money2(A.port)}). Les ventes que Google attribue à chaque parfum sont ramenées au réel (× ${nf(Math.round(A.k*100))} % : ce que la pub a vraiment vendu, divisé par ce que Google annonce). Estimation, à revoir chaque mois.`,`Margin per bottle = site price − fee (${nf(A.com)} % + ${money2(A.fixe)}) − purchase price − shipping (${money(A.envoi)}) + average shipping paid (${money2(A.port)}). Sales Google credits to each perfume are scaled to reality (× ${nf(Math.round(A.k*100))} %: what the ads really sold, divided by what Google reports). An estimate, to review every month.`)}</p></details></section>`;
   window._anXL=A;
   return h;
 }
 function anPPListe(){
   const A=window._anXL, el=document.getElementById('pp-liste'); if(!A||!el) return;
-  const f=AN.ppf||'tous', tri=AN.pptri||'perte', q=String(AN.ppq||'').trim().toLowerCase(), n=AN.ppn||25;
+  const f=AN.ppf||'tous', tri=AN.pptri||'perte', q=String(AN.ppq||'').trim().toLowerCase(), n=AN.ppn||8;   /* 11 nov. 2026 (Igal : « ça prend trop de place ») : 8 lignes, puis « Voir plus » */
   const res=o=>o.res!=null?o.res:-o.pub;
   let X=A.L.filter(o=>f==='tous'||o.dec===f);
   if(q) X=X.filter(o=>((o.nom||'')+' '+(o.marque||'')+' '+(o.sku||'')).toLowerCase().includes(q));
@@ -679,12 +732,12 @@ function anPPListe(){
   X=X.slice().sort(T);
   const lib={garder:A3('À garder','Keep'),sortir:A3('À sortir','Take out'),stock:A3('Plus en stock','Out of stock'),verif:A3('À vérifier','To check')};
   el.innerHTML=X.length?`<div class="pp-tete"><span>${A3('Parfum','Perfume')}</span><span>${A3('Pub (90 j)','Ads (90 d)')}</span><span>${A3('Ventes Google','Google sales')}</span><span>${A3('Marge rapportée','Margin brought')}</span><span>${A3('Résultat','Result')}</span></div>`
-    +X.slice(0,n).map(o=>`<div class="pp-l"><span class="pp-n"><b data-nolang>${esc(o.nom||o.sku)}</b><small><i class="pp-d ${o.dec}">${lib[o.dec]}</i> <span data-nolang>${esc(o.marque||'')}</span>${o.m!=null?' · '+A3('marge/flacon','margin/bottle')+' '+money(o.m):''}</small></span>
-      <span class="pp-v">${money(o.pub)}</span><span class="pp-v">${money(o.vg)}</span><span class="pp-v">${o.mgE!=null?money(o.mgE):'—'}</span><span class="pp-v ${o.dec==='verif'?'':res(o)<0?'neg':'pos'}">${o.dec==='verif'?'—':money(res(o))}</span></div>`).join('')
+    +`<div class="pp-boite">`+X.slice(0,n).map(o=>`<div class="pp-l"><span class="pp-n"><b data-nolang>${esc(o.nom||o.sku)}</b><small><i class="pp-d ${o.dec}">${lib[o.dec]}</i> <span data-nolang>${esc(o.marque||'')}</span>${o.m!=null?' · '+A3('marge/flacon','margin/bottle')+' '+money(o.m):''}</small></span>
+      <span class="pp-v">${money(o.pub)}</span><span class="pp-v">${money(o.vg)}</span><span class="pp-v">${o.mgE!=null?money(o.mgE):'—'}</span><span class="pp-v ${o.dec==='verif'?'':res(o)<0?'neg':'pos'}">${o.dec==='verif'?'—':money(res(o))}</span></div>`).join('')+`</div>`
     +(X.length>n?`<button type="button" class="ga-btn sec pp-plus" id="pp-plus">${A3(`Voir plus (${nf(X.length-n)} de plus)`,`Show more (${nf(X.length-n)} more)`)}</button>`:'')
     +`<p class="ga-note">${A3(`${nf(X.length)} parfum${X.length>1?'s':''} · total de la pub : ${money(X.reduce((a,o)=>a+o.pub,0))} sur 90 jours`,`${nf(X.length)} perfume${X.length>1?'s':''} · total ad spend: ${money(X.reduce((a,o)=>a+o.pub,0))} over 90 days`)}</p>`
     :`<p class="ga-vide">${A3('Aucun parfum ne correspond.','No perfume matches.')}</p>`;
-  const plus=document.getElementById('pp-plus'); if(plus) plus.onclick=()=>{ AN.ppn=n+50; anPPListe(); };
+  const plus=document.getElementById('pp-plus'); if(plus) plus.onclick=()=>{ AN.ppn=n+25; anPPListe(); };
 }
 function anExportPub(){ const A=window._anXL; if(!A||typeof sortieXlsx!=='function') return;
   const lib={garder:A3('Garder','Keep'),sortir:A3('Sortir de la pub','Take out of ads'),stock:A3('Sortir de la pub (plus en stock)','Take out of ads (out of stock)'),verif:A3('À vérifier','To check')};

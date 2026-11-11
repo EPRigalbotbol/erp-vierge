@@ -115,6 +115,7 @@ try:
         else: check('parfum A trouvé', False, an)
         check('un parfum plus en stock avec de la pub → « sortir (plus en stock) »', Lp.get(B0[0], [0, ''])[1] == 'stock', Lp.get(B0[0]))
         check('un code inconnu de l\'ERP → « à vérifier », jamais une décision inventée', Lp.get('999999999999', [0, ''])[1] == 'verif', Lp.get('999999999999'))
+        check('11 nov. : la carte « parfum par parfum » prend moins de place — l\'explication est repliée, la liste défile dans une boîte', pg.locator('details.ga-expl').count() == 1 and not pg.evaluate("()=>document.querySelector('details.ga-expl').open") and pg.locator('#pp-liste .pp-boite').count() == 1)
         check('la carte dit l\'économie par mois et propose la liste en Excel', pg.locator('#an-xl').count() == 1 and 'par mois en plus pour Sam' in pg.inner_text('#an'), '')
         # la liste complète, filtrable (Igal, 9 nov. : « qu'il puisse filtrer tout ça »)
         nl = pg.locator('#pp-liste .pp-l').count()
@@ -223,6 +224,20 @@ try:
             c3 = pt.evaluate("()=>{ const p=document.querySelector('.side nav a.nv[href^=\"analytique.html\"] .mn-st'); return p?p.className:''; }")
             check(f'{lg} : une fois la page Analytique ouverte, le point vert s\'éteint', c3 == 'mn-st', c3)
             pt.context.close()
+        # 7 ter. 11 nov. 2026 — Igal : « que toutes les informations sur cette page comportent un petit i »
+        SEL = ".ga-tab .ga-tl, .ga-h > h3, .ga-stats > div > span:first-child, .ga-free > b, .vis-t > b, .sel-pub > div > b:first-child, .st-acts > li > p > span, .st-acts > li > div:not(.st-etat):not(.st-ah):not(.st-kv) > span, .st-kv > div > span, .st-obj > span"
+        for lg in ('fr', 'en'):
+            pi = ouvre(lg=lg)
+            pi.evaluate("""d=>{ localStorage.setItem('google-sources-v1',JSON.stringify({maj:new Date().toISOString(),ga:{live:3,jours:{[d]:[10,9,1,50]},sources:[['google / cpc',5,1,50]],pays:[['United States',5,1,50]]},sc:{jours:{[d]:[1,9,4]},requetes:[['perfumes trade',1,9,1.2]]}}));
+              window.dispatchEvent(new CustomEvent('ck-maj',{detail:{cles:['google-sources-v1']}})); }""", (auj - datetime.timedelta(days=1)).isoformat())
+            pi.wait_for_timeout(1400)
+            sans = pi.evaluate("s=>[...document.querySelectorAll(s)].filter(e=>!e.querySelector('.ga-i')).map(e=>e.textContent.trim())", SEL)
+            nb = pi.evaluate("s=>document.querySelectorAll(s).length", SEL)
+            check(f'LE POINT — {lg} : chaque intitulé de la page (onglets, titres, cases de chiffres, tableaux) a son petit « i » ({nb} intitulés)', nb >= 25 and not sans, sans)
+            bi = pi.locator('.ga-tab .ga-i').first; bi.hover(); pi.wait_for_timeout(150)
+            bul = pi.evaluate("()=>{ const t=document.getElementById('ga-info'); return t&&t.style.display==='block'?t.innerText:''; }")
+            check(f'{lg} : au survol du « i » de « Commandes en ligne », la bulle explique', ('remboursements' in bul) if lg == 'fr' else ('refunds' in bul), bul)
+            pi.context.close()
         # 8. 11 nov. 2026 — la sélection pub (« ne garder que les gagnants ») et le journal des actions
         pj = ouvre()
         envoi = []
@@ -232,6 +247,7 @@ try:
         pj.click('#sel-env'); pj.wait_for_timeout(500)
         Lenv = dict((x[0], x[1]) for x in (envoi[0]['L'] if envoi else []))
         check('LE POINT — le bouton envoie au cockpit la décision de CHAQUE parfum (garder / plus en stock / à vérifier)', len(envoi) == 1 and Lenv.get(bc) == 'garder' and Lenv.get(B0[0]) == 'stock' and Lenv.get('999999999999') == 'verif', envoi)
+        check('chaque ligne dit aussi si le parfum était gagnant (pour le remettre en pub quand son stock revient)', envoi and all(len(x) == 3 for x in envoi[0]['L']) and [x for x in envoi[0]['L'] if x[0] == bc][0][2] == 1, envoi[:1])
         check('après l\'envoi : « ✓ Envoyé le … » et le bouton devient « Renvoyer la sélection à jour »', 'Envoyé le' in pj.inner_text('.sel-ok') and 'Renvoyer' in pj.inner_text('#sel-env'), pj.inner_text('.sel-pub'))
         check('après l\'envoi : un bouton copie l\'adresse du flux pour Merchant Center, sans jamais l\'afficher (elle porte un jeton)', pj.locator('#sel-copie').count() == 1 and 'etiquettes.csv' not in pj.inner_text('#an'))
         check('sans journal encore : la page dit que la première action notée sera la sélection pub', 'première action' in pj.inner_text('#jp'))

@@ -194,6 +194,8 @@ GA_CSS = r'''
 .ga-btn:hover{filter:brightness(.95)}
 .ga-expl{margin:16px 0 0;padding:14px 16px;border-radius:12px;background:color-mix(in srgb,var(--an-1) 6%,var(--surface));border:1px solid color-mix(in srgb,var(--an-1) 18%,transparent);font-size:13.5px;line-height:1.55;color:var(--ink-2)}
 .ga-expl>b{display:block;font-size:14.5px;color:var(--ink);margin-bottom:4px}
+.ga-expl>summary{cursor:pointer;font-weight:700;font-size:14px;color:var(--ink)}
+.pp-boite{max-height:430px;overflow-y:auto}
 .ga-expl p{margin:6px 0}.ga-expl ul{margin:6px 0;padding-left:18px}.ga-expl li{margin:3px 0}.ga-expl li b,.ga-expl p b{color:var(--ink)}
 .ga-prud{font-size:12.5px;color:var(--ink-3)}
 .ga-calc{margin:10px 0 0}.ga-calc summary{cursor:pointer;font-size:12.5px;font-weight:600;color:var(--an-1)}

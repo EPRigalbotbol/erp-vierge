@@ -78,6 +78,10 @@ color:var(--iris);line-height:1.4}
 .tri-ligne{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:12.5px;color:var(--ink-3)}
 .tri-ligne select{font-family:inherit;font-size:13px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
 .tri-ligne select.on{border-color:var(--iris);color:var(--iris);font-weight:600}
+.fdiff{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.fdiff button{font-family:inherit;font-size:13px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer}
+.fdiff button b{font-weight:700;margin-left:4px}
+.fdiff button.on{background:var(--iris);border-color:var(--iris);color:#fff}
 .vide{border:2px dashed var(--line);border-radius:11px;padding:30px 28px;text-align:center;
 background:var(--surface-2);max-width:64ch;margin:0 auto}
 .vide p{margin:0;font-size:14px;color:var(--ink-2);line-height:1.65}
@@ -354,8 +358,13 @@ function trieDiff(L){
   const nom=p=>((p.marque||'')+' '+(p.nom||'')).trim();
   return L.slice().sort((a,b)=>k==='nom'?s*nom(a.p).localeCompare(nom(b.p),'fr',{sensitivity:'base'}):(s*((+a.p.qte||0)-(+b.p.qte||0))||cap(b.p)-cap(a.p)));
 }
+/* 11 nov. 2026 (Igal : « un filtre pour repérer tout de suite les sites où ce n'est pas en ligne ») : un bouton par canal — la liste
+   ne garde que les parfums ABSENTS de ce canal. Retenu sur le poste. */
+const K_F_DIFF='tableau-filtre-diff-v1'; let F_DIFF=''; try{ F_DIFF=localStorage.getItem(K_F_DIFF)||''; }catch(e){}
 function blocDiff(){
-  const L=trieDiff(DIFF.L), n=DIFF.n, tot=L.length;
+  if(F_DIFF&&!CAN_DIFF.some(([id])=>id===F_DIFF&&DIFF.OK[id])) F_DIFF='';
+  const TT=trieDiff(DIFF.L), n=DIFF.n, tot=TT.length;
+  const L=F_DIFF?TT.filter(x=>x.st[F_DIFF]==='non'):TT, vus=L.length;
   const lu=CAN_DIFF.filter(([id])=>DIFF.OK[id]);
   let h=`<h2 class="sec">Pas en vente partout <em>en stock, mais absent d'au moins un canal</em>
       <a href="catalogue.html?diff=any">Voir dans le Catalogue</a></h2>`;
@@ -367,6 +376,7 @@ function blocDiff(){
       <p>${CAN_DIFF.map(([id,nom])=>DIFF.OK[id]?`<a href="catalogue.html?diff=${id}" data-nolang><b>${nf(n[id])}</b> ${esc(nom)}</a>`:'').filter(Boolean).join(' · ')}.
       « Mettre en ligne » ouvre la fiche du parfum sur « Mes canaux de vente » : chaque site où il manque a son bouton
       (« Mettre en ligne », ou « Remettre en vente » s'il y est retiré de la vente), avec son prix à côté. La liste se met à jour quand tu fermes la fiche.</p></div>
+    <div class="fdiff" role="group" aria-label="${L3('Filtrer par canal','Filter by channel','Filtrar por canal')}"><button type="button" data-fdiff="" class="${F_DIFF?'':'on'}">${L3('Tous','All','Todos')}<b data-nolang>${nf(tot)}</b></button>${CAN_DIFF.filter(([id])=>DIFF.OK[id]).map(([id,nom])=>`<button type="button" data-fdiff="${id}" class="${F_DIFF===id?'on':''}">${L3('Pas sur','Not on','No en')} <span data-nolang>${esc(nom)}</span><b data-nolang>${nf(n[id])}</b></button>`).join('')}</div>
     <div class="tri-ligne"><label for="tri-diff">Ordre</label><select id="tri-diff" class="${TRI_DIFF?'on':''}">${TRIS_DIFF.map(([v,l])=>`<option value="${v}" ${TRI_DIFF===v?'selected':''}>${l}</option>`).join('')}</select></div>
     <div class="wrapx"><table class="tbl"><thead><tr><th>Référence</th><th class="r">Reste</th><th class="r">Prix d'achat</th>
       ${CAN_DIFF.map(([id,nom])=>`<th class="c" data-nolang>${esc(nom)}</th>`).join('')}<th></th></tr></thead><tbody>
@@ -377,7 +387,7 @@ function blocDiff(){
       ${CAN_DIFF.map(([id])=>`<td class="c">${pz(st[id],p,id)}</td>`).join('')}
       <td class="r"><button class="btn" data-mel="${esc(p.cle)}">Mettre en ligne</button></td></tr>`).join('')}
     </tbody></table></div>
-    ${tot>vusDiff?`<p><button class="btn" id="plusDiff">Afficher plus (${nf(tot-vusDiff)} restants)</button></p>`:''}`;
+    ${vus>vusDiff?`<p><button class="btn" id="plusDiff">Afficher plus (${nf(vus-vusDiff)} restants)</button></p>`:''}`;
   return h;
 }
 let vusDiff=25;
@@ -973,6 +983,7 @@ function dessine(){
   try{ caisseBranche(CAISSES.pc); }catch(e){}
   const b=$('plus'); if(b) b.onclick=()=>{ vus+=25; dessine(); };
   const bd=$('plusDiff'); if(bd) bd.onclick=()=>{ vusDiff+=50; dessine(); };
+  document.querySelectorAll('[data-fdiff]').forEach(b=>b.onclick=()=>{ F_DIFF=b.dataset.fdiff||''; vusDiff=25; try{ F_DIFF?localStorage.setItem(K_F_DIFF,F_DIFF):localStorage.removeItem(K_F_DIFF); }catch(e){} const y=window.scrollY; dessine(); window.scrollTo(0,y); });
   const td=$('tri-diff'); if(td) td.onchange=()=>{ TRI_DIFF=td.value; try{ TRI_DIFF?localStorage.setItem(K_TRI_DIFF,TRI_DIFF):localStorage.removeItem(K_TRI_DIFF); }catch(e){} const y=window.scrollY; dessine(); window.scrollTo(0,y); };
   /* la fiche du Catalogue s'ouvre par-dessus le tableau de bord, la fenêtre « Mettre en ligne » déjà ouverte ; à la fermeture
      le relevé des canaux est relu et la liste redessinée à la même hauteur */

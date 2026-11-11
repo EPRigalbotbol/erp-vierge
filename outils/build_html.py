@@ -2413,7 +2413,7 @@ async function remetEnVente(p,cote,barre,promo){
   }catch(e){ return {ok:false,err:(e&&e.message)||'le cockpit ne répond pas'}; }
 }
 async function lanceMel(sel,res,mode,prog,arret){
-  const T={cree:0,deja:0,refus:0,erreur:0}, pb=[];
+  const T={cree:0,deja:0,refus:0,erreur:0}, pb=[], CR={};   /* CR : par canal, combien en vente (v) et en brouillon (b) */
   for(const id of sel){
     const items=res[id].slice(0,MEL_MAX), cote=COTE_SITE[id];
     for(let i=0;i<items.length;i+=MEL_LOT){
@@ -2436,7 +2436,7 @@ async function lanceMel(sel,res,mode,prog,arret){
       }catch(e){ pb.push(MEL_CANAL[id].nom+' : '+((e&&e.message)||'le cockpit ne répond pas')); T.erreur+=lot.length; if(mode==='publie') lot.forEach(x=>pubNote(x.p,id,(e&&e.message)||'le cockpit ne répond pas')); break; }
       const par=new Map(lot.map(x=>[String(x.p.bc),x]));
       (j.lignes||[]).forEach(l=>{
-        if(l.etat==='brouillon'||l.etat==='en ligne'){ T.cree++; const X=par.get(String(l.bc)); melRange(id,cote,l,X&&X.p); if(l.visible) pb.push((l.nom||l.bc)+' (Perfume City) : en vente mais pas visible — '+l.visible);
+        if(l.etat==='brouillon'||l.etat==='en ligne'){ T.cree++; (CR[id]=CR[id]||{v:0,b:0})[l.etat==='en ligne'&&!l.visible?'v':'b']++; const X=par.get(String(l.bc)); melRange(id,cote,l,X&&X.p); if(l.visible) pb.push((l.nom||l.bc)+' (Perfume City) : en vente mais pas visible — '+l.visible);
           if(mode==='publie'&&X&&X.p){ if(l.etat==='en ligne'&&!l.visible) pubClair(X.p,id);
             else pubNote(X.p,id,l.visible?('en vente mais pas visible sur la boutique : '+l.visible):(id==='perfumecity'&&!window.__melPcStock?"créé en brouillon : le droit de poser le stock (write_inventory) manque":'créé en brouillon, pas en vente')); }
           if(X&&X.saisi){ try{ MOD[X.p.id]=Object.assign({},MOD[X.p.id]||{}); MOD[X.p.id].pc=Object.assign({},MOD[X.p.id].pc,{[id]:X.v}); sauveMOD(); }catch(e){} } }
@@ -2449,9 +2449,24 @@ async function lanceMel(sel,res,mode,prog,arret){
   }
   try{ const J=lit('crm-journal-v1',[]); J.push({t:new Date().toISOString(),u:(typeof NOM_UTIL!=='undefined'&&NOM_UTIL)||'(non renseigné)',act:'site',lib:T.cree+' fiche(s) créée(s) sur '+sel.map(i=>MEL_CANAL[i].nom).join(', ')+(mode==='publie'?' (en ligne)':' (brouillon)'),n:T.cree,impact:0,det:[]}); ecrit('crm-journal-v1',J); }catch(e){}
   try{ majDiff(); }catch(e){}
-  return `<div class="mrep${T.erreur||T.refus?' bad':''}"><b>${nf(T.cree)}</b> fiche(s) créée(s) · ${nf(T.deja)} déjà là · ${nf(T.refus)} refusée(s) · ${nf(T.erreur)} en erreur.`
-    +(T.cree?`<br><small>${mode==='publie'?(window.__melPcStock?'Elles sont en vente.':'Celles des sites perfumestrade.com sont en vente ; chez Perfume City, en brouillon.'):"Elles sont en brouillon : pour les publier sur les sites perfumestrade.com, utilise « Remettre en vente » dans l'onglet « Sans prix sur le site » ; chez Perfume City, publie-les dans Shopify."}</small>`:'')
-    +(pb.length?'<br><small>'+pb.slice(0,8).map(esc).join('<br>')+(pb.length>8?'<br>… et '+(pb.length-8)+' autre(s)':'')+'</small>':'')+'</div>';
+  /* 11 nov. 2026 (Igal : « le message n'est pas clair ») : le compte-rendu dit, canal par canal, ce qui est EN VENTE et ce qui est
+     en brouillon, avec le geste à faire — au lieu d'une phrase générale qui parlait de Perfume City même quand il n'était pas coché. */
+  const nb=(n,s1,sp)=>nf(n)+' '+(n>1?sp:s1);
+  const lignes=[];
+  sel.forEach(id=>{ const c=CR[id]; if(!c) return; const nom=MEL_CANAL[id].nom;
+    if(c.v) lignes.push('✓ '+L3(`En vente sur ${nom} : ${nb(c.v,'parfum','parfums')}.`,`On sale on ${nom}: ${nf(c.v)} perfume${c.v>1?'s':''}.`,`A la venta en ${nom}: ${nf(c.v)} perfume${c.v>1?'s':''}.`));
+    if(c.b) lignes.push(id==='perfumecity'
+      ? L3(`En brouillon chez Perfume City : ${nb(c.b,'parfum','parfums')}. Pour le mettre en vente : ouvre sa fiche, puis « Mettre en ligne » sur la ligne Perfume City.`,
+           `Draft at Perfume City: ${nf(c.b)} perfume${c.b>1?'s':''}. To put it on sale: open its sheet, then “Put online” on the Perfume City line.`,
+           `En borrador en Perfume City: ${nf(c.b)} perfume${c.b>1?'s':''}. Para ponerlo a la venta: abre su ficha y luego «Poner en línea» en la línea Perfume City.`)
+      : L3(`En brouillon sur ${nom} : ${nb(c.b,'parfum','parfums')}. Pour le mettre en vente : ouvre sa fiche, puis « Mettre en ligne » sur la ligne de ce site.`,
+           `Draft on ${nom}: ${nf(c.b)} perfume${c.b>1?'s':''}. To put it on sale: open its sheet, then “Put online” on this site's line.`,
+           `En borrador en ${nom}: ${nf(c.b)} perfume${c.b>1?'s':''}. Para ponerlo a la venta: abre su ficha y luego «Poner en línea» en la línea de este sitio.`)); });
+  if(T.deja) lignes.push(L3(`Déjà sur le site : ${nb(T.deja,'parfum','parfums')} (rien n'a été changé).`,`Already on the site: ${nf(T.deja)} (nothing changed).`,`Ya en el sitio: ${nf(T.deja)} (no se cambió nada).`));
+  if(T.refus||T.erreur) lignes.push('<b>'+L3(`Pas créé : ${nf(T.refus+T.erreur)} — voir pourquoi ci-dessous.`,`Not created: ${nf(T.refus+T.erreur)} — see why below.`,`No creado: ${nf(T.refus+T.erreur)} — ver por qué abajo.`)+'</b>');
+  if(!lignes.length) lignes.push(L3('Rien n\'a été créé.','Nothing was created.','No se creó nada.'));
+  return `<div class="mrep${T.erreur||T.refus?' bad':''}">`+lignes.join('<br>')
+    +(pb.length?'<br><small>'+pb.slice(0,8).map(esc).join('<br>')+(pb.length>8?'<br>… '+L3('et '+(pb.length-8)+' autre(s)','and '+(pb.length-8)+' more','y '+(pb.length-8)+' más')+'</small>':'</small>'):'')+'</div>';
 }
 /* ALERTES « PAS EN LIGNE » (21 oct. 2026) : une mise en vente qui n'aboutit pas sur un canal est notée ici (parfum, canal, raison) ;
    le tableau de bord l'affiche jusqu'à ce que le relevé du canal montre le parfum en vente. */

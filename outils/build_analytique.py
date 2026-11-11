@@ -319,7 +319,11 @@ function anBranche(){
   z.querySelectorAll('[data-stf]').forEach(b=>b.onclick=()=>{ const f=b.dataset.f==='1'; if(!f&&!confirm(A3('Remettre cette action « à faire » ?','Set this action back to “to do”?'))) return; anStratFait(+b.dataset.stf,f); });
   const se=document.getElementById('sel-env'); if(se) se.onclick=()=>{ const A=window._anXL; if(A&&confirm(A3(`Ne garder en pub que les ${A.garder.length} parfums gagnants ?\n\nLes ${A.sortir.length} qui font perdre de l'argent et les ${A.stock.length} plus en stock sortent de la pub payante (ils restent en vente sur le site). C'est noté au journal.`,`Keep only the ${A.garder.length} winning perfumes in the ads?\n\nThe ${A.sortir.length} losing money and the ${A.stock.length} out of stock leave the paid ads (they stay for sale on the website). It is written in the log.`))) anSelEnvoie(); };
   const sc=document.getElementById('sel-copie');
-  if(sc){ const prends=()=>fetch(CK_URL+'/api/o/'+CK_ORG+'/google/etiquettes',{headers:{Authorization:'Bearer '+ckTok()}}).then(r=>r.json()).then(j=>{ if(j&&j.flux) window._anFlux=j.flux; }).catch(()=>{});
+  if(sc){ const prends=()=>fetch(CK_URL+'/api/o/'+CK_ORG+'/google/etiquettes',{headers:{Authorization:'Bearer '+ckTok()}}).then(r=>r.json()).then(j=>{ if(j&&j.flux) window._anFlux=j.flux; if(j&&j.fluxTitres) window._anFluxT=j.fluxTitres; }).catch(()=>{});
+    const st=document.getElementById('sel-titres');
+    if(st) st.onclick=async()=>{ const m=document.getElementById('sel-msg'); if(!window._anFluxT) await prends();
+      try{ await navigator.clipboard.writeText(window._anFluxT||''); if(m) m.textContent=A3('Adresse des titres copiée : colle-la dans une NOUVELLE source complémentaire de Merchant Center.','Titles address copied: paste it into a NEW supplemental source in Merchant Center.'); }
+      catch(e){ if(m) m.textContent=A3('La copie a été refusée par le navigateur : réessaie.','The browser refused the copy: try again.'); } };
     if(!window._anFlux) prends();
     sc.onclick=async()=>{ const m=document.getElementById('sel-msg'); if(!window._anFlux) await prends();
       try{ await navigator.clipboard.writeText(window._anFlux||''); if(m) m.textContent=A3('Adresse copiée : colle-la dans Merchant Center.','Address copied: paste it in Merchant Center.'); }
@@ -521,18 +525,37 @@ function anSelection(A){
     <p>${A3(`${nf(A.sortir.length)} parfums qui font perdre de l'argent et ${nf(A.stock.length)} plus en stock sortent de la pub payante. Ils restent en vente sur le site et dans Google Shopping gratuit.`,`${nf(A.sortir.length)} perfumes losing money and ${nf(A.stock.length)} out of stock leave the paid ads. They stay for sale on the website and in free Google Shopping.`)}</p>`;
   if(E&&E.maj) h+=`<p class="sel-ok">✓ ${A3('Envoyé','Sent')} ${esc(anQuand(E.maj))}${E.par?' · '+esc(E.par):''} — ${nf((E.n||{}).garder||0)} ${A3('gagnants gardés','winners kept')}</p>`;
   /* 11 nov. 2026 : l'adresse du flux (elle porte un jeton) n'est jamais affichée : un bouton la copie, Igal la colle dans Merchant Center */
-  if(E&&E.maj) h+=`<p><button type="button" class="ga-btn sec" id="sel-copie">${A3('Copier l\'adresse pour Merchant Center','Copy the address for Merchant Center')}</button></p>`;
+  if(E&&E.maj) h+=`<p><button type="button" class="ga-btn sec" id="sel-copie">${A3('Copier l\'adresse pour Merchant Center','Copy the address for Merchant Center')}</button> <button type="button" class="ga-btn sec" id="sel-titres">${A3('Copier l\'adresse des titres','Copy the titles address')}</button></p>`;
   return h+`</div><button type="button" class="ga-btn" id="sel-env">${E&&E.maj?A3('Renvoyer la sélection à jour','Send the updated selection'):A3('Ne garder en pub que les gagnants','Keep only the winners in the ads')}</button><span id="sel-msg" class="st-msg"></span></div>`;
+}
+/* LE TITRE GOOGLE SHOPPING (11 nov. 2026, Igal : « vas-y » pour améliorer ce que Google affiche). Le site envoie à Google le titre
+   de la fiche du site (« Lattafa Qaed Al Fursan EDP 3.4 oz ») ; Google Shopping montre ce titre, et c'est lui qui fait cliquer.
+   Pour les gagnants seulement (un test mesurable), l'ERP écrit un titre complet, dans l'ordre que Google recommande :
+   marque · nom · type en toutes lettres · contenance · pour qui — « Lattafa Qaed Al Fursan Eau de Parfum 3.4 oz for Men ».
+   Jamais de texte promotionnel (Google le refuse dans un titre). Un nom qui contient déjà un type ou une contenance n'est pas
+   touché (on ne devine pas) : il garde le titre du site. Le site ne change pas : le titre part par la source complémentaire. */
+const AN_TYPES={EDP:'Eau de Parfum',EDT:'Eau de Toilette',EDC:'Eau de Cologne',P:'Parfum','SET EDP':'Eau de Parfum Gift Set','SET EDT':'Eau de Toilette Gift Set'};
+const AN_GENRES={M:'for Men',W:'for Women',U:'Unisex',K:'for Kids'};
+function anTitreGoogle(f){
+  if(!f) return '';
+  const ty=AN_TYPES[f.ty], ge=AN_GENRES[f.ge], ml=String(f.ml||'').trim();
+  const marque=String(f.marque||'').replace(/\s+/g,' ').trim(), nom=String(f.nom||'').replace(/\s+/g,' ').trim();
+  if(!ty||!marque||!nom||!/^\d+(\.\d+)?$/.test(ml)) return '';
+  if(/\b(edp|edt|edc|eau de|parfum|cologne|oz|ml|set|coffret|gift)\b|\d+(\.\d+)?\s*(oz|ml)\b/i.test(nom)) return '';
+  const tete=nom.toLowerCase().startsWith(marque.toLowerCase())?nom:marque+' '+nom;
+  return [tete,ty,ml+' oz',ge].filter(Boolean).join(' ').slice(0,150);
 }
 async function anSelEnvoie(){
   const A=window._anXL, m=document.getElementById('sel-msg'); if(!A) return;
   /* [code-barres, décision, gagnant] : « gagnant » sert au cockpit à remettre en pub un ancien gagnant quand son stock revient */
-  const L=A.L.filter(o=>o.sku).map(o=>[o.sku,o.dec,(o.res!=null&&o.res>=0)?1:0]);
+  /* 4e colonne (11 nov. 2026) : le titre Google Shopping, seulement pour les gagnants (voir anTitreGoogle) */
+  const F=anFiches();
+  const L=A.L.filter(o=>o.sku).map(o=>{ const r=[o.sku,o.dec,(o.res!=null&&o.res>=0)?1:0]; if(o.dec==='garder'){ const t=anTitreGoogle(F[String(o.sku).replace(/^0+/,'')]); if(t) r.push(t); } return r; });
   try{ const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/google/etiquettes',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},body:JSON.stringify({L})});
     const j=await r.json().catch(()=>({}));
     if(!r.ok){ if(m) m.textContent=j.erreur||('erreur '+r.status); return; }
     const s=session()||{}; try{ localStorage.setItem('gads-etiquettes-v1',JSON.stringify({maj:new Date().toISOString(),par:s.nom||'',n:j.n})); }catch(e){}
-    window._anFlux=j.flux||''; gaAnime=false; anDessine();
+    window._anFlux=j.flux||''; window._anFluxT=j.fluxTitres||''; gaAnime=false; anDessine();
   }catch(e){ if(m) m.textContent=A3('Le cockpit ne répond pas : ','The cockpit is not answering: ')+(e&&e.message||e); }
 }
 /* ============ LE JOURNAL (11 nov. 2026) ============
@@ -660,7 +683,8 @@ function anFiches(){ const M={}; let MOD={}, EXT={q:{}}; try{ MOD=JSON.parse(loc
   try{ const r=JSON.parse(localStorage.getItem('stock-externe-v1')||'null'); if(r&&r.q) EXT=r; }catch(e){}
   Object.entries(IDX).forEach(([cle,v])=>{ const m=MOD[cle]||{}; const bc=String(v[0]||''); if(!bc) return;
     let q=v[4]; if(EXT.q[bc]!=null) q=EXT.q[bc]; if(m.qte!=null) q=m.qte;
-    const f={cle,bc,nom:v[1],marque:v[2],pa:m.pa!=null?+m.pa:(v[3]==null?null:+v[3]),pvr:m.pvr!=null?+m.pvr:(v[6]==null?null:+v[6]),q:+q||0};
+    const f={cle,bc,nom:m.nom||v[1],marque:m.marque||v[2],pa:m.pa!=null?+m.pa:(v[3]==null?null:+v[3]),pvr:m.pvr!=null?+m.pvr:(v[6]==null?null:+v[6]),q:+q||0,
+      ml:String(m.ml!=null?m.ml:(v[11]||'')),ty:String(m.type||v[8]||'').toUpperCase(),ge:String(m.genre||v[9]||'').toUpperCase()};
     String(bc).split(/[^0-9A-Za-z]+/).filter(Boolean).forEach(b=>{ M[b.replace(/^0+/,'')]=f; }); });
   return M; }
 function anAnalysePub(tous){
@@ -780,6 +804,6 @@ majUser();
 
 html = coquille("Analytique", "Analytique",
   "D'où viennent les commandes des sites, et ce que la publicité Google rapporte vraiment. Réservé aux administrateurs de l'ERP.",
-  CSS, CORPS, JS.replace('/*__RECAP__*/', RECAP_JS), donnees=('produits', 'histgros')).replace('__IDX__', 'Object.fromEntries(D_TOUS().map(r=>[r[15],[r[0],r[13],r[2],r[12],r[6],r[8],r[7],r[14],r[4],r[5],r[9]]]))')
+  CSS, CORPS, JS.replace('/*__RECAP__*/', RECAP_JS), donnees=('produits', 'histgros')).replace('__IDX__', 'Object.fromEntries(D_TOUS().map(r=>[r[15],[r[0],r[13],r[2],r[12],r[6],r[8],r[7],r[14],r[4],r[5],r[9],r[3]]]))')
 open('analytique.html', 'w').write(html)
 print('analytique.html', len(html)//1024, 'Ko')

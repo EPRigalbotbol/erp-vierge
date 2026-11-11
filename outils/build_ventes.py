@@ -2920,7 +2920,11 @@ vq().onkeydown=e=>{
   ['v-q','v-q2'].forEach(id=>$(id).addEventListener('focus',()=>vqActive(id))); }
 $('v-ok').onclick=()=>{
   if(!PANIER.length) return;
-  if(!window.__FRAIS_OK) return surStockServeur(()=>{ window.__FRAIS_OK=true; try{ $('v-ok').onclick(); } finally { window.__FRAIS_OK=false; } }, $('v-ok'));
+  /* 10 nov. 2026 (Sam, page Offre : « l'offre ne se save pas et ça ne se ferme pas ») : avant d'enregistrer, le stock est relu sur le
+     serveur, pour ne pas SORTIR des flacons d'une copie périmée. Tant qu'un autre envoi de la page est en route (stock annoncé aux
+     sites, prix…), cette relecture attend — et l'enregistrement était refusé (« le serveur ne répond pas »). Une offre ou une cote
+     ne sort rien du stock : elle n'a pas besoin de cette relecture, elle s'enregistre tout de suite. */
+  if(!window.__FRAIS_OK && $('v-stock').checked) return surStockServeur(()=>{ window.__FRAIS_OK=true; try{ $('v-ok').onclick(); } finally { window.__FRAIS_OK=false; } }, $('v-ok'));
   if(!signe("cette vente",()=>$('v-ok').click())) return;
   _PCI=null;                                      /* l'inventaire Perfume City est relu : un autre onglet a pu le changer */
   const canal=$('v-canal').value, d=$('v-date').value||ajd();

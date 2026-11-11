@@ -44,7 +44,7 @@ GPUB = {'j': {J(2): [50, 300, 20, 1000, 2, 1, 40], J(3): [70, 100, 30, 1200, 1, 
         'p': {'a': J(89), 'b': J(0), 'maj': '2026-11-15T13:00:00Z', 'L': [[bc, 50, 400, 4, 30, 'A', 1], [B0[0], 20, 100, 1, 9, 'B', 2], ['999999999999', 30, 0, 0, 12, 'Inconnu', 3]]}}
 REG = {'comV4': 1, 'canauxV': 3, 'pcCom3': 1, 'canaux': [{'id': 'site', 'nom': 'Site perfumestrade.com', 'com': 3}, {'id': 'sitegros', 'nom': 'Site wholesale.perfumestrade.com', 'com': 3},
        {'id': 'amazon', 'nom': 'Amazon', 'com': 15}, {'id': 'perfumecity', 'nom': 'Perfume City', 'com': 3}], 'envois': {'woocommerce': 0, 'woocommerce-gros': 0, 'shopify-pc': 0}}
-STRAT = {'courante': {'id': 'S1', 'date': '2026-11-01T12:00:00Z', 'faits': [False, True], 'res': {
+STRAT = {'courante': {'id': 'S1', 'date': '2026-11-01T12:00:00Z', 'faits': [None, {'date': '2026-11-03T14:32:00Z', 'par': 'ERP', 'comment': 'vu dans Google Ads : « PMax » active, 30 $ par jour'}], 'res': {
   'fr': {'titre': 'Stratégie de novembre', 'diagnostic': 'La pub coûte plus que la marge.', 'actions': [{'titre': 'Sortir 800 parfums de la pub', 'pourquoi': 'Ils perdent 2 859 $ par mois.', 'comment': ['Télécharger la liste', 'La donner au prestataire'], 'cout': '0 $', 'gain': '+2 859 $ par mois', 'mesure': 'pub/mois : 5 667 $ → 2 100 $', 'delai': 'cette semaine'}, {'titre': 'Emails automatiques', 'pourquoi': 'Email : 1 commande en 30 jours.'}],
          'previsions': {'texte': 'Si la pub baisse…', 'ca': {'prudent': 20000, 'probable': 24000, 'haut': 28000}, 'marge': {'prudent': 1000, 'probable': 2500, 'haut': 4000}}, 'retire': ['Doubler le budget : coûte plus que la marge'], 'manques': ['Search Console']},
   'en': {'titre': 'November strategy', 'diagnostic': 'Ads cost more than the margin.', 'actions': [{'titre': 'Take 800 perfumes out of ads', 'pourquoi': 'They lose $2,859 a month.'}, {'titre': 'Automatic emails'}], 'previsions': {'ca': {'prudent': 20000, 'probable': 24000, 'haut': 28000}}, 'retire': ['Double the budget'], 'manques': ['Search Console']}}},
@@ -137,12 +137,26 @@ try:
         # la stratégie et le rapport du mois
         stx = pg.inner_text('section.st')
         check('LE POINT — la stratégie s\'affiche : titre, diagnostic, actions, prévision en fourchette, et ce que les vérificateurs ont retiré', 'Stratégie de novembre' in stx and 'Sortir 800 parfums de la pub' in stx and 'prudent' in stx.lower() and a(stx, 24000) and pg.locator('section.st details').count() >= 1, stx[:500])
-        check('l\'action déjà faite est cochée et barrée', pg.locator('[data-stf="1"]').is_checked() and 'fait' in (pg.locator('.st-acts > li').nth(1).get_attribute('class') or ''))
+        check('LE POINT — plus aucune case « Fait » à cocher (Igal, 11 nov.) : l\'action constatée par l\'ERP dit « Fait le 3 novembre 2026 à … » et ce qui a été vu', pg.locator('.st-acts input[type=checkbox]').count() == 0 and 'Fait le 3 novembre 2026' in pg.locator('.st-acts > li').nth(1).inner_text() and 'vu dans Google Ads' in pg.locator('.st-acts > li').nth(1).inner_text() and 'fait' in (pg.locator('.st-acts > li').nth(1).get_attribute('class') or ''), pg.locator('.st-acts').inner_text()[:500])
+        check('LE POINT — stratégie pas encore active : le bouton « Activer la stratégie », et l\'action pas faite attend l\'activation (pas de bouton « C\'est fait »)', pg.locator('#st-active').count() == 1 and 'À faire après l\'activation' in pg.locator('.st-acts > li').nth(0).inner_text() and pg.locator('.st-cfait').count() == 0)
+        act = []
+        maint = pg.evaluate("()=>[new Date().toISOString(), new Date(Date.now()+30*86400e3).toISOString()]")   # l'heure de la page (horloge du test)
+        pg.route('**/strategie/active', lambda route: (act.append(1), route.fulfill(status=200, content_type='application/json', body=json.dumps({'ok': True, 'date': maint[0], 'fin': maint[1], 'constatees': 0}))))
+        pg.evaluate("()=>{ window.confirm=()=>true; }")
+        pg.click('#st-active'); pg.wait_for_timeout(500)
+        stA = pg.inner_text('section.st')
+        check('LE POINT — « Activer la stratégie » : le cockpit est appelé, la page dit « Stratégie active le … · mesure jusqu\'au … » et le bouton disparaît', len(act) == 1 and 'Stratégie active le' in stA and 'mesure jusqu' in stA and pg.locator('#st-active').count() == 0, stA[:400])
+        check('LE POINT — résultats depuis l\'activation : jour 1 sur 30, comparés aux mêmes jours juste avant (commandes, CA, marge, pub, marge après pub)', 'jour 1 sur 30' in stA and pg.locator('.st-res tbody tr').count() == 5, stA[-700:])
+        fa = []
+        pg.route('**/strategie/action', lambda route: (fa.append(route.request.post_data_json), route.fulfill(status=200, content_type='application/json', body='{"ok":true}')))
+        check('l\'action « manuelle » a maintenant un bouton « C\'est fait » (une seule)', pg.locator('.st-cfait').count() == 1)
+        pg.click('.st-cfait'); pg.wait_for_timeout(400)
+        check('LE POINT — « C\'est fait » : le cockpit reçoit l\'action, la ligne dit « Fait le <aujourd\'hui> à <heure> · Essai »', fa == [{'i': 0, 'fait': True}] and re.search(r'Fait le \d+ \w+ 2026 à \d\d:\d\d · Essai', pg.locator('.st-acts > li').nth(0).inner_text()) is not None, [fa, pg.locator('.st-acts > li').nth(0).inner_text()[:200]])
         check('LE POINT — le rapport du mois s\'affiche : bilan, verdict par action, avant → après, à garder / à essayer, prudence', 'Rapport de novembre' in stx and 'a marché' in stx and '2 100 $' in stx.replace('\u202f', ' ').replace('\xa0', ' ') and 'TikTok Shop' in stx and 'Un seul mois' in stx, stx[-600:])
         check('les deux boutons : mettre à jour la stratégie, rapport du mois', pg.locator('#st-maj').count() == 1 and pg.locator('#st-rap').count() == 1)
         cal = "e=>{ const S=JSON.parse(localStorage.getItem('strategie-v1')); S.encours=e?{id:'S9',type:'strategie',etape:'trois vérificateurs relisent',depuis:new Date(Date.now()-e*60e3).toISOString(),par:'Igal',err:''}:null; localStorage.setItem('strategie-v1',JSON.stringify(S)); window.dispatchEvent(new CustomEvent('ck-maj',{detail:{cles:['strategie-v1']}})); }"
-        pg.evaluate(cal, 20); pg.wait_for_timeout(400); stx2 = pg.inner_text('section.st')
-        check('LE POINT — une analyse restée 20 minutes sans fin est signalée « arrêtée en route », et le bouton est de nouveau utilisable', "arrêtée en route" in stx2 and 'trois vérificateurs relisent' in stx2 and pg.locator('#st-maj').is_enabled(), stx2[:600])
+        pg.evaluate(cal, 40); pg.wait_for_timeout(400); stx2 = pg.inner_text('section.st')
+        check('LE POINT — une analyse restée 40 minutes sans nouvelle étape est signalée « arrêtée en route », et le bouton est de nouveau utilisable', "arrêtée en route" in stx2 and 'trois vérificateurs relisent' in stx2 and pg.locator('#st-maj').is_enabled(), stx2[:600])
         pg.evaluate(cal, 0); pg.wait_for_timeout(300)
         dos = pg.evaluate("()=>{ const L=rcLignes(); const d=anDossier(L,__an.anCommandes(L)); return {ca:d.trente_derniers_jours.tous_canaux.ca, cmd:d.trente_derniers_jours.sites_en_ligne.commandes, pub:d.trente_derniers_jours.google_ads.pub_depensee, prec:typeof d.trente_jours_d_avant, manq:d.donnees_manquantes.length, pp:typeof d.pub_parfum_par_parfum_90j}; }")
         check('LE POINT — le dossier envoyé aux agents porte les vrais chiffres de la page (30 jours : 1 290 $, 6 commandes en ligne, 120 $ de pub)', dos['ca'] == 1290 and dos['cmd'] == 6 and dos['pub'] == 120 and dos['manq'] == 3 and dos['pp'] == 'object', dos)
@@ -151,12 +165,13 @@ try:
         pg.evaluate("()=>{ window.confirm=()=>true; }")
         pg.click('#st-maj'); pg.wait_for_timeout(600)
         check('le bouton envoie le dossier au cockpit et affiche « en préparation »', len(envoye) == 1 and envoye[0]['type'] == 'strategie' and envoye[0]['dossier']['trente_derniers_jours']['tous_canaux']['ca'] == 1290 and pg.locator('.sc').count() == 1, envoye[:1])
-        check('LE POINT — pendant le travail des agents : une vraie vidéo d\'équipe (quelqu\'un présente des chiffres), l\'étape en cours, le chrono', '/pub/attente/42648.mp4' in (pg.locator('.sc video').get_attribute('src') or '') and pg.locator('.sc-etapes li.on').count() == 1 and pg.locator('.sc-chrono').count() == 1)
+        check('LE POINT — plus de vidéo (Igal, 11 nov.) : une barre de progression, l\'étape en cours, le chrono', pg.locator('.sc video').count() == 0 and pg.locator('.sc-barre i').count() == 1 and pg.locator('.sc-etapes li.on').count() == 1 and pg.locator('.sc-chrono').count() == 1)
         pg.evaluate("()=>{ const S=JSON.parse(localStorage.getItem('strategie-v1')||'{}'); S.encours={type:'strategie',etape:'trois vérificateurs relisent',depuis:new Date().toISOString()}; localStorage.setItem('strategie-v1',JSON.stringify(S)); window.dispatchEvent(new CustomEvent('ck-maj',{detail:{cles:['strategie-v1']}})); }")
         pg.wait_for_timeout(200)
-        check('LE POINT — quand le serveur annonce l\'étape suivante (relève « ck-maj »), la vidéo change toute seule (l\'équipe relit), l\'étape 1 est cochée', '/pub/attente/46680.mp4' in (pg.locator('.sc video').get_attribute('src') or '') and pg.locator('.sc-etapes li.ok').count() == 1)
+        w2 = pg.evaluate("()=>parseFloat(document.querySelector('.sc-barre i').style.width)")
+        check('LE POINT — quand le serveur annonce l\'étape suivante (relève « ck-maj »), la barre passe le tiers et l\'étape 1 est cochée', pg.locator('.sc-etapes li.ok').count() == 1 and 33 <= w2 < 67, w2)
         pg.evaluate("()=>{ STRAT.encours=null; anDessine(); }")
-        check('LE POINT — la stratégie est prête : une poignée de main « Décision prise », puis le résultat', '/pub/attente/30010.mp4' in (pg.locator('.sc video').get_attribute('src') or '') and 'Décision prise' in pg.inner_text('.sc-accord'))
+        check('LE POINT — la stratégie est prête : la barre pleine et « Décision prise », puis le résultat', pg.locator('.sc video').count() == 0 and pg.evaluate("()=>document.querySelector('.sc-fin .sc-barre i').style.width") == '100%' and 'Décision prise' in pg.inner_text('.sc-accord'))
         att = pg.inner_text('.ga-attente') if pg.locator('.ga-attente').count() else ''
         check('LE POINT — « + 2 commandes de la pub payées, pas encore expédiées : 200 $ » (la commande directe n\'y est pas)', '2' in att and a(att, 200) and 'pas encore exp' in att, att)
         check('Google Shopping gratuit : 1 clic, 70 affichages', '1 clic' in pg.inner_text('.ga-free') and '70' in pg.inner_text('.ga-free'), pg.inner_text('.ga-free'))
@@ -208,6 +223,17 @@ try:
             c3 = pt.evaluate("()=>{ const p=document.querySelector('.side nav a.nv[href^=\"analytique.html\"] .mn-st'); return p?p.className:''; }")
             check(f'{lg} : une fois la page Analytique ouverte, le point vert s\'éteint', c3 == 'mn-st', c3)
             pt.context.close()
+        # 7 bis. 11 nov. 2026 : le point bleu bat aussi tant qu'une stratégie est ACTIVE (« connectée »), sur toutes les pages
+        pt = ouvre(page='tableau.html')
+        pt.evaluate("()=>{ const S=JSON.parse(localStorage.getItem('strategie-v1')); S.courante.active={date:new Date().toISOString(),par:'Igal',fin:new Date(Date.now()+30*86400e3).toISOString()}; localStorage.setItem('strategie-v1',JSON.stringify(S)); window.dispatchEvent(new CustomEvent('ck-maj',{detail:{cles:['strategie-v1']}})); }")
+        pt.wait_for_timeout(300)
+        c4 = pt.evaluate("()=>{ const a=document.querySelector('.side nav a.nv[href^=\"analytique.html\"]'); const p=a&&a.querySelector('.mn-st'); return [p?p.className:'', a?a.title:'']; }")
+        check('LE POINT — stratégie active : le point bleu bat à côté d\'« Analytique », sur une autre page, et l\'infobulle dit pourquoi', 'cours' in c4[0] and 'active' in c4[1], c4)
+        pt.evaluate("()=>{ const S=JSON.parse(localStorage.getItem('strategie-v1')); S.courante.active.fin=new Date(Date.now()-60e3).toISOString(); localStorage.setItem('strategie-v1',JSON.stringify(S)); window.dispatchEvent(new CustomEvent('ck-maj',{detail:{cles:['strategie-v1']}})); }")
+        pt.wait_for_timeout(300)
+        c5 = pt.evaluate("()=>{ const p=document.querySelector('.side nav a.nv[href^=\"analytique.html\"] .mn-st'); return p?p.className:''; }")
+        check('après les 30 jours, le point s\'éteint', c5 == 'mn-st', c5)
+        pt.context.close()
         # 6. langues
         for lg in ('en', 'es'):
             pe = ouvre(lg=lg)

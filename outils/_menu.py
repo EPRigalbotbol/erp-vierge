@@ -523,7 +523,10 @@ function mnStrategie(){
   const T=(fr,en,es)=>typeof L3==='function'?L3(fr,en,es):fr;
   let S=null; try{ S=JSON.parse(localStorage.getItem('strategie-v1')||'null'); }catch(e){}
   const E=S&&S.encours, C=S&&S.courante, R=S&&Array.isArray(S.rapports)?S.rapports[0]:null;
-  const enCours=!!(E&&!E.err&&E.depuis&&Date.now()-Date.parse(E.depuis)<15*60e3);
+  const enCours=!!(E&&!E.err&&E.depuis&&Date.now()-Date.parse(E.maj||E.depuis)<30*60e3);
+  /* 11 nov. 2026 (Igal : « le petit point bleu qui clignotait n'est plus là ») : il bat aussi tout le temps qu'une stratégie
+     est ACTIVE (30 jours après « Activer la stratégie ») — l'ERP est branché dessus et constate les actions faites */
+  const active=!!(C&&C.active&&C.active.fin&&Date.now()<Date.parse(C.active.fin));
   /* le dernier résultat : la stratégie ou le rapport le plus récent */
   const der=[C&&{id:C.id,d:C.date,r:0},R&&{id:R.id,d:R.date,r:1}].filter(Boolean).sort((x,y)=>String(y.d).localeCompare(String(x.d)))[0]||null;
   const ici=/analytique\.html/.test(location.pathname);
@@ -531,9 +534,11 @@ function mnStrategie(){
   if(der&&ici){ try{ localStorage.setItem('strategie-vue',der.id); }catch(e){} vu=der.id; }
   if(der&&!vu){ try{ localStorage.setItem('strategie-vue',der.id); }catch(e){} vu=der.id; }   /* première visite : l'ancienne n'est pas « neuve » */
   const neuve=!!(der&&der.id!==vu&&!enCours);
+  const bat=enCours||(active&&!neuve);
   let p=a.querySelector('.mn-st'); if(!p){ p=document.createElement('i'); p.className='mn-st'; p.setAttribute('aria-hidden','true'); a.appendChild(p); }
-  p.className='mn-st'+(enCours?' cours':neuve?' neuve':'');
-  a.title=enCours?T('La stratégie est en préparation — elle continue même si vous changez de page','The strategy is being prepared — it keeps going even if you change page','La estrategia se está preparando — sigue aunque cambie de página')
+  p.className='mn-st'+(bat?' cours':neuve?' neuve':'');
+  a.title=(!enCours&&bat)?T('La stratégie est active : l\'ERP suit les actions et les résultats','The strategy is active: the ERP follows the actions and results','La estrategia está activa: el ERP sigue las acciones y los resultados')
+    :enCours?T('La stratégie est en préparation — elle continue même si vous changez de page','The strategy is being prepared — it keeps going even if you change page','La estrategia se está preparando — sigue aunque cambie de página')
     :neuve?T('Nouvelle stratégie à lire','New strategy to read','Nueva estrategia para leer'):'';
   /* le petit message, une seule fois par résultat, et seulement si on l'a vu tourner depuis cette page */
   if(enCours) window.__mnStCours=E.id;
@@ -561,7 +566,7 @@ window.mnStrategie=mnStrategie;
   const t=()=>{ try{ mnStrategie(); }catch(e){} };
   window.addEventListener('storage',e=>{ if(e.key==='strategie-v1') t(); });
   window.addEventListener('ck-maj',e=>{ try{ if((e.detail&&e.detail.cles||[]).includes('strategie-v1')) t(); }catch(_){} });
-  setInterval(t,30000);   /* le point bleu s'éteint seul après un quart d'heure, même sans nouvelle donnée */
+  setInterval(t,30000);   /* le point bleu s'éteint seul après une demi-heure sans nouvelle étape, même sans nouvelle donnée */
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',t); else setTimeout(t,0);
 })();
 

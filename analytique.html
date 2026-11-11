@@ -598,9 +598,23 @@ font-size:11.5px;color:var(--ink-3);line-height:1.5}
 .st-diag{font-size:14px;line-height:1.55;color:var(--ink-2);margin:0 0 10px}
 .st-acts{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:12px}
 .st-acts li{font-size:13.5px;line-height:1.5;color:var(--ink-2);padding:2px 0}
-.st-acts li.fait .st-ah b{text-decoration:line-through;color:var(--ink-3)}
 .st-ah{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}.st-ah b{font-size:14.5px;color:var(--ink)}
-.st-ok{font-size:12.5px;font-weight:600;color:var(--ink-2);display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.st-acts li.fait .st-ah b{text-decoration:none;color:var(--ink)}
+.st-qui{font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--surface-2,#eef0f3);color:var(--ink-2);margin-left:8px}
+.st-etat{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:4px 0 2px}
+.st-acts .st-etat>span{display:inline;text-transform:none;letter-spacing:0;margin:0;font-size:13px}
+.st-acts .st-etat>.st-fait{font-weight:700;color:#188038}.st-fait small{display:block;font-weight:500;color:var(--ink-3);font-size:12px}
+.st-acts .st-etat>.st-afaire{font-size:12.5px;font-weight:600;color:var(--ink-3)}
+.st-etat .ga-btn{padding:5px 12px;font-size:12.5px}
+.st-annule{background:none;border:0;color:var(--ink-3);text-decoration:underline;font:inherit;font-size:12px;cursor:pointer;padding:0}
+.st-obj{margin:8px 0 10px;font-size:14px;font-weight:600;color:var(--ink)}.st-obj span{display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.st-act{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:6px 0 14px;padding:12px 14px;border:1px dashed #1a73e8;border-radius:12px;font-size:13px;color:var(--ink-2)}
+.st-on{display:flex;align-items:center;gap:9px;margin:6px 0 14px;font-size:13.5px;font-weight:700;color:var(--ink)}
+.st-on i{width:9px;height:9px;border-radius:50%;background:#1a73e8;animation:scLive 1.2s ease-in-out infinite}
+.st-res{margin:16px 0 0;font-size:13.5px}.st-res table{border-collapse:collapse;margin:6px 0;font-variant-numeric:tabular-nums}
+.st-res th,.st-res td{padding:5px 14px 5px 0;text-align:right}.st-res th:first-child,.st-res td:first-child{text-align:left;color:var(--ink-3)}
+.st-res th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.st-up{color:#188038;font-weight:700}.st-down{color:#c5221f;font-weight:700}
 .st-acts p,.st-ra p{margin:4px 0}.st-acts p>span,.st-acts div>span,.st-kv span,.st-l{display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin-top:6px}
 .st-acts ul,.st-kv ul,.st-bloc ul{margin:2px 0;padding-left:18px}
 .st-kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:4px 16px}
@@ -608,29 +622,24 @@ font-size:11.5px;color:var(--ink-3);line-height:1.5}
 .st-prev th,.st-prev td{padding:5px 14px 5px 0;text-align:right}.st-prev th:first-child,.st-prev td:first-child{text-align:left;color:var(--ink-3)}
 .st-prev th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
 .st-ra{padding:8px 0;border-top:1px solid var(--line-2)}.st-v{font-size:12px;font-weight:700;color:var(--an-3)}.st-av{font-variant-numeric:tabular-nums}
-.sc{position:relative;margin:12px 0 4px;border-radius:14px;overflow:hidden;aspect-ratio:16/7;min-height:230px;background:#111;box-shadow:0 8px 26px rgba(0,0,0,.18)}
-.sc-v{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;animation:scZoom 18s ease-in-out infinite alternate}
-@keyframes scZoom{from{transform:scale(1.02)}to{transform:scale(1.10)}}
-.sc-voile{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.45) 0%,rgba(0,0,0,0) 30%,rgba(0,0,0,0) 45%,rgba(0,0,0,.72) 100%)}
-.sc-haut{position:absolute;left:16px;right:16px;top:12px;display:flex;justify-content:space-between;align-items:center;color:#fff;font-size:13px;font-weight:600}
-.sc-live{display:inline-flex;align-items:center;gap:8px;background:rgba(0,0,0,.35);backdrop-filter:blur(6px);padding:6px 12px;border-radius:999px}
-.sc-live i{width:8px;height:8px;border-radius:50%;background:#ff5a4f;animation:scLive 1.4s infinite}
-@keyframes scLive{0%,100%{opacity:1}50%{opacity:.25}}
-.sc-chrono{background:rgba(0,0,0,.35);backdrop-filter:blur(6px);padding:6px 11px;border-radius:999px;font-variant-numeric:tabular-nums}
-.sc-bas{position:absolute;left:16px;right:16px;bottom:12px;color:#fff}
-.sc-dit{position:relative;height:30px;margin-bottom:8px}
-.sc-dit span{position:absolute;left:0;bottom:0;font-size:clamp(15px,2vw,20px);font-weight:600;text-shadow:0 2px 8px rgba(0,0,0,.5);opacity:0;animation:scDit calc(var(--n)*4s) calc(var(--j)*4s) infinite}
-@keyframes scDit{0%{opacity:0;transform:translateY(8px)}6%,28%{opacity:1;transform:none}34%,100%{opacity:0;transform:translateY(-6px)}}
-.sc-etapes{display:flex;gap:6px 18px;flex-wrap:wrap;list-style:none;padding:0;margin:0;counter-reset:e}
-.sc-etapes li{font-size:12.5px;color:rgba(255,255,255,.65);display:inline-flex;align-items:center;gap:7px;counter-increment:e}
-.sc-etapes li::before{content:counter(e);width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:1.5px solid rgba(255,255,255,.6)}
-.sc-etapes li.on{color:#fff;font-weight:700}.sc-etapes li.on::before{background:#fff;color:#111;border-color:#fff;animation:scPulse 1.4s infinite}
-.sc-etapes li.ok{color:rgba(255,255,255,.9)}.sc-etapes li.ok::before{content:"✓";background:#1baf7a;border-color:#1baf7a;color:#fff}
-@keyframes scPulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.6)}100%{box-shadow:0 0 0 9px rgba(255,255,255,0)}}
-.sc-accord{position:absolute;left:0;right:0;bottom:22px;display:flex;justify-content:center;align-items:center;gap:12px;color:#fff;font-size:clamp(17px,2.4vw,24px);font-weight:700;text-shadow:0 2px 10px rgba(0,0,0,.5);animation:scAccord .8s .4s both}
-.sc-accord b{width:40px;height:40px;border-radius:50%;background:#1baf7a;display:inline-flex;align-items:center;justify-content:center;font-size:22px;text-shadow:none}
-@keyframes scAccord{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
-@media(prefers-reduced-motion:reduce){.sc *{animation:none!important}.sc-dit span:first-child{opacity:1}}
+.sc{margin:12px 0 4px;padding:16px 18px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.sc-haut{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:14px;font-weight:700;color:var(--ink)}
+.sc-live{display:inline-flex;align-items:center;gap:9px}
+.sc-live i{width:9px;height:9px;border-radius:50%;background:#1a73e8;animation:scLive 1.2s ease-in-out infinite}
+@keyframes scLive{0%,100%{box-shadow:0 0 0 0 rgba(26,115,232,.55)}50%{box-shadow:0 0 0 6px rgba(26,115,232,0)}}
+.sc-chrono{font-size:13px;font-weight:600;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.sc-barre{height:10px;margin:14px 0 12px;border-radius:99px;background:var(--surface-2,#eef0f3);overflow:hidden}
+.sc-barre i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#1a73e8,#4c8df6);transition:width .9s ease}
+.sc-etapes{display:flex;gap:6px 20px;flex-wrap:wrap;list-style:none;padding:0;margin:0;counter-reset:e}
+.sc-etapes li{font-size:13px;color:var(--ink-3);display:inline-flex;align-items:center;gap:7px;counter-increment:e}
+.sc-etapes li::before{content:counter(e);width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:1.5px solid var(--line)}
+.sc-etapes li.on{color:var(--ink);font-weight:700}.sc-etapes li.on::before{background:#1a73e8;color:#fff;border-color:#1a73e8}
+.sc-etapes li.ok{color:var(--ink)}.sc-etapes li.ok::before{content:"✓";background:#1baf7a;border-color:#1baf7a;color:#fff}
+.sc-note{margin:10px 0 0;font-size:12.5px;color:var(--ink-3)}
+.sc-accord{display:flex;align-items:center;gap:12px;font-size:17px;font-weight:700;color:var(--ink);animation:scAccord .6s both}
+.sc-accord b{width:32px;height:32px;border-radius:50%;background:#1baf7a;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:18px}
+@keyframes scAccord{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.sc *{animation:none!important;transition:none!important}}
 .pp-barre{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin:18px 0 10px}
 .pp-barre .ga-mini button small{font-weight:500;color:var(--ink-3);margin-left:2px}
 .pp-tri{font-size:12.5px;color:var(--ink-3);display:inline-flex;align-items:center;gap:6px}
@@ -700,33 +709,33 @@ font-size:11.5px;color:var(--ink-3);line-height:1.5}
   <div class="logo"><div class="n">Perfumes Trade</div><div class="s">ERP</div></div>
   <nav>
     <div class="navlab">Produits</div>
-    <a class="nv" href="catalogue.html?v=202611102253"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>Catalogue<span class="ct nu" id="ct-catalogue">0</span></a>
-    <a class="nv" href="stock.html?v=202611102253"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg></span>Inventaire<span class="ct nu" id="ct-inventaire">0</span></a>
-    <a class="nv" href="inventaire_pc.html?v=202611102253"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h16l-1-5H5z"/><path d="M5 9v11h14V9"/><path d="M10 20v-5h4v5"/></svg></span>Inventaire Perfume City<span class="ct" id="ct-pcity"></span></a>
-    <a class="nv" href="demandes_pc.html?v=202611102253"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></span>Transfert interstore<span class="ct" id="ct-demandes"></span></a>
+    <a class="nv" href="catalogue.html?v=202611111022"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>Catalogue<span class="ct nu" id="ct-catalogue">0</span></a>
+    <a class="nv" href="stock.html?v=202611111022"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg></span>Inventaire<span class="ct nu" id="ct-inventaire">0</span></a>
+    <a class="nv" href="inventaire_pc.html?v=202611111022"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h16l-1-5H5z"/><path d="M5 9v11h14V9"/><path d="M10 20v-5h4v5"/></svg></span>Inventaire Perfume City<span class="ct" id="ct-pcity"></span></a>
+    <a class="nv" href="demandes_pc.html?v=202611111022"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></span>Transfert interstore<span class="ct" id="ct-demandes"></span></a>
     <div class="navlab">Commerce</div>
-    <a class="nv" href="quotes.html?v=202611102253"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>Cote<span class="ct" id="ct-devis"></span></a>
-    <a class="nv" href="offres.html?v=202611102253"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="8" cy="8" r="1.5"/></svg></span>Offre<span class="ct" id="ct-offre"></span></a>
-    <a class="nv" href="factures.html?v=202611102253"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span>Factures<span class="ct" id="ct-factures"></span></a>
-    <a class="nv" href="ventes.html?v=202611102253"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/></svg></span>Ventes<span class="ct" id="ct-ventes"></span></a>
-    <a class="nv" href="fournisseurs.html?v=202611102253"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></svg></span>Fournisseurs<span class="ct" id="ct-fournisseurs"></span></a>
-    <a class="nv" href="etude.html?v=202611102253"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg></span>Étude de cote<span class="ct" id="ct-étude"></span></a>
-    <a class="nv" href="clients.html?v=202611102253"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></span>Clients<span class="ct nb" id="ct-clients">0</span></a>
-    <a class="nv sub" href="clients.html?v=202611102253#vip" data-id="clients-vip" data-sous="clients.html">Clients VIP</a>
-    <a class="nv" data-pilotage="1" href="connecteurs.html?v=202611102253"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10l-3-3M17 17H7l3 3"/></svg></span>Connecteurs<span class="ct" id="ct-connecteurs"></span></a>
+    <a class="nv" href="quotes.html?v=202611111022"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>Cote<span class="ct" id="ct-devis"></span></a>
+    <a class="nv" href="offres.html?v=202611111022"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="8" cy="8" r="1.5"/></svg></span>Offre<span class="ct" id="ct-offre"></span></a>
+    <a class="nv" href="factures.html?v=202611111022"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span>Factures<span class="ct" id="ct-factures"></span></a>
+    <a class="nv" href="ventes.html?v=202611111022"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/></svg></span>Ventes<span class="ct" id="ct-ventes"></span></a>
+    <a class="nv" href="fournisseurs.html?v=202611111022"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></svg></span>Fournisseurs<span class="ct" id="ct-fournisseurs"></span></a>
+    <a class="nv" href="etude.html?v=202611111022"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg></span>Étude de cote<span class="ct" id="ct-étude"></span></a>
+    <a class="nv" href="clients.html?v=202611111022"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></span>Clients<span class="ct nb" id="ct-clients">0</span></a>
+    <a class="nv sub" href="clients.html?v=202611111022#vip" data-id="clients-vip" data-sous="clients.html">Clients VIP</a>
+    <a class="nv" data-pilotage="1" href="connecteurs.html?v=202611111022"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10l-3-3M17 17H7l3 3"/></svg></span>Connecteurs<span class="ct" id="ct-connecteurs"></span></a>
     <a class="nv" href="#galou" id="gl-btn" data-id="galou" onclick="if(typeof galouOuvre==='function')galouOuvre();return false"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v10H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg></span>Parler à Léa<span class="ct" id="ct-parler"></span></a>
     <div class="navlab" data-pilotage="1">Pilotage</div>
     <a class="nv" href="#support" id="aid-btn" data-id="support" onclick="if(typeof aidOuvre==='function')aidOuvre();return false"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="m9.5 9.5-4-4M14.5 9.5l4-4M14.5 14.5l4 4M9.5 14.5l-4 4"/></svg></span>Support technique<span class="ct" id="ct-support"></span></a>
-    <a class="nv" data-pilotage="1" href="journal.html?v=202611102253"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Journal<span class="ct" id="ct-journal"></span></a>
-    <a class="nv" data-pilotage="1" href="tableau.html?v=202611102253"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/></svg></span>Tableau de bord<span class="ct" id="ct-tableau"></span></a>
-    <a class="nv on" data-pilotage="1" href="analytique.html?v=202611102253"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>Analytique<span class="ct" id="ct-analytique"></span></a>
-    <a class="nv" data-pilotage="1" href="taches.html?v=202611102253"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m8 12 3 3 5-6"/></svg></span>Tâches<span class="ct" id="ct-taches"></span></a>
-    <a class="nv" data-pilotage="1" href="acces.html?v=202611102253"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.3 8 8 9 4.7-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></span>Accès<span class="ct" id="ct-accès"></span></a>
+    <a class="nv" data-pilotage="1" href="journal.html?v=202611111022"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Journal<span class="ct" id="ct-journal"></span></a>
+    <a class="nv" data-pilotage="1" href="tableau.html?v=202611111022"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/></svg></span>Tableau de bord<span class="ct" id="ct-tableau"></span></a>
+    <a class="nv on" data-pilotage="1" href="analytique.html?v=202611111022"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>Analytique<span class="ct" id="ct-analytique"></span></a>
+    <a class="nv" data-pilotage="1" href="taches.html?v=202611111022"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m8 12 3 3 5-6"/></svg></span>Tâches<span class="ct" id="ct-taches"></span></a>
+    <a class="nv" data-pilotage="1" href="acces.html?v=202611111022"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.3 8 8 9 4.7-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></span>Accès<span class="ct" id="ct-accès"></span></a>
     <a class="nv" data-pilotage="1" href="https://app.gusto.com" target="_blank" rel="noopener" title="Ouvre Gusto dans un nouvel onglet"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M14.5 9a2.5 2 0 0 0-2.5-1.5c-1.4 0-2.5.8-2.5 2s1 1.7 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2A2.7 2 0 0 1 9.5 15M12 6v1.5M12 16.5V18"/></svg></span>Paie<span class="ct" id="ct-paie"></span></a>
-    <a class="nv" data-pilotage="1" href="reglages.html?v=202611102253"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg></span>Réglages<span class="ct" id="ct-réglages"></span></a>
+    <a class="nv" data-pilotage="1" href="reglages.html?v=202611111022"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg></span>Réglages<span class="ct" id="ct-réglages"></span></a>
   </nav>
   <div class="sfoot"><div id="sfu" class="sfu"></div><span id="sfoot"></span>
-    <div class="ver" title="Si cette date n'est pas la derni&egrave;re, recharge avec Cmd+Option+R">version du 11/10/2026 à 22h53</div>
+    <div class="ver" title="Si cette date n'est pas la derni&egrave;re, recharge avec Cmd+Option+R">version du 11/11/2026 à 10h22</div>
     <div class="sfline" id="sfline"></div></div>
 </aside>
 <main class="main"><div class="wrap">
@@ -807,7 +816,7 @@ try{
 }catch(e){}
 })();
 </script>
-<script src="donnees/langue.js?v=202611102253"></script>
+<script src="donnees/langue.js?v=202611111022"></script>
 <script>
 /* le menu réglé et la langue de l'écran, AVANT le code de la page : rien ne saute, rien n'est vu dans une autre langue */
 
@@ -1349,7 +1358,10 @@ function mnStrategie(){
   const T=(fr,en,es)=>typeof L3==='function'?L3(fr,en,es):fr;
   let S=null; try{ S=JSON.parse(localStorage.getItem('strategie-v1')||'null'); }catch(e){}
   const E=S&&S.encours, C=S&&S.courante, R=S&&Array.isArray(S.rapports)?S.rapports[0]:null;
-  const enCours=!!(E&&!E.err&&E.depuis&&Date.now()-Date.parse(E.depuis)<15*60e3);
+  const enCours=!!(E&&!E.err&&E.depuis&&Date.now()-Date.parse(E.maj||E.depuis)<30*60e3);
+  /* 11 nov. 2026 (Igal : « le petit point bleu qui clignotait n'est plus là ») : il bat aussi tout le temps qu'une stratégie
+     est ACTIVE (30 jours après « Activer la stratégie ») — l'ERP est branché dessus et constate les actions faites */
+  const active=!!(C&&C.active&&C.active.fin&&Date.now()<Date.parse(C.active.fin));
   /* le dernier résultat : la stratégie ou le rapport le plus récent */
   const der=[C&&{id:C.id,d:C.date,r:0},R&&{id:R.id,d:R.date,r:1}].filter(Boolean).sort((x,y)=>String(y.d).localeCompare(String(x.d)))[0]||null;
   const ici=/analytique\.html/.test(location.pathname);
@@ -1357,9 +1369,11 @@ function mnStrategie(){
   if(der&&ici){ try{ localStorage.setItem('strategie-vue',der.id); }catch(e){} vu=der.id; }
   if(der&&!vu){ try{ localStorage.setItem('strategie-vue',der.id); }catch(e){} vu=der.id; }   /* première visite : l'ancienne n'est pas « neuve » */
   const neuve=!!(der&&der.id!==vu&&!enCours);
+  const bat=enCours||(active&&!neuve);
   let p=a.querySelector('.mn-st'); if(!p){ p=document.createElement('i'); p.className='mn-st'; p.setAttribute('aria-hidden','true'); a.appendChild(p); }
-  p.className='mn-st'+(enCours?' cours':neuve?' neuve':'');
-  a.title=enCours?T('La stratégie est en préparation — elle continue même si vous changez de page','The strategy is being prepared — it keeps going even if you change page','La estrategia se está preparando — sigue aunque cambie de página')
+  p.className='mn-st'+(bat?' cours':neuve?' neuve':'');
+  a.title=(!enCours&&bat)?T('La stratégie est active : l\'ERP suit les actions et les résultats','The strategy is active: the ERP follows the actions and results','La estrategia está activa: el ERP sigue las acciones y los resultados')
+    :enCours?T('La stratégie est en préparation — elle continue même si vous changez de page','The strategy is being prepared — it keeps going even if you change page','La estrategia se está preparando — sigue aunque cambie de página')
     :neuve?T('Nouvelle stratégie à lire','New strategy to read','Nueva estrategia para leer'):'';
   /* le petit message, une seule fois par résultat, et seulement si on l'a vu tourner depuis cette page */
   if(enCours) window.__mnStCours=E.id;
@@ -1387,7 +1401,7 @@ window.mnStrategie=mnStrategie;
   const t=()=>{ try{ mnStrategie(); }catch(e){} };
   window.addEventListener('storage',e=>{ if(e.key==='strategie-v1') t(); });
   window.addEventListener('ck-maj',e=>{ try{ if((e.detail&&e.detail.cles||[]).includes('strategie-v1')) t(); }catch(_){} });
-  setInterval(t,30000);   /* le point bleu s'éteint seul après un quart d'heure, même sans nouvelle donnée */
+  setInterval(t,30000);   /* le point bleu s'éteint seul après une demi-heure sans nouvelle étape, même sans nouvelle donnée */
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',t); else setTimeout(t,0);
 })();
 
@@ -1772,7 +1786,7 @@ const LG_FR_PARCOURS=!/catalogue|stock|inventaire/.test(location.pathname);
 })();
 
 </script>
-<script src="donnees/produits.js?v=202611102253"></script><script src="donnees/histgros.js?v=202611102253"></script>
+<script src="donnees/produits.js?v=202611111022"></script><script src="donnees/histgros.js?v=202611111022"></script>
 <script>
 if (typeof window.D_PROD==='undefined') {
   /* Le code de la page est lancé plus tard par l'amorce (voir _serveur.py) : ce drapeau
@@ -1794,7 +1808,7 @@ if (typeof window.D_PROD==='undefined') {
 }
 </script>
 <script type="text/plain" id="page-js">
-const VER_URL='202611102253';
+const VER_URL='202611111022';
 const $=i=>document.getElementById(i);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const nf=v=>Number(v||0).toLocaleString('fr-FR');
@@ -6535,10 +6549,11 @@ function anBranche(){
     const t=document.getElementById('pp-tri'); if(t) t.onchange=()=>{ AN.pptri=t.value; AN.ppn=25; anSauve(); anPPListe(); };
     const q=document.getElementById('pp-q'); if(q) q.oninput=()=>{ AN.ppq=q.value; AN.ppn=25; anPPListe(); }; }
   clearInterval(window._anChrono); const ch=document.querySelector('.sc-chrono');
-  if(ch) window._anChrono=setInterval(()=>{ const el=document.querySelector('.sc-chrono'); if(!el){ clearInterval(window._anChrono); return; } const d=Math.max(0,Math.round((Date.now()-Date.parse(el.dataset.depuis))/1000)); el.textContent=Math.floor(d/60)+':'+String(d%60).padStart(2,'0'); },1000);
-  const sm=document.getElementById('st-maj'); if(sm) sm.onclick=()=>{ if(confirm(A3('Lancer les agents ? Ils travaillent une à trois minutes sur les chiffres de cette page.','Start the agents? They work for one to three minutes on the figures of this page.'))) anStratLance('strategie'); };
+  if(ch) window._anChrono=setInterval(()=>{ const el=document.querySelector('.sc-chrono'); if(!el){ clearInterval(window._anChrono); return; } const d=Math.max(0,Math.round((Date.now()-Date.parse(el.dataset.depuis))/1000)); el.textContent=Math.floor(d/60)+':'+String(d%60).padStart(2,'0'); const E=(STRAT||{}).encours, b=document.querySelector('.sc-barre i'); if(E&&b){ const v=anPct(E); b.style.width=v+'%'; b.parentNode.setAttribute('aria-valuenow',v); } },1000);
+  const sm=document.getElementById('st-maj'); if(sm) sm.onclick=()=>{ const C=(STRAT||{}).courante, act=C&&C.active&&Date.now()<Date.parse(C.active.fin); if(confirm((act?A3('Attention : la stratégie actuelle est ACTIVE (mesure en cours). Une nouvelle stratégie la remplacera et il faudra l\'activer à nouveau.\n\n','Warning: the current strategy is ACTIVE (measurement in progress). A new strategy will replace it and will need to be activated again.\n\n'):'')+A3('Lancer les agents ? Ils travaillent quelques minutes sur les chiffres de cette page.','Start the agents? They work for a few minutes on the figures of this page.'))) anStratLance('strategie'); };
   const sr=document.getElementById('st-rap'); if(sr) sr.onclick=()=>{ if(confirm(A3('Préparer le rapport du mois ? Les agents comparent les chiffres du jour de la stratégie à ceux d\'aujourd\'hui.','Prepare the monthly report? The agents compare the figures from the day of the strategy with today\'s.'))) anStratLance('rapport'); };
-  z.querySelectorAll('[data-stf]').forEach(c=>c.onchange=()=>{ anStratFait(+c.dataset.stf,c.checked); c.closest('li').classList.toggle('fait',c.checked); });
+  z.querySelectorAll('[data-stf]').forEach(b=>b.onclick=()=>{ const f=b.dataset.f==='1'; if(!f&&!confirm(A3('Remettre cette action « à faire » ?','Set this action back to “to do”?'))) return; anStratFait(+b.dataset.stf,f); });
+  const sa=document.getElementById('st-active'); if(sa) sa.onclick=()=>{ if(confirm(A3('Activer la stratégie ? Les 30 jours de mesure commencent maintenant.','Activate the strategy? The 30-day measurement starts now.'))) anStratActive(); };
   const re=()=>{ gaAnime=true; anSauve(); anDessine(); };
   z.querySelectorAll('[data-an]').forEach(b=>b.onclick=()=>{ AN.sel=b.dataset.an; re(); });
   z.querySelectorAll('[data-ans]').forEach(b=>b.onclick=()=>{ AN.site=b.dataset.ans; re(); });
@@ -6580,34 +6595,33 @@ function anDossier(L,tous){
     outils_en_place:['WooCommerce (perfumestrade.com, wholesale)','Shopify (Perfume City)','Google Ads (campagnes créées par un prestataire, reprises par Sam en novembre 2026 : voir campagnes_google_ads)','Google for WooCommerce (2 837 produits envoyés à Google)','Klaviyo (emails)','WhatsApp (envoi des nouveaux arrivages aux clients favoris)','Amazon','Lightspeed (caisse)'],
     donnees_manquantes:['Search Console non branchée : on ne connaît ni les recherches Google qui mènent au site, ni ses positions','nombre de visiteurs des sites non mesuré : pas de taux de conversion','historique des ventes du site avant octobre 2026 hors de l\'ERP (seulement la pub Google, par mois)'] };
 }
-/* LA SALLE DE RÉUNION (9 nov. 2026). Igal : « une petite animation où on voit des gens discuter, se mettre d'accord, écrire… »,
-   puis « je veux de vrais personnages… une petite vidéo d'une vraie équipe en réunion, le temps que la décision soit prise ».
-   Pendant que les agents travaillent, une vraie vidéo d'équipe passe, et elle CHANGE avec l'étape : quelqu'un présente des
-   chiffres (le stratège propose), l'équipe relit autour de la table (les vérificateurs), on écrit (le rédacteur) ; quand la
-   stratégie est prête, une poignée de main (« décision prise »), puis le résultat. Vidéos libres de droits (Mixkit), servies
-   par le cockpit (/pub/attente). Par-dessus : l'étape, ce que l'agent est en train de faire, et le chrono. */
-const AN_VID={propose:'42648',relit:'46680',ecrit:'4809',accord:'30010',compare:'22961'};
-const anVid=id=>(typeof CK_URL!=='undefined'&&CK_URL?CK_URL:'')+'/pub/attente/'+id+'.mp4';
-function anScene(E){
+/* L'ATTENTE (11 nov. 2026). Igal : « plus de vidéo », une barre de progression à la place. Pendant que les agents travaillent
+   (sur le cockpit, une à dix minutes), on voit : les trois étapes, celle en cours, une barre qui avance, le chrono.
+   La barre : chaque étape vaut un tiers ; à l'intérieur d'une étape elle avance avec le temps écoulé depuis le début de
+   l'étape (E.maj, posé par le cockpit), sans jamais dépasser 90 % de l'étape tant que le serveur n'a pas annoncé la suivante. */
+const AN_DUREE=[240,240,240];   /* durée habituelle d'une étape, en secondes */
+function anPhase(E){
   const rap=E.type==='rapport', e=String(E.etape||'');
-  const ph=rap?(/contr[ôo]leur/i.test(e)?1:/r[ée]dacteur/i.test(e)?2:0):(/v[ée]rificateur/i.test(e)?1:/r[ée]dacteur/i.test(e)?2:0);
-  const vid=rap?[AN_VID.compare,AN_VID.relit,AN_VID.ecrit][ph]:[AN_VID.propose,AN_VID.relit,AN_VID.ecrit][ph];
+  return rap?(/contr[ôo]leur/i.test(e)?1:/r[ée]dacteur/i.test(e)?2:0):(/v[ée]rificateur/i.test(e)?1:/r[ée]dacteur/i.test(e)?2:0);
+}
+function anPct(E){
+  const ph=anPhase(E), t0=Date.parse(E.maj||E.depuis)||Date.now();
+  const dans=Math.min(.9,Math.max(0,(Date.now()-t0)/1000/AN_DUREE[ph]));
+  return Math.round((ph+dans)/3*100);
+}
+function anScene(E){
+  const rap=E.type==='rapport', ph=anPhase(E);
   const etapes=rap?[A3('L\'analyste compare avant / après','The analyst compares before / after'),A3('Le contrôleur vérifie chaque chiffre','The controller checks every figure'),A3('Le rédacteur écrit le rapport','The editor writes the report')]
     :[A3('Le stratège propose','The strategist proposes'),A3('Trois vérificateurs relisent','Three checkers review'),A3('Le rédacteur écrit','The editor writes')];
-  const dits=rap?[[A3('Avant… après… action par action.','Before… after… action by action.'),A3('Qu\'est-ce qui a vraiment marché ?','What really worked?')],[A3('Chaque chiffre est recompté.','Every figure is recounted.'),A3('Pas d\'exagération.','No overstatement.')],[A3('Un rapport clair, en français et en anglais.','A clear report, in French and English.'),A3('Presque fini…','Almost done…')]]
-    :[[A3('Il étudie les chiffres de la page…','Studying the figures on this page…'),A3('3 actions au plus, chacune appuyée sur un chiffre.','Up to 3 actions, each backed by a figure.')],
-      [A3('« Ce chiffre, il sort d\'où ? »','“Where does this figure come from?”'),A3('« Ça rapporte vraiment, après la pub ? »','“Does it really pay, after ads?”'),A3('« Sam peut le faire cette semaine ? »','“Can Sam do it this week?”')],
-      [A3('Il ne garde que ce que les trois ont validé.','Keeping only what all three approved.'),A3('Il écrit en mots simples, en français et en anglais.','Writing in plain words, in French and English.')]];
   const depuis=Math.max(0,Math.round((Date.now()-Date.parse(E.depuis))/1000));
-  return `<div class="sc"><video class="sc-v" src="${esc(anVid(vid))}" autoplay muted loop playsinline preload="auto"></video><div class="sc-voile"></div>
-    <div class="sc-haut"><span class="sc-live"><i></i>${rap?A3('Rapport du mois en préparation','Monthly report in progress'):A3('Stratégie en préparation','Strategy in progress')}</span><span data-nolang class="sc-chrono" data-depuis="${esc(E.depuis)}">${Math.floor(depuis/60)}:${String(depuis%60).padStart(2,'0')}</span></div>
-    <div class="sc-bas"><div class="sc-dit">${dits[ph].map((t,j)=>`<span style="--j:${j};--n:${dits[ph].length}">${esc(t)}</span>`).join('')}</div>
-      <ol class="sc-etapes">${etapes.map((t,i)=>`<li class="${i<ph?'ok':i===ph?'on':''}">${esc(t)}</li>`).join('')}</ol></div></div>`;
+  return `<div class="sc"><div class="sc-haut"><span class="sc-live"><i></i>${rap?A3('Rapport du mois en préparation','Monthly report in progress'):A3('Stratégie en préparation','Strategy in progress')}</span><span data-nolang class="sc-chrono" data-depuis="${esc(E.depuis)}">${Math.floor(depuis/60)}:${String(depuis%60).padStart(2,'0')}</span></div>
+    <div class="sc-barre" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${anPct(E)}"><i style="width:${anPct(E)}%"></i></div>
+    <ol class="sc-etapes">${etapes.map((t,i)=>`<li class="${i<ph?'ok':i===ph?'on':''}">${esc(t)}</li>`).join('')}</ol>
+    <p class="sc-note">${A3('Vous pouvez changer de page : l\'analyse continue sur le serveur, le point bleu du menu clignote jusqu\'à la fin.','You can change page: the analysis keeps going on the server, the blue dot in the menu blinks until it ends.')}</p></div>`;
 }
-/* la décision est prise : une poignée de main quelques secondes, puis le résultat */
+/* la décision est prise : la barre pleine quelques secondes, puis le résultat */
 function anSceneFin(rap){
-  return `<div class="sc sc-fin"><video class="sc-v" src="${esc(anVid(AN_VID.accord))}" autoplay muted playsinline preload="auto"></video><div class="sc-voile"></div>
-    <div class="sc-accord"><b>✓</b><span>${rap?A3('Le rapport est prêt','The report is ready'):A3('Décision prise : la stratégie est prête','Decision made: the strategy is ready')}</span></div></div>`;
+  return `<div class="sc sc-fin"><div class="sc-barre"><i style="width:100%"></i></div><div class="sc-accord"><b>✓</b><span>${rap?A3('Le rapport est prêt','The report is ready'):A3('Décision prise : la stratégie est prête','Decision made: the strategy is ready')}</span></div></div>`;
 }
 async function anStratLance(type){
   const st=document.getElementById('st-msg');
@@ -6618,9 +6632,39 @@ async function anStratLance(type){
     STRAT.encours={type,etape:A3('départ','starting'),depuis:new Date().toISOString()}; gaAnime=true; anDessine();
   }catch(e){ if(st) st.textContent=A3('Le cockpit ne répond pas : ','The cockpit is not answering: ')+(e&&e.message||e); }
 }
+/* 11 nov. 2026 : plus de case « Fait » à cocher. L'ERP constate lui-même (Google Ads, réglages) ; seule une action « manuelle »
+   a un bouton « C'est fait », qui note le jour, l'heure et le nom. */
 async function anStratFait(i,fait){
-  try{ await fetch(CK_URL+'/api/o/'+CK_ORG+'/strategie/action',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},body:JSON.stringify({i,fait})});
-    if(STRAT.courante&&STRAT.courante.faits) STRAT.courante.faits[i]=fait; }catch(e){}
+  try{ const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/strategie/action',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},body:JSON.stringify({i,fait})});
+    if(r.ok&&STRAT.courante&&STRAT.courante.faits){ const s=session()||{}; STRAT.courante.faits[i]=fait?{date:new Date().toISOString(),par:s.nom||'',comment:'déclaré fait'}:null; anDessine(); } }catch(e){}
+}
+async function anStratActive(){
+  const st=document.getElementById('st-msg');
+  try{ const r=await fetch(CK_URL+'/api/o/'+CK_ORG+'/strategie/active',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ckTok()},body:'{}'});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok){ if(st) st.textContent=j.erreur||('erreur '+r.status); return; }
+    if(STRAT.courante){ const s=session()||{}; STRAT.courante.active={date:j.date,fin:j.fin,par:s.nom||''}; }
+    gaAnime=true; anDessine();
+  }catch(e){ if(st) st.textContent=A3('Le cockpit ne répond pas : ','The cockpit is not answering: ')+(e&&e.message||e); }
+}
+/* « fait le 12 novembre 2026 à 14:32 » */
+const anQuand=iso=>{ try{ const d=new Date(iso); return A3('le ','on ')+d.toLocaleDateString(A3('fr-FR','en-US'),{day:'numeric',month:'long',year:'numeric'})+A3(' à ',' at ')+d.toLocaleTimeString(A3('fr-FR','en-US'),{hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } };
+/* LES RÉSULTATS DEPUIS L'ACTIVATION (11 nov. 2026, « résultats sur 30 jours ») : les jours écoulés depuis le clic, comparés aux
+   mêmes nombre de jours juste avant — tous les sites, mêmes règles que le haut de la page (commandes payées, retours déduits). */
+function anStratResultats(C,tous){
+  const A=C.active; if(!A) return '';
+  const d0=rcISO(new Date(A.date)), auj=rcISO(new Date());
+  const n=Math.max(1,Math.min(30,Math.round((Date.parse(auj)-Date.parse(d0))/86400e3)+1));
+  const av0=rcISO(new Date(Date.parse(d0+'T12:00:00')-n*86400e3)), av1=rcISO(new Date(Date.parse(d0+'T12:00:00')-86400e3));
+  const ap=anSomme(anDans(tous,d0,auj)), av=anSomme(anDans(tous,av0,av1));
+  const pa=anPub(d0,auj).T, pv=anPub(av0,av1).T;
+  const lig=(lib,a,b,f,bon)=>{ const dv=b?((a-b)/Math.abs(b)*100):null; const cl=dv==null?'':((dv>=0)===bon?'st-up':'st-down');
+    return `<tr><td>${lib}</td><td>${f(b)}</td><td><b>${f(a)}</b></td><td class="${cl}">${dv==null?'—':(dv>=0?'+':'')+Math.round(dv)+' %'}</td></tr>`; };
+  return `<div class="st-res"><b>${A3(`Résultats depuis l'activation — jour ${n} sur 30`,`Results since activation — day ${n} of 30`)}</b>
+    <table><thead><tr><th></th><th>${A3(`${n} jours avant`,`${n} days before`)}</th><th>${A3('Depuis l\'activation','Since activation')}</th><th>${A3('Écart','Change')}</th></tr></thead><tbody>
+    ${lig(A3('Commandes en ligne','Online orders'),ap.n,av.n,nf,true)}${lig(A3('Chiffre d\'affaires en ligne','Online revenue'),ap.ca,av.ca,money,true)}${lig(A3('Marge nette en ligne','Online net margin'),ap.mg,av.mg,money,true)}
+    ${lig(A3('Dépense Google Ads','Google Ads spend'),pa.pub,pv.pub,money,false)}${lig(A3('Marge après pub','Margin after ads'),ap.mg-pa.pub,av.mg-pv.pub,money,true)}</tbody></table>
+    <p class="ga-note">${A3('Les chiffres de chaque jour s\'ajoutent tout seuls jusqu\'au 30e jour ; ensuite, le « Rapport du mois » explique ce qui vient de la stratégie et ce qui vient d\'ailleurs.','Each day\'s figures add up on their own until day 30; then the “Monthly report” explains what comes from the strategy and what comes from elsewhere.')}</p></div>`;
 }
 const anLg=()=>LANG==='fr'?'fr':'en';
 const anDate=s=>{ try{ return new Date(s).toLocaleDateString(A3('fr-FR','en-US'),{day:'numeric',month:'long',year:'numeric'}); }catch(e){ return String(s||'').slice(0,10); } };
@@ -6629,11 +6673,11 @@ function anStrategie(L,tous){
   const S=STRAT||{}, C=S.courante, E=S.encours, R=(S.rapports||[])[0];
   let h=`<section class="ga-card ga-pad st"><div class="ga-h"><h3>${A3('Stratégie','Strategy')}</h3><span class="ga-src">${A3('proposée et vérifiée par cinq agents','proposed and checked by five agents')}</span></div>`;
   h+=`<p class="st-com">${A3('Un stratège propose 3 actions au plus, appuyées sur les chiffres de cette page. Trois vérificateurs indépendants les relisent — les chiffres, la marge, la faisabilité — et une action refusée par un seul d\'entre eux est retirée. Un rédacteur écrit la version finale. Au bout d\'un mois, le « Rapport du mois » compare avant / après, action par action.','A strategist proposes up to 3 actions, based on the figures on this page. Three independent checkers review them — the figures, the margin, the feasibility — and an action refused by any one of them is dropped. An editor writes the final version. After a month, the “Monthly report” compares before / after, action by action.')}</p>`;
-  const enCours=E&&!E.err&&(Date.now()-Date.parse(E.depuis))<15*60e3;
+  const enCours=E&&!E.err&&(Date.now()-Date.parse(E.maj||E.depuis))<30*60e3;
   if(enCours){ h+=anScene(E); window._anEnCours=E.type; }
   else if(window._anEnCours&&!(E&&E.err)){ const t=window._anEnCours; window._anEnCours=null; window._anFin=Date.now(); window._anFinType=t; setTimeout(()=>{ gaAnime=true; anDessine(); },6500); }
   if(!enCours&&window._anFin&&Date.now()-window._anFin<6000) h+=anSceneFin(window._anFinType==='rapport');
-  /* 9 nov. 2026 : une analyse restée plus d'un quart d'heure sans fin ni erreur (cockpit redémarré, modèle muet) : on le dit, au lieu de rien */
+  /* 9 nov. 2026 : une analyse restée plus d'une demi-heure sans nouvelle étape, ni fin ni erreur (cockpit redémarré, modèle muet) : on le dit, au lieu de rien */
   if(!enCours&&E&&!E.err&&E.depuis) h+=`<div class="an-alerte">${A3(`L'analyse lancée à ${new Date(E.depuis).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})} s'est arrêtée en route (étape : « ${esc(E.etape||'')} »). Relancez-la avec le bouton ci-dessous.`,`The analysis started at ${new Date(E.depuis).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})} stopped on the way. Start it again with the button below.`)}</div>`;
   if(!enCours&&E&&E.err) h+=`<div class="an-alerte">${A3('La dernière analyse n\'a pas abouti : ','The last analysis did not finish: ')}<span data-nolang>${esc(E.err)}</span></div>`;
   const age=C?Math.floor((Date.now()-Date.parse(C.date))/86400e3):0;
@@ -6642,9 +6686,17 @@ function anStrategie(L,tous){
     +`<span id="st-msg" class="st-msg"></span></div>`;
   if(C&&C.res){ const X=C.res[anLg()]||C.res.fr||{};
     h+=`<div class="st-bloc"><div class="st-t">${esc(X.titre||A3('Stratégie','Strategy'))} <small>${A3('du','of')} ${esc(anDate(C.date))}</small></div>${X.diagnostic?`<p class="st-diag">${esc(X.diagnostic)}</p>`:''}
-      <ol class="st-acts">${(X.actions||[]).map((a,i)=>`<li class="${(C.faits||[])[i]?'fait':''}"><div class="st-ah"><b>${esc(a.titre||'')}</b><label class="st-ok"><input type="checkbox" data-stf="${i}" ${(C.faits||[])[i]?'checked':''}> ${A3('Fait','Done')}</label></div>
+      ${X.objectif?`<p class="st-obj"><span>${A3('Objectif du mois','Goal for the month')}</span>${esc(X.objectif)}</p>`:''}
+      ${C.active?`<p class="st-on"><i></i>${A3('Stratégie active','Strategy active')} ${esc(anQuand(C.active.date))} · ${A3('mesure jusqu\'au','measured until')} ${esc(anDate(C.active.fin))}</p>`
+        :`<div class="st-act"><button type="button" class="ga-btn" id="st-active" ${enCours?'disabled':''}>${A3('Activer la stratégie','Activate the strategy')}</button><span>${A3('Le clic ouvre les 30 jours de mesure. Ensuite l\'ERP note seul chaque action faite, avec le jour et l\'heure.','The click opens the 30-day measurement. Then the ERP records each action done by itself, with the day and time.')}</span></div>`}
+      <ol class="st-acts">${(X.actions||[]).map((a,i)=>{ const f=(C.faits||[])[i], fa=(C.res.fr&&C.res.fr.actions||[])[i]||a, v=(fa.verif||{}).type||'manuel', qui=fa.qui||a.qui||'';
+        const etat=f?`<span class="st-fait">✓ ${A3('Fait','Done')} ${f.date?esc(anQuand(f.date)):''}${f.par&&f.par!=='ERP'?' · '+esc(f.par):''}${f.comment&&f.par==='ERP'?`<small data-nolang>${esc(f.comment)}</small>`:''}</span>${f.par!=='ERP'&&C.active?`<button type="button" class="st-annule" data-stf="${i}" data-f="0">${A3('annuler','undo')}</button>`:''}`
+          :!C.active?`<span class="st-afaire">${A3('À faire après l\'activation','To do after activation')}</span>`
+          :v==='manuel'?`<span class="st-afaire">${A3('À faire','To do')}</span><button type="button" class="ga-btn sec st-cfait" data-stf="${i}" data-f="1">${A3('C\'est fait','It\'s done')}</button>`
+          :`<span class="st-afaire">${v==='campagne'?A3('À faire — l\'ERP le verra seul dans Google Ads','To do — the ERP will see it in Google Ads by itself'):A3('À faire — l\'ERP le verra seul dans les Réglages','To do — the ERP will see it in Settings by itself')}</span>`;
+        return `<li class="${f?'fait':''}"><div class="st-ah"><b>${esc(a.titre||'')}</b>${qui?`<span class="st-qui" data-nolang>${esc(qui)}</span>`:''}</div><div class="st-etat">${etat}</div>
         ${a.pourquoi?`<p><span>${A3('Pourquoi','Why')}</span>${esc(a.pourquoi)}</p>`:''}${(a.comment||[]).length?`<div><span>${A3('Comment','How')}</span>${anLi(a.comment)}</div>`:''}
-        <div class="st-kv">${a.cout?`<div><span>${A3('Coût','Cost')}</span>${esc(a.cout)}</div>`:''}${a.gain?`<div><span>${A3('Gain attendu','Expected gain')}</span>${esc(a.gain)}</div>`:''}${a.mesure?`<div><span>${A3('Ce qu\'on mesurera dans un mois','What we will measure in a month')}</span>${esc(a.mesure)}</div>`:''}${a.delai?`<div><span>${A3('Délai','Timing')}</span>${esc(a.delai)}</div>`:''}</div></li>`).join('')}</ol>`;
+        <div class="st-kv">${a.cout?`<div><span>${A3('Coût','Cost')}</span>${esc(a.cout)}</div>`:''}${a.gain?`<div><span>${A3('Gain attendu','Expected gain')}</span>${esc(a.gain)}</div>`:''}${a.mesure?`<div><span>${A3('Ce qu\'on mesurera dans un mois','What we will measure in a month')}</span>${esc(a.mesure)}</div>`:''}${a.delai?`<div><span>${A3('Délai','Timing')}</span>${esc(a.delai)}</div>`:''}</div></li>`; }).join('')}</ol>${anStratResultats(C,tous)}`;
     const pv=X.previsions||{};
     if(pv.ca||pv.marge) h+=`<div class="st-prev"><b>${A3('Les 30 prochains jours, en fourchette','The next 30 days, as a range')}</b><table><thead><tr><th></th><th>${A3('Prudent','Cautious')}</th><th>${A3('Probable','Likely')}</th><th>${A3('Haut','High')}</th></tr></thead><tbody>
       ${pv.ca?`<tr><td>${A3("Chiffre d'affaires",'Revenue')}</td><td>${money(pv.ca.prudent)}</td><td><b>${money(pv.ca.probable)}</b></td><td>${money(pv.ca.haut)}</td></tr>`:''}${pv.marge?`<tr><td>${A3('Marge après pub','Margin after ads')}</td><td>${money(pv.marge.prudent)}</td><td><b>${money(pv.marge.probable)}</b></td><td>${money(pv.marge.haut)}</td></tr>`:''}</tbody></table>${pv.texte?`<p>${esc(pv.texte)}</p>`:''}</div>`;

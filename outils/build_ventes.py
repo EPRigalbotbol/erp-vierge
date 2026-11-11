@@ -3852,12 +3852,17 @@ if(MODE_QUOTES) setTimeout(()=>{
       return `<div class="cand ${on?'coche':''} ${i===SEL?'sel':''}" data-cle="${esc(cle)}"><input type="checkbox" ${on?'checked':''} tabindex="-1">
         ${vignette(cle)}
         <b>${esc(v[2]||'')} ${esc(v[1]||'')}${tyBadge(cle)}${v[3]?' <span style="font-weight:500;color:var(--ink-2)">'+esc(v[3])+' oz</span>':''}</b>
+        <button type="button" class="vfbtn" data-vfc="${esc(cle)}">${r3('Voir la fiche','See the sheet','Ver la ficha')} ↗</button>
         <span>stock <i>${nf(st)}</i></span></div>`; }).join('')
       +`<div class="cpied"><button type="button" class="btn pri" id="v-cadd" ${COCHES.size?'':'disabled'}>${MODE_OFFRE?r3('Ajouter','Add','Añadir'):'Ajouter'} ${COCHES.size?COCHES.size+' ':''}${MODE_OFFRE?r3('à l\'offre','to the offer','a la oferta'):'au devis'}</button>
         <button type="button" class="btn" id="v-ctous">Tout cocher</button>
         <em>${CANDIDATS.length} parfum${CANDIDATS.length>1?'s':''} trouvé${CANDIDATS.length>1?'s':''} — coche, puis ajoute</em></div>`;
     el.classList.add('on');
     el.querySelectorAll('[data-cle]').forEach(d=>d.onclick=()=>{ const c=d.dataset.cle; if(COCHES.has(c)) COCHES.delete(c); else COCHES.add(c); peintRes(); });
+    /* 11 nov. 2026 (Igal : « quand on choisit un parfum, sur sa ligne, “voir la fiche” ») : la fiche du Catalogue s'ouvre en panneau
+       à droite, sans cocher ni décocher la ligne ; la liste reste telle quelle à la fermeture */
+    el.querySelectorAll('[data-vfc]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); e.preventDefault(); if(typeof ficheFenetre!=='function') return;
+      ficheFenetre(b.dataset.vfc,()=>{ try{ MOD=lit(KMOD,{})||{}; EXT=Object.assign({q:{}},JSON.parse(localStorage.getItem(KEXT)||'{}')); }catch(_){} peintRes(); }); });
     $('v-cadd').onclick=()=>ajouteCoches();
     $('v-ctous').onclick=()=>{ CANDIDATS.forEach(c=>COCHES.add(c)); peintRes(); };
   };

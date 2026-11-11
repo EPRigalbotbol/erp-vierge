@@ -266,6 +266,12 @@ function anBranche(){
   const sr=document.getElementById('st-rap'); if(sr) sr.onclick=()=>{ if(confirm(A3('Préparer le rapport du mois ? Les agents comparent les chiffres du jour de la stratégie à ceux d\'aujourd\'hui.','Prepare the monthly report? The agents compare the figures from the day of the strategy with today\'s.'))) anStratLance('rapport'); };
   z.querySelectorAll('[data-stf]').forEach(b=>b.onclick=()=>{ const f=b.dataset.f==='1'; if(!f&&!confirm(A3('Remettre cette action « à faire » ?','Set this action back to “to do”?'))) return; anStratFait(+b.dataset.stf,f); });
   const se=document.getElementById('sel-env'); if(se) se.onclick=()=>{ const A=window._anXL; if(A&&confirm(A3(`Ne garder en pub que les ${A.garder.length} parfums gagnants ?\n\nLes ${A.sortir.length} qui font perdre de l'argent et les ${A.stock.length} plus en stock sortent de la pub payante (ils restent en vente sur le site). C'est noté au journal.`,`Keep only the ${A.garder.length} winning perfumes in the ads?\n\nThe ${A.sortir.length} losing money and the ${A.stock.length} out of stock leave the paid ads (they stay for sale on the website). It is written in the log.`))) anSelEnvoie(); };
+  const sc=document.getElementById('sel-copie');
+  if(sc){ const prends=()=>fetch(CK_URL+'/api/o/'+CK_ORG+'/google/etiquettes',{headers:{Authorization:'Bearer '+ckTok()}}).then(r=>r.json()).then(j=>{ if(j&&j.flux) window._anFlux=j.flux; }).catch(()=>{});
+    if(!window._anFlux) prends();
+    sc.onclick=async()=>{ const m=document.getElementById('sel-msg'); if(!window._anFlux) await prends();
+      try{ await navigator.clipboard.writeText(window._anFlux||''); if(m) m.textContent=A3('Adresse copiée : colle-la dans Merchant Center.','Address copied: paste it in Merchant Center.'); }
+      catch(e){ if(m) m.textContent=A3('La copie a été refusée par le navigateur : réessaie.','The browser refused the copy: try again.'); } }; }
   const jo=document.getElementById('jp-ok'); if(jo) jo.onclick=anJPAjoute;
   const jq=document.getElementById('jp-quoi'); if(jq) jq.onkeydown=e=>{ if(e.key==='Enter') anJPAjoute(); };
   const jm=document.getElementById('jp-plus'); if(jm) jm.onclick=()=>{ AN.jpn=(AN.jpn||15)+30; gaAnime=false; anDessine(); };
@@ -462,6 +468,8 @@ function anSelection(A){
   let h=`<div class="sel-pub"><div><b>${A3(`Ne garder en pub que les ${nf(A.garder.length)} gagnants`,`Keep only the ${nf(A.garder.length)} winners in the ads`)}</b>
     <p>${A3(`${nf(A.sortir.length)} parfums qui font perdre de l'argent et ${nf(A.stock.length)} plus en stock sortent de la pub payante. Ils restent en vente sur le site et dans Google Shopping gratuit.`,`${nf(A.sortir.length)} perfumes losing money and ${nf(A.stock.length)} out of stock leave the paid ads. They stay for sale on the website and in free Google Shopping.`)}</p>`;
   if(E&&E.maj) h+=`<p class="sel-ok">✓ ${A3('Envoyé','Sent')} ${esc(anQuand(E.maj))}${E.par?' · '+esc(E.par):''} — ${nf((E.n||{}).garder||0)} ${A3('gagnants gardés','winners kept')}</p>`;
+  /* 11 nov. 2026 : l'adresse du flux (elle porte un jeton) n'est jamais affichée : un bouton la copie, Igal la colle dans Merchant Center */
+  if(E&&E.maj) h+=`<p><button type="button" class="ga-btn sec" id="sel-copie">${A3('Copier l\'adresse pour Merchant Center','Copy the address for Merchant Center')}</button></p>`;
   return h+`</div><button type="button" class="ga-btn" id="sel-env">${E&&E.maj?A3('Renvoyer la sélection à jour','Send the updated selection'):A3('Ne garder en pub que les gagnants','Keep only the winners in the ads')}</button><span id="sel-msg" class="st-msg"></span></div>`;
 }
 async function anSelEnvoie(){

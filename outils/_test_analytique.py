@@ -233,6 +233,7 @@ try:
         Lenv = dict((x[0], x[1]) for x in (envoi[0]['L'] if envoi else []))
         check('LE POINT — le bouton envoie au cockpit la décision de CHAQUE parfum (garder / plus en stock / à vérifier)', len(envoi) == 1 and Lenv.get(bc) == 'garder' and Lenv.get(B0[0]) == 'stock' and Lenv.get('999999999999') == 'verif', envoi)
         check('après l\'envoi : « ✓ Envoyé le … » et le bouton devient « Renvoyer la sélection à jour »', 'Envoyé le' in pj.inner_text('.sel-ok') and 'Renvoyer' in pj.inner_text('#sel-env'), pj.inner_text('.sel-pub'))
+        check('après l\'envoi : un bouton copie l\'adresse du flux pour Merchant Center, sans jamais l\'afficher (elle porte un jeton)', pj.locator('#sel-copie').count() == 1 and 'etiquettes.csv' not in pj.inner_text('#an'))
         check('sans journal encore : la page dit que la première action notée sera la sélection pub', 'première action' in pj.inner_text('#jp'))
         hier = (auj - datetime.timedelta(days=1)).isoformat()
         pj.evaluate("""d=>{ localStorage.setItem('journal-pub-v1',JSON.stringify({L:[

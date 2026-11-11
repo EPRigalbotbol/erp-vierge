@@ -283,6 +283,7 @@ border-radius:6px;text-align:right;background:var(--surface)}
 /* 5 nov. 2026 (Igal : « enlève-moi les couleurs, je comprends rien ») : toutes les pastilles de prix ont le même aspect, aucune ne s'allume */
 .pan .puc.on{background:var(--surface);border-color:var(--line);color:var(--ink-2)}
 .pan .puc.dp,.pan .puc.dp.on{background:var(--surface);border-color:var(--line);color:var(--ink-2)}
+.vfbtn{font:600 11px Inter,sans-serif;color:var(--iris);background:var(--iris-soft);border:0;border-radius:6px;padding:2px 7px;margin-left:4px;cursor:pointer;vertical-align:1px}.vfbtn:hover{text-decoration:underline}.vfvig{cursor:pointer;display:inline-block;float:left;margin-right:9px}.vfvig .vig{float:none !important;margin-right:0 !important;display:block}
 .pan b.vfiche{cursor:pointer}.pan b.vfiche:hover{color:var(--iris);text-decoration:underline}
 #v-q2w{margin-top:12px}
 .pan .del:hover{color:var(--crit)}
@@ -2448,6 +2449,12 @@ function puChips(l,i){
     if(of) h+=ch('o',`<span data-nolang>${r3('Offre','Offer','Oferta')} ${esc(of.num)} · ${dfr(of.d)}</span>`,of.p,' dp of',r3('Prix offert à '+nom+' le '+dfr(of.d)+' (offre valable 30 jours)','Price offered to '+nom+' on '+dfr(of.d)+' (offer valid 30 days)','Precio ofrecido a '+nom+' el '+dfr(of.d)+' (oferta válida 30 días)')); }catch(e){}
   return h?`<span class="pucs">${h}</span>`:'';
 }
+/* 11 nov. 2026 (Igal : « sur les lignes de la cote, ouvrir la fiche produit en latéral ») : le nom était déjà cliquable depuis le
+   4 nov., mais rien ne le montrait. Chaque ligne a maintenant un bouton « Ouvrir la fiche », et la photo s'ouvre aussi. */
+function lieFichesPan(){
+  $('v-pan').querySelectorAll('[data-fiche]').forEach(b=>b.onclick=e=>{ if(e) e.preventDefault(); if(typeof ficheFenetre!=='function') return;
+    ficheFenetre(b.dataset.fiche,()=>{ try{ MOD=lit(KMOD,{})||{}; EXT=Object.assign({q:{}},JSON.parse(localStorage.getItem(KEXT)||'{}')); }catch(e){} peintPanier(); }); });
+}
 function peintPanier(){
   const c=canalCour();
   if(!PANIER.length){ $('v-pan').innerHTML='<div class="vide">Aucun parfum. Scanne un code-barres ou tape un nom ci-dessus.</div>';
@@ -2459,7 +2466,7 @@ function peintPanier(){
     const pct=pa!=null&&mt>0?mg/mt*100:null;
     const cls=pct==null?'na':pct<0?'c':pct<(REG.margeMin||10)?'w':'g';
     return `<tr><td class="r" style="color:var(--ink-3);width:34px">${i+1}</td>
-      <td><b class="vfiche" data-fiche="${esc(l.cle)}" title="${r3('Voir la fiche du parfum','See the perfume sheet','Ver la ficha del perfume')}">${esc(v[2]||'')} ${esc(v[1]||'')}${tyBadge(l.cle)}</b><br><span style="font-size:11.5px;color:var(--ink-3)" data-st="${i}">${esc(v[0]||'')} · ${estPC(c.nom)?'stock Perfume City':'stock'} ${nf(st)}${l.q>st?' — <b style="color:var(--crit)">manque '+nf(l.q-st)+'</b>':''}</span></td>
+      <td><b class="vfiche" data-fiche="${esc(l.cle)}" title="${r3('Voir la fiche du parfum','See the perfume sheet','Ver la ficha del perfume')}">${esc(v[2]||'')} ${esc(v[1]||'')}${tyBadge(l.cle)}</b> <button type="button" class="vfbtn" data-fiche="${esc(l.cle)}">${r3('Ouvrir la fiche','Open the sheet','Abrir la ficha')} ↗</button><br><span style="font-size:11.5px;color:var(--ink-3)" data-st="${i}">${esc(v[0]||'')} · ${estPC(c.nom)?'stock Perfume City':'stock'} ${nf(st)}${l.q>st?' — <b style="color:var(--crit)">manque '+nf(l.q-st)+'</b>':''}</span></td>
       <td class="r"><input type="number" min="1" step="1" data-i="${i}" data-f="q" value="${l.q}"></td>
       <td class="r"><input type="number" step="any" data-i="${i}" data-f="p" value="${l.p==null?'':l.p}" placeholder="prix">${puChips(l,i)}</td>
       <td class="r" data-mt="${i}">${money2(mt)}</td>
@@ -2490,8 +2497,7 @@ function peintPanier(){
   $('v-pan').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ PANIER.splice(+b.dataset.del,1); peintPanier(); });
   /* 4 nov. 2026 (Igal) : « de Cote, qu'il puisse cliquer sur le produit et avoir la fiche produit en latéral, comme s'il était
      sur le catalogue » — la fiche du Catalogue elle-même, en panneau à droite ; à sa fermeture, les prix qu'elle a pu changer sont relus */
-  $('v-pan').querySelectorAll('[data-fiche]').forEach(b=>b.onclick=()=>{ if(typeof ficheFenetre!=='function') return;
-    ficheFenetre(b.dataset.fiche,()=>{ try{ MOD=lit(KMOD,{})||{}; EXT=Object.assign({q:{}},JSON.parse(localStorage.getItem(KEXT)||'{}')); }catch(e){} peintPanier(); }); });
+  lieFichesPan();
   $('v-q2w').hidden=PANIER.length<1;   /* 11 nov. 2026 (Igal) : la recherche du bas, dès le premier parfum ajouté */
   $('v-pan').querySelectorAll('[data-pu]').forEach(b=>b.onclick=()=>{
     const i=+b.dataset.pu, l=PANIER[i]; if(!l) return; l.p=+b.dataset.pv; l.pm=true;
@@ -3875,10 +3881,11 @@ if(MODE_QUOTES) setTimeout(()=>{
     th.insertBefore(h2,ths[3]); th.insertBefore(h1,h2);
     t.querySelectorAll('tbody tr').forEach((tr,i)=>{ const l=PANIER[i]; if(!l) return;
       const pa=paEff(l.cle), pg=prixSuggere(l.cle,gros);
-      try{ tr.children[1].insertAdjacentHTML('afterbegin', vignette(l.cle)); }catch(e){}
+      try{ tr.children[1].insertAdjacentHTML('afterbegin', `<span class="vfvig" data-fiche="${esc(l.cle)}" title="${r3('Ouvrir la fiche','Open the sheet','Abrir la ficha')}">${vignette(l.cle)}</span>`); }catch(e){}
       const c1=document.createElement('td'); c1.className='r colref colpa'; c1.textContent=pa!=null?money2(pa):'—';
       const c2=document.createElement('td'); c2.className='r colref'; c2.textContent=pg!=null?money2(pg):'—';
       tr.insertBefore(c2,tr.children[3]); tr.insertBefore(c1,c2); });
+    lieFichesPan();
     const tf=t.querySelector('tfoot tr'); if(tf){ const e1=document.createElement('td'); e1.className='colpa'; tf.insertBefore(document.createElement('td'),tf.children[3]); tf.insertBefore(e1,tf.children[3]); }
   };
   ouvreVente();

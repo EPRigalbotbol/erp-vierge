@@ -197,10 +197,10 @@ function anEtat(){
 function anPubJ(){ let G={}; try{ G=JSON.parse(localStorage.getItem('google-pub-v1')||'{}')||{}; }catch(e){} G=G||{};
   /* 10 nov. 2026 : quand le script posé dans Google Ads envoie ses chiffres (google-ads-v1), ils remplacent ceux de l'extension
      pour la pub payante — toutes les campagnes, pas seulement Performance Max ; les fiches gratuites restent celles de l'extension */
-  const A=anAdsJ(); if(!A||!A.j||!Object.keys(A.j).length) return G;
+  const A=anAdsJ(); if(!A||!A.j||!Object.keys(A.j).length) return G;   /* pas de script posé : tout vient de l'extension du site, relevés heure par heure compris (G.h) */
   const J=Object.assign({},G.j||{});
   Object.keys(A.j).forEach(d=>{ const a=A.j[d]||[], g=J[d]||[]; J[d]=[+a[0]||0,+a[1]||0,+a[2]||0,+a[3]||0,+a[4]||0,+g[5]||0,+g[6]||0]; });
-  const R=Object.assign({},G,{j:J,_err:''}); if(A.p&&Array.isArray(A.p.L)&&A.p.L.length) R.p=A.p; return R; }
+  const R=Object.assign({},G,{j:J,_err:''}); if(A.p&&Array.isArray(A.p.L)&&A.p.L.length) R.p=A.p; if(Array.isArray(A.h)&&A.h.length) R.h=A.h; return R; }
 function anAdsJ(){ try{ const A=JSON.parse(localStorage.getItem('google-ads-v1')||'null'); return (A&&typeof A==='object')?A:null; }catch(e){ return null; } }
 function anPub(a,b){ const G=anPubJ(); const J=G.j||{}; const T={pub:0,ventes:0,clics:0,aff:0,conv:0,gClics:0,gAff:0,jours:0};
   Object.keys(J).forEach(d=>{ if(d<a||d>b) return; const r=J[d]||[]; T.jours++; T.pub+=+r[0]||0; T.ventes+=+r[1]||0; T.clics+=+r[2]||0; T.aff+=+r[3]||0; T.conv+=+r[4]||0; T.gClics+=+r[5]||0; T.gAff+=+r[6]||0; });
@@ -440,7 +440,7 @@ const anQuand=iso=>{ try{ const d=new Date(iso), z='America/New_York'; return A3
      • cinq chiffres en tête de bloc (anCampTuiles) : actions faites, dépensé, clics, commandes de la pub, résultat ;
      • UNE courbe qui part du redémarrage (plus les 14 jours d'avant, qui écrasaient l'échelle) : ce que la pub a coûté et la marge
        des commandes qu'elle a amenées, ADDITIONNÉS depuis le départ. Un point par relevé : le cockpit garde le cumul du jour à
-       chaque envoi du script Google Ads, une fois par heure (google-ads-v1 › h). Les jours d'avant ces relevés : un point par jour ;
+       chaque passage, une fois par heure, quand il a bougé (google-pub-v1 › h). Les jours d'avant ces relevés : un point par jour ;
      • le détail jour par jour, heure par heure, et la moyenne par jour comparée aux 30 jours d'avant — repliés.
    Les heures sont celles de Miami (celles des ventes et de Google Ads).
    Une commande est « de la pub » quand la boutique a noté un clic sur une publicité Google ; elle compte une fois expédiée. */
@@ -466,8 +466,9 @@ function anCampDonnees(C,tous){
   /* la moyenne par jour ne compte que les journées COMPLÈTES : aujourd'hui n'est pas fini */
   const complets=depuis.slice(0,-1), Tc=som(complets), nc=complets.length;
   const camp=(()=>{ try{ const R=anCampCalc(tous); if(!R) return null; return {budget:R.C.filter(c=>c.on).reduce((a,c)=>a+(+c.budget||0),0),seuil:R.seuil}; }catch(e){ return null; } })();
-  /* les relevés heure par heure du cockpit : [heure, jour du compte, coût, ventes, clics, affichages, conv] = le cumul du jour à cette heure */
-  const H=(((anAdsJ()||{}).h)||[]).filter(r=>Array.isArray(r)&&r[1]>=d0&&r[1]<=auj&&Date.parse(r[0])>=t0).sort((a,b)=>a[0]<b[0]?-1:1);
+  /* les relevés heure par heure du cockpit : [heure, jour du compte, coût, ventes, clics, affichages, conv] = le cumul du jour à cette heure.
+     Ils viennent de la même source que les chiffres par jour : l'extension Google du site (google-pub-v1), ou le script Google Ads s'il est posé. */
+  const H=((anPubJ().h)||[]).filter(r=>Array.isArray(r)&&r[1]>=d0&&r[1]<=auj&&Date.parse(r[0])>=t0).sort((a,b)=>a[0]<b[0]?-1:1);
   const HJ={}; H.forEach(r=>{ (HJ[r[1]]=HJ[r[1]]||[]).push(r); });
   /* les points de la courbe : le départ à zéro, puis chaque relevé ; un jour sans relevé (avant le 12 nov. 2026) = un point */
   const pts=[{t:t0,d:d0,pub:0,clics:0,aff:0,mg:0,n:0,g:'dep'}];
@@ -503,13 +504,13 @@ function anCampSuivi(D){
   if(camp&&camp.budget>0&&((nc>=1&&moyPub<camp.budget*0.5)||(nc===0&&T.pub<camp.budget*0.1)))
     h+=`<p class="st-peu">${nc>=1?A3(`La campagne ne dépense pas son budget : ${anM(moyPub)} par jour en moyenne, sur ${anM(camp.budget)} possibles. Google la diffuse peu.`,`The campaign is not spending its budget: ${anM(moyPub)} a day on average, out of ${anM(camp.budget)} possible. Google is showing it little.`):A3(`Premier jour : ${anM(T.pub)} dépensés sur ${anM(camp.budget)} possibles. Google remet la campagne en route ; à revoir demain.`,`First day: ${anM(T.pub)} spent out of ${anM(camp.budget)} possible. Google is restarting the campaign; check again tomorrow.`)}</p>`;
   const sansHeure=D.h0&&anJM(D.h0)>d0;
-  h+=`<div class="ga-plot ga-plot2" id="st-camp-c"></div><p class="ga-note">${A3('La courbe part du redémarrage et additionne tout depuis : ce que la pub a coûté, et la marge des commandes qu\'elle a amenées. Quand la ligne verte passe au-dessus de la ligne orange, la pub rapporte plus qu\'elle ne coûte. Un point par relevé (toutes les heures) : passez la souris dessus.','The curve starts at the restart and adds everything up since: what the ads cost, and the margin of the orders they brought. When the green line goes above the orange line, the ads bring in more than they cost. One point per reading (every hour): hover over it.')}${(!D.h0||sansHeure)?' '+A3(`Le détail heure par heure commence ${D.h0?'le '+anJC(anJM(D.h0),{day:'numeric',month:'long'})+' à '+anHM(D.h0):'au prochain relevé'} : avant, l'ERP ne gardait qu'un total par jour.`,`The hour-by-hour detail starts ${D.h0?'on '+anJC(anJM(D.h0),{day:'numeric',month:'long'})+' at '+anHM(D.h0):'at the next reading'}: before that, the ERP only kept one total per day.`):''}</p>`;
+  h+=`<div class="ga-plot ga-plot2" id="st-camp-c"></div><p class="ga-note">${A3('La courbe part du redémarrage et additionne tout depuis : ce que la pub a coûté, et la marge des commandes qu\'elle a amenées. Quand la ligne verte passe au-dessus de la ligne orange, la pub rapporte plus qu\'elle ne coûte. Un point par relevé (toutes les heures, quand les chiffres ont bougé) : passez la souris dessus.','The curve starts at the restart and adds everything up since: what the ads cost, and the margin of the orders they brought. When the green line goes above the orange line, the ads bring in more than they cost. One point per reading (every hour, when the figures moved): hover over it.')}${(!D.h0||sansHeure)?' '+A3(`Le détail heure par heure commence ${D.h0?'le '+anJC(anJM(D.h0),{day:'numeric',month:'long'})+' à '+anHM(D.h0):'au prochain relevé'} : avant, l'ERP ne gardait qu'un total par jour.`,`The hour-by-hour detail starts ${D.h0?'on '+anJC(anJM(D.h0),{day:'numeric',month:'long'})+' at '+anHM(D.h0):'at the next reading'}: before that, the ERP only kept one total per day.`):''}</p>`;
   const jl=d=>anJC(d,{weekday:'short',day:'numeric',month:'short'});
   h+=`<details class="ga-calc st-jours"${nJ<=7?' open':''}><summary>${A3('Jour par jour','Day by day')}</summary><div class="st-res"><table><thead><tr><th>${A3('Jour','Day')}</th><th>${A3('Dépensé','Spent')}</th><th>${A3('Affichages','Impressions')}</th><th>${A3('Clics','Clicks')}</th><th>${A3('Commandes','Orders')}</th><th>${A3('Ventes','Sales')}</th><th>${A3('Marge','Margin')}</th><th>${A3('Résultat','Result')}</th></tr></thead><tbody>
     ${depuis.slice().reverse().map(x=>`<tr><td><span data-nolang>${esc(jl(x.d))}</span>${x.d===auj?` <i class="st-cours">${A3('en cours','in progress')}</i>`:''}</td><td>${anM(x.pub)}</td><td>${nf(Math.round(x.aff))}</td><td>${nf(Math.round(x.clics))}</td><td>${nf(x.n)}</td><td>${anM(x.ca)}</td><td>${anM(x.mg)}</td><td class="${x.res>=0?'st-up':'st-down'}"><b>${anM(x.res)}</b></td></tr>`).join('')}
     <tr class="st-tot"><td>${A3('Total','Total')}</td><td>${anM(T.pub)}</td><td>${nf(Math.round(T.aff))}</td><td>${nf(Math.round(T.clics))}</td><td>${nf(T.n)}</td><td>${anM(T.ca)}</td><td>${anM(T.mg)}</td><td class="${res>=0?'st-up':'st-down'}"><b>${anM(res)}</b></td></tr></tbody></table></div></details>`;
   if(D.heures.length) h+=`<details class="ga-calc st-heures"><summary>${A3('Heure par heure','Hour by hour')} <small>${A3(`les ${D.heures.length} derniers relevés`,`the last ${D.heures.length} readings`)}</small></summary><div class="st-res"><table><thead><tr><th>${A3('Relevé (heure de Miami)','Reading (Miami time)')}</th><th>${A3('Dépensé depuis le relevé d\'avant','Spent since the previous reading')}</th><th>${A3('Affichages','Impressions')}</th><th>${A3('Clics','Clicks')}</th><th>${A3('Dépensé dans la journée','Spent that day')}</th></tr></thead><tbody>
-    ${D.heures.map(x=>`<tr><td data-nolang>${esc(jl(x.d))} · ${esc(anHM(x.t))}</td><td>${anM(Math.max(0,x.pub))}</td><td>${nf(Math.max(0,Math.round(x.aff)))}</td><td>${nf(Math.max(0,Math.round(x.clics)))}</td><td><b>${anM(x.cumPub)}</b></td></tr>`).join('')}</tbody></table></div></details>`;
+    ${D.heures.map(x=>`<tr><td data-nolang>${esc(jl(anJM(new Date(x.t))))} · ${esc(anHM(x.t))}</td><td>${anM(Math.max(0,x.pub))}</td><td>${nf(Math.max(0,Math.round(x.aff)))}</td><td>${nf(Math.max(0,Math.round(x.clics)))}</td><td><b>${anM(x.cumPub)}</b></td></tr>`).join('')}</tbody></table></div></details>`;
   const mj=(v,k)=>k?anM(v/k):'—', nj=(v,k)=>k?(v/k).toLocaleString(A3('fr-FR','en-US'),{maximumFractionDigits:1}):'—';
   h+=`<details class="ga-calc st-moy"><summary>${A3('Comparer aux 30 jours d\'avant','Compare with the 30 days before')}</summary><div class="st-res"><b>${A3('Par jour, en moyenne','Per day, on average')}</b>
     <table><thead><tr><th></th><th>${A3('Les 30 jours d\'avant','The 30 days before')}</th><th>${A3('Depuis le redémarrage','Since the restart')}${nc?` (${A3(nc>1?nc+' jours complets':'1 jour complet',nc>1?nc+' full days':'1 full day')})`:''}</th></tr></thead><tbody>
@@ -522,7 +523,7 @@ function anCampSuivi(D){
   /* la courbe : un point par relevé, depuis l'heure du redémarrage */
   const K=D.pts.map(p=>{ const j=anJC(p.d,{day:'numeric',month:'short'}), jj=anJC(p.d,{weekday:'long',day:'numeric',month:'long'});
     if(p.g==='dep') return {k:'dep',court:j+' '+anHM(p.t),court2:j+' '+anHM(p.t),lib:A3('Redémarrage — ','Restart — ')+jj+A3(' à ',' at ')+anHM(p.t)};
-    if(p.g==='h') return {k:String(p.t),court:j+' '+anHM(p.t),court2:j+' '+anHM(p.t),lib:jj+A3(' à ',' at ')+anHM(p.t)};
+    if(p.g==='h'){ const dr=anJM(new Date(p.t)), jr=anJC(dr,{day:'numeric',month:'short'}); return {k:String(p.t),court:jr+' '+anHM(p.t),court2:jr+' '+anHM(p.t),lib:anJC(dr,{weekday:'long',day:'numeric',month:'long'})+A3(' à ',' at ')+anHM(p.t)}; }
     return {k:p.d,court:j,court2:j,lib:jj+(p.g==='auj'?A3(' — aujourd\'hui, dernier relevé',' — today, last reading'):A3(' — la journée entière',' — the whole day'))}; });
   AN_CAMP={K,sp:D.pts.map(p=>p.pub),sm:D.pts.map(p=>p.mg),pts:D.pts};
   return h;

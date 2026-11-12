@@ -406,6 +406,30 @@ function aliasBC(){ Object.entries(MOD).forEach(([cle,m])=>{ if(!m||!m.bcs||!IDX
   /* les cases collées du fichier (deux codes dans la même cellule) */
   Object.entries(bcExtra()).forEach(([cle,L])=>{ if(!IDX[cle]) return; L.forEach(b=>{ if(!parBC[b]) parBC[b]=cle; if(!parBC['0'+b]) parBC['0'+b]=cle; }); }); }
 aliasBC();
+/* UN CODE-BARRES PORTÉ PAR PLUSIEURS PARFUMS (Igal, 11 nov. 2026 : « Sam vient de rentrer une new order ; il a un code-barres qui est
+   sur trois parfums identiques, un no box, un gift et un autre ; l'ERP a choisi le mauvais parfum — est-ce que tu pourrais lui laisser
+   la possibilité de choisir lequel il veut »). Le fabricant met parfois le même code sur le flacon, sa version sans boîte et son coffret.
+   L'ERP ne devine plus : la ligne attend que Sam dise lequel c'est (liste des fiches qui portent ce code, avec leur nom complet, leur
+   taille et leur stock), et son choix se change tant que la facture n'est pas enregistrée. */
+let _FRERES=null, _LIGS=null;
+const bcNu=b=>String(b||'').replace(/[^0-9A-Za-z]/g,'').replace(/^0+/,'');
+function freresBC(bc){
+  const k=bcNu(bc); if(!k) return [];
+  if(!_FRERES){ _FRERES={}; Object.entries(IDX).forEach(([cle,v])=>{ const c=bcNu(v[0]); if(c) (_FRERES[c]=_FRERES[c]||[]).push(cle); }); }
+  const L=_FRERES[k]||[]; return L.length>1?L:[];
+}
+/* ce qui distingue deux fiches au même code : le nom complet du fichier (« … no box », « … gift set »), la taille, le type, le stock */
+function libFrere(cle){
+  if(!_LIGS){ _LIGS={}; try{ D_TOUS().forEach(r=>{ if(r&&r[15]) _LIGS[r[15]]=r; }); }catch(e){} }
+  const r=_LIGS[cle]||[], v=IDX[cle]||[]; const nom=String(r[1]||v[1]||'').trim(), mq=String(r[2]||v[2]||'').trim(), oz=String(r[3]||'').trim(), ty=String(r[4]||'').trim();
+  return [mq+' '+nom, oz?oz+' oz':'', ty, L3('en stock','in stock','en stock')+' '+nf(qteEff(cle))].filter(Boolean).join(' · ');
+}
+/* la fiche d'une ligne lue par son code-barres : celle du code — ou, si plusieurs fiches portent ce code, celle que Sam a choisie (sinon aucune) */
+function cleDeLigne(x){
+  const c=trouve(x.bc); if(!c||x._i==null) return c;
+  const fr=freresBC(x.bc); if(!fr.length) return c;
+  const ch=(EDITS[x._i]||{}).cle; return (ch&&fr.includes(ch))?ch:null;
+}
 function trouve(bc){
   bc=String(bc||''); if(!bc) return null;       /* une ligne sans code-barres ne « trouve » pas l'article ajouté sans code */
   const c=[bc,bc.replace(/^0+/,''),bc.padStart(12,'0'),bc.padStart(13,'0')];
@@ -775,7 +799,7 @@ let SWAP=false, INV_OK=false, AUTO_SWAP=0, TEXTE_VU=null;   /* garde « prix et 
 /* l'index des produits se refait quand un article est créé depuis l'aperçu */
 function refaitIndex(){ const N=Object.fromEntries(D_TOUS().map(r=>[r[15],[r[0],r[13],r[2],r[12],r[6],r[8],r[7]]]));
   Object.keys(IDX).forEach(k=>delete IDX[k]); Object.assign(IDX,N);
-  Object.keys(parBC).forEach(k=>delete parBC[k]); Object.entries(IDX).forEach(([cle,v])=>{ if(v[0]) parBC[v[0]]=cle; }); aliasBC(); M_CAT=null; _OZ=null; CAT_OK=false; }
+  Object.keys(parBC).forEach(k=>delete parBC[k]); Object.entries(IDX).forEach(([cle,v])=>{ if(v[0]) parBC[v[0]]=cle; }); aliasBC(); M_CAT=null; _OZ=null; CAT_OK=false; _FRERES=null; _LIGS=null; }
 function razMap(){ MAP={}; LIEU=''; }
 function majSens(){
   document.querySelectorAll('#sens button').forEach(b=>b.classList.toggle('on',b.dataset.s===SENS));
@@ -945,7 +969,7 @@ function analyse(){
      frais d'arrivée (au prorata de la valeur de la ligne, sur les lignes enregistrées) */
   const r2=v=>Math.round(v*100)/100;
   if(tauxManque) TX=1;
-  const valUsd=L.reduce((a,x)=>a+(trouve(x.bc)?(x.q||0)*(x.p||0)*TX:0),0);
+  const valUsd=L.reduce((a,x)=>a+(cleDeLigne(x)?(x.q||0)*(x.p||0)*TX:0),0);
   const kFr=(SENS==='achat'&&valUsd>0)?FR/valUsd:0;
   L.forEach(x=>{ x.pUsd=r2((x.p||0)*TX); x.cout=r2((x.p||0)*TX*(1+kFr)); });
   const FRN_NOM=$('tiers').value.trim();
@@ -954,7 +978,9 @@ function analyse(){
      deux sites. Le stock et le prix d'achat moyen se cumulent maintenant d'une ligne à l'autre : la 2e ligne part de ce que la 1re a laissé. */
   const RUN_Q={}, RUN_PA={};
   L.forEach(x=>{
-    x.cle=trouve(x.bc); montant+=(x.q||0)*(x.p||0);
+    x.cle=cleDeLigne(x); montant+=(x.q||0)*(x.p||0);
+    /* plusieurs fiches portent ce code-barres : la ligne montre lesquelles, et attend le choix si personne n'a encore choisi */
+    if(x.bc&&x._i!=null){ const fr=freresBC(x.bc); if(fr.length&&trouve(x.bc)){ x.freres=fr; if(!x.cle) x.aChoisir=true; } }
     if(!x.cle && SENS==='achat' && !x.bc){
       const a=refAlias(x.ref,FRN_NOM); if(a){ x.cle=a; x.par='ref'; }
       else if(x.des){ const r=mCherche(x.des);
@@ -1072,6 +1098,10 @@ function dessineApercu(){
         <select data-choix="${x._i}"><option value="">— choisir le parfum —</option>${(x.cands||[]).map(c=>`<option value="${esc(c.cle)}">${esc(nomCat(c.cle))}${ozDe(c.cle)?' · '+esc(ozDe(c.cle))+' oz':''}</option>`).join('')}</select>
         <input data-cherche="${x._i}" list="l-cat" placeholder="ou tape son nom…" autocomplete="off">
         <span>ou <button class="lnk" data-cree="${x._i}">créer l'article</button> · <button class="lnk" data-sup="${x._i}">retirer la ligne</button></span></div></td><td class="r pfac">${cell(x,'p')}</td></tr>`;
+    if(!x.cle && x.aChoisir) return `<tr class="inc"><td class="ref"><b data-nolang>${esc(x.des||'—')}</b><span>${x.bc}</span></td>
+      <td class="r">${cell(x,'q')}</td>${rep?'<td></td>':''}${s?'':`<td class="r">${cell(x,'p')}</td>`}<td colspan="2"><div class="choix"><b data-nolang>${L3(`Ce code-barres est sur ${x.freres.length} parfums — c'est lequel ?`,`This barcode is on ${x.freres.length} perfumes — which one is it?`,`Este código de barras está en ${x.freres.length} perfumes — ¿cuál es?`)}</b>
+        <select data-frere="${x._i}" data-nolang><option value="">${L3('— choisir le parfum —','— choose the perfume —','— elegir el perfume —')}</option>${x.freres.map(c=>`<option value="${esc(c)}">${esc(libFrere(c))}</option>`).join('')}</select>
+        <span><button class="lnk" data-sup="${x._i}">retirer la ligne</button></span></div></td>${s?`<td class="r pfac">${cell(x,'p')}</td>`:''}</tr>`;
     if(!x.cle) return `<tr class="inc"><td class="ref"><b>${esc(x.des||'—')}</b><span>${x.bc}</span></td>
       <td class="r">${cell(x,'q')}</td>${rep?'<td></td>':''}${s?'':`<td class="r">${cell(x,'p')}</td>`}<td colspan="2">code-barres absent du catalogue — ${s?`<button class="lnk" data-cree="${x._i}">créer l'article</button> ou `:''}<button class="lnk" data-sup="${x._i}">retirer la ligne</button></td>${s?`<td class="r pfac">${cell(x,'p')}</td>`:''}</tr>`;
     const v=IDX[x.cle];
@@ -1091,9 +1121,10 @@ function dessineApercu(){
     const cvt = (s&&!A.tauxManque&&(A.dev==='EUR'||A.frais>0)) ? `<small class="conv" style="display:block;font-size:11px;color:var(--ink-3);white-space:nowrap">= ${money2(x.cout)} rendu</small>` : '';
     const lu = x.par ? `<span class="lu" data-nolang>« ${esc(x.des||'')} »${x.ref?' · réf. '+esc(x.ref):''}</span>` : '';
     const chg = (x.par==='devine' && (x.cands||[]).length) ? `<span class="chg"><span>reconnu par le nom — vérifie :</span> <select data-choix="${x._i}">${(x.cands||[]).map(c=>`<option value="${esc(c.cle)}"${c.cle===x.cle?' selected':''}>${esc(nomCat(c.cle))}${ozDe(c.cle)?' · '+esc(ozDe(c.cle))+' oz':''}</option>`).join('')}</select></span>` : '';
+    const chgF = (x.freres&&x.freres.length) ? `<span class="chg" data-nolang><span>${L3(`même code-barres sur ${x.freres.length} parfums — choisi :`,`same barcode on ${x.freres.length} perfumes — chosen:`,`mismo código de barras en ${x.freres.length} perfumes — elegido:`)}</span> <select data-frere="${x._i}">${x.freres.map(c=>`<option value="${esc(c)}"${c===x.cle?' selected':''}>${esc(libFrere(c))}</option>`).join('')}</select></span>` : '';
     /* le nom du parfum ouvre sa fiche dans une fenêtre (Igal, 17 oct. 2026 : « quand je clique sur un produit, une fenêtre s'ouvre pour que Sam ait la fiche ») */
     const nomF=`<a class="fiche" href="catalogue.html#cle=${encodeURIComponent(x.cle)}" data-fiche="${esc(x.cle)}" title="Ouvrir la fiche de ce parfum">${esc(v[1])}</a>`;
-    const tete=`<tr class="${x.manque?'neg':''}${EDITS[x._i]?' corr':''}"><td class="ref"><div class="mq">${esc(v[2])}</div><b>${nomF}${tyBadge(x.cle)}</b><span>${v[0]||'sans code-barres'}</span>${lu}${chg}</td>`;
+    const tete=`<tr class="${x.manque?'neg':''}${EDITS[x._i]?' corr':''}"><td class="ref"><div class="mq">${esc(v[2])}</div><b>${nomF}${tyBadge(x.cle)}</b><span>${v[0]||'sans code-barres'}</span>${lu}${chg}${chgF}</td>`;
     /* Igal, 17 oct. 2026 : sur une facture d'achat le PRIX MOYEN est le chiffre principal (« 22,50 → 20,37 »), le prix de la
        facture passe au second plan, plus petit, à droite */
     if(s) return tete+`<td class="r">${cell(x,'q')}</td>${rep?repCell(x):''}<td>${mv}</td><td class="r moy">${pr}${expl}</td><td class="r pfac">${cell(x,'p')}${cvt} ${sup(x)}</td></tr>`;
@@ -1172,6 +1203,10 @@ function dessineApercu(){
     log({act:'creation',lib:'ligne de facture reconnue — « '+(x.des||x.ref||'')+' » = '+nomCat(cle),bc:IDX[cle][0],ref:nomCat(cle),av:null,ap:null});
     dessineApercu(); };
   box.querySelectorAll('[data-choix]').forEach(sel=>sel.onchange=()=>retient(+sel.dataset.choix,sel.value));
+  /* « ce code-barres est sur plusieurs parfums — c'est lequel ? » : le choix vit sur la ligne, jusqu'à l'enregistrement */
+  box.querySelectorAll('[data-frere]').forEach(sel=>sel.onchange=()=>{ const i=+sel.dataset.frere; EDITS[i]=Object.assign({},EDITS[i]||{});
+    if(sel.value&&IDX[sel.value]) EDITS[i].cle=sel.value; else delete EDITS[i].cle;
+    if(!Object.keys(EDITS[i]).length) delete EDITS[i]; dessineApercu(); });
   box.querySelectorAll('[data-cherche]').forEach(inp=>inp.onchange=()=>{ const o=[...$('l-cat').options].find(op=>op.value===inp.value); if(o) retient(+inp.dataset.cherche,o.dataset.cle); });
   if(box.querySelector('[data-cherche]')) remplitCat();
   box.querySelectorAll('[data-map]').forEach(sel=>sel.onchange=()=>{

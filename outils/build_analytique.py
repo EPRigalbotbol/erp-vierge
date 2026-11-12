@@ -260,6 +260,8 @@ function anDessine(){
     ads={A,mgA,pub};
     const bon=reste>=0;
     h+=`<div class="ga-verdict ${bon?'bon':'mal'}"><span class="ga-vv">${gaCnt(reste,'$')}</span><span class="ga-vt">${bon?A3('gagnés après avoir payé la pub','earned after paying for the ads'):A3('perdus : la pub a coûté plus que la marge des commandes qu\'elle a amenées','lost: the ads cost more than the margin of the orders they brought')}</span></div>
+      <p class="ga-phrase"><span data-nolang>${esc(rcLib(AN.sel,P))}</span> : ${A3('la pub a coûté','the ads cost')} <b>${money(pub.T.pub)}</b>. ${A3('Elle a amené','They brought')} <b>${nf(nA)}</b> ${A3('commande'+(nA>1?'s':'')+', qui '+(nA>1?'ont':'a')+' laissé','order'+(nA>1?'s':'')+', which left')} <b>${money(mgA)}</b> ${A3('de marge nette','net margin')}. ${A3('Résultat','Result')} : <b>${reste<0?'−':''}${money(Math.abs(reste))}</b>.</p>
+      <p class="ga-note">${A3('Ce chiffre bouge dans la journée : la dépense de Google est relue toutes les heures, et chaque commande venue de la pub le fait remonter d\'un coup. Il se juge sur une semaine complète, pas sur un jour.','This figure moves during the day: Google\'s spend is read every hour, and each order from the ads lifts it at once. Judge it over a full week, not a single day.')}</p>
       <div class="ga-plot ga-plot2" id="ga-c2"></div>
       <div class="ga-stats">
         <div><span>${A3('La pub coûte, par commande','Ad cost per order')}</span><b>${nA?money(pub.T.pub/nA):'—'}</b></div>
@@ -433,17 +435,27 @@ function anStratResultats(C,tous){
   const A=C.active; if(!A) return '';
   const d0=rcISO(new Date(A.date)), auj=rcISO(new Date());
   const n=Math.max(1,Math.min(30,Math.round((Date.parse(auj)-Date.parse(d0))/86400e3)+1));
-  const av0=rcISO(new Date(Date.parse(d0+'T12:00:00')-n*86400e3)), av1=rcISO(new Date(Date.parse(d0+'T12:00:00')-86400e3));
-  const ap=anSomme(anDans(tous,d0,auj)), av=anSomme(anDans(tous,av0,av1));
-  const pa=anPub(d0,auj).T, pv=anPub(av0,av1).T;
+  /* 11 nov. 2026 (Igal : « ce n'est pas du tout clair, pourquoi ça bouge tout le temps, le chiffre n'est jamais le même ») : la journée en
+     cours n'est pas finie — ses chiffres montent jusqu'au soir, et la comparer à des journées entières donnait un écart faux qui changeait
+     à chaque visite. On ne compare plus que des journées COMPLÈTES (jusqu'à hier), au même nombre de jours juste avant l'activation. */
+  const hier=rcISO(new Date(Date.parse(auj+'T12:00:00')-86400e3));
+  const nc=Math.max(0,Math.min(30,Math.round((Date.parse(hier)-Date.parse(d0))/86400e3)+1));
+  const titre=`<b>${A3(`Résultats depuis l'activation — jour ${n} sur 30`,`Results since activation — day ${n} of 30`)}</b>`;
+  if(!nc) return `<div class="st-res">${titre}
+    <p class="ga-note">${A3('Premier jour en cours : la comparaison commence demain, sur une journée complète. Les chiffres d\'une journée pas finie montent jusqu\'au soir : ils ne se comparent à rien.','First day in progress: the comparison starts tomorrow, on a full day. The figures of an unfinished day keep rising until the evening: they compare to nothing.')}</p></div>`;
+  const av0=rcISO(new Date(Date.parse(d0+'T12:00:00')-nc*86400e3)), av1=rcISO(new Date(Date.parse(d0+'T12:00:00')-86400e3));
+  const ap=anSomme(anDans(tous,d0,hier)), av=anSomme(anDans(tous,av0,av1));
+  const pa=anPub(d0,hier).T, pv=anPub(av0,av1).T;
   const lig=(lib,a,b,f,bon)=>{ const dv=b?((a-b)/Math.abs(b)*100):null; const cl=dv==null?'':((dv>=0)===bon?'st-up':'st-down');
     return `<tr><td>${lib}</td><td>${f(b)}</td><td><b>${f(a)}</b></td><td class="${cl}">${dv==null?'—':(dv>=0?'+':'')+Math.round(dv)+' %'}</td></tr>`; };
-  return `<div class="st-res"><b>${A3(`Résultats depuis l'activation — jour ${n} sur 30`,`Results since activation — day ${n} of 30`)}</b>
-    <table><thead><tr><th></th><th>${A3(`${n} jours avant`,`${n} days before`)}</th><th>${A3('Depuis l\'activation','Since activation')}</th><th>${A3('Écart','Change')}</th></tr></thead><tbody>
+  const jr=A3(nc>1?`${nc} jours complets`:'1 jour complet',nc>1?`${nc} full days`:'1 full day');
+  return `<div class="st-res">${titre}
+    <table><thead><tr><th></th><th>${A3(nc>1?`Les ${nc} jours d'avant`:'Le jour d\'avant',nc>1?`The ${nc} days before`:'The day before')}</th><th>${A3('Depuis l\'activation','Since activation')} (${jr})</th><th>${A3('Écart','Change')}</th></tr></thead><tbody>
     ${lig(A3('Commandes en ligne','Online orders'),ap.n,av.n,nf,true)}${lig(A3('Chiffre d\'affaires en ligne','Online revenue'),ap.ca,av.ca,money,true)}${lig(A3('Marge nette en ligne','Online net margin'),ap.mg,av.mg,money,true)}
     ${lig(A3('Dépense Google Ads','Google Ads spend'),pa.pub,pv.pub,money,false)}${lig(A3('Marge après pub','Margin after ads'),ap.mg-pa.pub,av.mg-pv.pub,money,true)}</tbody></table>
-    <p class="ga-note">${A3('Les chiffres de chaque jour s\'ajoutent tout seuls jusqu\'au 30e jour ; ensuite, le « Rapport du mois » explique ce qui vient de la stratégie et ce qui vient d\'ailleurs.','Each day\'s figures add up on their own until day 30; then the “Monthly report” explains what comes from the strategy and what comes from elsewhere.')}</p></div>`;
+    <p class="ga-note">${A3('Seules les journées complètes sont comptées : aujourd\'hui entrera demain, et ce tableau ne bouge donc qu\'une fois par jour. Après le 30e jour, le « Rapport du mois » explique ce qui vient de la stratégie et ce qui vient d\'ailleurs.','Only full days are counted: today will be added tomorrow, so this table changes only once a day. After day 30, the “Monthly report” explains what comes from the strategy and what comes from elsewhere.')}</p></div>`;
 }
+
 const anLg=()=>LANG==='fr'?'fr':'en';
 const anDate=s=>{ try{ return new Date(s).toLocaleDateString(A3('fr-FR','en-US'),{day:'numeric',month:'long',year:'numeric'}); }catch(e){ return String(s||'').slice(0,10); } };
 const anLi=a=>(Array.isArray(a)&&a.length)?'<ul>'+a.map(x=>`<li>${esc(x)}</li>`).join('')+'</ul>':'';
@@ -779,7 +791,7 @@ function anAttente(P){ const A=(ORI['_attente_woocommerce']&&ORI['_attente_wooco
   return `<div class="ga-attente">+ <b>${nf(X.length)}</b> ${A3(X.length>1?'commandes de la pub payées, pas encore expédiées':'commande de la pub payée, pas encore expédiée',X.length>1?'orders from the ads paid, not shipped yet':'order from the ads paid, not shipped yet')} : <b>${money(mt)}</b> <span>${A3('— elles compteront dès leur expédition','— they will count once shipped')}</span></div>`; }
 /* les administrateurs de l'ERP : les rôles Admin et Patron, et eux seuls (un Comptable, qui voit les marges, n'y entre pas) */
 function anAdmin(){ const s=session(); return !!s&&/^(admin|patron)$/.test(String(s.role||'')); }
-window.__an={AN,anCommandes,anFamille,anDessine,ORI:()=>ORI};
+window.__an={AN,anCommandes,anFamille,anDessine,ORI:()=>ORI,STRAT:()=>STRAT};
 function majUser(){ try{ piedSession(); }catch(e){} }
 majUser();
 (function(){

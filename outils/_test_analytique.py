@@ -147,7 +147,14 @@ try:
         pg.click('#st-active'); pg.wait_for_timeout(500)
         stA = pg.inner_text('section.st')
         check('LE POINT — « Activer la stratégie » : le cockpit est appelé, la page dit « Stratégie active le … · mesure jusqu\'au … » et le bouton disparaît', len(act) == 1 and 'Stratégie active le' in stA and 'mesure jusqu' in stA and pg.locator('#st-active').count() == 0, stA[:400])
-        check('LE POINT — résultats depuis l\'activation : jour 1 sur 30, comparés aux mêmes jours juste avant (commandes, CA, marge, pub, marge après pub)', 'jour 1 sur 30' in stA and pg.locator('.st-res tbody tr').count() == 5, stA[-700:])
+        # 11 nov. 2026 (Igal : « pas clair du tout, pourquoi ça bouge tout le temps ») : seules les journées COMPLÈTES sont comparées
+        check('LE POINT — le jour de l\'activation : « jour 1 sur 30 », et AUCUN tableau — la journée en cours ne se compare à rien', 'jour 1 sur 30' in stA and 'commence demain' in stA and pg.locator('.st-res tbody tr').count() == 0, stA[-700:])
+        pg.evaluate("()=>{ __an.STRAT().courante.active.date=new Date(Date.now()-3*86400e3).toISOString(); __an.anDessine(); }"); pg.wait_for_timeout(400)
+        stB = pg.inner_text('section.st')
+        check('LE POINT — trois jours après : « jour 4 sur 30 », le tableau compare 3 jours COMPLETS aux 3 jours d\'avant (aujourd\'hui n\'est pas compté)', 'jour 4 sur 30' in stB and '3 jours complets' in stB.lower() and 'les 3 jours d\'avant' in stB.lower() and pg.locator('.st-res tbody tr').count() == 5 and 'ne bouge donc qu\'une fois par jour' in stB, stB[-800:])
+        ph = pg.inner_text('.ga-phrase')
+        check('LE POINT — « est-ce que la pub rapporte ? » se lit en une phrase : ce que la pub a coûté, les commandes amenées, leur marge, le résultat', 'la pub a coûté' in ph and 'commande' in ph and 'de marge nette' in ph and 'Résultat' in ph, ph)
+        check('et la page dit pourquoi ce chiffre bouge dans la journée', 'Ce chiffre bouge dans la journée' in pg.inner_text('section.ga-card:has(.ga-verdict)'))
         fa = []
         pg.route('**/strategie/action', lambda route: (fa.append(route.request.post_data_json), route.fulfill(status=200, content_type='application/json', body='{"ok":true}')))
         check('l\'action « manuelle » a maintenant un bouton « C\'est fait » (une seule)', pg.locator('.st-cfait').count() == 1)
@@ -247,7 +254,18 @@ try:
         pj.click('#sel-env'); pj.wait_for_timeout(500)
         Lenv = dict((x[0], x[1]) for x in (envoi[0]['L'] if envoi else []))
         check('LE POINT — le bouton envoie au cockpit la décision de CHAQUE parfum (garder / plus en stock / à vérifier)', len(envoi) == 1 and Lenv.get(bc) == 'garder' and Lenv.get(B0[0]) == 'stock' and Lenv.get('999999999999') == 'verif', envoi)
-        check('chaque ligne dit aussi si le parfum était gagnant (pour le remettre en pub quand son stock revient)', envoi and all(len(x) == 3 for x in envoi[0]['L']) and [x for x in envoi[0]['L'] if x[0] == bc][0][2] == 1, envoi[:1])
+        check('chaque ligne dit aussi si le parfum était gagnant (pour le remettre en pub quand son stock revient)', envoi and all(len(x) in (3, 4) for x in envoi[0]['L']) and [x for x in envoi[0]['L'] if x[0] == bc][0][2] == 1, envoi[:1])
+        # 11 nov. 2026 : le titre Google Shopping des gagnants (4e colonne), jamais pour les autres
+        check('LE POINT — seuls les gagnants portent un titre Google Shopping', envoi and all(len(x) == 3 or x[1] == 'garder' for x in envoi[0]['L']), envoi[:1])
+        T = pj.evaluate("""()=>[
+          anTitreGoogle({marque:'Lattafa',nom:'Qaed Al Fursan',ml:'3.4',ty:'EDP',ge:'M'}),
+          anTitreGoogle({marque:'Gucci',nom:'Gucci Flora Gorgeous Gardenia',ml:'3.3',ty:'EDT',ge:'W'}),
+          anTitreGoogle({marque:'Dior',nom:'Sauvage EDT 2oz',ml:'2',ty:'EDT',ge:'M'}),
+          anTitreGoogle({marque:'Cartier',nom:'Coffret Santos',ml:'3.3',ty:'SKIN CARE',ge:'M'}),
+          anTitreGoogle({marque:'Armaf',nom:'Club de Nuit',ml:'',ty:'EDT',ge:'U'})]""")
+        check('LE POINT — le titre suit l\'ordre de Google : marque, nom, type en toutes lettres, contenance, pour qui', T[0] == 'Lattafa Qaed Al Fursan Eau de Parfum 3.4 oz for Men', T)
+        check('la marque n\'est pas répétée quand le nom la contient déjà', T[1] == 'Gucci Flora Gorgeous Gardenia Eau de Toilette 3.3 oz for Women', T)
+        check('un nom qui contient déjà un type ou une contenance, un type inconnu, une contenance manquante : pas de titre (on ne devine pas)', T[2] == '' and T[3] == '' and T[4] == '', T)
         check('après l\'envoi : « ✓ Envoyé le … » et le bouton devient « Renvoyer la sélection à jour »', 'Envoyé le' in pj.inner_text('.sel-ok') and 'Renvoyer' in pj.inner_text('#sel-env'), pj.inner_text('.sel-pub'))
         check('après l\'envoi : un bouton copie l\'adresse du flux pour Merchant Center, sans jamais l\'afficher (elle porte un jeton)', pj.locator('#sel-copie').count() == 1 and 'etiquettes.csv' not in pj.inner_text('#an'))
         check('sans journal encore : la page dit que la première action notée sera la sélection pub', 'première action' in pj.inner_text('#jp'))

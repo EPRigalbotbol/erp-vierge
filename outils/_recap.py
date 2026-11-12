@@ -173,6 +173,7 @@ GA_CSS = r'''
 .ga-verdict.bon{background:color-mix(in srgb,#188038 9%,transparent)}.ga-verdict.mal{background:color-mix(in srgb,#d93025 9%,transparent)}
 .ga-vv{font-size:30px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
 .ga-verdict.bon .ga-vv{color:#188038}.ga-verdict.mal .ga-vv{color:#d93025}
+.ga-phrase{font-size:13.5px;line-height:1.6;margin:6px 2px 2px;color:var(--ink);max-width:110ch}.ga-phrase b{font-variant-numeric:tabular-nums}
 .ga-vt{font-size:13.5px;color:var(--ink-2);line-height:1.4;flex:1 1 220px}
 .ga-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0 0}
 @media(max-width:560px){.ga-stats{grid-template-columns:1fr}}

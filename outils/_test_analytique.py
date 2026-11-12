@@ -60,11 +60,11 @@ srv = subprocess.Popen(['python3', '-m', 'http.server', str(port), '--bind', '12
 try:
     with sync_playwright() as p:
         b = p.chromium.launch(); err = []
-        def ouvre(lg='fr', role='patron', page='analytique.html', avant=None):
-            ctx = b.new_context(viewport={'width': 1440, 'height': 1000}, timezone_id='America/New_York', locale='fr-FR')
+        def ouvre(lg='fr', role='patron', page='analytique.html', avant=None, tz='America/New_York', heure=14):
+            ctx = b.new_context(viewport={'width': 1440, 'height': 1000}, timezone_id=tz, locale='fr-FR')
             pg = ctx.new_page(); pg.on('pageerror', lambda e: err.append(str(e))); pg.on('dialog', lambda d: d.accept())
             pg.add_init_script("Object.defineProperty(window,'D_HG',{configurable:true,set(v){ window.__hgReel=v; },get(){ return null; }})")
-            pg.clock.set_fixed_time(datetime.datetime(auj.year, auj.month, auj.day, 14, 0, tzinfo=ZoneInfo('America/New_York')))
+            pg.clock.set_fixed_time(datetime.datetime(auj.year, auj.month, auj.day, heure, 0, tzinfo=ZoneInfo(tz)))
             base = f'http://127.0.0.1:{port}/'
             pg.goto(base + 'accueil.html'); pg.wait_for_timeout(300); pg.evaluate('s=>{ window.__ST=s; }', STRAT); pg.evaluate(SESS, [F, ORIG, PCO, GPUB, REG, lg, role])
             if avant: pg.add_init_script(avant)
@@ -136,22 +136,42 @@ try:
             pg.click('#an-xl')
         check('le bouton télécharge bien un fichier Excel', dl.value.suggested_filename.endswith('.xlsx'), dl.value.suggested_filename)
         # la stratégie et le rapport du mois
-        stx = pg.inner_text('section.st')
+        # le texte d'un bloc, même replié (les détails fermés ne sont pas dans inner_text) ; TXL : sans les textes jamais traduits
+        TX = "s=>[...document.querySelectorAll(s)].map(e=>e.textContent).join(' ').replace(/\\s+/g,' ')"
+        TXL = "s=>[...document.querySelectorAll(s)].map(e=>{ const c=e.cloneNode(true); c.querySelectorAll('[data-nolang]').forEach(x=>x.remove()); return c.textContent; }).join(' ').replace(/\\s+/g,' ')"
+        LI = lambda p, i: p.locator(f'.st-acts > li[data-sti="{i}"]')
+        stx = pg.evaluate(TX, 'section.st')
         check('LE POINT — la stratégie s\'affiche : titre, diagnostic, actions, prévision en fourchette, et ce que les vérificateurs ont retiré', 'Stratégie de novembre' in stx and 'Sortir 800 parfums de la pub' in stx and 'prudent' in stx.lower() and a(stx, 24000) and pg.locator('section.st details').count() >= 1, stx[:500])
-        check('LE POINT — plus aucune case « Fait » à cocher (Igal, 11 nov.) : l\'action constatée par l\'ERP dit « Fait le 3 novembre 2026 à … » et ce qui a été vu', pg.locator('.st-acts input[type=checkbox]').count() == 0 and 'Fait le 3 novembre 2026' in pg.locator('.st-acts > li').nth(1).inner_text() and 'vu dans Google Ads' in pg.locator('.st-acts > li').nth(1).inner_text() and 'fait' in (pg.locator('.st-acts > li').nth(1).get_attribute('class') or ''), pg.locator('.st-acts').inner_text()[:500])
-        check('LE POINT — stratégie pas encore active : le bouton « Activer la stratégie », et l\'action pas faite attend l\'activation (pas de bouton « C\'est fait »)', pg.locator('#st-active').count() == 1 and 'À faire après l\'activation' in pg.locator('.st-acts > li').nth(0).inner_text() and pg.locator('.st-cfait').count() == 0)
+        check('LE POINT — plus aucune case « Fait » à cocher (Igal, 11 nov.) : l\'action constatée par l\'ERP est SIGNÉE « Fait par l\'ERP le 3 novembre 2026 à … », à l\'heure de Miami, avec ce qui a été vu', pg.locator('.st-acts input[type=checkbox]').count() == 0 and 'Fait par l\'ERP le 3 novembre 2026 à 09:32' in LI(pg, 1).inner_text() and 'vu dans Google Ads' in LI(pg, 1).inner_text() and 'fait' in (LI(pg, 1).get_attribute('class') or ''), pg.evaluate(TX, '.st-acts')[:500])
+        check('LE POINT — stratégie pas encore active : le bouton « Activer la stratégie », et l\'action pas faite attend l\'activation (pas de bouton « C\'est fait »)', pg.locator('#st-active').count() == 1 and 'À faire après l\'activation' in LI(pg, 0).inner_text() and pg.locator('.st-cfait').count() == 0)
         act = []
         maint = pg.evaluate("()=>[new Date().toISOString(), new Date(Date.now()+30*86400e3).toISOString()]")   # l'heure de la page (horloge du test)
         pg.route('**/strategie/active', lambda route: (act.append(1), route.fulfill(status=200, content_type='application/json', body=json.dumps({'ok': True, 'date': maint[0], 'fin': maint[1], 'constatees': 0}))))
         pg.evaluate("()=>{ window.confirm=()=>true; }")
         pg.click('#st-active'); pg.wait_for_timeout(500)
-        stA = pg.inner_text('section.st')
+        stA = pg.evaluate(TX, 'section.st')
         check('LE POINT — « Activer la stratégie » : le cockpit est appelé, la page dit « Stratégie active le … · mesure jusqu\'au … » et le bouton disparaît', len(act) == 1 and 'Stratégie active le' in stA and 'mesure jusqu' in stA and pg.locator('#st-active').count() == 0, stA[:400])
         # 11 nov. 2026 (Igal : « pas clair du tout, pourquoi ça bouge tout le temps ») : seules les journées COMPLÈTES sont comparées
-        check('LE POINT — le jour de l\'activation : « jour 1 sur 30 », et AUCUN tableau — la journée en cours ne se compare à rien', 'jour 1 sur 30' in stA and 'commence demain' in stA and pg.locator('.st-res tbody tr').count() == 0, stA[-700:])
+        check('LE POINT — le jour de l\'activation : « jour 1 sur 30 », et AUCUN tableau — la journée en cours ne se compare à rien', 'jour 1 sur 30' in stA and 'commence demain' in stA and pg.locator('.st-tout tbody tr').count() == 0, stA[-700:])
         pg.evaluate("()=>{ __an.STRAT().courante.active.date=new Date(Date.now()-3*86400e3).toISOString(); __an.anDessine(); }"); pg.wait_for_timeout(400)
-        stB = pg.inner_text('section.st')
-        check('LE POINT — trois jours après : « jour 4 sur 30 », le tableau compare 3 jours COMPLETS aux 3 jours d\'avant (aujourd\'hui n\'est pas compté)', 'jour 4 sur 30' in stB and '3 jours complets' in stB.lower() and 'les 3 jours d\'avant' in stB.lower() and pg.locator('.st-res tbody tr').count() == 5 and 'ne bouge donc qu\'une fois par jour' in stB, stB[-800:])
+        stB = pg.evaluate(TX, 'section.st')
+        check('LE POINT — trois jours après : « jour 4 sur 30 », le tableau compare 3 jours COMPLETS aux 3 jours d\'avant (aujourd\'hui n\'est pas compté)', 'jour 4 sur 30' in stB and '3 jours complets' in stB.lower() and 'les 3 jours d\'avant' in stB.lower() and pg.locator('.st-tout tbody tr').count() == 5 and 'ne bouge donc qu\'une fois par jour' in stB, stB[-800:])
+        # 12 nov. 2026 (Igal : « analyser le coût de la pub depuis le démarrage de la campagne et surtout connaître l'évolution ; je veux que
+        # cette partie soit mieux faite et plus compréhensible »)
+        camp = pg.evaluate(TX, '.st-camp')
+        tu = pg.evaluate(TX, '.st-tuiles'); sec = pg.evaluate(TX, '.st-sec')
+        check('LE POINT — les chiffres en tête, au format de la page Tâches : actions faites, dépensé, clics, commandes de la pub, résultat — et une phrase', pg.locator('.st-tuiles > div').count() == 5 and '1 / 2' in tu and 'action faite' in tu and 'dépensés en pub' in tu and 'clic' in tu and 'de la pub' in tu and 'résultat de la pub' in tu and 'la pub a coûté' in pg.inner_text('.st-camp .ga-phrase') and 'jour 4 sur 30' in pg.inner_text('.st-on'), tu[:400])
+        check('LE POINT — « Évolution depuis le redémarrage » dit le jour ET l\'heure du départ, en heures de Miami', 'Évolution depuis le redémarrage' in sec and re.search(r'depuis le \d+ \w+ 2026 à 14:00', sec) is not None and 'heures de Miami' in sec, sec[:300])
+        cp = pg.evaluate("()=>{ const C=__an.CAMP(); return [C.K.length, C.K[0].court, C.sp[0], C.sm[0], C.K[C.K.length-1].lib, [...C.sp].every((v,i,a)=>i===0||v>=a[i-1]-1e-9)]; }")
+        check('LE POINT — l\'évolution : UNE courbe qui part du redémarrage à zéro (plus les 14 jours d\'avant), un point par jour tant qu\'il n\'y a pas de relevé par heure, et elle ne redescend jamais (tout est additionné)', pg.locator('#st-camp-c svg').count() == 1 and pg.locator('#st-camp-c .ga-rep').count() == 1 and cp[0] == 5 and '14:00' in cp[1] and cp[2] == 0 and cp[3] == 0 and 'aujourd' in cp[4] and cp[5], cp)
+        check('LE POINT — jour par jour : une ligne par jour depuis le redémarrage (4), la plus récente en haut marquée « en cours », et un total', pg.locator('.st-jours tbody tr').count() == 5 and 'en cours' in pg.locator('.st-jours tbody tr').nth(0).inner_text() and 'Total' in pg.locator('.st-jours tbody tr').nth(4).inner_text(), pg.inner_text('.st-jours')[:400])
+        tj = pg.evaluate("()=>{ const c=[...document.querySelectorAll('.st-jours tbody tr')].slice(0,4).map(tr=>tr.children[1].textContent); const t=document.querySelector('.st-jours .st-tot').children[1].textContent; return [c,t,document.querySelector('.st-tuiles > .st-dep b').textContent]; }")
+        check('le total du tableau est le chiffre « Dépensé » du haut', tj[1] == tj[2], tj)
+        check('la moyenne par jour compare les 30 jours d\'avant aux journées COMPLÈTES depuis le redémarrage (3)', 'Par jour, en moyenne' in camp and '3 jours complets' in camp.lower() and 'les 30 jours d\'avant' in camp.lower(), camp[-900:])
+        check('LE POINT — le bloc se lit comme la page Tâches : des titres de section (Évolution, À faire, Fait), et tout le détail est replié (fabrication, constat, ventes de tous les sites, comparaison aux 30 jours d\'avant, prévision)', pg.locator('.st-sec').count() >= 4 and 'À faire' in sec and 'Fait' in sec and pg.evaluate("()=>['st-comment','st-constat','st-ventes','st-moy','st-prevd'].every(c=>{ const d=document.querySelector('details.'+c); return d&&!d.open; })"), sec[:300])
+        cartes = pg.evaluate("()=>[...document.querySelectorAll('.st-acts > li')].map(l=>[l.dataset.sti, l.className, l.parentElement.className, !!l.querySelector('.st-ka .st-cfait'), l.querySelector('.st-det').open, (l.querySelector('.st-att')||{}).textContent||''])")
+        check('LE POINT — une carte par action : celle à faire d\'abord (barre orange, bouton « C\'est fait » à droite, « gain attendu » et « délai » en une ligne), celle qui est faite dans « Fait » (barre verte) ; le pourquoi / comment est replié', len(cartes) == 2 and cartes[0][0] == '0' and 'afaire' in cartes[0][1] and cartes[0][3] and 'Gain attendu' in cartes[0][5] and 'cette semaine' in cartes[0][5] and cartes[1][0] == '1' and 'fait' in cartes[1][1] and 'st-faites' in cartes[1][2] and not cartes[1][3] and not cartes[0][4] and not cartes[1][4], cartes)
+        check('LE POINT — une action à valider à la main le dit : « l\'ERP ne peut pas voir cette action tout seul : cliquez C\'est fait »', 'ne peut pas voir cette action tout seul' in pg.evaluate(TX, '.st-acts'), pg.evaluate(TX, '.st-acts')[:300])
         ph = pg.inner_text('.ga-phrase')
         check('LE POINT — « est-ce que la pub rapporte ? » se lit en une phrase : ce que la pub a coûté, les commandes amenées, leur marge, le résultat', 'la pub a coûté' in ph and 'commande' in ph and 'de marge nette' in ph and 'Résultat' in ph, ph)
         check('et la page dit pourquoi ce chiffre bouge dans la journée', 'Ce chiffre bouge dans la journée' in pg.inner_text('section.ga-card:has(.ga-verdict)'))
@@ -159,13 +179,42 @@ try:
         pg.route('**/strategie/action', lambda route: (fa.append(route.request.post_data_json), route.fulfill(status=200, content_type='application/json', body='{"ok":true}')))
         check('l\'action « manuelle » a maintenant un bouton « C\'est fait » (une seule)', pg.locator('.st-cfait').count() == 1)
         pg.click('.st-cfait'); pg.wait_for_timeout(400)
-        check('LE POINT — « C\'est fait » : le cockpit reçoit l\'action, la ligne dit « Fait le <aujourd\'hui> à <heure> · Essai »', fa == [{'i': 0, 'fait': True}] and re.search(r'Fait le \d+ \w+ 2026 à \d\d:\d\d · Essai', pg.locator('.st-acts > li').nth(0).inner_text()) is not None, [fa, pg.locator('.st-acts > li').nth(0).inner_text()[:200]])
+        check('LE POINT — « C\'est fait » : le cockpit reçoit l\'action, la ligne dit « Fait le <aujourd\'hui> à <heure> · Essai »', fa == [{'i': 0, 'fait': True}] and re.search(r'Fait le \d+ \w+ 2026 à \d\d:\d\d · Essai', LI(pg, 0).inner_text()) is not None, [fa, LI(pg, 0).inner_text()[:200]])
         check('LE POINT — le rapport du mois s\'affiche : bilan, verdict par action, avant → après, à garder / à essayer, prudence', 'Rapport de novembre' in stx and 'a marché' in stx and '2 100 $' in stx.replace('\u202f', ' ').replace('\xa0', ' ') and 'TikTok Shop' in stx and 'Un seul mois' in stx, stx[-600:])
         check('les deux boutons : mettre à jour la stratégie, rapport du mois', pg.locator('#st-maj').count() == 1 and pg.locator('#st-rap').count() == 1)
         cal = "e=>{ const S=JSON.parse(localStorage.getItem('strategie-v1')); S.encours=e?{id:'S9',type:'strategie',etape:'trois vérificateurs relisent',depuis:new Date(Date.now()-e*60e3).toISOString(),par:'Igal',err:''}:null; localStorage.setItem('strategie-v1',JSON.stringify(S)); window.dispatchEvent(new CustomEvent('ck-maj',{detail:{cles:['strategie-v1']}})); }"
         pg.evaluate(cal, 40); pg.wait_for_timeout(400); stx2 = pg.inner_text('section.st')
         check('LE POINT — une analyse restée 40 minutes sans nouvelle étape est signalée « arrêtée en route », et le bouton est de nouveau utilisable', "arrêtée en route" in stx2 and 'trois vérificateurs relisent' in stx2 and pg.locator('#st-maj').is_enabled(), stx2[:600])
         pg.evaluate(cal, 0); pg.wait_for_timeout(300)
+        # 12 nov. 2026 — Igal : « c'est à l'ERP de la valider, de mettre la date : signé, fait par l'ERP à telle date »
+        ACT3 = "h=>{ const S=__an.STRAT(); S.courante.active={date:new Date(Date.now()-h*3600e3).toISOString(),fin:new Date(Date.now()+27*86400e3).toISOString(),par:'Igal'}; __an.anDessine(); }"
+        sel = "f=>{ const S=JSON.parse(localStorage.getItem('strategie-v1')); window.__gardeS=window.__gardeS||JSON.stringify(S); ['fr','en'].forEach(l=>{ S.courante.res[l].actions[0].verif={type:'selection'}; S.courante.res[l].actions[0].qui='ERP'; }); S.courante.faits[0]=f; S.courante.active=S.courante.active||{date:'2026-11-11T20:18:00Z',par:'Igal',fin:'2026-12-11T20:18:00Z'}; localStorage.setItem('strategie-v1',JSON.stringify(S)); window.dispatchEvent(new CustomEvent('ck-maj',{detail:{cles:['strategie-v1']}})); }"
+        pg.evaluate(sel, {'date': '2026-11-11T19:52:13Z', 'par': 'ERP', 'comment': 'sélection envoyée à Google depuis l\'ERP (bouton cliqué par Igal) : 97 gagnants gardés en pub, 796 perdants sortis', 'lu': '2026-11-12T08:10:00Z'}); pg.wait_for_timeout(400)
+        l0 = LI(pg, 0); t0 = l0.inner_text()
+        check('LE POINT — « sortir les perdants de la pub » est signé par l\'ERP : « Fait par l\'ERP le 11 novembre 2026 à 14:52 », ce qu\'il a fait (97 gardés, 796 sortis), et l\'heure où Google a relu la sélection',
+              'Fait par l\'ERP le 11 novembre 2026 à 14:52' in t0 and '97 gagnants gardés' in t0 and '796 perdants sortis' in t0 and 'Google a relu la sélection le 12 novembre 2026 à 03:10' in t0, t0[:400])
+        check('une action signée par l\'ERP n\'a ni bouton « C\'est fait » ni « annuler »', l0.locator('.st-cfait').count() == 0 and l0.locator('.st-annule').count() == 0)
+        pg.evaluate(sel, None); pg.wait_for_timeout(400); t0 = LI(pg, 0).inner_text()
+        check('tant que la sélection n\'est pas envoyée : « c\'est l\'ERP qui le fait », le bouton à utiliser est nommé, et il n\'y a PAS de « C\'est fait » à cliquer', 'c\'est l\'ERP qui le fait' in t0 and 'Ne garder en pub que les gagnants' in t0 and 'signe l\'action lui-même' in t0 and LI(pg, 0).locator('.st-cfait').count() == 0, repr(t0[:600]))
+        pg.evaluate("()=>{ localStorage.setItem('strategie-v1',window.__gardeS); window.dispatchEvent(new CustomEvent('ck-maj',{detail:{cles:['strategie-v1']}})); }"); pg.wait_for_timeout(300)
+        # 12 nov. 2026 — Igal : « je veux vraiment connaître l'évolution depuis le jour, depuis l'heure où on a commencé la campagne »
+        pg.evaluate(ACT3, 72); pg.wait_for_timeout(300)
+        n0 = pg.evaluate("()=>__an.CAMP().K.length")
+        check('sans relevé par heure : la page le dit (« le détail heure par heure commence au prochain relevé »), et il n\'y a pas de tableau des heures', 'heure par heure commence au prochain relevé' in pg.evaluate(TX, '.st-camp') and pg.locator('.st-heures').count() == 0, pg.evaluate(TX, '.st-camp .ga-note')[:300])
+        pg.evaluate("()=>{ const d=__an.anJM(new Date()), t=h=>new Date(Date.now()-h*3600e3).toISOString(); window.__gardeA=localStorage.getItem('google-ads-v1'); localStorage.setItem('google-ads-v1',JSON.stringify({maj:t(0),v:1,c:[],j:{[d]:[12,0,5,200,0]},h:[[t(100),d,99,0,9,999,0],[t(4),d,4,0,2,80,0],[t(3),d,9,0,3,150,0],[t(2),d,12,0,5,200,0]]})); window.dispatchEvent(new CustomEvent('ck-maj',{detail:{cles:['google-ads-v1']}})); }"); pg.wait_for_timeout(900)
+        pg.evaluate(ACT3, 72); pg.wait_for_timeout(300)
+        hp = pg.evaluate("()=>{ const C=__an.CAMP(), n=C.K.length; return [n, C.K.slice(-3).map(k=>k.court), C.sp.slice(-3).map(v=>Math.round((v-C.sp[n-4])*100)/100), C.K.slice(-3).map(k=>k.lib)]; }")
+        check('LE POINT — avec les relevés du cockpit : un point PAR HEURE sur la courbe (10:00, 11:00, 12:00 à Miami), et la dépense monte de relevé en relevé (4 $, 9 $, 12 $) ; un relevé d\'avant le redémarrage ne compte pas', hp[0] == n0 + 2 and '10:00' in hp[1][0] and '11:00' in hp[1][1] and '12:00' in hp[1][2] and hp[2] == [4, 9, 12] and 'à 12:00' in hp[3][2], [n0, hp])
+        pg.evaluate("()=>{ document.querySelector('details.st-heures').open=true; }")
+        hh = pg.evaluate("()=>[...document.querySelectorAll('.st-heures tbody tr')].map(tr=>[...tr.children].map(td=>td.textContent.replace(/\\s+/g,' ').trim()))")
+        check('LE POINT — « Heure par heure » : le relevé le plus récent en haut, ce qui a été dépensé depuis le relevé d\'avant (3 $, 5 $, 4 $) et le total de la journée (12 $, 9 $, 4 $)', len(hh) == 3 and '12:00' in hh[0][0] and [r[1] for r in hh] == ['3 $', '5 $', '4 $'] and [r[4] for r in hh] == ['12 $', '9 $', '4 $'] and hh[0][3] == '2' and hh[0][2] == '50', hh)
+        check('la ligne du jour (« Jour par jour ») suit le dernier relevé : 12 $', '12 $' in pg.evaluate("()=>document.querySelector('.st-jours tbody tr').children[1].textContent.replace(/\\s+/g,' ')"), pg.evaluate(TX, '.st-jours')[:200])
+        if os.environ.get('AN_SHOT'):
+            pg.evaluate(sel, {'date': '2026-11-11T19:52:13Z', 'par': 'ERP', 'comment': 'sélection envoyée à Google depuis l\'ERP (bouton cliqué par Igal) : 97 gagnants gardés en pub, 796 perdants sortis, 85 sortis faute de stock', 'lu': '2026-11-12T08:10:00Z'}); pg.wait_for_timeout(1500)
+            pg.locator('section.st').screenshot(path=os.environ['AN_SHOT'] + '_strategie.png')
+            pg.emulate_media(color_scheme='dark'); pg.wait_for_timeout(400); pg.locator('section.st').screenshot(path=os.environ['AN_SHOT'] + '_strategie_sombre.png'); pg.emulate_media(color_scheme='light')
+            pg.evaluate("()=>{ localStorage.setItem('strategie-v1',window.__gardeS); window.dispatchEvent(new CustomEvent('ck-maj',{detail:{cles:['strategie-v1']}})); }"); pg.wait_for_timeout(300)
+        pg.evaluate("()=>{ if(window.__gardeA==null) localStorage.removeItem('google-ads-v1'); else localStorage.setItem('google-ads-v1',window.__gardeA); window.dispatchEvent(new CustomEvent('ck-maj',{detail:{cles:['google-ads-v1']}})); }"); pg.wait_for_timeout(500)
         dos = pg.evaluate("()=>{ const L=rcLignes(); const d=anDossier(L,__an.anCommandes(L)); return {ca:d.trente_derniers_jours.tous_canaux.ca, cmd:d.trente_derniers_jours.sites_en_ligne.commandes, pub:d.trente_derniers_jours.google_ads.pub_depensee, prec:typeof d.trente_jours_d_avant, manq:d.donnees_manquantes.length, pp:typeof d.pub_parfum_par_parfum_90j}; }")
         check('LE POINT — le dossier envoyé aux agents porte les vrais chiffres de la page (30 jours : 1 290 $, 6 commandes en ligne, 120 $ de pub)', dos['ca'] == 1290 and dos['cmd'] == 6 and dos['pub'] == 120 and dos['manq'] == 3 and dos['pp'] == 'object', dos)
         envoye = []
@@ -310,6 +359,18 @@ try:
             fr = sorted(set(m.group(0) for m in FR.finditer(te)))
             check(f'6. {lg} : la page est en anglais, plus un mot de français, « i » compris', not fr and 'where orders come from' in te.lower() and all('publicit' not in x and 'adresse' not in x for x in pe.evaluate("()=>[...document.querySelectorAll('.ga-i')].map(b=>b.dataset.info)")) and 'Analytics' in pe.inner_text('.side'), fr[:12])
             pe.context.close()
+        # 12 nov. 2026 : les jours sont ceux de Miami — Igal ouvre l'ERP depuis l'Europe, où il est déjà « demain » le soir de Miami
+        ACT = "h=>{ const S=__an.STRAT(); S.courante.active={date:new Date(Date.now()-h*3600e3).toISOString(),fin:new Date(Date.now()+30*86400e3).toISOString(),par:'x'}; __an.anDessine(); }"
+        pj = ouvre(tz='Asia/Jerusalem', heure=2); pj.evaluate(ACT, 4); pj.wait_for_timeout(500)
+        check('LE POINT — écran ouvert en Europe à 2 h du matin (19 h la veille à Miami), campagne relancée 4 h plus tôt : c\'est encore le jour 1, pas le jour 2', 'jour 1 sur 30' in pj.evaluate(TX, '.st-tout') and 'jour 1 sur 30' in pj.inner_text('.st-on') and pj.locator('.st-jours tbody tr').count() == 2, [pj.evaluate(TX, '.st-tout')[:120], pj.inner_text('.st-on')])
+        eu = [pj.inner_text('.st-on'), pj.evaluate(TX, '.st-sec'), LI(pj, 1).inner_text()]
+        check('LE POINT — écran ouvert en Europe : toutes les heures du bloc sont celles de MIAMI (activée à 15:00 la veille, départ de la courbe à 15:00, action signée à 09:32) — pas l\'heure de l\'écran', 'à 15:00' in eu[0] and 'à 15:00' in eu[1] and 'heures de Miami' in eu[1] and 'le 3 novembre 2026 à 09:32' in eu[2], eu)
+        pj.context.close()
+        pe = ouvre(lg='en'); pe.evaluate(ACT, 3 * 24); pe.wait_for_timeout(500)
+        te = pe.evaluate(TXL, '.st-tuiles, .st-sec, .st-camp, .st-tout, .st-acts')
+        check('en : la pub depuis le redémarrage, le tableau des ventes et les actions sont en anglais, plus un mot de français', 'Progress since the restart' in te and 'Miami time' in te and 'spent on ads' in te and 'result of the ads' in te and 'To do' in te and 'Day by day' in te and 'Per day, on average' in te and 'All online sales since activation' in te and not re.search(r'Dépensé|Résultat|jour |depuis|Commandes|Pourquoi, comment', te), te[:500])
+        check('en : la signature de l\'ERP est en anglais — « Done by the ERP on November 3, 2026 »', 'Done by the ERP on November 3, 2026' in pe.evaluate(TX, '.st-acts'), pe.evaluate(TX, '.st-acts')[:300])
+        pe.context.close()
         check('6. aucune erreur JS', not err, err[:3])
         b.close()
 finally:

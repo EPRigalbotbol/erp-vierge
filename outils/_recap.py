@@ -211,7 +211,18 @@ GA_CSS = r'''
 .st-rapport{border-color:color-mix(in srgb,var(--an-3) 40%,var(--line));background:color-mix(in srgb,var(--an-3) 5%,var(--surface))}
 .st-t{font-size:16px;font-weight:700;color:var(--ink);margin:0 0 6px}.st-t small{font-size:12.5px;font-weight:500;color:var(--ink-3);margin-left:6px}
 .st-diag{font-size:14px;line-height:1.55;color:var(--ink-2);margin:0 0 10px}
-.st-acts{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:12px}
+/* 12 nov. 2026 (Igal : « comme on a fait les Tâches, sur le même format ») : titres de section, cartes à barre de couleur, gros chiffres */
+.st-sec{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin:26px 0 12px;padding-bottom:9px;border-bottom:1px solid var(--line)}
+.st-sec b{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink);font-weight:700}
+.st-sec em{font-style:normal;font-size:12.5px;color:var(--ink-3)}
+.st-acts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.st-acts>li.st-k{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:12px;padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 16px;align-items:start}
+.st-acts>li.st-k.afaire{border-left-color:#e37400}.st-acts>li.st-k.fait{border-left-color:#188038}.st-acts>li.st-k.attente{border-left-color:var(--ink-3)}
+.st-ka{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+.st-att{margin:2px 0 0;font-size:13px;color:var(--ink-2)}.st-att i{font-style:normal;font-weight:700;color:var(--ink-3);font-size:11px;letter-spacing:.05em;text-transform:uppercase;margin-right:3px}
+.st-vide{background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:18px;text-align:center;color:var(--ink-3);font-size:14px}.st-vide b{display:block;color:#188038;font-size:15px;margin-bottom:3px}
+.st-bloc>details.ga-calc{margin:0;padding:10px 2px;border-bottom:1px solid var(--line)}.st-bloc>details.ga-calc>summary{font-size:13.5px;font-weight:600;color:var(--ink)}
+.st-heures summary small{font-weight:500;color:var(--ink-3);margin-left:6px}.st-heures table,.st-moy table{min-width:520px}
 .st-acts li{font-size:13.5px;line-height:1.5;color:var(--ink-2);padding:2px 0}
 .st-ah{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}.st-ah b{font-size:14.5px;color:var(--ink)}
 .st-acts li.fait .st-ah b{text-decoration:none;color:var(--ink)}
@@ -226,6 +237,24 @@ GA_CSS = r'''
 .st-act{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:6px 0 14px;padding:12px 14px;border:1px dashed #1a73e8;border-radius:12px;font-size:13px;color:var(--ink-2)}
 .st-on{display:flex;align-items:center;gap:9px;margin:6px 0 14px;font-size:13.5px;font-weight:700;color:var(--ink)}
 .st-on i{width:9px;height:9px;border-radius:50%;background:#1a73e8;animation:scLive 1.2s ease-in-out infinite}
+.st-st{font-size:15px;font-weight:700;color:var(--ink);margin:18px 0 8px}.st-st small{font-size:12.5px;font-weight:500;color:var(--ink-3);margin-left:6px}
+.st-camp{margin:0 0 4px}.st-camp .st-st{margin-top:0}.st-camp>details.ga-calc{margin:0;padding:10px 2px;border-top:1px solid var(--line)}.st-camp>details.ga-calc>summary{font-size:13.5px;font-weight:600;color:var(--ink)}
+.st-tuiles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:14px 0 4px}
+@media(max-width:900px){.st-tuiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.st-tuiles>div{padding:12px 16px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+.st-tuiles span{display:block;font-size:12.5px;color:var(--ink-2)}
+.st-tuiles b{display:block;font-family:Inter,sans-serif;font-size:24px;font-weight:800;letter-spacing:-.03em;line-height:1.15;color:var(--ink);font-variant-numeric:tabular-nums}
+.st-tuiles small{display:block;font-size:11.5px;color:var(--ink-3)}
+.st-tuiles>.bon b{color:#188038}
+.st-tuiles>.mal b{color:#d93025}
+.st-peu{margin:6px 0 8px;padding:9px 12px;border-radius:10px;font-size:13.5px;font-weight:600;color:#b45f06;background:color-mix(in srgb,#f9ab00 14%,transparent)}
+.st-cours{font-style:normal;font-size:11px;font-weight:700;color:#1a73e8;margin-left:6px}
+.st-tot td{border-top:1px solid var(--line);font-weight:700}
+.st-jours .st-res{margin-top:4px;overflow-x:auto}.st-jours table{min-width:640px}
+.st-aide{display:block;flex-basis:100%;font-size:12px;color:var(--ink-3)}
+.st-fait.st-erp small+small{margin-top:1px}
+.st-det{margin:2px 0 0}.st-det>summary{cursor:pointer;font-size:12.5px;font-weight:600;color:var(--ink-3);list-style-position:inside}
+.st-comment,.st-constat{margin:8px 0}
 .st-res{margin:16px 0 0;font-size:13.5px}.st-res table{border-collapse:collapse;margin:6px 0;font-variant-numeric:tabular-nums}
 .st-res th,.st-res td{padding:5px 14px 5px 0;text-align:right}.st-res th:first-child,.st-res td:first-child{text-align:left;color:var(--ink-3)}
 .st-res th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
@@ -344,7 +373,8 @@ GA_JS = r'''
 const GA_MOUV=!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
 let gaAnime=true;   /* la première fois et à chaque choix : on anime ; une simple relève du serveur redessine sans rejouer */
 const gaPct=(a,b)=>(b==null||Math.abs(b)<0.005)?null:(a-b)/Math.abs(b)*100;
-const gaFmt=(f,v)=>f==='$'?money(v):f==='%'?nf(Math.round(v))+' %':nf(Math.round(v));
+/* « $c » : au centime pour les petites sommes (la pub des premières heures : 0,02 $ ne s'affiche pas « 0 $ ») */
+const gaFmt=(f,v)=>f==='$c'?(typeof anM==='function'?anM(v):money(v)):f==='$'?money(v):f==='%'?nf(Math.round(v))+' %':nf(Math.round(v));
 /* un chiffre qui arrive en comptant */
 const gaCnt=(v,f,cls='')=>`<span class="ga-cnt ${cls}" data-v="${v}" data-f="${f}">${gaFmt(f,v)}</span>`;
 function gaCompte(z){ if(!GA_MOUV||!gaAnime) return;

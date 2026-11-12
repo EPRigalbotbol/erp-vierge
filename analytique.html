@@ -599,7 +599,18 @@ font-size:11.5px;color:var(--ink-3);line-height:1.5}
 .st-rapport{border-color:color-mix(in srgb,var(--an-3) 40%,var(--line));background:color-mix(in srgb,var(--an-3) 5%,var(--surface))}
 .st-t{font-size:16px;font-weight:700;color:var(--ink);margin:0 0 6px}.st-t small{font-size:12.5px;font-weight:500;color:var(--ink-3);margin-left:6px}
 .st-diag{font-size:14px;line-height:1.55;color:var(--ink-2);margin:0 0 10px}
-.st-acts{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:12px}
+/* 12 nov. 2026 (Igal : « comme on a fait les Tâches, sur le même format ») : titres de section, cartes à barre de couleur, gros chiffres */
+.st-sec{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin:26px 0 12px;padding-bottom:9px;border-bottom:1px solid var(--line)}
+.st-sec b{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink);font-weight:700}
+.st-sec em{font-style:normal;font-size:12.5px;color:var(--ink-3)}
+.st-acts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.st-acts>li.st-k{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:12px;padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 16px;align-items:start}
+.st-acts>li.st-k.afaire{border-left-color:#e37400}.st-acts>li.st-k.fait{border-left-color:#188038}.st-acts>li.st-k.attente{border-left-color:var(--ink-3)}
+.st-ka{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+.st-att{margin:2px 0 0;font-size:13px;color:var(--ink-2)}.st-att i{font-style:normal;font-weight:700;color:var(--ink-3);font-size:11px;letter-spacing:.05em;text-transform:uppercase;margin-right:3px}
+.st-vide{background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:18px;text-align:center;color:var(--ink-3);font-size:14px}.st-vide b{display:block;color:#188038;font-size:15px;margin-bottom:3px}
+.st-bloc>details.ga-calc{margin:0;padding:10px 2px;border-bottom:1px solid var(--line)}.st-bloc>details.ga-calc>summary{font-size:13.5px;font-weight:600;color:var(--ink)}
+.st-heures summary small{font-weight:500;color:var(--ink-3);margin-left:6px}.st-heures table,.st-moy table{min-width:520px}
 .st-acts li{font-size:13.5px;line-height:1.5;color:var(--ink-2);padding:2px 0}
 .st-ah{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}.st-ah b{font-size:14.5px;color:var(--ink)}
 .st-acts li.fait .st-ah b{text-decoration:none;color:var(--ink)}
@@ -614,6 +625,24 @@ font-size:11.5px;color:var(--ink-3);line-height:1.5}
 .st-act{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:6px 0 14px;padding:12px 14px;border:1px dashed #1a73e8;border-radius:12px;font-size:13px;color:var(--ink-2)}
 .st-on{display:flex;align-items:center;gap:9px;margin:6px 0 14px;font-size:13.5px;font-weight:700;color:var(--ink)}
 .st-on i{width:9px;height:9px;border-radius:50%;background:#1a73e8;animation:scLive 1.2s ease-in-out infinite}
+.st-st{font-size:15px;font-weight:700;color:var(--ink);margin:18px 0 8px}.st-st small{font-size:12.5px;font-weight:500;color:var(--ink-3);margin-left:6px}
+.st-camp{margin:0 0 4px}.st-camp .st-st{margin-top:0}.st-camp>details.ga-calc{margin:0;padding:10px 2px;border-top:1px solid var(--line)}.st-camp>details.ga-calc>summary{font-size:13.5px;font-weight:600;color:var(--ink)}
+.st-tuiles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:14px 0 4px}
+@media(max-width:900px){.st-tuiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.st-tuiles>div{padding:12px 16px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+.st-tuiles span{display:block;font-size:12.5px;color:var(--ink-2)}
+.st-tuiles b{display:block;font-family:Inter,sans-serif;font-size:24px;font-weight:800;letter-spacing:-.03em;line-height:1.15;color:var(--ink);font-variant-numeric:tabular-nums}
+.st-tuiles small{display:block;font-size:11.5px;color:var(--ink-3)}
+.st-tuiles>.bon b{color:#188038}
+.st-tuiles>.mal b{color:#d93025}
+.st-peu{margin:6px 0 8px;padding:9px 12px;border-radius:10px;font-size:13.5px;font-weight:600;color:#b45f06;background:color-mix(in srgb,#f9ab00 14%,transparent)}
+.st-cours{font-style:normal;font-size:11px;font-weight:700;color:#1a73e8;margin-left:6px}
+.st-tot td{border-top:1px solid var(--line);font-weight:700}
+.st-jours .st-res{margin-top:4px;overflow-x:auto}.st-jours table{min-width:640px}
+.st-aide{display:block;flex-basis:100%;font-size:12px;color:var(--ink-3)}
+.st-fait.st-erp small+small{margin-top:1px}
+.st-det{margin:2px 0 0}.st-det>summary{cursor:pointer;font-size:12.5px;font-weight:600;color:var(--ink-3);list-style-position:inside}
+.st-comment,.st-constat{margin:8px 0}
 .st-res{margin:16px 0 0;font-size:13.5px}.st-res table{border-collapse:collapse;margin:6px 0;font-variant-numeric:tabular-nums}
 .st-res th,.st-res td{padding:5px 14px 5px 0;text-align:right}.st-res th:first-child,.st-res td:first-child{text-align:left;color:var(--ink-3)}
 .st-res th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
@@ -732,33 +761,33 @@ font-size:11.5px;color:var(--ink-3);line-height:1.5}
   <div class="logo"><div class="n">Perfumes Trade</div><div class="s">ERP</div></div>
   <nav>
     <div class="navlab">Produits</div>
-    <a class="nv" href="catalogue.html?v=202611112339"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>Catalogue<span class="ct nu" id="ct-catalogue">0</span></a>
-    <a class="nv" href="stock.html?v=202611112339"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg></span>Inventaire<span class="ct nu" id="ct-inventaire">0</span></a>
-    <a class="nv" href="inventaire_pc.html?v=202611112339"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h16l-1-5H5z"/><path d="M5 9v11h14V9"/><path d="M10 20v-5h4v5"/></svg></span>Inventaire Perfume City<span class="ct" id="ct-pcity"></span></a>
-    <a class="nv" href="demandes_pc.html?v=202611112339"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></span>Transfert interstore<span class="ct" id="ct-demandes"></span></a>
+    <a class="nv" href="catalogue.html?v=202611120651"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>Catalogue<span class="ct nu" id="ct-catalogue">0</span></a>
+    <a class="nv" href="stock.html?v=202611120651"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg></span>Inventaire<span class="ct nu" id="ct-inventaire">0</span></a>
+    <a class="nv" href="inventaire_pc.html?v=202611120651"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h16l-1-5H5z"/><path d="M5 9v11h14V9"/><path d="M10 20v-5h4v5"/></svg></span>Inventaire Perfume City<span class="ct" id="ct-pcity"></span></a>
+    <a class="nv" href="demandes_pc.html?v=202611120651"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></span>Transfert interstore<span class="ct" id="ct-demandes"></span></a>
     <div class="navlab">Commerce</div>
-    <a class="nv" href="quotes.html?v=202611112339"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>Cote<span class="ct" id="ct-devis"></span></a>
-    <a class="nv" href="offres.html?v=202611112339"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="8" cy="8" r="1.5"/></svg></span>Offre<span class="ct" id="ct-offre"></span></a>
-    <a class="nv" href="factures.html?v=202611112339"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span>Factures<span class="ct" id="ct-factures"></span></a>
-    <a class="nv" href="ventes.html?v=202611112339"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/></svg></span>Ventes<span class="ct" id="ct-ventes"></span></a>
-    <a class="nv" href="fournisseurs.html?v=202611112339"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></svg></span>Fournisseurs<span class="ct" id="ct-fournisseurs"></span></a>
-    <a class="nv" href="etude.html?v=202611112339"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg></span>Étude de cote<span class="ct" id="ct-étude"></span></a>
-    <a class="nv" href="clients.html?v=202611112339"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></span>Clients<span class="ct nb" id="ct-clients">0</span></a>
-    <a class="nv sub" href="clients.html?v=202611112339#vip" data-id="clients-vip" data-sous="clients.html">Clients VIP</a>
-    <a class="nv" data-pilotage="1" href="connecteurs.html?v=202611112339"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10l-3-3M17 17H7l3 3"/></svg></span>Connecteurs<span class="ct" id="ct-connecteurs"></span></a>
+    <a class="nv" href="quotes.html?v=202611120651"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>Cote<span class="ct" id="ct-devis"></span></a>
+    <a class="nv" href="offres.html?v=202611120651"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="8" cy="8" r="1.5"/></svg></span>Offre<span class="ct" id="ct-offre"></span></a>
+    <a class="nv" href="factures.html?v=202611120651"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span>Factures<span class="ct" id="ct-factures"></span></a>
+    <a class="nv" href="ventes.html?v=202611120651"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/></svg></span>Ventes<span class="ct" id="ct-ventes"></span></a>
+    <a class="nv" href="fournisseurs.html?v=202611120651"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></svg></span>Fournisseurs<span class="ct" id="ct-fournisseurs"></span></a>
+    <a class="nv" href="etude.html?v=202611120651"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg></span>Étude de cote<span class="ct" id="ct-étude"></span></a>
+    <a class="nv" href="clients.html?v=202611120651"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></span>Clients<span class="ct nb" id="ct-clients">0</span></a>
+    <a class="nv sub" href="clients.html?v=202611120651#vip" data-id="clients-vip" data-sous="clients.html">Clients VIP</a>
+    <a class="nv" data-pilotage="1" href="connecteurs.html?v=202611120651"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10l-3-3M17 17H7l3 3"/></svg></span>Connecteurs<span class="ct" id="ct-connecteurs"></span></a>
     <a class="nv" href="#galou" id="gl-btn" data-id="galou" onclick="if(typeof galouOuvre==='function')galouOuvre();return false"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v10H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg></span>Parler à Léa<span class="ct" id="ct-parler"></span></a>
     <div class="navlab" data-pilotage="1">Pilotage</div>
     <a class="nv" href="#support" id="aid-btn" data-id="support" onclick="if(typeof aidOuvre==='function')aidOuvre();return false"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="m9.5 9.5-4-4M14.5 9.5l4-4M14.5 14.5l4 4M9.5 14.5l-4 4"/></svg></span>Support technique<span class="ct" id="ct-support"></span></a>
-    <a class="nv" data-pilotage="1" href="journal.html?v=202611112339"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Journal<span class="ct" id="ct-journal"></span></a>
-    <a class="nv" data-pilotage="1" href="tableau.html?v=202611112339"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/></svg></span>Tableau de bord<span class="ct" id="ct-tableau"></span></a>
-    <a class="nv on" data-pilotage="1" href="analytique.html?v=202611112339"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>Analytique<span class="ct" id="ct-analytique"></span></a>
-    <a class="nv" data-pilotage="1" href="taches.html?v=202611112339"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m8 12 3 3 5-6"/></svg></span>Tâches<span class="ct" id="ct-taches"></span></a>
-    <a class="nv" data-pilotage="1" href="acces.html?v=202611112339"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.3 8 8 9 4.7-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></span>Accès<span class="ct" id="ct-accès"></span></a>
+    <a class="nv" data-pilotage="1" href="journal.html?v=202611120651"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Journal<span class="ct" id="ct-journal"></span></a>
+    <a class="nv" data-pilotage="1" href="tableau.html?v=202611120651"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/></svg></span>Tableau de bord<span class="ct" id="ct-tableau"></span></a>
+    <a class="nv on" data-pilotage="1" href="analytique.html?v=202611120651"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>Analytique<span class="ct" id="ct-analytique"></span></a>
+    <a class="nv" data-pilotage="1" href="taches.html?v=202611120651"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m8 12 3 3 5-6"/></svg></span>Tâches<span class="ct" id="ct-taches"></span></a>
+    <a class="nv" data-pilotage="1" href="acces.html?v=202611120651"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.3 8 8 9 4.7-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></span>Accès<span class="ct" id="ct-accès"></span></a>
     <a class="nv" data-pilotage="1" href="https://app.gusto.com" target="_blank" rel="noopener" title="Ouvre Gusto dans un nouvel onglet"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M14.5 9a2.5 2 0 0 0-2.5-1.5c-1.4 0-2.5.8-2.5 2s1 1.7 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2A2.7 2 0 0 1 9.5 15M12 6v1.5M12 16.5V18"/></svg></span>Paie<span class="ct" id="ct-paie"></span></a>
-    <a class="nv" data-pilotage="1" href="reglages.html?v=202611112339"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg></span>Réglages<span class="ct" id="ct-réglages"></span></a>
+    <a class="nv" data-pilotage="1" href="reglages.html?v=202611120651"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg></span>Réglages<span class="ct" id="ct-réglages"></span></a>
   </nav>
   <div class="sfoot"><div id="sfu" class="sfu"></div><span id="sfoot"></span>
-    <div class="ver" title="Si cette date n'est pas la derni&egrave;re, recharge avec Cmd+Option+R">version du 11/11/2026 à 23h39</div>
+    <div class="ver" title="Si cette date n'est pas la derni&egrave;re, recharge avec Cmd+Option+R">version du 11/12/2026 à 06h51</div>
     <div class="sfline" id="sfline"></div></div>
 </aside>
 <main class="main"><div class="wrap">
@@ -839,7 +868,7 @@ try{
 }catch(e){}
 })();
 </script>
-<script src="donnees/langue.js?v=202611112339"></script>
+<script src="donnees/langue.js?v=202611120651"></script>
 <script>
 /* le menu réglé et la langue de l'écran, AVANT le code de la page : rien ne saute, rien n'est vu dans une autre langue */
 
@@ -1809,7 +1838,7 @@ const LG_FR_PARCOURS=!/catalogue|stock|inventaire/.test(location.pathname);
 })();
 
 </script>
-<script src="donnees/produits.js?v=202611112339"></script><script src="donnees/histgros.js?v=202611112339"></script>
+<script src="donnees/produits.js?v=202611120651"></script><script src="donnees/histgros.js?v=202611120651"></script>
 <script>
 if (typeof window.D_PROD==='undefined') {
   /* Le code de la page est lancé plus tard par l'amorce (voir _serveur.py) : ce drapeau
@@ -1831,7 +1860,7 @@ if (typeof window.D_PROD==='undefined') {
 }
 </script>
 <script type="text/plain" id="page-js">
-const VER_URL='202611112339';
+const VER_URL='202611120651';
 const $=i=>document.getElementById(i);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const nf=v=>Number(v||0).toLocaleString('fr-FR');
@@ -5951,7 +5980,8 @@ function poseSortie(id, obtenir){
 const GA_MOUV=!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
 let gaAnime=true;   /* la première fois et à chaque choix : on anime ; une simple relève du serveur redessine sans rejouer */
 const gaPct=(a,b)=>(b==null||Math.abs(b)<0.005)?null:(a-b)/Math.abs(b)*100;
-const gaFmt=(f,v)=>f==='$'?money(v):f==='%'?nf(Math.round(v))+' %':nf(Math.round(v));
+/* « $c » : au centime pour les petites sommes (la pub des premières heures : 0,02 $ ne s'affiche pas « 0 $ ») */
+const gaFmt=(f,v)=>f==='$c'?(typeof anM==='function'?anM(v):money(v)):f==='$'?money(v):f==='%'?nf(Math.round(v))+' %':nf(Math.round(v));
 /* un chiffre qui arrive en comptant */
 const gaCnt=(v,f,cls='')=>`<span class="ga-cnt ${cls}" data-v="${v}" data-f="${f}">${gaFmt(f,v)}</span>`;
 function gaCompte(z){ if(!GA_MOUV||!gaAnime) return;
@@ -6631,6 +6661,7 @@ function anDessine(){
     gaCourbe(document.getElementById('ga-c2'),B.K,[{v:cum(mgJ),c:'var(--an-3)',nom:A3('Marge des commandes de la pub','Margin of ad orders'),aire:true,etiquette:true},{v:cum(pubJ),c:'var(--an-2)',nom:A3('Pub dépensée','Ad spend'),etiquette:true}],'$',{id:'b',h:210,droite:16,titre:A3('Marge cumulée et pub cumulée','Cumulative margin and ad spend')}); }
   /* les barres se remplissent */
   if(GA_MOUV&&gaAnime){ z.querySelectorAll('.ga-bf,.ga-pb i').forEach(b=>{ b.style.width='0'; }); requestAnimationFrame(()=>requestAnimationFrame(()=>z.querySelectorAll('.ga-bf,.ga-pb i').forEach(b=>{ b.style.width=''; }))); }
+  try{ anCampDessine(); }catch(e){}
   gaCompte(z);
   anAides(z); anBranche(); gaAnime=false;
 }
@@ -6762,28 +6793,131 @@ async function anStratActive(){
   }catch(e){ if(st) st.textContent=A3('Le cockpit ne répond pas : ','The cockpit is not answering: ')+(e&&e.message||e); }
 }
 /* « fait le 12 novembre 2026 à 14:32 » */
-const anQuand=iso=>{ try{ const d=new Date(iso); return A3('le ','on ')+d.toLocaleDateString(A3('fr-FR','en-US'),{day:'numeric',month:'long',year:'numeric'})+A3(' à ',' at ')+d.toLocaleTimeString(A3('fr-FR','en-US'),{hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } };
+/* 12 nov. 2026 : toujours l'heure de MIAMI (celle des ventes, du journal et de Google Ads) — un écran ouvert en Europe affichait une
+   autre heure que la courbe et le journal de la même page */
+const anQuand=iso=>{ try{ const d=new Date(iso), z='America/New_York'; return A3('le ','on ')+d.toLocaleDateString(A3('fr-FR','en-US'),{timeZone:z,day:'numeric',month:'long',year:'numeric'})+A3(' à ',' at ')+d.toLocaleTimeString(A3('fr-FR','en-US'),{timeZone:z,hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } };
 /* LES RÉSULTATS DEPUIS L'ACTIVATION (11 nov. 2026, « résultats sur 30 jours ») : les jours écoulés depuis le clic, comparés aux
    mêmes nombre de jours juste avant — tous les sites, mêmes règles que le haut de la page (commandes payées, retours déduits). */
+/* ============ LA PUB GOOGLE DEPUIS LE REDÉMARRAGE (12 nov. 2026) ============
+   Igal : « je veux vraiment connaître l'évolution depuis le jour, depuis l'heure où on a commencé la campagne ». Le départ, c'est
+   l'heure où la stratégie a été activée (la campagne est repartie à ce moment-là). Depuis :
+     • cinq chiffres en tête de bloc (anCampTuiles) : actions faites, dépensé, clics, commandes de la pub, résultat ;
+     • UNE courbe qui part du redémarrage (plus les 14 jours d'avant, qui écrasaient l'échelle) : ce que la pub a coûté et la marge
+       des commandes qu'elle a amenées, ADDITIONNÉS depuis le départ. Un point par relevé : le cockpit garde le cumul du jour à
+       chaque envoi du script Google Ads, une fois par heure (google-ads-v1 › h). Les jours d'avant ces relevés : un point par jour ;
+     • le détail jour par jour, heure par heure, et la moyenne par jour comparée aux 30 jours d'avant — repliés.
+   Les heures sont celles de Miami (celles des ventes et de Google Ads).
+   Une commande est « de la pub » quand la boutique a noté un clic sur une publicité Google ; elle compte une fois expédiée. */
+let AN_CAMP=null;
+const anJM=t=>{ try{ const j=(typeof jourMiami==='function')?jourMiami(t):''; if(j) return j; }catch(e){} return rcISO(t instanceof Date?t:new Date(t)); };
+const anPlus=(d,n)=>{ const x=new Date(d+'T12:00:00Z'); x.setUTCDate(x.getUTCDate()+n); return x.toISOString().slice(0,10); };
+/* un montant : au dollar près, sauf les petites sommes (0,02 $ de pub ne s'affiche pas « 0 $ ») */
+const anM=v=>{ const a=Math.abs(+v||0), sg=(+v<0&&a>=0.005)?'−':''; if(a>=0.005&&a<100&&Math.abs(a-Math.round(a))>0.004){ const t=a.toLocaleString(A3('fr-FR','en-US'),{minimumFractionDigits:2,maximumFractionDigits:2}); return sg+A3(t+' $','$'+t); } return sg+money(Math.round(a)); };
+/* l'heure de Miami d'un instant, et un jour « AAAA-MM-JJ » écrit en clair */
+const anHM=t=>{ try{ return new Date(t).toLocaleTimeString(A3('fr-FR','en-US'),{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } };
+const anJC=(d,o)=>{ try{ return new Date(d+'T12:00:00Z').toLocaleDateString(A3('fr-FR','en-US'),Object.assign({timeZone:'UTC'},o)); }catch(e){ return d; } };
+function anCampDonnees(C,tous){
+  const A=C&&C.active; if(!A) return null;
+  const t0=Date.parse(A.date), d0=anJM(A.date), auj=anJM(new Date());
+  const nJ=Math.max(1,Math.min(60,Math.round((Date.parse(auj)-Date.parse(d0))/86400e3)+1));
+  const P=anPub(anPlus(d0,-30),auj), J=P.J||{};
+  const parJour={}; tous.forEach(o=>{ if(o.site!=='site'||o.fam!=='gads') return; const x=parJour[o.d]=parJour[o.d]||{n:0,ca:0,mg:0}; x.ca+=o.ca; x.mg+=o.mg; if(!o.ret) x.n++; });
+  const jour=d=>{ const r=J[d]||[], o=parJour[d]||{n:0,ca:0,mg:0}, pub=+r[0]||0; return {d,pub,aff:+r[3]||0,clics:+r[2]||0,n:o.n,ca:o.ca,mg:o.mg,res:o.mg-pub}; };
+  const som=L=>L.reduce((T,x)=>{ T.pub+=x.pub; T.aff+=x.aff; T.clics+=x.clics; T.n+=x.n; T.ca+=x.ca; T.mg+=x.mg; return T; },{pub:0,aff:0,clics:0,n:0,ca:0,mg:0});
+  const depuis=[]; for(let i=0;i<nJ;i++) depuis.push(jour(anPlus(d0,i)));
+  const avant=[]; for(let i=30;i>=1;i--) avant.push(jour(anPlus(d0,-i)));
+  const T=som(depuis), V=som(avant), res=T.mg-T.pub;
+  /* la moyenne par jour ne compte que les journées COMPLÈTES : aujourd'hui n'est pas fini */
+  const complets=depuis.slice(0,-1), Tc=som(complets), nc=complets.length;
+  const camp=(()=>{ try{ const R=anCampCalc(tous); if(!R) return null; return {budget:R.C.filter(c=>c.on).reduce((a,c)=>a+(+c.budget||0),0),seuil:R.seuil}; }catch(e){ return null; } })();
+  /* les relevés heure par heure du cockpit : [heure, jour du compte, coût, ventes, clics, affichages, conv] = le cumul du jour à cette heure */
+  const H=(((anAdsJ()||{}).h)||[]).filter(r=>Array.isArray(r)&&r[1]>=d0&&r[1]<=auj&&Date.parse(r[0])>=t0).sort((a,b)=>a[0]<b[0]?-1:1);
+  const HJ={}; H.forEach(r=>{ (HJ[r[1]]=HJ[r[1]]||[]).push(r); });
+  /* les points de la courbe : le départ à zéro, puis chaque relevé ; un jour sans relevé (avant le 12 nov. 2026) = un point */
+  const pts=[{t:t0,d:d0,pub:0,clics:0,aff:0,mg:0,n:0,g:'dep'}];
+  let bp=0,bc=0,ba=0,mg=0,n=0;
+  depuis.forEach(x=>{ mg+=x.mg; n+=x.n; let der=null;
+    (HJ[x.d]||[]).forEach(r=>{ der={t:Date.parse(r[0]),d:x.d,pub:bp+Math.min(+r[2]||0,x.pub),clics:bc+Math.min(+r[4]||0,x.clics),aff:ba+Math.min(+r[5]||0,x.aff),mg,n,g:'h'}; pts.push(der); });
+    const f={t:null,d:x.d,pub:bp+x.pub,clics:bc+x.clics,aff:ba+x.aff,mg,n,g:x.d===auj?'auj':'jour'};
+    if(!der||Math.abs(f.pub-der.pub)>0.004||f.clics!==der.clics||f.aff!==der.aff) pts.push(f);
+    bp+=x.pub; bc+=x.clics; ba+=x.aff; });
+  /* heure par heure : ce qui s'est ajouté entre deux relevés du même jour (les 24 derniers) */
+  const heures=H.map((r,i)=>{ const p=(i>0&&H[i-1][1]===r[1])?H[i-1]:null; return {t:r[0],d:r[1],pub:(+r[2]||0)-(p?+p[2]||0:0),clics:(+r[4]||0)-(p?+p[4]||0:0),aff:(+r[5]||0)-(p?+p[5]||0:0),cumPub:+r[2]||0,cumClics:+r[4]||0}; }).slice(-24).reverse();
+  return {A,t0,d0,auj,nJ,P,depuis,T,V,res,Tc,nc,camp,pts,heures,h0:H.length?H[0][0]:''};
+}
+/* LES CHIFFRES EN TÊTE (même forme que la page Tâches : un gros chiffre, son nom dessous) */
+function anCampTuiles(D,faites,total){
+  let h=`<div class="st-tuiles"><div class="st-nb"><b>${nf(faites)} / ${nf(total)}</b><span>${A3(faites>1?'actions faites':'action faite',faites>1?'actions done':'action done')}</span></div>`;
+  if(D&&D.P.lu){ const T=D.T, c=D.camp;
+    h+=`<div class="st-dep"><b>${anM(T.pub)}</b><span>${A3('dépensés en pub','spent on ads')}</span>${c&&c.budget?`<small>${A3('sur','out of')} ${anM(c.budget*D.nJ)} ${A3('de budget','budget')} (${anM(c.budget)} ${A3('par jour','a day')})</small>`:''}</div>
+      <div><b>${nf(Math.round(T.clics))}</b><span>${A3(T.clics>1?'clics':'clic',T.clics>1?'clicks':'click')}</span><small>${nf(Math.round(T.aff))} ${A3('affichages','impressions')}</small></div>
+      <div><b>${nf(T.n)}</b><span>${A3(T.n>1?'commandes de la pub':'commande de la pub',T.n>1?'orders from the ads':'order from the ads')}</span><small>${anM(T.ca)} ${A3('de ventes','in sales')} · ${anM(T.mg)} ${A3('de marge','margin')}</small></div>
+      <div class="${D.res>=0?'bon':'mal'}"><b>${anM(D.res)}</b><span>${A3('résultat de la pub','result of the ads')}</span><small>${A3('marge − pub','margin − ads')}</small></div>`; }
+  return h+`</div>`;
+}
+function anCampSuivi(D){
+  AN_CAMP=null; if(!D) return '';
+  const {A,d0,auj,nJ,P,depuis,T,V,res,Tc,nc,camp}=D;
+  const quand=`<span data-nolang>${esc(anJC(d0,{day:'numeric',month:'long',year:'numeric'}))}</span> ${A3('à','at')} <span data-nolang>${esc(anHM(A.date))}</span>`;
+  let h=`<div class="st-sec"><b>${A3('Évolution depuis le redémarrage','Progress since the restart')}</b><em>${A3('depuis le','since')} ${quand} · ${A3('heures de Miami','Miami time')}</em></div><div class="st-camp">`;
+  if(!P.lu) return h+`<p class="ga-vide">${P.err?A3('Le cockpit n\'arrive pas à lire les chiffres de Google : ','The cockpit cannot read Google\'s figures: ')+'<span data-nolang>'+esc(P.err)+'</span>':A3('Les chiffres de Google arrivent : le cockpit les lit une fois par heure.','Google\'s figures are on their way: the cockpit reads them once an hour.')}</p></div>`;
+  h+=`<p class="ga-phrase">${A3('Depuis le redémarrage, la pub a coûté','Since the restart, the ads cost')} <b>${anM(T.pub)}</b>. ${A3('Elle a amené','They brought')} <b>${nf(T.n)}</b> ${A3('commande'+(T.n>1?'s':'')+', qui '+(T.n>1?'ont':'a')+' laissé','order'+(T.n>1?'s':'')+', which left')} <b>${anM(T.mg)}</b> ${A3('de marge nette','net margin')}. ${A3('Résultat','Result')} : <b>${anM(res)}</b>.${(T.pub>=1&&camp&&camp.seuil)?` ${A3('Pour 1 $ de pub','For $1 of ads')} : <b>${(T.ca/T.pub).toLocaleString(A3('fr-FR','en-US'),{maximumFractionDigits:2})} $</b> ${A3('de ventes — il en faut','in sales — it takes')} <b>${camp.seuil.toLocaleString(A3('fr-FR','en-US'),{maximumFractionDigits:2})} $</b> ${A3('pour ne pas perdre','not to lose money')}.`:''}</p>`;
+  /* une campagne allumée qui ne dépense pas son budget : Google la diffuse peu — c'est le premier signal à regarder */
+  const moyPub=nc?Tc.pub/nc:null;
+  if(camp&&camp.budget>0&&((nc>=1&&moyPub<camp.budget*0.5)||(nc===0&&T.pub<camp.budget*0.1)))
+    h+=`<p class="st-peu">${nc>=1?A3(`La campagne ne dépense pas son budget : ${anM(moyPub)} par jour en moyenne, sur ${anM(camp.budget)} possibles. Google la diffuse peu.`,`The campaign is not spending its budget: ${anM(moyPub)} a day on average, out of ${anM(camp.budget)} possible. Google is showing it little.`):A3(`Premier jour : ${anM(T.pub)} dépensés sur ${anM(camp.budget)} possibles. Google remet la campagne en route ; à revoir demain.`,`First day: ${anM(T.pub)} spent out of ${anM(camp.budget)} possible. Google is restarting the campaign; check again tomorrow.`)}</p>`;
+  const sansHeure=D.h0&&anJM(D.h0)>d0;
+  h+=`<div class="ga-plot ga-plot2" id="st-camp-c"></div><p class="ga-note">${A3('La courbe part du redémarrage et additionne tout depuis : ce que la pub a coûté, et la marge des commandes qu\'elle a amenées. Quand la ligne verte passe au-dessus de la ligne orange, la pub rapporte plus qu\'elle ne coûte. Un point par relevé (toutes les heures) : passez la souris dessus.','The curve starts at the restart and adds everything up since: what the ads cost, and the margin of the orders they brought. When the green line goes above the orange line, the ads bring in more than they cost. One point per reading (every hour): hover over it.')}${(!D.h0||sansHeure)?' '+A3(`Le détail heure par heure commence ${D.h0?'le '+anJC(anJM(D.h0),{day:'numeric',month:'long'})+' à '+anHM(D.h0):'au prochain relevé'} : avant, l'ERP ne gardait qu'un total par jour.`,`The hour-by-hour detail starts ${D.h0?'on '+anJC(anJM(D.h0),{day:'numeric',month:'long'})+' at '+anHM(D.h0):'at the next reading'}: before that, the ERP only kept one total per day.`):''}</p>`;
+  const jl=d=>anJC(d,{weekday:'short',day:'numeric',month:'short'});
+  h+=`<details class="ga-calc st-jours"${nJ<=7?' open':''}><summary>${A3('Jour par jour','Day by day')}</summary><div class="st-res"><table><thead><tr><th>${A3('Jour','Day')}</th><th>${A3('Dépensé','Spent')}</th><th>${A3('Affichages','Impressions')}</th><th>${A3('Clics','Clicks')}</th><th>${A3('Commandes','Orders')}</th><th>${A3('Ventes','Sales')}</th><th>${A3('Marge','Margin')}</th><th>${A3('Résultat','Result')}</th></tr></thead><tbody>
+    ${depuis.slice().reverse().map(x=>`<tr><td><span data-nolang>${esc(jl(x.d))}</span>${x.d===auj?` <i class="st-cours">${A3('en cours','in progress')}</i>`:''}</td><td>${anM(x.pub)}</td><td>${nf(Math.round(x.aff))}</td><td>${nf(Math.round(x.clics))}</td><td>${nf(x.n)}</td><td>${anM(x.ca)}</td><td>${anM(x.mg)}</td><td class="${x.res>=0?'st-up':'st-down'}"><b>${anM(x.res)}</b></td></tr>`).join('')}
+    <tr class="st-tot"><td>${A3('Total','Total')}</td><td>${anM(T.pub)}</td><td>${nf(Math.round(T.aff))}</td><td>${nf(Math.round(T.clics))}</td><td>${nf(T.n)}</td><td>${anM(T.ca)}</td><td>${anM(T.mg)}</td><td class="${res>=0?'st-up':'st-down'}"><b>${anM(res)}</b></td></tr></tbody></table></div></details>`;
+  if(D.heures.length) h+=`<details class="ga-calc st-heures"><summary>${A3('Heure par heure','Hour by hour')} <small>${A3(`les ${D.heures.length} derniers relevés`,`the last ${D.heures.length} readings`)}</small></summary><div class="st-res"><table><thead><tr><th>${A3('Relevé (heure de Miami)','Reading (Miami time)')}</th><th>${A3('Dépensé depuis le relevé d\'avant','Spent since the previous reading')}</th><th>${A3('Affichages','Impressions')}</th><th>${A3('Clics','Clicks')}</th><th>${A3('Dépensé dans la journée','Spent that day')}</th></tr></thead><tbody>
+    ${D.heures.map(x=>`<tr><td data-nolang>${esc(jl(x.d))} · ${esc(anHM(x.t))}</td><td>${anM(Math.max(0,x.pub))}</td><td>${nf(Math.max(0,Math.round(x.aff)))}</td><td>${nf(Math.max(0,Math.round(x.clics)))}</td><td><b>${anM(x.cumPub)}</b></td></tr>`).join('')}</tbody></table></div></details>`;
+  const mj=(v,k)=>k?anM(v/k):'—', nj=(v,k)=>k?(v/k).toLocaleString(A3('fr-FR','en-US'),{maximumFractionDigits:1}):'—';
+  h+=`<details class="ga-calc st-moy"><summary>${A3('Comparer aux 30 jours d\'avant','Compare with the 30 days before')}</summary><div class="st-res"><b>${A3('Par jour, en moyenne','Per day, on average')}</b>
+    <table><thead><tr><th></th><th>${A3('Les 30 jours d\'avant','The 30 days before')}</th><th>${A3('Depuis le redémarrage','Since the restart')}${nc?` (${A3(nc>1?nc+' jours complets':'1 jour complet',nc>1?nc+' full days':'1 full day')})`:''}</th></tr></thead><tbody>
+    <tr><td>${A3('Dépense de pub','Ad spend')}</td><td>${mj(V.pub,30)}</td><td><b>${mj(Tc.pub,nc)}</b></td></tr>
+    <tr><td>${A3('Commandes de la pub','Orders from the ads')}</td><td>${nj(V.n,30)}</td><td><b>${nj(Tc.n,nc)}</b></td></tr>
+    <tr><td>${A3('Marge de ces commandes','Margin of these orders')}</td><td>${mj(V.mg,30)}</td><td><b>${mj(Tc.mg,nc)}</b></td></tr>
+    <tr><td>${A3('Résultat (marge − pub)','Result (margin − ads)')}</td><td>${mj(V.mg-V.pub,30)}</td><td><b>${mj(Tc.mg-Tc.pub,nc)}</b></td></tr></tbody></table>
+    ${nc?'':`<p class="ga-note">${A3('La moyenne « depuis le redémarrage » s\'affichera demain : elle ne compte que les journées complètes.','The “since the restart” average will show tomorrow: it only counts full days.')}</p>`}</div></details>
+    <p class="ga-note">${A3('Les chiffres de Google ont quelques heures de retard. Une commande n\'est comptée qu\'une fois expédiée, au jour où elle a été passée : les derniers jours peuvent donc encore monter.','Google\'s figures are a few hours late. An order only counts once shipped, on the day it was placed: the last few days can still go up.')}</p></div>`;
+  /* la courbe : un point par relevé, depuis l'heure du redémarrage */
+  const K=D.pts.map(p=>{ const j=anJC(p.d,{day:'numeric',month:'short'}), jj=anJC(p.d,{weekday:'long',day:'numeric',month:'long'});
+    if(p.g==='dep') return {k:'dep',court:j+' '+anHM(p.t),court2:j+' '+anHM(p.t),lib:A3('Redémarrage — ','Restart — ')+jj+A3(' à ',' at ')+anHM(p.t)};
+    if(p.g==='h') return {k:String(p.t),court:j+' '+anHM(p.t),court2:j+' '+anHM(p.t),lib:jj+A3(' à ',' at ')+anHM(p.t)};
+    return {k:p.d,court:j,court2:j,lib:jj+(p.g==='auj'?A3(' — aujourd\'hui, dernier relevé',' — today, last reading'):A3(' — la journée entière',' — the whole day'))}; });
+  AN_CAMP={K,sp:D.pts.map(p=>p.pub),sm:D.pts.map(p=>p.mg),pts:D.pts};
+  return h;
+}
+function anCampDessine(){
+  const el=document.getElementById('st-camp-c'); if(!el||!AN_CAMP) return;
+  const P=AN_CAMP.pts;
+  gaCourbe(el,AN_CAMP.K,[{v:AN_CAMP.sm,c:'var(--an-3)',nom:A3('Marge des commandes de la pub, depuis le redémarrage','Margin of ad orders, since the restart'),nomTip:A3('Marge des commandes de la pub','Margin of ad orders'),aire:true,etiquette:true},{v:AN_CAMP.sp,c:'var(--an-2)',nom:A3('Pub dépensée, depuis le redémarrage','Ad spend, since the restart'),nomTip:A3('Pub dépensée','Ad spend'),etiquette:true}],'$c',
+    {id:'c',h:230,droite:46,titre:A3('Pub dépensée et marge des commandes de la pub, additionnées depuis le redémarrage','Ad spend and margin of ad orders, added up since the restart'),reperes:{0:[{}]},
+     tipPlus:i=>{ const p=P[i]||{}; return `<div><span>${A3('Résultat','Result')}</span><b>${anM((p.mg||0)-(p.pub||0))}</b></div><div><span>${A3('Clics','Clicks')}</span><b>${nf(Math.round(p.clics||0))}</b></div><div><span>${A3('Affichages','Impressions')}</span><b>${nf(Math.round(p.aff||0))}</b></div><div><span>${A3('Commandes de la pub','Orders from the ads')}</span><b>${nf(p.n||0)}</b></div>`; }});
+}
 function anStratResultats(C,tous){
   const A=C.active; if(!A) return '';
-  const d0=rcISO(new Date(A.date)), auj=rcISO(new Date());
+  /* les jours sont ceux de Miami (ceux des ventes et de Google Ads) : un écran ouvert en Europe passe à « demain » six heures trop tôt */
+  const d0=anJM(A.date), auj=anJM(new Date());
   const n=Math.max(1,Math.min(30,Math.round((Date.parse(auj)-Date.parse(d0))/86400e3)+1));
   /* 11 nov. 2026 (Igal : « ce n'est pas du tout clair, pourquoi ça bouge tout le temps, le chiffre n'est jamais le même ») : la journée en
      cours n'est pas finie — ses chiffres montent jusqu'au soir, et la comparer à des journées entières donnait un écart faux qui changeait
      à chaque visite. On ne compare plus que des journées COMPLÈTES (jusqu'à hier), au même nombre de jours juste avant l'activation. */
-  const hier=rcISO(new Date(Date.parse(auj+'T12:00:00')-86400e3));
+  const hier=anPlus(auj,-1);
   const nc=Math.max(0,Math.min(30,Math.round((Date.parse(hier)-Date.parse(d0))/86400e3)+1));
-  const titre=`<b>${A3(`Résultats depuis l'activation — jour ${n} sur 30`,`Results since activation — day ${n} of 30`)}</b>`;
-  if(!nc) return `<div class="st-res">${titre}
+  const titre=`<b>${A3(`Toutes les ventes en ligne depuis l'activation — jour ${n} sur 30`,`All online sales since activation — day ${n} of 30`)}</b>`;
+  if(!nc) return `<div class="st-res st-tout">${titre}
     <p class="ga-note">${A3('Premier jour en cours : la comparaison commence demain, sur une journée complète. Les chiffres d\'une journée pas finie montent jusqu\'au soir : ils ne se comparent à rien.','First day in progress: the comparison starts tomorrow, on a full day. The figures of an unfinished day keep rising until the evening: they compare to nothing.')}</p></div>`;
-  const av0=rcISO(new Date(Date.parse(d0+'T12:00:00')-nc*86400e3)), av1=rcISO(new Date(Date.parse(d0+'T12:00:00')-86400e3));
+  const av0=anPlus(d0,-nc), av1=anPlus(d0,-1);
   const ap=anSomme(anDans(tous,d0,hier)), av=anSomme(anDans(tous,av0,av1));
   const pa=anPub(d0,hier).T, pv=anPub(av0,av1).T;
   const lig=(lib,a,b,f,bon)=>{ const dv=b?((a-b)/Math.abs(b)*100):null; const cl=dv==null?'':((dv>=0)===bon?'st-up':'st-down');
     return `<tr><td>${lib}</td><td>${f(b)}</td><td><b>${f(a)}</b></td><td class="${cl}">${dv==null?'—':(dv>=0?'+':'')+Math.round(dv)+' %'}</td></tr>`; };
   const jr=A3(nc>1?`${nc} jours complets`:'1 jour complet',nc>1?`${nc} full days`:'1 full day');
-  return `<div class="st-res">${titre}
+  return `<div class="st-res st-tout">${titre}
     <table><thead><tr><th></th><th>${A3(nc>1?`Les ${nc} jours d'avant`:'Le jour d\'avant',nc>1?`The ${nc} days before`:'The day before')}</th><th>${A3('Depuis l\'activation','Since activation')} (${jr})</th><th>${A3('Écart','Change')}</th></tr></thead><tbody>
     ${lig(A3('Commandes en ligne','Online orders'),ap.n,av.n,nf,true)}${lig(A3('Chiffre d\'affaires en ligne','Online revenue'),ap.ca,av.ca,money,true)}${lig(A3('Marge nette en ligne','Online net margin'),ap.mg,av.mg,money,true)}
     ${lig(A3('Dépense Google Ads','Google Ads spend'),pa.pub,pv.pub,money,false)}${lig(A3('Marge après pub','Margin after ads'),ap.mg-pa.pub,av.mg-pv.pub,money,true)}</tbody></table>
@@ -6796,7 +6930,7 @@ const anLi=a=>(Array.isArray(a)&&a.length)?'<ul>'+a.map(x=>`<li>${esc(x)}</li>`)
 function anStrategie(L,tous){
   const S=STRAT||{}, C=S.courante, E=S.encours, R=(S.rapports||[])[0];
   let h=`<section class="ga-card ga-pad st"><div class="ga-h"><h3>${A3('Stratégie','Strategy')}</h3><span class="ga-src">${A3('proposée et vérifiée par cinq agents','proposed and checked by five agents')}</span></div>`;
-  h+=`<p class="st-com">${A3('Un stratège propose 3 actions au plus, appuyées sur les chiffres de cette page. Trois vérificateurs indépendants les relisent — les chiffres, la marge, la faisabilité — et une action refusée par un seul d\'entre eux est retirée. Un rédacteur écrit la version finale. Au bout d\'un mois, le « Rapport du mois » compare avant / après, action par action.','A strategist proposes up to 3 actions, based on the figures on this page. Three independent checkers review them — the figures, the margin, the feasibility — and an action refused by any one of them is dropped. An editor writes the final version. After a month, the “Monthly report” compares before / after, action by action.')}</p>`;
+  const stCom=`<details class="ga-calc st-comment"><summary>${A3('Comment cette stratégie est faite','How this strategy is made')}</summary><p class="st-com">${A3('Un stratège propose 3 actions au plus, appuyées sur les chiffres de cette page. Trois vérificateurs indépendants les relisent — les chiffres, la marge, la faisabilité — et une action refusée par un seul d\'entre eux est retirée. Un rédacteur écrit la version finale. Au bout d\'un mois, le « Rapport du mois » compare avant / après, action par action.','A strategist proposes up to 3 actions, based on the figures on this page. Three independent checkers review them — the figures, the margin, the feasibility — and an action refused by any one of them is dropped. An editor writes the final version. After a month, the “Monthly report” compares before / after, action by action.')}</p></details>`;
   const enCours=E&&!E.err&&(Date.now()-Date.parse(E.maj||E.depuis))<30*60e3;
   if(enCours){ h+=anScene(E); window._anEnCours=E.type; }
   else if(window._anEnCours&&!(E&&E.err)){ const t=window._anEnCours; window._anEnCours=null; window._anFin=Date.now(); window._anFinType=t; setTimeout(()=>{ gaAnime=true; anDessine(); },6500); }
@@ -6809,24 +6943,55 @@ function anStrategie(L,tous){
     +(C?`<button type="button" class="ga-btn sec" id="st-rap" ${enCours?'disabled':''}>${A3('Rapport du mois','Monthly report')}</button><span>${age<28?A3(`Le rapport est plus parlant après 4 semaines (dans ${28-age} jour${28-age>1?'s':''}).`,`The report means more after 4 weeks (in ${28-age} day${28-age>1?'s':''}).`):A3('La stratégie a plus de 4 semaines : c\'est le moment du rapport.','The strategy is over 4 weeks old: time for the report.')}</span>`:'')
     +`<span id="st-msg" class="st-msg"></span></div>`;
   if(C&&C.res){ const X=C.res[anLg()]||C.res.fr||{};
-    h+=`<div class="st-bloc"><div class="st-t">${esc(X.titre||A3('Stratégie','Strategy'))} <small>${A3('du','of')} ${esc(anDate(C.date))}</small></div>${X.diagnostic?`<p class="st-diag">${esc(X.diagnostic)}</p>`:''}
-      ${X.objectif?`<p class="st-obj"><span>${A3('Objectif du mois','Goal for the month')}</span>${esc(X.objectif)}</p>`:''}
-      ${C.active?`<p class="st-on"><i></i>${A3('Stratégie active','Strategy active')} ${esc(anQuand(C.active.date))} · ${A3('mesure jusqu\'au','measured until')} ${esc(anDate(C.active.fin))}</p>`
-        :`<div class="st-act"><button type="button" class="ga-btn" id="st-active" ${enCours?'disabled':''}>${A3('Activer la stratégie','Activate the strategy')}</button><span>${A3('Le clic ouvre les 30 jours de mesure. Ensuite l\'ERP note seul chaque action faite, avec le jour et l\'heure.','The click opens the 30-day measurement. Then the ERP records each action done by itself, with the day and time.')}</span></div>`}
-      <ol class="st-acts">${(X.actions||[]).map((a,i)=>{ const f=(C.faits||[])[i], fa=(C.res.fr&&C.res.fr.actions||[])[i]||a, v=(fa.verif||{}).type||'manuel', qui=fa.qui||a.qui||'';
-        const etat=f?`<span class="st-fait">✓ ${A3('Fait','Done')} ${f.date?esc(anQuand(f.date)):''}${f.par&&f.par!=='ERP'?' · '+esc(f.par):''}${f.comment&&f.par==='ERP'?`<small data-nolang>${esc(f.comment)}</small>`:''}</span>${f.par!=='ERP'&&C.active?`<button type="button" class="st-annule" data-stf="${i}" data-f="0">${A3('annuler','undo')}</button>`:''}`
-          :!C.active?`<span class="st-afaire">${A3('À faire après l\'activation','To do after activation')}</span>`
-          :v==='manuel'?`<span class="st-afaire">${A3('À faire','To do')}</span><button type="button" class="ga-btn sec st-cfait" data-stf="${i}" data-f="1">${A3('C\'est fait','It\'s done')}</button>`
-          :`<span class="st-afaire">${v==='campagne'?A3('À faire — l\'ERP le verra seul dans Google Ads','To do — the ERP will see it in Google Ads by itself'):A3('À faire — l\'ERP le verra seul dans les Réglages','To do — the ERP will see it in Settings by itself')}</span>`;
-        return `<li class="${f?'fait':''}"><div class="st-ah"><b>${esc(a.titre||'')}</b>${qui?`<span class="st-qui" data-nolang>${esc(qui)}</span>`:''}</div><div class="st-etat">${etat}</div>
+    /* 12 nov. 2026 (Igal : « la stratégie, je trouve ça très moche, c'est écrit partout — je la veux comme on a fait les Tâches, avec la
+       date, sur le même format ») : la forme de la page Tâches, de haut en bas —
+         1. où on en est, en une ligne (active depuis quand, jour n sur 30) et l'objectif ;
+         2. les chiffres en gros (actions faites, dépensé, clics, commandes de la pub, résultat) ;
+         3. l'évolution depuis l'heure du redémarrage (une courbe ; les tableaux se déplient) ;
+         4. « À faire » puis « Fait » : UNE CARTE PAR ACTION, barre de couleur à gauche, la date et la signature, le bouton à droite ;
+            le pourquoi / comment se déplie ;
+         5. tout le reste replié : ventes de tous les sites avant / après, prévision, constat de départ, ce qui a été retiré. */
+    const D=anCampDonnees(C,tous), acts=X.actions||[], nbF=acts.filter((a,i)=>(C.faits||[])[i]).length;
+    const nj=C.active?Math.max(1,Math.min(30,Math.round((Date.parse(anJM(new Date()))-Date.parse(anJM(C.active.date)))/86400e3)+1)):0;
+    const carte=(a,i)=>{ const f=(C.faits||[])[i], fa=(C.res.fr&&C.res.fr.actions||[])[i]||a, v=(fa.verif||{}).type||'manuel', qui=fa.qui||a.qui||'';
+      /* 12 nov. 2026 (Igal : « il faut que ce soit signé : fait par l'ERP à telle date ») : ce que l'ERP a fait ou constaté lui-même
+         porte sa signature en toutes lettres, la date, ce qu'il a vu, et l'heure où Google a relu la sélection quand elle est connue */
+      let cl='afaire', etat='', btn='';
+      if(f){ cl='fait';
+        etat=`<span class="st-fait${f.par==='ERP'?' st-erp':''}">✓ ${f.par==='ERP'?A3('Fait par l\'ERP','Done by the ERP'):A3('Fait','Done')} ${f.date?esc(anQuand(f.date)):''}${f.par&&f.par!=='ERP'?' · '+esc(f.par):''}${f.comment&&f.par==='ERP'?`<small data-nolang>${esc(f.comment)}</small>`:''}${f.lu&&f.par==='ERP'?`<small>${A3('Google a relu la sélection','Google re-read the selection')} ${esc(anQuand(f.lu))}</small>`:''}</span>`;
+        if(f.par!=='ERP'&&C.active) btn=`<button type="button" class="st-annule" data-stf="${i}" data-f="0">${A3('annuler','undo')}</button>`; }
+      else if(!C.active){ cl='attente'; etat=`<span class="st-afaire">${A3('À faire après l\'activation','To do after activation')}</span>`; }
+      else if(v==='manuel'){ etat=`<span class="st-afaire">${A3('À faire','To do')}</span><small class="st-aide">${A3('L\'ERP ne peut pas voir cette action tout seul : cliquez « C\'est fait » quand elle est faite.','The ERP cannot see this action by itself: click “It\'s done” once it is done.')}</small>`;
+        btn=`<button type="button" class="ga-btn sec st-cfait" data-stf="${i}" data-f="1">${A3('C\'est fait ✓','It\'s done ✓')}</button>`; }
+      else if(v==='selection') etat=`<span class="st-afaire">${A3('À faire — c\'est l\'ERP qui le fait','To do — the ERP does it')}</span><small class="st-aide">${A3('Bouton « Ne garder en pub que les gagnants », plus bas dans cette page. Dès l\'envoi, l\'ERP signe l\'action lui-même, avec la date.','Button “Keep only the winners in the ads”, further down this page. Once sent, the ERP signs the action itself, with the date.')}</small>`;
+      else etat=`<span class="st-afaire">${v==='campagne'?A3('À faire — l\'ERP le verra seul dans Google Ads','To do — the ERP will see it in Google Ads by itself'):A3('À faire — l\'ERP le verra seul dans les Réglages','To do — the ERP will see it in Settings by itself')}</span>`;
+      /* une action pas encore faite dit en une ligne ce qu'on en attend et pour quand */
+      const att=(!f&&(a.gain||a.delai))?`<p class="st-att">${a.gain?`<i>${A3('Gain attendu','Expected gain')}</i> ${esc(a.gain)}`:''}${a.gain&&a.delai?' · ':''}${a.delai?`<i>${A3('Délai','Timing')}</i> ${esc(a.delai)}`:''}</p>`:'';
+      return `<li class="st-k ${cl}" data-sti="${i}"><div class="st-kc"><div class="st-ah"><b>${esc(a.titre||'')}</b>${qui?`<span class="st-qui" data-nolang>${esc(qui)}</span>`:''}</div><div class="st-etat">${etat}</div>${att}
+        <details class="st-det"><summary>${A3('Pourquoi, comment, et ce qu\'on en attend','Why, how, and what we expect')}</summary>
         ${a.pourquoi?`<p><span>${A3('Pourquoi','Why')}</span>${esc(a.pourquoi)}</p>`:''}${(a.comment||[]).length?`<div><span>${A3('Comment','How')}</span>${anLi(a.comment)}</div>`:''}
-        <div class="st-kv">${a.cout?`<div><span>${A3('Coût','Cost')}</span>${esc(a.cout)}</div>`:''}${a.gain?`<div><span>${A3('Gain attendu','Expected gain')}</span>${esc(a.gain)}</div>`:''}${a.mesure?`<div><span>${A3('Ce qu\'on mesurera dans un mois','What we will measure in a month')}</span>${esc(a.mesure)}</div>`:''}${a.delai?`<div><span>${A3('Délai','Timing')}</span>${esc(a.delai)}</div>`:''}</div></li>`; }).join('')}</ol>${anStratResultats(C,tous)}`;
+        <div class="st-kv">${a.cout?`<div><span>${A3('Coût','Cost')}</span>${esc(a.cout)}</div>`:''}${a.gain?`<div><span>${A3('Gain attendu','Expected gain')}</span>${esc(a.gain)}</div>`:''}${a.mesure?`<div><span>${A3('Ce qu\'on mesurera dans un mois','What we will measure in a month')}</span>${esc(a.mesure)}</div>`:''}${a.delai?`<div><span>${A3('Délai','Timing')}</span>${esc(a.delai)}</div>`:''}</div></details></div><div class="st-ka">${btn}</div></li>`; };
+    const idx=acts.map((a,i)=>i), aF=idx.filter(i=>!(C.faits||[])[i]), dF=idx.filter(i=>(C.faits||[])[i]).sort((x,y)=>String(((C.faits||[])[y]||{}).date||'').localeCompare(String(((C.faits||[])[x]||{}).date||'')));
+    const pl=(k,un,pls)=>nf(k)+' '+(k>1?pls:un);
+    h+=`<div class="st-bloc"><div class="st-t">${esc(X.titre||A3('Stratégie','Strategy'))} <small>${A3('du','of')} ${esc(anDate(C.date))}</small></div>
+      ${C.active?`<p class="st-on"><i></i>${A3('Stratégie active','Strategy active')} ${esc(anQuand(C.active.date))} · ${A3(`jour ${nj} sur 30`,`day ${nj} of 30`)} · ${A3('mesure jusqu\'au','measured until')} ${esc(anDate(C.active.fin))}</p>`
+        :`<div class="st-act"><button type="button" class="ga-btn" id="st-active" ${enCours?'disabled':''}>${A3('Activer la stratégie','Activate the strategy')}</button><span>${A3('Le clic ouvre les 30 jours de mesure. Ensuite l\'ERP note seul chaque action faite, avec le jour et l\'heure.','The click opens the 30-day measurement. Then the ERP records each action done by itself, with the day and time.')}</span></div>`}
+      ${X.objectif?`<p class="st-obj"><span>${A3('Objectif du mois','Goal for the month')}</span>${esc(X.objectif)}</p>`:''}
+      ${C.active?anCampTuiles(D,nbF,acts.length):''}
+      ${anCampSuivi(D)}
+      <div class="st-sec"><b>${A3('À faire','To do')}</b><em>${aF.length?pl(aF.length,A3('action','action'),A3('actions','actions')):''}</em></div>
+      ${aF.length?`<ol class="st-acts">${aF.map(i=>carte(acts[i],i)).join('')}</ol>`:`<div class="st-vide"><b>${A3('Tout est fait.','Everything is done.')}</b>${A3('Il ne reste qu\'à mesurer le résultat.','All that is left is to measure the result.')}</div>`}
+      ${dF.length?`<div class="st-sec"><b>${A3('Fait','Done')}</b><em>${pl(dF.length,A3('action','action'),A3('actions','actions'))} · ${A3('la plus récente en premier','most recent first')}</em></div><ol class="st-acts st-faites">${dF.map(i=>carte(acts[i],i)).join('')}</ol>`:''}
+      <div class="st-sec"><b>${A3('Pour aller plus loin','To go further')}</b><em>${A3('cliquez sur une ligne pour l\'ouvrir','click a line to open it')}</em></div>
+      ${C.active?`<details class="ga-calc st-ventes"><summary>${A3('Les ventes de tous les sites, avant et après l\'activation','Sales of all sites, before and after activation')}</summary>${anStratResultats(C,tous)}</details>`:''}`;
     const pv=X.previsions||{};
-    if(pv.ca||pv.marge) h+=`<div class="st-prev"><b>${A3('Les 30 prochains jours, en fourchette','The next 30 days, as a range')}</b><table><thead><tr><th></th><th>${A3('Prudent','Cautious')}</th><th>${A3('Probable','Likely')}</th><th>${A3('Haut','High')}</th></tr></thead><tbody>
-      ${pv.ca?`<tr><td>${A3("Chiffre d'affaires",'Revenue')}</td><td>${money(pv.ca.prudent)}</td><td><b>${money(pv.ca.probable)}</b></td><td>${money(pv.ca.haut)}</td></tr>`:''}${pv.marge?`<tr><td>${A3('Marge après pub','Margin after ads')}</td><td>${money(pv.marge.prudent)}</td><td><b>${money(pv.marge.probable)}</b></td><td>${money(pv.marge.haut)}</td></tr>`:''}</tbody></table>${pv.texte?`<p>${esc(pv.texte)}</p>`:''}</div>`;
+    if(pv.ca||pv.marge) h+=`<details class="ga-calc st-prevd"><summary>${A3('Les 30 prochains jours, en fourchette','The next 30 days, as a range')}</summary><div class="st-prev"><table><thead><tr><th></th><th>${A3('Prudent','Cautious')}</th><th>${A3('Probable','Likely')}</th><th>${A3('Haut','High')}</th></tr></thead><tbody>
+      ${pv.ca?`<tr><td>${A3("Chiffre d'affaires",'Revenue')}</td><td>${money(pv.ca.prudent)}</td><td><b>${money(pv.ca.probable)}</b></td><td>${money(pv.ca.haut)}</td></tr>`:''}${pv.marge?`<tr><td>${A3('Marge après pub','Margin after ads')}</td><td>${money(pv.marge.prudent)}</td><td><b>${money(pv.marge.probable)}</b></td><td>${money(pv.marge.haut)}</td></tr>`:''}</tbody></table>${pv.texte?`<p>${esc(pv.texte)}</p>`:''}</div></details>`;
+    if(X.diagnostic) h+=`<details class="ga-calc st-constat"${C.active?'':' open'}><summary>${A3('Le constat de départ','The starting point')}</summary><p class="st-diag">${esc(X.diagnostic)}</p></details>`;
     if((X.retire||[]).length||(X.manques||[]).length) h+=`<details class="ga-calc"><summary>${A3('Ce que les vérificateurs ont retiré, et ce qui manque','What the checkers removed, and what is missing')}</summary>${(X.retire||[]).length?`<p class="ga-note"><b>${A3('Retiré','Removed')}</b></p>${anLi(X.retire)}`:''}${(X.manques||[]).length?`<p class="ga-note"><b>${A3('Données manquantes','Missing data')}</b></p>${anLi(X.manques)}`:''}</details>`;
     h+=`</div>`; }
   else if(!enCours) h+=`<p class="ga-vide">${A3('Pas encore de stratégie : clique sur « Établir la stratégie ».','No strategy yet: click “Build the strategy”.')}</p>`;
+  h+=stCom;
   if(R&&R.res){ const Y=R.res[anLg()]||R.res.fr||{};
     h+=`<div class="st-bloc st-rapport"><div class="st-t">${esc(Y.titre||A3('Rapport du mois','Monthly report'))} <small>${A3('du','of')} ${esc(anDate(R.date))}</small></div>${Y.bilan?`<p class="st-diag">${esc(Y.bilan)}</p>`:''}${Y.prevision_verifiee?`<p><span class="st-l">${A3('La prévision','The forecast')}</span>${esc(Y.prevision_verifiee)}</p>`:''}
       ${(Y.actions||[]).map(a=>`<div class="st-ra"><div class="st-ah"><b>${esc(a.titre||'')}</b><span class="st-v">${esc(a.verdict||'')}</span></div>${(a.avant||a.apres)?`<p class="st-av">${esc(a.avant||'')} → <b>${esc(a.apres||'')}</b></p>`:''}${a.explication?`<p>${esc(a.explication)}</p>`:''}</div>`).join('')}
@@ -7125,7 +7290,7 @@ function anAttente(P){ const A=(ORI['_attente_woocommerce']&&ORI['_attente_wooco
   return `<div class="ga-attente">+ <b>${nf(X.length)}</b> ${A3(X.length>1?'commandes de la pub payées, pas encore expédiées':'commande de la pub payée, pas encore expédiée',X.length>1?'orders from the ads paid, not shipped yet':'order from the ads paid, not shipped yet')} : <b>${money(mt)}</b> <span>${A3('— elles compteront dès leur expédition','— they will count once shipped')}</span></div>`; }
 /* les administrateurs de l'ERP : les rôles Admin et Patron, et eux seuls (un Comptable, qui voit les marges, n'y entre pas) */
 function anAdmin(){ const s=session(); return !!s&&/^(admin|patron)$/.test(String(s.role||'')); }
-window.__an={AN,anCommandes,anFamille,anDessine,ORI:()=>ORI,STRAT:()=>STRAT};
+window.__an={AN,anCommandes,anFamille,anDessine,ORI:()=>ORI,STRAT:()=>STRAT,CAMP:()=>AN_CAMP,anJM};
 function majUser(){ try{ piedSession(); }catch(e){} }
 majUser();
 (function(){

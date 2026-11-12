@@ -173,6 +173,8 @@ function faContexte(){
     const asin=String(r[18]||'').trim().toUpperCase(); if(/^B0[A-Z0-9]{8}$/.test(asin)&&!parASIN[asin]) parASIN[asin]=r[15]; });
   for(const cle in MOD){ const m=MOD[cle]; if(m&&m.bcs&&parCle[cle]) String(m.bcs).split(/[\s,;\/]+/).forEach(x=>pose(x,cle));
     if(m&&m.bc&&parCle[cle]) pose(m.bc,cle); }   /* le code posé sur la fiche par Sam (10 nov. 2026) */
+  /* 12 nov. 2026 : à code égal, une fiche retirée du catalogue ne prend jamais la vente d'une fiche en service */
+  for(const k in parBC){ const v=parBC[k].filter(c=>!(MOD[c]&&MOD[c].masque)); if(v.length) parBC[k]=v; }
   let AL={}; try{ const a=lit('alias-noms-v1',{}); if(a&&typeof a==='object') AL=a; }catch(e){}
   const norm=s=>String(s==null?'':s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
   /* Amazon (24 sept. 2026) : le code arrive souvent abîmé — « 1783320424991 » (un

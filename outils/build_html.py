@@ -7248,7 +7248,8 @@ if(/[#&]cadre=1/.test(location.hash) && window.parent!==window){
   if(ma){ pret(); setTimeout(()=>{ try{ arrivageOuvre(decodeURIComponent(ma[1])); }catch(e){ console.error(e); } },80); return; }
   const m=location.hash.match(/cle=([^&]+)/); if(!m){ pret(); return; }
   const id=decodeURIComponent(m[1]); const p=tousLesArticles().find(x=>x.id===id); if(!p){ pret(); return; }
-  $('fs').value=''; $('q').value=p.bc||p.nom; render(); setTimeout(()=>{ ouvreFiche(id); pret();
+  /* 12 nov. 2026 : une fiche retirée s'ouvre sur son filtre (sinon : fenêtre vide) */
+  $('fs').value=''; $('q').value=p.bc||p.nom; if(p.masque) $('fx').value='retire'; render(); setTimeout(()=>{ ouvreFiche(id); pret();
     /* 25 oct. 2026 : depuis le tableau de bord (« Pas en vente partout »), &mel=1 ouvre tout de suite la fenêtre
        « Mettre en ligne » de CE parfum, sur les canaux où il manque — un clic depuis le tableau de bord, pas trois. */
     /* 31 oct. 2026 : depuis le tableau de bord (&canaux=1), la fiche s'ouvre directement sur « Mes canaux de vente », où chaque site

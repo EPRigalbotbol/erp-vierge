@@ -343,8 +343,17 @@ try:
           window.dispatchEvent(new CustomEvent('ck-maj',{detail:{cles:['google-sources-v1']}})); }""", hier)
         pj.wait_for_timeout(1300)
         vt = pj.inner_text('#vis')
-        check('LE POINT — en direct de Google : visiteurs en ce moment (140), visites 30 jours (420), achats, sources, recherches tapées dans Google, pays (Porto Rico)', '140' in vt and '420' in vt and 'google / cpc' in vt and 'tobacco touch perfume' in vt and 'Puerto Rico' in vt and '6,2' in vt, vt[:700])
+        check('LE POINT — en direct de Google : visiteurs au dernier relevé (140), visites 30 jours (420), achats, sources, recherches tapées dans Google, pays (Porto Rico)', '140' in vt and '420' in vt and 'google / cpc' in vt and 'tobacco touch perfume' in vt and 'Puerto Rico' in vt and '6,2' in vt, vt[:700])
         check('un accès refusé chez Google est dit en clair sur la carte', 'pas encore accès' in vt, vt[:300])
+        # 13 nov. 2026 — Igal : « 19 visiteurs sur le site en ce moment, est-ce vraiment vrai ? »
+        check('LE POINT — le chiffre des visiteurs dit ce qu\'il est : « au dernier relevé », « sur 30 minutes », avec l\'heure du relevé (Miami) — plus « en ce moment »', 'au dernier relevé' in vt.lower() and 'visiteurs sur 30 minutes' in vt and re.search(r'relevé à \d\d:\d\d \(Miami\)', vt) is not None and 'en ce moment' not in vt.lower(), vt[:300])
+        check('des visites qui viennent de la pub et qui achètent : pas d\'alerte « robots »', pj.locator('.vis-robots').count() == 0)
+        pj.evaluate("""d=>{ const G=JSON.parse(localStorage.getItem('google-sources-v1')); G.ga.sources=[['(direct) / (none)',11788,2,855],['google / cpc',3270,131,14629],['google / organic',225,3,300]]; localStorage.setItem('google-sources-v1',JSON.stringify(G));
+          window.dispatchEvent(new CustomEvent('ck-maj',{detail:{cles:['google-sources-v1']}})); }""", hier)
+        pj.wait_for_timeout(1000)
+        rb = pj.inner_text('.vis-robots') if pj.locator('.vis-robots').count() else ''
+        check('LE POINT — 9 visites sur 10 sans origine et qui n\'achètent pas : la carte prévient « très probablement des robots », avec les chiffres (11 788 sur 15 283, 2 achats ; les 3 495 autres : 134 achats)', 'robots' in rb and all(x in rb.replace('\u202f', ' ').replace('\xa0', ' ') for x in ('11 788', '15 283', '2 achats', '3 495', '134 achats')), rb)
+        check('… et le taux d\'achat est aussi donné sans ces visites (3,8 %)', 'sans les visites « directes » : 3,8' in pj.inner_text('#vis').replace('\xa0', ' '), pj.inner_text('#vis')[:400])
         pj.context.close()
         # 7 bis. 11 nov. 2026 : le point bleu bat aussi tant qu'une stratégie est ACTIVE (« connectée »), sur toutes les pages
         pt = ouvre(page='tableau.html')

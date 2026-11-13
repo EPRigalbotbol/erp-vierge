@@ -93,7 +93,7 @@ const AN_AIDE=[
   [/^La pub coûte, par commande$|^Ad cost per order$/,'Le coût de la pub divisé par le nombre de commandes venues de la pub.','The ad cost divided by the number of orders that came from the ads.'],
   [/^Une commande de la pub rapporte$|^An order from the ads earns$/,'La marge nette moyenne d\'une commande venue de la pub, avant de payer la pub.','The average net margin of an order that came from the ads, before paying for the ads.'],
   [/^Ventes : selon Google \/ réelles$|^Sales: per Google \/ actual$/,'Google s\'attribue souvent plus de ventes qu\'il n\'en fait. À gauche, ce que Google annonce ; à droite, les commandes vraiment venues de la pub dans l\'ERP.','Google often claims more sales than it makes. Left: what Google reports; right: the orders that really came from the ads in the ERP.'],
-  [/^Sur le site en ce moment$|^On the site right now$/,'Les visiteurs actifs sur perfumestrade.com dans les 30 dernières minutes (Google Analytics).','Visitors active on perfumestrade.com in the last 30 minutes (Google Analytics).'],
+  [/^Sur le site, au dernier relevé$|^On the site, at the last reading$/,'Les visiteurs que Google Analytics a comptés sur perfumestrade.com pendant les 30 minutes avant le dernier relevé (un relevé par heure). Ce chiffre compte aussi les robots.','Visitors Google Analytics counted on perfumestrade.com during the 30 minutes before the last reading (one reading an hour). This figure also counts robots.'],
   [/^Visites, 30 jours$|^Visits, 30 days$/,'Le nombre de visites du site sur 30 jours. Attention : une partie peut venir de robots (beaucoup de visites « directes » sans achat).','The number of site visits over 30 days. Careful: some may come from bots (many “direct” visits with no purchase).'],
   [/^Visiteurs qui achètent$|^Visitors who buy$/,'Achats ÷ visites, sur 30 jours. En e-commerce, 1 à 3 % est courant.','Purchases ÷ visits, over 30 days. In e-commerce, 1 to 3% is common.'],
   [/^Clics gratuits depuis Google$|^Free clicks from Google$/,'Les clics sur les résultats normaux de Google (pas la pub), d\'après Search Console, sur 30 jours.','Clicks on Google\'s regular results (not ads), per Search Console, over 30 days.'],
@@ -759,10 +759,19 @@ function anVisites(){
   const ses=som(A.jours,a0,a1,0), sesP=som(A.jours,b0,b1,0), ach=som(A.jours,a0,a1,2), achP=som(A.jours,b0,b1,2);
   const cl=som(S.jours,a0,a1,0), clP=som(S.jours,b0,b1,0);
   const ev=(x,y)=>y>0?`<small class="${x>=y?'st-up':'st-down'}">${x>=y?'+':''}${Math.round((x-y)/y*100)} % ${A3('vs 30 jours d\'avant','vs previous 30 days')}</small>`:'';
+  /* 13 nov. 2026 (Igal : « 19 visiteurs sur le site en ce moment, est-ce vraiment vrai ? ») : vrai pour Google Analytics, mais ces
+     visiteurs-là ne sont presque jamais des clients. En novembre, 9 visites sur 10 arrivaient sans origine (« direct »), restaient
+     12 secondes et n'achetaient rien : des robots. La carte le dit dès que les visites « directes » pèsent plus de la moitié des
+     visites et achètent au moins dix fois moins que les autres. */
+  const D=(()=>{ const L=A.sources||[], dir=L.filter(r=>/^\(direct\)/i.test(String(r[0]||''))), tot=L.reduce((t,r)=>t+(+r[1]||0),0);
+    const dS=dir.reduce((t,r)=>t+(+r[1]||0),0), dA=dir.reduce((t,r)=>t+(+r[2]||0),0), rS=tot-dS, rA=L.reduce((t,r)=>t+(+r[2]||0),0)-dA;
+    const tauxDir=dS?dA/dS:0, tauxReste=rS?rA/rS:0;
+    return {tot,dS,dA,rS,rA,tauxReste,suspect:tot>0&&dS>=tot*0.5&&rS>0&&tauxDir*10<=tauxReste}; })();
+  if(D.suspect) h+=`<p class="gc-alerte vis-robots">${A3(`Attention : ${nf(D.dS)} visites sur ${nf(D.tot)} arrivent sans origine connue (« direct ») et n'ont fait que ${nf(D.dA)} achat${D.dA>1?'s':''}. Ce sont très probablement des robots, pas des clients. Les ${nf(D.rS)} autres visites ont fait ${nf(D.rA)} achat${D.rA>1?'s':''} : c'est elles qu'il faut regarder.`,`Warning: ${nf(D.dS)} visits out of ${nf(D.tot)} arrive with no known origin (“direct”) and made only ${nf(D.dA)} purchase${D.dA===1?'':'s'}. They are very probably robots, not customers. The other ${nf(D.rS)} visits made ${nf(D.rA)} purchase${D.rA===1?'':'s'}: those are the ones to watch.`)}</p>`;
   h+=`<div class="ga-stats ga-stats4">
-    <div><span>${A3('Sur le site en ce moment','On the site right now')}</span><b>${nf(A.live||0)}</b><small>${A3('visiteurs','visitors')}</small></div>
+    <div><span>${A3('Sur le site, au dernier relevé','On the site, at the last reading')}</span><b>${nf(A.live||0)}</b><small>${A3('visiteurs sur 30 minutes','visitors over 30 minutes')}${(A.maj||G.maj)?` · ${A3('relevé à','read at')} <span data-nolang>${esc(anHM(A.maj||G.maj))}</span> ${A3('(Miami)','(Miami)')}`:''}</small></div>
     <div><span>${A3('Visites, 30 jours','Visits, 30 days')}</span><b>${nf(ses)}</b>${ev(ses,sesP)}</div>
-    <div><span>${A3('Visiteurs qui achètent','Visitors who buy')}</span><b>${ses?(Math.round(ach/ses*1000)/10).toLocaleString(A3('fr-FR','en-US')):'0'} %</b><small>${nf(ach)} ${A3('achats','purchases')}</small></div>
+    <div><span>${A3('Visiteurs qui achètent','Visitors who buy')}</span><b>${ses?(Math.round(ach/ses*1000)/10).toLocaleString(A3('fr-FR','en-US')):'0'} %</b><small>${nf(ach)} ${A3('achats','purchases')}${D.suspect?` · ${A3('sans les visites « directes »','without “direct” visits')} : ${(Math.round(D.tauxReste*1000)/10).toLocaleString(A3('fr-FR','en-US'))} %`:''}</small></div>
     <div><span>${A3('Clics gratuits depuis Google','Free clicks from Google')}</span><b>${nf(cl)}</b>${ev(cl,clP)}</div></div>`;
   const tab=(tit,ent,L)=>L&&L.length?`<div class="vis-t"><b>${tit}</b><table><thead><tr>${ent.map((e,i)=>`<th class="${i?'n':''}">${e}</th>`).join('')}</tr></thead><tbody>${L.map(r=>`<tr>${r.map((c,i)=>`<td class="${i?'n':''}" ${i?'':'data-nolang'}>${esc(String(c))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:'';
   h+=`<div class="vis-g">`

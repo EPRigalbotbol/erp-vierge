@@ -69,6 +69,9 @@ background:var(--surface-2);color:var(--ink-2);border:1px solid var(--line)}
 .ch.ou-ligne{background:#9A2A56;color:#fff;border-color:#9A2A56}
 .ch.ou-ligne .ou{color:#fff}
 .ch.ou-ligne::before{background:#fff}
+/* 13 nov. 2026 : la provenance d'une vente du site — la publicité payée se voit tout de suite (bleu Google) */
+.ch.or-pub{background:#1a73e8;color:#fff;border-color:#1a73e8}.ch.or-pub .ou{color:#fff}.ch.or-pub::before{background:#fff}
+.ch.or-autre .ou{color:var(--ink-2)}
 .ch.c5{--c:#8A5A00}.ch.c6{--c:#4C7C8A}.ch.c7{--c:#7A4E9E}.ch.na{--c:transparent;border-style:dashed;color:var(--ink-3);font-weight:500}
 
 /* Par canal : un onglet par canal, avec son logo (l'icône du site du canal, jamais
@@ -2192,7 +2195,33 @@ function nomAff(c){ const t=String(c||''); return /^gros$/i.test(t)?'Vente en gr
 /* la pastille du canal : le nom fixe n'est pas traduit (un nom propre), la bulle explique */
 /* 8 nov. 2026 (Igal : « sur le petit logo Perfume City, mets online ou boutique directement, beaucoup plus visible ») : la pastille
    dit elle-même d'où vient la vente — « Perfume City · BOUTIQUE » ou « Perfume City · EN LIGNE » */
+/* 13 nov. 2026 (Igal : « sur la ligne des ventes de perfumestrade.com seulement, la provenance de la vente, pour savoir si c'est grâce
+   à Google Ads ») : la boutique note d'où venait l'acheteur, le cockpit le range par commande (ventes-origine-v1 : « woocommerce|21412 »
+   → « gads »). La pastille du canal le dit : « perfumestrade.com · PUB GOOGLE ». Ce magasin n'arrive que chez l'Admin et le Patron :
+   les autres rôles ne voient rien de plus. */
+let V_ORI=null;
+try{ window.addEventListener('ck-maj',()=>{ V_ORI=null; }); window.addEventListener('storage',e=>{ if(e.key==='ventes-origine-v1') V_ORI=null; }); }catch(e){}
+function vOri(){ if(!V_ORI){ try{ V_ORI=JSON.parse(localStorage.getItem('ventes-origine-v1')||'null')||{}; }catch(e){ V_ORI={}; } } return V_ORI; }
+/* rend [nom court, phrase, 'pub' si c'est une publicité payée] ou null (pas une vente du site détail, ou origine pas encore lue) */
+function origineSite(x){
+  if(String(x.auto||'')!=='woocommerce') return null;
+  const c=String(vOri()['woocommerce|'+String(x.num||'')]||''); if(!c) return null;
+  const t=c.split(':')[0], d=c.slice(t.length+1);
+  if(t==='gads') return [r3('Pub Google','Google Ads','Anuncio Google'),r3('un clic sur une publicité Google payée (Google Ads)','a click on a paid Google ad (Google Ads)','un clic en un anuncio de Google de pago (Google Ads)'),'pub'];
+  if(t==='gshop') return [r3('Google Shopping gratuit','Free Google Shopping','Google Shopping gratis'),r3('une fiche produit gratuite de Google Shopping','a free Google Shopping product listing','una ficha de producto gratuita de Google Shopping'),''];
+  if(t==='google') return [r3('Recherche Google','Google search','Búsqueda de Google'),r3('un résultat ordinaire de Google, non payant','a regular, unpaid Google result','un resultado normal de Google, sin pago'),''];
+  if(t==='direct') return [r3('Venu directement','Direct','Directo'),r3('adresse tapée, favori, ou lien sans source','typed address, bookmark, or link without a source','dirección escrita, favorito o enlace sin origen'),''];
+  if(t==='email') return [r3('Email','Email','Email'),r3('un lien dans un email ou une newsletter','a link in an email or a newsletter','un enlace en un email o un boletín'),''];
+  if(t==='ia') return [r3('IA (ChatGPT…)','AI (ChatGPT…)','IA (ChatGPT…)'),r3('une réponse d\'une IA (ChatGPT, Perplexity…)','an answer from an AI (ChatGPT, Perplexity…)','una respuesta de una IA (ChatGPT, Perplexity…)'),''];
+  if(t==='social'){ const n=d?d.charAt(0).toUpperCase()+d.slice(1):r3('Réseaux sociaux','Social media','Redes sociales'); return [n,r3('un réseau social','social media','una red social'),'']; }
+  if(t==='moteur') return [r3('Autre moteur','Other search engine','Otro buscador'),r3('un autre moteur de recherche (Bing, Yahoo…)','another search engine (Bing, Yahoo…)','otro buscador (Bing, Yahoo…)'),''];
+  if(t==='site') return [d||r3('Autre site','Other site','Otro sitio'),r3('un lien sur un autre site','a link on another site','un enlace en otro sitio'),''];
+  if(t==='inconnu') return [r3('Origine inconnue','Unknown origin','Origen desconocido'),r3('la boutique n\'a pas noté d\'où venait le client','the store did not record where the customer came from','la tienda no anotó de dónde venía el cliente'),''];
+  return [r3('Autre origine','Other origin','Otro origen'),c,''];
+}
 function pastCanal(x){ const c=x.canal, k=identCanal(c);
+  const og=origineSite(x);
+  if(og) return `<span class="ch ${cls(c)} ${og[2]?'or-pub':'or-autre'}" title="${esc(origine(x)+' — '+r3('Origine du client : ','Customer origin: ','Origen del cliente: ')+og[1])}"><span${k.fixe?' data-nolang':''}>${esc(canalCourt(c))}</span> <b class="ou"${/^(Email|[a-z0-9.-]+\.[a-z]{2,})$/i.test(og[0])?' data-nolang':''}>· ${esc(og[0])}</b></span>`;
   let ou=''; if(String(x.auto||'')==='shopify-pc'&&x.ou){ const o=String(x.ou);
     ou=o==='boutique'?r3('Boutique','Store','Tienda'):o==='en ligne'?r3('En ligne','Online','En línea'):o==='commande manuelle'?r3('Manuelle','Manual','Manual'):/^\d+$/.test(o)?r3('Autre canal','Other channel','Otro canal'):o; }
   return `<span class="ch ${cls(c)}${ou?' ou-'+(String(x.ou)==='en ligne'?'ligne':'bout'):''}" title="${esc(origine(x))}"${k.fixe?' data-nolang':''}>${esc(canalCourt(c))}${ou?` <b class="ou">· ${esc(ou)}</b>`:''}</span>`; }

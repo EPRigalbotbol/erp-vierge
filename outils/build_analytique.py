@@ -215,7 +215,7 @@ function anDessine(){
   const CMD=tous.filter(duSite), C=anDans(CMD,P.a,P.b), CP=Q?anDans(CMD,Q.a,Q.b):null;
   const B=anJours(P);
   B.K.forEach(k=>{ k.court2=B.jour?new Date(k.k+'T12:00:00').toLocaleDateString(A3('fr-FR','en-US'),{day:'numeric',month:'short'}):k.court; });
-  const per=[['rel:7',A3('7 jours','7 days')],['rel:30',A3('30 jours','30 days')],['cemois',A3('Ce mois','This month')],['moisdernier',A3('Mois dernier','Last month')],['rel:90',A3('90 jours','90 days')],['cetteannee',A3('Cette année','This year')]];
+  const per=[['rel:1',A3('Aujourd\'hui','Today')],['rel:7',A3('7 jours','7 days')],['rel:30',A3('30 jours','30 days')],['cemois',A3('Ce mois','This month')],['moisdernier',A3('Mois dernier','Last month')],['rel:90',A3('90 jours','90 days')],['cetteannee',A3('Cette année','This year')]];
   const sites=[['tous',A3('Tous les sites','All sites')],['site','perfumestrade.com'],['sitegros','wholesale'],['pc',A3('Perfume City en ligne','Perfume City online')]];
   let h=`<div class="ga-top"><div class="ga-seg">${per.map(([v,l])=>`<button type="button" class="${AN.sel===v?'on':''}" data-an="${v}">${l}</button>`).join('')}</div>
     <div class="ga-seg">${sites.map(([v,l])=>`<button type="button" class="${AN.site===v?'on':''}" data-ans="${v}"><span data-nolang>${esc(l)}</span></button>`).join('')}</div></div>

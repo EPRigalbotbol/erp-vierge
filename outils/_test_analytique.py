@@ -240,6 +240,12 @@ try:
         check('deux courbes cumulées (marge et pub) avec leurs étiquettes', pg.locator('#ga-c2 .ga-l').count() == 2 and pg.locator('#ga-c2 .ga-lab').count() == 2)
         check('une relecture en panne (Shopify) est dite en haut de la page', 'Access denied' in T and pg.locator('.an-alerte').count() == 1, T[:400])
         # 5. période, survol, onglets, sites
+        # 13 nov. 2026 — Igal : « 7 jours, 30 jours, Ce mois… j'aimerais que tu rajoutes la valeur "aujourd'hui" »
+        seg = pg.evaluate("()=>[...document.querySelectorAll('.ga-seg [data-an]')].map(b=>b.textContent.trim())")
+        check('LE POINT — la période « Aujourd\'hui » est proposée, en premier, avant « 7 jours »', seg[:2] == ['Aujourd\'hui', '7 jours'], seg)
+        pg.click('[data-an="rel:1"]'); pg.wait_for_timeout(1300)
+        jr = pg.evaluate("()=>{ const P=rcPlage('rel:1'), Q=rcPrec('rel:1',P); return [P.a, P.b, Q.a, Q.b, rcLib('rel:1',P), rcLibPrec('rel:1',Q), document.querySelector('.ga-seg [data-an=\"rel:1\"]').className, document.querySelectorAll('#an svg').length]; }")
+        check('« Aujourd\'hui » : la période est le jour même, comparée à hier, et la page se dessine sans erreur', jr[0] == auj.isoformat() and jr[1] == auj.isoformat() and jr[2] == jr[3] == (auj - datetime.timedelta(days=1)).isoformat() and jr[4].startswith('Aujourd\'hui') and jr[5] == 'hier' and 'on' in jr[6] and jr[7] >= 1 and not err, [jr, err[:2]])
         pg.click('[data-an="rel:7"]'); pg.wait_for_timeout(1300)
         z = pg.locator('#ga-c1 .ga-zone').bounding_box()
         pg.mouse.move(z['x'] + z['width'] * 0.85, z['y'] + z['height'] / 2); pg.wait_for_timeout(150)
@@ -377,6 +383,8 @@ try:
         ACT = "h=>{ const S=__an.STRAT(); S.courante.active={date:new Date(Date.now()-h*3600e3).toISOString(),fin:new Date(Date.now()+30*86400e3).toISOString(),par:'x'}; __an.anDessine(); }"
         pj = ouvre(tz='Asia/Jerusalem', heure=2); pj.evaluate(ACT, 4); pj.wait_for_timeout(500)
         check('LE POINT — écran ouvert en Europe à 2 h du matin (19 h la veille à Miami), campagne relancée 4 h plus tôt : c\'est encore le jour 1, pas le jour 2', 'jour 1 sur 30' in pj.evaluate(TX, '.st-tout') and 'jour 1 sur 30' in pj.inner_text('.st-on') and pj.locator('.st-jours tbody tr').count() == 2, [pj.evaluate(TX, '.st-tout')[:120], pj.inner_text('.st-on')])
+        jm = pj.evaluate("()=>{ const P=rcPlage('rel:1'); return [P.a, P.b, rcPlage('cemois').b]; }")
+        check('LE POINT — écran ouvert en Europe à 2 h du matin : « Aujourd\'hui » est le jour de Miami (la veille pour l\'écran), pas un lendemain sans ventes', jm[0] == jm[1] == jm[2] == (auj - datetime.timedelta(days=1)).isoformat(), [jm, auj.isoformat()])
         eu = [pj.inner_text('.st-on'), pj.evaluate(TX, '.st-sec'), LI(pj, 1).inner_text()]
         check('LE POINT — écran ouvert en Europe : toutes les heures du bloc sont celles de MIAMI (activée à 15:00 la veille, départ de la courbe à 15:00, action signée à 09:32) — pas l\'heure de l\'écran', 'à 15:00' in eu[0] and 'à 15:00' in eu[1] and 'heures de Miami' in eu[1] and 'le 3 novembre 2026 à 09:32' in eu[2], eu)
         pj.context.close()

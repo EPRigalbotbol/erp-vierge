@@ -5,8 +5,8 @@
 #   2. LE POINT : ses chiffres sont CEUX DE LA PAGE VENTES, canal par canal (chiffre d'affaires, marge nette, flacons) ;
 #   3. les règles de marge, vérifiées à la main : commission du canal, port encaissé − coût d'envoi, frais de carte ;
 #   4. un remboursement vient en déduction ; Perfume City montre boutique / en ligne ;
-#   5. les périodes : ce mois, mois dernier, 30/90 jours, cette année, tout, un mois choisi, une année choisie ; une période
-#      vide le dit sans planter ;
+#   5. les périodes : ce mois, mois dernier, 30/90 jours, cette année, tout, un mois choisi, une année choisie, ENTRE DEUX DATES
+#      et ENTRE DEUX MOIS (13 nov. 2026) ; une période vide le dit sans planter ;
 #   6. le graphique : une colonne par jour, l'infobulle dit le jour et le canal, la bascule marge / flacons, les chiffres
 #      sont aussi dans un tableau ;
 #   7. en anglais et en espagnol, plus un mot de français ;
@@ -114,6 +114,25 @@ try:
         check('5. le choix d\'un mois (il y a deux mois) montre ses 275 $ (5 × 55)', '275 $' in kp(), kp())
         pg.select_option('#rc-an', 'annee:%d' % auj.year); pg.wait_for_timeout(300)
         check('5. le choix d\'une année s\'applique (1 745 $)', pg.evaluate("()=>document.getElementById('rc-an').classList.contains('on')") and '1 745 $' in kp(), kp())
+        # 13 nov. 2026 — Igal : « un filtre pour sélectionner le chiffre d'affaires entre deux dates précises, ou deux mois précis »
+        h2 = lambda: pg.inner_text('#recap h2 em').replace('\xa0', ' ')
+        pg.fill('#rc-du', LM(10)); pg.wait_for_timeout(150); pg.fill('#rc-au', LM(16)); pg.wait_for_timeout(400)
+        kd = kp()
+        check('LE POINT — entre deux dates (10 → 16 octobre) : le chiffre d\'affaires est celui de ces jours-là seulement (Amazon 150 − 150 remboursés, caisse 240, Perfume City 270 = 510 $)', '510 $' in kd and '1 370 $' not in kd, kd)
+        check('… le titre dit la période (« 10–16 oct. 2026 ») et les deux cases de dates restent remplies et allumées', '10–16 oct. 2026' in h2() and pg.evaluate("()=>[document.getElementById('rc-du').value, document.getElementById('rc-au').value, document.getElementById('rc-du').classList.contains('on')]") == [LM(10), LM(16), True], [h2(), pg.evaluate("()=>[document.getElementById('rc-du').value, document.getElementById('rc-au').value]")])
+        check('… et la comparaison se fait avec les 7 jours juste avant (« vs 3–9 oct. 2026 »)', 'vs' in kd and '3–9 oct. 2026' in kd, kd)
+        pg.fill('#rc-du', LM(16)); pg.wait_for_timeout(150); pg.fill('#rc-au', LM(10)); pg.wait_for_timeout(400)
+        check('les deux dates données à l\'envers donnent le même résultat (510 $)', '510 $' in kp() and '10–16 oct. 2026' in h2(), [kp(), h2()])
+        pg.evaluate("()=>{ RC.sel='du:%s:2027-03-01'; rcDessine(); }" % auj.replace(day=1).isoformat()); pg.wait_for_timeout(300)
+        check('une date de fin dans le futur s\'arrête à aujourd\'hui (1er → 15 novembre : 100 $)', '100 $' in kp() and '1–15 nov. 2026' in h2(), [kp(), h2()])
+        pg.fill('#rc-du', LM(11)); pg.wait_for_timeout(150); pg.fill('#rc-au', LM(11)); pg.wait_for_timeout(400)
+        check('un seul jour (du 11 au 11 octobre) : 240 $, et le titre écrit la date une seule fois', '240 $' in kp() and h2().count('oct.') == 1 and '11 oct. 2026' in h2(), [kp(), h2()])
+        pg.select_option('#rc-m1', '%04d-%02d' % (y2, m2)); pg.wait_for_timeout(150); pg.select_option('#rc-m2', LM(1)[:7]); pg.wait_for_timeout(400)
+        km = kp()
+        check('LE POINT — entre deux mois (septembre → octobre, mois entiers) : 275 + 1 370 = 1 645 $, et le titre dit « septembre 2026 – octobre 2026 »', '1 645 $' in km and 'septembre 2026 – octobre 2026' in h2() and pg.evaluate("()=>document.getElementById('rc-m1').classList.contains('on')"), [km, h2()])
+        check('… comparés aux deux mois d\'avant, qui sont d\'avant le 1er octobre 2026 : pas de comparaison', 'vs' not in km, km)
+        pg.reload(); pg.wait_for_timeout(2200)
+        check('le choix « entre deux mois » est gardé quand on revient sur le tableau de bord', '1 645 $' in kp() and 'septembre 2026 – octobre 2026' in h2(), [kp(), h2()])
         pg.click('[data-rc="rel:30"]'); pg.wait_for_timeout(200)
         check('5. « 30 jours » : du 17 oct. au 15 nov. → 660 + 100 = 760 $', '760 $' in kp(), kp())
         pg.evaluate("()=>{ RC.sel='mois:1999-01'; rcDessine(); }"); pg.wait_for_timeout(300)
@@ -154,6 +173,8 @@ try:
             zz = pe.locator('#rc-c .ga-zone').bounding_box(); pe.mouse.move(zz['x'] + zz['width'] * 14 / 30, zz['y'] + zz['height'] / 2); pe.wait_for_timeout(200)
             tip = tipde(pe)
             check(f'7. {lg} — la date de l\'infobulle est dans la langue', ('Oct' in tip) if lg == 'en' else ('oct' in tip and 'jue' in tip), tip)
+            bar = pe.inner_text('#recap .rc-perso')
+            check(f'7. {lg} — « entre deux dates », « entre deux mois » sont traduits', ('Between two dates' in bar and 'Between two months' in bar) if lg == 'en' else ('Entre dos fechas' in bar and 'Entre dos meses' in bar), bar)
             pe.click('[data-rc="cetteannee"]'); pe.wait_for_timeout(300)
             h2 = pe.inner_text('#recap h2')
             check(f'7. {lg} — « cette année » : la période est dans la langue', ('This year' in h2) if lg == 'en' else ('Este año' in h2), h2)

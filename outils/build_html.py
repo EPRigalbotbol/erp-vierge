@@ -4159,7 +4159,8 @@ function blocVentes(p){
   const grp=(cle)=>{ const G={}; l.forEach(x=>{ const g=cle(x)||'—'; const o=G[g]=G[g]||{n:g,q:0,m:0,mg:0,d:'',pmin:null,pmax:null}; o.q+=x.q; o.m+=x.q*(x.p||0); const mm=marge(x); if(mm!=null){ o.mg+=mm; o.mgk=1; } if(x.d>o.d) o.d=x.d;
       if(x.q>0&&x.p!=null){ o.pmin=o.pmin==null?x.p:Math.min(o.pmin,x.p); o.pmax=o.pmax==null?x.p:Math.max(o.pmax,x.p); } });
     return Object.values(G).sort((a,b)=>b.q-a.q||b.m-a.m); };
-  const C=grp(x=>x.canal), K=grp(x=>x.client);
+  /* 14 nov. 2026 (Sam) : « Par client » dans l'ordre chronologique, le dernier achat en haut */
+  const C=grp(x=>x.canal), K=grp(x=>x.client).sort((a,b)=>String(b.d).localeCompare(String(a.d))||b.q-a.q);
   /* 10 nov. 2026 (Sam ne comprenait pas le tableau « Par client ») : une phrase par client */
   const cli=o=>{ const n=o.q>0, un=Math.abs(o.q)===1, fo=n&&o.pmin!=null&&o.pmax-o.pmin>0.004;
     return `<li><b data-nolang>${esc(o.n==='—'?T('client non noté','customer not noted','cliente no anotado'):o.n)}</b> — ${nf(o.q)} ${T(un?'flacon':'flacons',un?'bottle':'bottles',un?'frasco':'frascos')}, ${money(o.m)} ${T('au total','in total','en total')}`

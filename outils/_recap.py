@@ -463,8 +463,11 @@ RECAP_JS = r'''
    fabriquées à part ; _test_recap.py vérifie qu'elles donnent les mêmes chiffres canal par canal. */
 const RC_K='tableau-recap-v1';
 const RC={sel:'moisdernier',metric:'ca',canal:''};
-try{ const r=lit(RC_K,null); if(r&&typeof r==='object'){ if(r.sel) RC.sel=r.sel; if(r.metric) RC.metric=r.metric; } }catch(e){}
-function rcSauve(){ try{ ecrit(RC_K,{sel:RC.sel,metric:RC.metric}); }catch(e){} }
+/* 14 nov. 2026 (Igal : « quand on va sur le dashboard, je ne veux pas qu'il y ait la dernière recherche de quelqu'un, je veux que la
+   recherche soit vide ») : la période n'est plus gardée — chaque ouverture repart de « Mois dernier », cases de dates vides.
+   Seul le choix de l'indicateur (chiffre d'affaires, marge…) est gardé. */
+try{ const r=lit(RC_K,null); if(r&&typeof r==='object'){ if(r.metric) RC.metric=r.metric; } }catch(e){}
+function rcSauve(){ try{ ecrit(RC_K,{metric:RC.metric}); }catch(e){} }
 /* ---- les canaux, comme dans Ventes ---- */
 const RC_CANAUX_DEF=[{id:'site',nom:'Site perfumestrade.com',com:3},{id:'sitegros',nom:'Site wholesale.perfumestrade.com',com:3},
   {id:'amazon',nom:'Amazon',com:15},{id:'perfumecity',nom:'Perfume City',com:3}];

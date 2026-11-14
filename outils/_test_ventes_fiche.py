@@ -64,6 +64,12 @@ with sync_playwright() as p:
     check('Chad Johnson : « 1 flacon » au singulier, un seul prix « 95,00 $ le flacon », sans fourchette ni « en moyenne »', chad and '1 flacon,' in chad and '95,00 $ le flacon' in chad and 'entre' not in chad and 'moyenne' not in chad, chad)
     maria = next((r for r in K if r.startswith('Maria')), None)
     check('Maria Lopez : 80,00 $ le flacon (le retour ne fausse pas le prix payé)', maria and '80,00 $ le flacon' in maria and 'entre' not in maria, maria)
+    # 14 nov. 2026 (Sam) : « Par client » dans l'ordre chronologique — le dernier achat en haut, le plus ancien en bas
+    import re as _re
+    def _d(r):
+        m = _re.search(r'dernier achat le (\d\d)/(\d\d)/(\d\d)', r); return (m.group(3) + m.group(1) + m.group(2)) if m else ''
+    ds = [_d(r) for r in K]
+    check('LE POINT — « Par client » : du dernier achat (en haut) au plus ancien (en bas)', len(ds) >= 3 and all(ds) and ds == sorted(ds, reverse=True), list(zip(ds, [r[:30] for r in K])))
     for lg, mots, fr in (('en', ['bottles', 'in total', 'per bottle on average', 'between', 'last purchase'], ['flacon', 'au total', 'moyenne', 'dernier achat']),
                          ('es', ['frascos', 'en total', 'el frasco de media', 'entre', 'última compra'], ['flacon', 'au total', 'moyenne', 'dernier achat'])):
         pg.evaluate("l=>{ localStorage.setItem('langue-v1',l); if(typeof appliqueLangue==='function') appliqueLangue(l); LANG=l; dessineFiche(); }", lg); pg.wait_for_timeout(300)

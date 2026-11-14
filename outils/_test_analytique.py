@@ -21,7 +21,7 @@ C = json.load(open(D + '/cat.json'))
 def a(t, n):   # « 650 $ » (fr) ou « $650 » (en) : le montant n est-il écrit dans t ?
     t = t.replace('\u202f', ' ').replace('\xa0', ' ')
     return bool(re.search(r'(?<![\d,.])' + re.escape(format(n, ',').replace(',', ' ')) + r' \$', t) or re.search(r'\$' + re.escape(format(n, ',')) + r'(?![\d,])', t))
-A = [r for r in C if (r[6] or 0) > 20 and r[0] and r[0].isdigit() and (r[12] or 0) > 0][0]
+A = [r for r in C if (r[6] or 0) > 20 and r[0] and r[0].isdigit() and (r[12] or 0) > 0 and (r[7] or 0) - r[12] > 70][0]   # 14 nov. : un parfum qui passe la règle des 40 $
 cle, bc = A[15], A[0]
 auj = datetime.date(2026, 11, 15)
 def J(n): return (auj - datetime.timedelta(days=n)).isoformat()
@@ -105,21 +105,28 @@ try:
         st = pg.inner_text('.ga-stats')
         check('« Ventes : selon Google / réelles » = 400 $ / 300 $ ; coût de la pub par commande = 60 $', a(st, 400) and a(st, 300) and a(st, 60), st)
         # la pub, parfum par parfum
-        an = pg.evaluate("()=>{ const A=anAnalysePub(__an.anCommandes(rcLignes())); return A&&{k:A.k,L:A.L.map(o=>[o.sku,o.dec,o.m,o.mgE,o.res,o.pvr,o.pa]),gain:A.gain90}; }")
+        an = pg.evaluate("()=>{ const A=anAnalysePub(__an.anCommandes(rcLignes())); return A&&{k:A.k,L:A.L.map(o=>[o.sku,o.dec,o.m,o.mgE,o.res,o.pvr,o.pa,o.q,!!o.nouveau]),gain:A.gain90}; }")
         Lp = {x[0]: x for x in (an or {}).get('L', [])}
         check('LE POINT — rapport ventes réelles / ventes Google sur 90 jours = 400 / 500 = 0,8', an and abs(an['k'] - 0.8) < 1e-9, an and an['k'])
         xa = Lp.get(bc)
         if xa:
             m = xa[5] * (1 - 0.03) - 0.3 - xa[6]; mg = 400 * 0.8 * m / xa[5]; res = mg - 50
-            check('LE POINT — parfum A : marge d\'un flacon, marge rapportée et résultat calculés à la main', abs(xa[2] - m) < 0.01 and abs(xa[3] - mg) < 0.01 and abs(xa[4] - res) < 0.01 and xa[1] == ('garder' if res >= 0 else 'sortir'), [xa, m, mg, res])
+            check('LE POINT — parfum A : marge d\'un flacon, marge rapportée et résultat calculés à la main', abs(xa[2] - m) < 0.01 and abs(xa[3] - mg) < 0.01 and abs(xa[4] - res) < 0.01, [xa, m, mg, res])
+            # 14 nov. 2026 (Igal : « tu retires tous ceux qui font moins de 30 ou 40 dollars ») : la marge par flacon décide, plus le résultat passé
+            check('LE POINT — la règle des 40 $ : « garder » seulement si le flacon laisse au moins 40 $ et qu\'il en reste au moins 2, sinon « sortir »', xa[1] == ('garder' if (xa[2] >= 40 and xa[7] >= 2) else 'sortir'), xa)
         else: check('parfum A trouvé', False, an)
         check('un parfum plus en stock avec de la pub → « sortir (plus en stock) »', Lp.get(B0[0], [0, ''])[1] == 'stock', Lp.get(B0[0]))
         check('un code inconnu de l\'ERP → « à vérifier », jamais une décision inventée', Lp.get('999999999999', [0, ''])[1] == 'verif', Lp.get('999999999999'))
+        nv = [x for x in an['L'] if x[8]]
+        check('LE POINT — les parfums qui passent la règle sans avoir jamais été en pub y entrent (« garder », marge ≥ 40 $, au moins 2 en stock)', len(nv) > 0 and all(x[1] == 'garder' and x[2] >= 40 and x[7] >= 2 for x in nv), (len(nv), nv[:2]))
+        regle = pg.evaluate("()=>[anDecision({q:5,m:39.99}),anDecision({q:5,m:40}),anDecision({q:1,m:120}),anDecision({q:0,m:120}),anDecision({q:3,m:null})]")
+        check('la règle, cas par cas : 39,99 $ → sortir ; 40 $ → garder ; 1 seul flacon → sortir ; 0 → plus en stock ; marge inconnue → sortir', regle == ['sortir', 'garder', 'sortir', 'stock', 'sortir'], regle)
         check('11 nov. : la carte « parfum par parfum » prend moins de place — l\'explication est repliée, la liste défile dans une boîte', pg.locator('details.ga-expl').count() == 1 and not pg.evaluate("()=>document.querySelector('details.ga-expl').open") and pg.locator('#pp-liste .pp-boite').count() == 1)
         check('la carte dit l\'économie par mois et propose la liste en Excel', pg.locator('#an-xl').count() == 1 and 'par mois en plus pour Sam' in pg.inner_text('#an'), '')
         # la liste complète, filtrable (Igal, 9 nov. : « qu'il puisse filtrer tout ça »)
-        nl = pg.locator('#pp-liste .pp-l').count()
-        check('LE POINT — tous les parfums de la pub sont listés (3), pas seulement les 8 pires', nl == 3, nl)
+        pg.click('[data-ppf="tous"]'); pg.fill('#pp-q', 'xyz'); pg.fill('#pp-q', ''); pg.wait_for_timeout(100)
+        nl = pg.evaluate("()=>window._anXL.L.filter(o=>!o.nouveau).length")
+        check('LE POINT — tous les parfums de la pub sont listés (3), en plus de ceux qui entrent', nl == 3 and len(an['L']) == 3 + len(nv), [nl, len(an['L'])])
         pg.click('[data-ppf="stock"]'); pg.wait_for_timeout(100)
         check('le filtre « Plus en stock » ne garde que le parfum B', pg.locator('#pp-liste .pp-l').count() == 1 and pg.locator('#pp-liste .pp-d.stock').count() == 1)
         pg.click('[data-ppf="tous"]'); pg.select_option('#pp-tri', 'pub'); pg.wait_for_timeout(100)
@@ -195,7 +202,9 @@ try:
               'Fait par l\'ERP le 11 novembre 2026 à 14:52' in t0 and '97 gagnants gardés' in t0 and '796 perdants sortis' in t0 and 'Google a relu la sélection le 12 novembre 2026 à 03:10' in t0, t0[:400])
         check('une action signée par l\'ERP n\'a ni bouton « C\'est fait » ni « annuler »', l0.locator('.st-cfait').count() == 0 and l0.locator('.st-annule').count() == 0)
         pg.evaluate(sel, None); pg.wait_for_timeout(400); t0 = LI(pg, 0).inner_text()
-        check('tant que la sélection n\'est pas envoyée : « c\'est l\'ERP qui le fait », le bouton à utiliser est nommé, et il n\'y a PAS de « C\'est fait » à cliquer', 'c\'est l\'ERP qui le fait' in t0 and 'Ne garder en pub que les gagnants' in t0 and 'signe l\'action lui-même' in t0 and LI(pg, 0).locator('.st-cfait').count() == 0, repr(t0[:600]))
+        check('tant que la sélection n\'est pas envoyée : « c\'est l\'ERP qui le fait », le bouton à utiliser est nommé, et il n\'y a PAS de « C\'est fait » à cliquer', 'c\'est l\'ERP qui le fait' in t0 and 'Ne garder en pub que les parfums à bonne marge' in t0 and 'signe l\'action lui-même' in t0 and LI(pg, 0).locator('.st-cfait').count() == 0, repr(t0[:600]))
+        pg.evaluate(sel.replace("verif={type:'selection'}", "verif={type:'selection_marge',seuil:40}"), None); pg.wait_for_timeout(400); t0 = LI(pg, 0).inner_text()
+        check('14 nov. : l\'action « règle des 40 $ » est faite par l\'ERP — elle nomme le bouton « Renvoyer la sélection à jour », sans « C\'est fait » à cliquer', 'c\'est l\'ERP qui le fait' in t0 and 'Renvoyer la sélection à jour' in t0 and 'règle des 40 $' in t0 and LI(pg, 0).locator('.st-cfait').count() == 0, repr(t0[:600]))
         pg.evaluate("()=>{ localStorage.setItem('strategie-v1',window.__gardeS); window.dispatchEvent(new CustomEvent('ck-maj',{detail:{cles:['strategie-v1']}})); }"); pg.wait_for_timeout(300)
         # 12 nov. 2026 — Igal : « je veux vraiment connaître l'évolution depuis le jour, depuis l'heure où on a commencé la campagne »
         pg.evaluate(ACT3, 72); pg.wait_for_timeout(300)
@@ -310,11 +319,13 @@ try:
         envoi = []
         pj.route('**/google/etiquettes', lambda route: (envoi.append(route.request.post_data_json), route.fulfill(status=200, content_type='application/json', body=json.dumps({'ok': True, 'n': {'garder': 1, 'stock': 1, 'verif': 1}, 'flux': 'https://cockpit.exemple/gads/dasy/j/etiquettes.csv'}))))
         sel = pj.inner_text('.sel-pub')
-        check('LE POINT — le bloc « Ne garder en pub que les gagnants » dit combien sortent (perdants, plus en stock) et qu\'ils restent en vente sur le site', 'Ne garder en pub que les 1 gagnants' in sel and 'plus en stock' in sel and 'restent en vente sur le site' in sel, sel)
+        ng = pj.evaluate("()=>window._anXL.garder.length")
+        check('LE POINT — le bloc dit combien de parfums restent en pub (ceux qui laissent au moins 40 $), combien sortent, et qu\'ils restent en vente sur le site', f'Ne garder en pub que les {ng} parfums qui laissent au moins 40 $' in sel and 'marge trop faible' in sel and 'plus en stock' in sel and 'restent en vente sur le site' in sel and 'pas encore en pub' in sel, sel)
         pj.click('#sel-env'); pj.wait_for_timeout(500)
         Lenv = dict((x[0], x[1]) for x in (envoi[0]['L'] if envoi else []))
         check('LE POINT — le bouton envoie au cockpit la décision de CHAQUE parfum (garder / plus en stock / à vérifier)', len(envoi) == 1 and Lenv.get(bc) == 'garder' and Lenv.get(B0[0]) == 'stock' and Lenv.get('999999999999') == 'verif', envoi)
-        check('chaque ligne dit aussi si le parfum était gagnant (pour le remettre en pub quand son stock revient)', envoi and all(len(x) in (3, 4) for x in envoi[0]['L']) and [x for x in envoi[0]['L'] if x[0] == bc][0][2] == 1, envoi[:1])
+        check('chaque ligne dit aussi si le parfum passe la règle des 40 $ (pour le remettre en pub quand son stock revient)', envoi and all(len(x) in (3, 4) for x in envoi[0]['L']) and [x for x in envoi[0]['L'] if x[0] == bc][0][2] == 1, envoi[:1])
+        check('LE POINT — l\'envoi porte la règle (« marge », 40 $) : c\'est elle que la stratégie signe', envoi and envoi[0].get('regle') == {'type': 'marge', 'seuil': 40}, envoi and envoi[0].get('regle'))
         # 11 nov. 2026 : le titre Google Shopping des gagnants (4e colonne), jamais pour les autres
         check('LE POINT — seuls les gagnants portent un titre Google Shopping', envoi and all(len(x) == 3 or x[1] == 'garder' for x in envoi[0]['L']), envoi[:1])
         T = pj.evaluate("""()=>[

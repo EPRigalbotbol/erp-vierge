@@ -63,9 +63,17 @@ try:
         print('« Retiré de la vente : 0 en stock » — seulement quand c\'est vrai')
         check('stock > 0 et pas en vente : « Pas en ligne », pas de mention de stock', 'Pas en ligne' in L('site').inner_text() and '0 en stock' not in L('site').inner_text(), L('site').inner_text())
         # un parfum à 0 en stock : en ligne sur le gros (0 sur le site), retiré du détail
-        pg.evaluate("z=>{ const S=JSON.parse(localStorage.getItem('site-stock-v1')); S[z]={g:{id:7,q:0,suivi:true,pr:60,ps:null,nom:'z'}}; S._retires=S._retires||{}; S._retires.d=Object.assign({},S._retires.d,{[z]:{id:8,q:0,suivi:true,pr:90,ps:null,nom:'z'}}); localStorage.setItem('site-stock-v1',JSON.stringify(S)); }", Z[0])
+        pg.evaluate("z=>{ const S=JSON.parse(localStorage.getItem('site-stock-v1')); S[z]={g:{id:7,q:0,suivi:true,pr:60,ps:null,nom:'z'}}; S._retires=S._retires||{}; S._retires.d=Object.assign({},S._retires.d,{[z]:{id:8,q:0,suivi:true,pr:90,ps:null,nom:'z',auto:1}}); localStorage.setItem('site-stock-v1',JSON.stringify(S)); }", Z[0])
         pg.goto(base + 'catalogue.html#cle=' + Z[15] + '&canaux=1'); pg.reload(); pg.wait_for_timeout(3500)
         check('LE POINT — stock à 0 et pas en vente : « Retiré de la vente : 0 en stock »', 'Retiré de la vente : 0 en stock' in T('site'), T('site'))
+        # 14 nov. 2026 (Igal, capture à l'appui : « écritures écrasées ») : la mention ne déborde jamais sur la colonne de la marge
+        def chevauche():
+            return pg.evaluate("()=>{ const r=document.querySelector('[data-cn=\"site\"]'); const h=r&&r.querySelector('.hors'), c=r&&r.querySelector('.c4'); if(!h||!c) return 'absent'; const a=h.getBoundingClientRect(), b=c.getBoundingClientRect(); return a.right>b.left+1&&a.bottom>b.top&&a.top<b.bottom ? [a.right,b.left] : ''; }")
+        res = []
+        for w in (1440, 1200, 1024):
+            pg.set_viewport_size({'width': w, 'height': 1000}); pg.wait_for_timeout(300); res.append((w, chevauche()))
+        pg.set_viewport_size({'width': 1440, 'height': 1000})
+        check('LE POINT — « Retiré de la vente : 0 en stock · revient tout seul » reste dans sa colonne (1440, 1200, 1024 px) : rien n\'écrase la marge', all(x == '' for _, x in res) and 'revient tout seul' in T('site'), res)
         check('stock à 0 mais encore en vente (gros) : « ✓ En ligne » + « 0 en stock », pas « Retiré »', 'En ligne' in T('sitegros') and '0 en stock' in T('sitegros') and 'Retiré' not in T('sitegros'), T('sitegros'))
         ouvre('en')
         check('en anglais : « ✓ Online » et « Take offline »', 'Online' in L('site').inner_text() and 'Take offline' in L('site').inner_text(), L('site').inner_text())

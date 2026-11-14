@@ -100,10 +100,23 @@ try:
         check('« Venus directement » est expliqué (adresse tapée, favori…)', any('adresse du site' in x for x in inf2), inf2)
         # 4. Google : la pub rapporte-t-elle ?
         V = pg.inner_text('.ga-verdict')
-        mgAds = pg.evaluate("()=>{ const C=__an.anCommandes(rcLignes()).filter(o=>o.site==='site'&&o.fam==='gads'&&o.d>='2026-10-17'); return Math.round(C.reduce((a,o)=>a+o.mg,0)*100)/100; }")
-        check('LE POINT — le verdict = marge des commandes Google Ads − pub (50 + 70 = 120 $ ; la pub d\'il y a 40 jours n\'y est pas)', a(V, abs(round(mgAds - 120))), [mgAds, V])
+        mgAds, caAds = pg.evaluate("()=>{ const C=__an.anCommandes(rcLignes()).filter(o=>o.site==='site'&&o.fam==='gads'&&o.d>='2026-10-17'); return [Math.round(C.reduce((a,o)=>a+o.mg,0)*100)/100, C.reduce((a,o)=>a+o.ca,0)]; }")
+        # 14 nov. 2026 : les 2 commandes de la pub payées pas encore expédiées (110 + 90 $) comptent, à la marge des commandes expédiées
+        att_mg = 200 * (mgAds / caAds) if caAds else 200 * 0.35
+        check('LE POINT — le verdict = marge des commandes Google Ads (+ celles payées, pas encore expédiées) − pub (50 + 70 = 120 $ ; la pub d\'il y a 40 jours n\'y est pas)', a(V, abs(round(mgAds + att_mg - 120))), [mgAds, att_mg, V])
         st = pg.inner_text('.ga-stats')
-        check('« Ventes : selon Google / réelles » = 400 $ / 300 $ ; coût de la pub par commande = 60 $', a(st, 400) and a(st, 300) and a(st, 60), st)
+        check('« Ventes : selon Google / réelles » = 400 $ / 500 $ (300 $ expédiés + 200 $ payés pas encore expédiés) ; coût de la pub par commande = 120 $ ÷ 4 = 30 $', a(st, 400) and a(st, 500) and a(st, 30) and '2 pas encore expédiées' in st, st)
+        # 14 nov. 2026 (Igal : « ce tableau, on le démarre à partir du moment où on a repris la campagne en main »)
+        rp = pg.evaluate("""()=>{ const S=__an.STRAT(); const garde=JSON.stringify(S.courante.active||null);
+          S.courante.active={date:new Date(Date.now()-2*86400e3).toISOString(),fin:new Date(Date.now()+28*86400e3).toISOString(),par:'Igal'}; __an.anDessine();
+          const d0=__an.anJM(S.courante.active.date), auj=__an.anJM(new Date());
+          const A=__an.anCommandes(rcLignes()).filter(o=>o.site==='site'&&o.fam==='gads'&&o.d>=d0&&o.d<=auj), mg=A.reduce((a,o)=>a+o.mg,0);
+          const pub=Object.entries(JSON.parse(localStorage.getItem('google-pub-v1')).j).filter(([d])=>d>=d0&&d<=auj).reduce((a,[d,r])=>a+(+r[0]||0),0);
+          const r={phrase:document.querySelector('.ga-phrase').innerText, src:[...document.querySelectorAll('.ga-src')].map(x=>x.innerText).join(' | '), v:document.querySelectorAll('.ga-verdict')[0].innerText, attendu:Math.round(mg+__an.anAttenteAds({a:d0,b:auj},A.reduce((x,o)=>x+o.ca,0)>0?mg/A.reduce((x,o)=>x+o.ca,0):null).mg-pub)};
+          S.courante.active=JSON.parse(garde); __an.anDessine(); r.apres=document.querySelector('.ga-phrase').innerText; return r; }""")
+        check('LE POINT — stratégie active : le bilan de la pub part du jour de la reprise de la campagne (« Depuis la reprise de la campagne, le … »), plus de la période choisie',
+              rp['phrase'].startswith('Depuis la reprise de la campagne, le ') and 'depuis le ' in rp['src'] and a(rp['v'], abs(rp['attendu'])), rp)
+        check('sans stratégie active, le bilan revient à la période choisie en haut', not rp['apres'].startswith('Depuis la reprise'), rp['apres'][:80])
         # la pub, parfum par parfum
         an = pg.evaluate("()=>{ const A=anAnalysePub(__an.anCommandes(rcLignes())); return A&&{k:A.k,L:A.L.map(o=>[o.sku,o.dec,o.m,o.mgE,o.res,o.pvr,o.pa,o.q,!!o.nouveau]),gain:A.gain90}; }")
         Lp = {x[0]: x for x in (an or {}).get('L', [])}
@@ -244,7 +257,7 @@ try:
         pg.evaluate("()=>{ STRAT.encours=null; anDessine(); }")
         check('LE POINT — la stratégie est prête : la barre pleine et « Décision prise », puis le résultat', pg.locator('.sc video').count() == 0 and pg.evaluate("()=>document.querySelector('.sc-fin .sc-barre i').style.width") == '100%' and 'Décision prise' in pg.inner_text('.sc-accord'))
         att = pg.inner_text('.ga-attente') if pg.locator('.ga-attente').count() else ''
-        check('LE POINT — « + 2 commandes de la pub payées, pas encore expédiées : 200 $ » (la commande directe n\'y est pas)', '2' in att and a(att, 200) and 'pas encore exp' in att, att)
+        check('LE POINT — « Dont 2 commandes de la pub payées, pas encore expédiées : 200 $ », déjà comptées (la commande directe n\'y est pas)', att.startswith('Dont 2') and a(att, 200) and 'pas encore exp' in att and 'déjà comptées' in att, att)
         check('Google Shopping gratuit : 1 clic, 70 affichages', '1 clic' in pg.inner_text('.ga-free') and '70' in pg.inner_text('.ga-free'), pg.inner_text('.ga-free'))
         check('deux courbes cumulées (marge et pub) avec leurs étiquettes', pg.locator('#ga-c2 .ga-l').count() == 2 and pg.locator('#ga-c2 .ga-lab').count() == 2)
         check('une relecture en panne (Shopify) est dite en haut de la page', 'Access denied' in T and pg.locator('.an-alerte').count() == 1, T[:400])

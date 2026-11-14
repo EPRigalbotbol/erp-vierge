@@ -250,24 +250,35 @@ function anDessine(){
         :`<p class="ga-vide">${A3('Aucune commande en ligne sur cette période.','No online order in this period.')}</p>`}
     </section>`;
   /* ---- 3. Google Ads : est-ce que la pub rapporte ? (la pub tourne sur perfumestrade.com : on compare avec ce site seulement) ---- */
-  const pub=anPub(P.a,P.b);
-  h+=`<section class="ga-card ga-pad"><div class="ga-h"><h3>${A3('Google Ads : est-ce que la pub rapporte ?','Google Ads: do the ads pay off?')}</h3><span class="ga-src" data-nolang>perfumestrade.com</span></div>`;
+  /* 14 nov. 2026 (Igal : « ce tableau, on le démarre à partir du moment où on a repris la campagne en main ») : tant qu'une stratégie
+     est active, ce bilan part du JOUR de son activation (la reprise de la campagne), quelle que soit la période choisie en haut ;
+     les jours de l'ancienne gestion n'y sont plus mélangés. Sans stratégie active : la période choisie, comme avant. */
+  const SA=(STRAT&&STRAT.courante&&STRAT.courante.active&&STRAT.courante.active.date)?STRAT.courante.active:null;
+  const PR=SA?{a:anJM(SA.date),b:anJM(new Date())}:P, BR=SA?anJours(PR):B;
+  if(SA) BR.K.forEach(k=>{ k.court2=BR.jour?new Date(k.k+'T12:00:00').toLocaleDateString(A3('fr-FR','en-US'),{day:'numeric',month:'short'}):k.court; });
+  const dRep=SA?new Date(PR.a+'T12:00:00').toLocaleDateString(A3('fr-FR','en-US'),{day:'numeric',month:'long'}):'';
+  const pub=anPub(PR.a,PR.b);
+  h+=`<section class="ga-card ga-pad"><div class="ga-h"><h3>${A3('Google Ads : est-ce que la pub rapporte ?','Google Ads: do the ads pay off?')}</h3><span class="ga-src" data-nolang>perfumestrade.com${SA?' · '+esc(A3('depuis le ','since ')+dRep):''}</span></div>`;
   let ads=null;
   if(!pub.lu){ h+=`<p class="ga-vide">${pub.err?A3('Le cockpit n\'arrive pas à lire les chiffres de Google : ','The cockpit cannot read Google\'s figures: ')+'<span data-nolang>'+esc(pub.err)+'</span>':A3('Les chiffres de Google arrivent : le cockpit les lit une fois par heure.','Google\'s figures are on their way: the cockpit reads them once an hour.')}</p>`; }
   else {
-    const A=anDans(tous.filter(o=>o.site==='site'&&o.fam==='gads'),P.a,P.b);
-    const mgA=A.reduce((a,o)=>a+o.mg,0), caA=A.reduce((a,o)=>a+o.ca,0), nA=A.filter(ok).length, reste=mgA-pub.T.pub;
-    ads={A,mgA,pub};
+    const A=anDans(tous.filter(o=>o.site==='site'&&o.fam==='gads'),PR.a,PR.b);
+    const mgE=A.reduce((a,o)=>a+o.mg,0), caE=A.reduce((a,o)=>a+o.ca,0), nE=A.filter(ok).length;
+    /* 14 nov. 2026 (Igal : « même les commandes pas expédiées, je veux qu'elles soient notées quand même ») : les commandes de la
+       pub PAYÉES mais pas encore expédiées de la période comptent dans ce bilan, avec leur marge estimée (voir anAttenteAds) */
+    const AT=anAttenteAds(PR,caE>0?mgE/caE:null);
+    const mgA=mgE+AT.mg, caA=caE+AT.mt, nA=nE+AT.n, reste=mgA-pub.T.pub;
+    ads={A:A.concat(AT.X.map(x=>({d:x.d,mg:x.mg,ca:x.mt}))),mgA,pub,P:PR,B:BR};
     const bon=reste>=0;
     h+=`<div class="ga-verdict ${bon?'bon':'mal'}"><span class="ga-vv">${gaCnt(reste,'$')}</span><span class="ga-vt">${bon?A3('gagnés après avoir payé la pub','earned after paying for the ads'):A3('perdus : la pub a coûté plus que la marge des commandes qu\'elle a amenées','lost: the ads cost more than the margin of the orders they brought')}</span></div>
-      <p class="ga-phrase"><span data-nolang>${esc(rcLib(AN.sel,P))}</span> : ${A3('la pub a coûté','the ads cost')} <b>${money(pub.T.pub)}</b>. ${A3('Elle a amené','They brought')} <b>${nf(nA)}</b> ${A3('commande'+(nA>1?'s':'')+', qui '+(nA>1?'ont':'a')+' laissé','order'+(nA>1?'s':'')+', which left')} <b>${money(mgA)}</b> ${A3('de marge nette','net margin')}. ${A3('Résultat','Result')} : <b>${reste<0?'−':''}${money(Math.abs(reste))}</b>.</p>
+      <p class="ga-phrase">${SA?`<span class="ga-repris">${esc(A3(`Depuis la reprise de la campagne, le ${dRep}`,`Since the campaign was taken over, on ${dRep}`))}</span>`:`<span data-nolang>${esc(rcLib(AN.sel,P))}</span>`} : ${A3('la pub a coûté','the ads cost')} <b>${money(pub.T.pub)}</b>. ${A3('Elle a amené','They brought')} <b>${nf(nA)}</b> ${A3('commande'+(nA>1?'s':''),'order'+(nA>1?'s':''))}${AT.n?` (${A3(`dont ${nf(AT.n)} payée${AT.n>1?'s':''}, pas encore expédiée${AT.n>1?'s':''}`,`including ${nf(AT.n)} paid, not shipped yet`)})`:''}${A3(', qui '+(nA>1?'ont':'a')+' laissé',', which left')} <b>${money(mgA)}</b> ${A3('de marge nette','net margin')}. ${A3('Résultat','Result')} : <b>${reste<0?'−':''}${money(Math.abs(reste))}</b>.</p>
       <p class="ga-note">${A3('Ce chiffre bouge dans la journée : la dépense de Google est relue toutes les heures, et chaque commande venue de la pub le fait remonter d\'un coup. Il se juge sur une semaine complète, pas sur un jour.','This figure moves during the day: Google\'s spend is read every hour, and each order from the ads lifts it at once. Judge it over a full week, not a single day.')}</p>
       <div class="ga-plot ga-plot2" id="ga-c2"></div>
       <div class="ga-stats">
         <div><span>${A3('La pub coûte, par commande','Ad cost per order')}</span><b>${nA?money(pub.T.pub/nA):'—'}</b></div>
         <div><span>${A3('Une commande de la pub rapporte','An order from the ads earns')}</span><b>${nA?money(mgA/nA):'—'}</b><small>${A3('de marge nette','net margin')}</small></div>
-        <div><span>${A3('Ventes : selon Google / réelles','Sales: per Google / actual')}</span><b>${money(pub.T.ventes)} / ${money(caA)}</b><small>${nf(nA)} ${A3('commandes expédiées','shipped orders')}</small></div>
-      </div>${anAttente(P)}
+        <div><span>${A3('Ventes : selon Google / réelles','Sales: per Google / actual')}</span><b>${money(pub.T.ventes)} / ${money(caA)}</b><small>${nf(nE)} ${A3('commandes expédiées','shipped orders')}${AT.n?' + '+nf(AT.n)+' '+A3('pas encore expédiée'+(AT.n>1?'s':''),'not shipped yet'):''}</small></div>
+      </div>${anAttente(AT)}
       <div class="ga-free ${pub.T.gClics?'':'ko'}"><b>${A3('Google Shopping gratuit','Free Google Shopping')}</b> · ${nf(Math.round(pub.T.gClics))} ${A3('clic'+(pub.T.gClics>1?'s':''),'click'+(pub.T.gClics>1?'s':''))} · ${nf(Math.round(pub.T.gAff))} ${A3('affichages','impressions')}${pub.T.gClics?'':` — <span>${A3('aucun clic : Google ne montre presque pas les fiches gratuites (à voir dans Merchant Center)','no clicks: Google barely shows the free listings (to check in Merchant Center)')}</span>`}</div>`;
   }
   h+=`</section></div>`;
@@ -292,9 +303,10 @@ function anDessine(){
   gaCourbe(document.getElementById('ga-c1'),B.K,[{v:cur,c:'var(--an-1)',nom:m.nom,nomTip:rcLib(AN.sel,P),aire:true}].concat(prev?[{v:prev,c:'var(--ga-prec)',nom:lib,nomTip:lib,pointille:true}]:[]),m.f,{id:'a',h:270,titre:m.nom,reperes:REP,
     tipPlus:i=>(REP[i]||[]).length?`<div class="ga-tip-j">${REP[i].slice(0,4).map(e=>`<p><i></i>${esc(e.quoi)}</p>`).join('')}${REP[i].length>4?`<p>+ ${REP[i].length-4}</p>`:''}</div>`:''});
   if(ads){ const cum=a=>{ let s=0; return a.map(v=>s+=v); };
-    const pubJ=B.K.map(k=>{ let s=0; Object.keys(ads.pub.J).forEach(d=>{ if((B.jour?d:d.slice(0,7))===k.k&&d>=P.a&&d<=P.b) s+=+(ads.pub.J[d]||[])[0]||0; }); return s; });
-    const mgJ=anSerieK(B,ads.A,o=>o.mg);
-    gaCourbe(document.getElementById('ga-c2'),B.K,[{v:cum(mgJ),c:'var(--an-3)',nom:A3('Marge des commandes de la pub','Margin of ad orders'),aire:true,etiquette:true},{v:cum(pubJ),c:'var(--an-2)',nom:A3('Pub dépensée','Ad spend'),etiquette:true}],'$',{id:'b',h:210,droite:16,titre:A3('Marge cumulée et pub cumulée','Cumulative margin and ad spend')}); }
+    const BB=ads.B, PP=ads.P;
+    const pubJ=BB.K.map(k=>{ let s=0; Object.keys(ads.pub.J).forEach(d=>{ if((BB.jour?d:d.slice(0,7))===k.k&&d>=PP.a&&d<=PP.b) s+=+(ads.pub.J[d]||[])[0]||0; }); return s; });
+    const mgJ=anSerieK(BB,ads.A,o=>o.mg);
+    gaCourbe(document.getElementById('ga-c2'),BB.K,[{v:cum(mgJ),c:'var(--an-3)',nom:A3('Marge des commandes de la pub','Margin of ad orders'),aire:true,etiquette:true},{v:cum(pubJ),c:'var(--an-2)',nom:A3('Pub dépensée','Ad spend'),etiquette:true}],'$',{id:'b',h:210,droite:16,titre:A3('Marge cumulée et pub cumulée','Cumulative margin and ad spend')}); }
   /* les barres se remplissent */
   if(GA_MOUV&&gaAnime){ z.querySelectorAll('.ga-bf,.ga-pb i').forEach(b=>{ b.style.width='0'; }); requestAnimationFrame(()=>requestAnimationFrame(()=>z.querySelectorAll('.ga-bf,.ga-pb i').forEach(b=>{ b.style.width=''; }))); }
   try{ anCampDessine(); }catch(e){}
@@ -947,13 +959,28 @@ function anExportPub(){ const A=window._anXL; if(!A||typeof sortieXlsx!=='functi
 /* 9 nov. 2026 (Igal, sur l'écart « selon Google / réelles ») : les commandes venues de la pub, PAYÉES mais pas encore expédiées.
    Google les compte déjà ; l'ERP les comptera à leur expédition. Le cockpit en garde la liste du moment (_attente_woocommerce) :
    elle ne s'affiche que si la période choisie va jusqu'à aujourd'hui. */
-function anAttente(P){ const A=(ORI['_attente_woocommerce']&&ORI['_attente_woocommerce'].L)||[]; if(P.b<rcISO(new Date())) return '';
-  const X=A.filter(x=>x&&x.o==='gads'); if(!X.length) return '';
-  const mt=X.reduce((a,x)=>a+(+x.mt||0),0);
-  return `<div class="ga-attente">+ <b>${nf(X.length)}</b> ${A3(X.length>1?'commandes de la pub payées, pas encore expédiées':'commande de la pub payée, pas encore expédiée',X.length>1?'orders from the ads paid, not shipped yet':'order from the ads paid, not shipped yet')} : <b>${money(mt)}</b> <span>${A3('— elles compteront dès leur expédition','— they will count once shipped')}</span></div>`; }
+/* LES COMMANDES DE LA PUB PAYÉES, PAS ENCORE EXPÉDIÉES (14 nov. 2026). Seulement celles de la période (avant, la liste montrait
+   aussi de vieilles commandes restées « en cours » sur le site depuis des mois). Leur marge : parfum par parfum quand le cockpit
+   a lu leurs lignes et que chaque parfum a un prix d'achat (prix − commission − prix d'achat − envoi + port payé) ; sinon, leur
+   montant × le taux de marge des commandes de la pub déjà expédiées sur la période (à défaut, 35 %). */
+function anAttenteAds(R,taux){
+  const A=(ORI['_attente_woocommerce']&&ORI['_attente_woocommerce'].L)||[];
+  const site=(REG.canaux||[]).find(c=>c.id==='site')||{}, com=(+site.com>=0&&site.com!=='')?+site.com:2.9, fixe=(site.fixe!=null&&site.fixe!=='')?+site.fixe:0.3;
+  const envoi=rcEnvoi('woocommerce'), F=anFiches(), t=(taux!=null&&isFinite(taux))?taux:0.35;
+  const X=A.filter(x=>x&&x.o==='gads'&&String(x.d||'')>=R.a&&String(x.d||'')<=R.b).map(x=>{ const mt=+x.mt||0; let mg=null;
+    const L=Array.isArray(x.L)?x.L:[];
+    if(L.length){ let pa=0, okPa=true; L.forEach(l=>{ const f=F[String(l[0]||'').replace(/^0+/,'')]; if(f&&f.pa!=null) pa+=f.pa*(+l[2]||1); else okPa=false; });
+      if(okPa) mg=mt*(1-com/100)-fixe-pa-envoi+(+x.port||0); }
+    if(mg==null) mg=mt*t;
+    return Object.assign({},x,{mt,mg}); });
+  return {X,n:X.length,mt:X.reduce((a,x)=>a+x.mt,0),mg:X.reduce((a,x)=>a+x.mg,0)};
+}
+function anAttente(AT){ const X=(AT&&AT.X)||[]; if(!X.length) return '';
+  const mt=AT.mt;
+  return `<div class="ga-attente">${A3('Dont','Including')} <b>${nf(X.length)}</b> ${A3(X.length>1?'commandes de la pub payées, pas encore expédiées':'commande de la pub payée, pas encore expédiée',X.length>1?'orders from the ads paid, not shipped yet':'order from the ads paid, not shipped yet')} : <b>${money(mt)}</b> <span>${A3('— déjà comptées ci-dessus, avec leur marge estimée','— already counted above, with their estimated margin')}</span></div>`; }
 /* les administrateurs de l'ERP : les rôles Admin et Patron, et eux seuls (un Comptable, qui voit les marges, n'y entre pas) */
 function anAdmin(){ const s=session(); return !!s&&/^(admin|patron)$/.test(String(s.role||'')); }
-window.__an={AN,anCommandes,anFamille,anDessine,ORI:()=>ORI,STRAT:()=>STRAT,CAMP:()=>AN_CAMP,anJM};
+window.__an={AN,anCommandes,anFamille,anDessine,ORI:()=>ORI,STRAT:()=>STRAT,CAMP:()=>AN_CAMP,anJM,anAttenteAds};
 function majUser(){ try{ piedSession(); }catch(e){} }
 majUser();
 (function(){

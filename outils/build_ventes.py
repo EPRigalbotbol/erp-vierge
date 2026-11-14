@@ -338,6 +338,9 @@ border:1px solid var(--line);border-radius:6px;padding:5px 10px;cursor:pointer}
    quand l'écran est juste (le tableau masque ses colonnes secondaires s'il déborde) */
 .tbl td.act button{display:block;width:100%;margin:0 0 4px;text-align:center}.tbl td.act button:last-child{margin-bottom:0}
 .tv2 .pl3 div{line-height:1.35;padding:2px 0}
+.vatt{border:1.5px dashed var(--iris);border-radius:12px;background:var(--iris-soft);padding:10px 12px;margin:0 0 14px}
+.vatt-t{font-size:14px;margin-bottom:6px}.vatt-t span{display:block;font-size:12.5px;color:var(--ink-2);margin-top:2px}
+.vatt .vatt-tb{background:#fff}.vatt .num a{color:var(--iris);font-weight:700}
 .tv2 .pl3 em{font-style:normal;font-family:Inter,sans-serif;font-weight:700;color:var(--iris);margin-right:2px}
 .tv2 .pl3 b{font-weight:600;display:inline}
 .tv2 .pl3 div{font-size:14px}
@@ -2085,7 +2088,7 @@ function dessine(){
     $('nbv').textContent=''; $('src').innerHTML='aucune vente'; return;
   }
   if(!L.length){
-    $('corps').innerHTML=`<div class="vide"><h3>Aucune vente ne correspond</h3><p>Élargis la période ou enlève un filtre.</p></div>`;
+    $('corps').innerHTML=vAttenteSite()+`<div class="vide"><h3>Aucune vente ne correspond</h3><p>Élargis la période ou enlève un filtre.</p></div>`;
     $('nbv').textContent=''; $('src').innerHTML=`0 vente affichée<br>sur ${nf(nbVentes(V))} au total`; return;
   }
   /* Igal, 27 sept. 2026 : « quand une personne achète plusieurs parfums, il faudrait
@@ -2119,7 +2122,7 @@ function dessine(){
         if(/^(processing|on-hold)$/.test(w)) return `<span class="st exp">à expédier</span>`;
         return `<span class="st ok">vendue</span>`; })();
   const tipMg=x=> (x.com ? `Marge nette : prix de vente moins le prix d'achat et la commission ${x.canal} (${x.com} %)` : `Marge nette : prix de vente moins le prix d'achat`)+((x.portMt||x.envoiMt)?` ; plus le port payé par le client, moins le coût de l'envoi`:'')+(x.carteMt?` ; moins les frais de carte Lightspeed (${carteTaux()} % de la part payée par carte)`:'');
-  $('corps').innerHTML=`<div class="wrapx af"><table class="tbl tv2"><thead><tr>
+  $('corps').innerHTML=vAttenteSite()+`<div class="wrapx af"><table class="tbl tv2"><thead><tr>
     <th class="no o4">N°</th><th>Date</th><th>Canal</th><th>Commande</th><th class="cli">Client</th><th class="pdt">Produit</th>
     <th class="r">Qté</th><th class="r o2">Prix unit.</th><th class="r">Montant</th><th class="r vmg" title="Après le prix d'achat et la commission du canal">Marge nette</th><th>État</th><th class="go"></th>
     </tr></thead><tbody>${v.map((x,i)=>`${(i===0||v[i-1].d!==x.d)?ligneJour(x.d,L):''}<tr class="${x.ret?'ret':''}${x.att?' att':''}${estPC(x.canal)?' pcr':''}" data-d="${i}" title="${x.att==='exp'?'Commande à expédier : voir la commande':x.att?'Commande en attente : ouvrir sa fiche':'Ouvrir la fiche de la vente'}">
@@ -2218,6 +2221,32 @@ function origineSite(x){
   if(t==='site') return [d||r3('Autre site','Other site','Otro sitio'),r3('un lien sur un autre site','a link on another site','un enlace en otro sitio'),''];
   if(t==='inconnu') return [r3('Origine inconnue','Unknown origin','Origen desconocido'),r3('la boutique n\'a pas noté d\'où venait le client','the store did not record where the customer came from','la tienda no anotó de dónde venía el cliente'),''];
   return [r3('Autre origine','Other origin','Otro origen'),c,''];
+}
+/* LES COMMANDES DES SITES PAYÉES, PAS ENCORE EXPÉDIÉES (14 nov. 2026, Igal : « même les commandes pas expédiées, je veux qu'elles
+   soient notées… je devrais les voir sur les lignes des ventes »). Règle du 5 nov. inchangée : une commande des sites n'est une VENTE
+   (chiffre, stock, facture) qu'une fois « completed » sur WooCommerce. En attendant, elle est montrée ici, au-dessus des ventes, avec
+   son client, ses parfums, son montant et son origine — et elle n'entre dans aucun total. La liste vient du cockpit (photo relue toutes
+   les 2 minutes, administrateurs seulement) ; seules celles de la période choisie, et depuis le démarrage de l'ERP (1er oct. 2026). */
+function vAttenteSite(){
+  const O=vOri(), deb=jourChoisi()||periode()||'2026-10-01', fin=jourChoisi()||'9999';
+  const sites=[['woocommerce','Site perfumestrade.com','https://perfumestrade.com'],['woocommerce-gros','Site wholesale.perfumestrade.com','https://wholesale.perfumestrade.com']];
+  const X=[]; sites.forEach(([k,canal,url])=>{ if(canalSel&&canalSel!==canal) return;
+    ((O['_attente_'+k]&&O['_attente_'+k].L)||[]).forEach(x=>{ const d=String(x&&x.d||''); if(!d||d<'2026-10-01'||d<deb||d>fin) return; X.push(Object.assign({k,canal,url},x)); }); });
+  if(!X.length) return '';
+  X.sort((a,b)=>(b.d+(b.h||'')).localeCompare(a.d+(a.h||'')));
+  const mt=X.reduce((a,x)=>a+(+x.mt||0),0);
+  return `<div class="vatt"><div class="vatt-t"><b>${esc(r3('Payées sur le site, pas encore expédiées','Paid on the website, not shipped yet','Pagadas en el sitio, aún no enviadas'))}</b> · ${nf(X.length)} ${esc(r3(X.length>1?'commandes':'commande',X.length>1?'orders':'order',X.length>1?'pedidos':'pedido'))} · ${money2(mt)}
+    <span>${esc(r3('Elles deviennent des ventes à leur expédition (« completed » sur le site) : en attendant, elles ne comptent dans aucun total.','They become sales once shipped (“completed” on the website): until then, they count in no total.','Se convierten en ventas al enviarse («completed» en el sitio): mientras tanto, no cuentan en ningún total.'))}</span></div>
+    <div class="wrapx"><table class="tbl tv2 vatt-tb"><tbody>${X.map(x=>{ const c=String(x.o||''), t=c.split(':')[0];
+      const og=t==='gads'?r3('Pub Google','Google Ads','Anuncio Google'):t==='gshop'?r3('Google Shopping gratuit','Free Google Shopping','Google Shopping gratis'):t==='direct'?r3('Venu directement','Direct','Directo'):t==='google'?r3('Recherche Google','Google search','Búsqueda de Google'):t?r3('Autre origine','Other origin','Otro origen'):'';
+      const L=Array.isArray(x.L)?x.L:[];
+      return `<tr><td class="qd"><b>${dfr(x.d)}</b>${x.h?`<span class="hh">${esc(x.h)}</span>`:''}</td>
+        <td class="cnl"><span class="ch ${t==='gads'?'or-pub':'or-autre'}"><span data-nolang>${esc(canalCourt(x.canal))}</span>${og?` <b class="ou">· ${esc(og)}</b>`:''}</span></td>
+        <td class="num"><a href="${esc(x.url)}/wp-admin/post.php?post=${encodeURIComponent(x.id)}&action=edit" target="_blank" rel="noopener" data-nolang>#${esc(x.n||x.id)}</a></td>
+        <td class="cli" data-nolang>${esc(x.cl||'—')}</td>
+        <td class="ref pdt">${L.length?`<div class="pl3">${L.slice(0,4).map(l=>`<div><em>${nf(l[2])}×</em> <b data-nolang>${esc(l[1])}</b></div>`).join('')}${L.length>4?`<div class="plus4">+ ${nf(L.length-4)}</div>`:''}</div>`:'—'}</td>
+        <td class="r mt">${money2(+x.mt||0)}</td>
+        <td class="etat"><span class="st exp">${esc(x.st==='on-hold'?r3('en attente (contrôle)','on hold (check)','en espera (control)'):r3('payée, à expédier','paid, to ship','pagada, por enviar'))}</span></td></tr>`; }).join('')}</tbody></table></div></div>`;
 }
 function pastCanal(x){ const c=x.canal, k=identCanal(c);
   const og=origineSite(x);

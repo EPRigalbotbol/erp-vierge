@@ -646,6 +646,8 @@ MOTS2 = {
     "Nom commercial (sous la raison sociale)": ["Trade name (under the legal name)", "Nombre comercial (bajo la razón social)"],
     "Adresse (une ligne)": ["Address (one line)", "Dirección (una línea)"],
     "Email sur la facture": ["Email on the invoice", "Email en la factura"],
+    "Contact direct — prénom (en bas de la feuille Nouveaux arrivages)": ["Direct contact — first name (at the bottom of the New Arrivals sheet)", "Contacto directo — nombre (al pie de la hoja Nuevos arribos)"],
+    "Contact direct — numéro (en bas de la feuille Nouveaux arrivages)": ["Direct contact — number (at the bottom of the New Arrivals sheet)", "Contacto directo — número (al pie de la hoja Nuevos arribos)"],
     "N° de Sales Tax (Florida certificate)": ["Sales Tax number (Florida certificate)", "N.º de Sales Tax (certificado de Florida)"],
     "Taux de sales tax appliqué (%)": ["Sales tax rate applied (%)", "Tasa de sales tax aplicada (%)"],
     "Frais si paiement par carte (%)": ["Fee for card payment (%)", "Comisión si se paga con tarjeta (%)"],

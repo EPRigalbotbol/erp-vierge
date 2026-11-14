@@ -68,6 +68,9 @@ CSS = r'''/* ===== NOUVEAUX ARRIVAGES (8 nov. 2026) : la fenêtre d'envoi, puis 
 .arr-feuille .act1{font-family:ArrSerif;font-weight:600;font-size:18px;letter-spacing:.14em;text-transform:uppercase}
 .arr-feuille .act2{font-size:9.5px;color:#4a453d;margin-top:4px}
 .arr-feuille .act3{font-size:11px;font-weight:600;letter-spacing:.06em;margin-top:5px}
+.arr-feuille .act4{font-size:10px;letter-spacing:.05em;margin-top:3px;color:#4a453d}
+.arr-feuille .act4 b{font-weight:600;color:#1f1c17}
+.arr-feuille .apied .adir{font-weight:600;color:#4a453d}
 .arr-feuille .apied{position:absolute;left:38px;right:38px;bottom:25px;display:flex;justify-content:space-between;font-size:7.5px;color:#8a8478;border-top:1px solid #ece6dc;padding-top:5px}'''
 JS = r'''/* ============ NOUVEAUX ARRIVAGES → CLIENTS FAVORIS (Igal, 8 nov. 2026) ============
    « À chaque fois que Sam rentre une new order, une fenêtre s'ouvre : est-ce que vous voulez l'envoyer à vos clients favoris ? »
@@ -81,9 +84,9 @@ JS = r'''/* ============ NOUVEAUX ARRIVAGES → CLIENTS FAVORIS (Igal, 8 nov. 20
 const K_ARR_E='arrivages-envoyes-v1';
 const ARR_LG={en:'English',fr:'Français',es:'Español'};
 const ARR_T={
-  en:{titre:'New Arrivals',intro:n=>`${n} fragrance${n>1?'s':''} just landed in our Miami warehouse. Available now for our partners.`,prix:'Prices on request',cta:'Send us the barcode and the quantity on WhatsApp — we reply the same day.',g:{M:'Men',W:'Women',F:'Women',U:'Unisex'},fic:'New-Arrivals',},
-  fr:{titre:'Nouveaux arrivages',intro:n=>`${n} parfum${n>1?'s':''} vien${n>1?'nent':'t'} d'arriver dans notre entrepôt de Miami. Disponible${n>1?'s':''} dès maintenant pour nos partenaires.`,prix:'Prix sur demande',cta:'Envoyez-nous le code-barres et la quantité sur WhatsApp — réponse le jour même.',g:{M:'Homme',W:'Femme',F:'Femme',U:'Mixte'},fic:'Nouveaux-arrivages',},
-  es:{titre:'Nuevos arribos',intro:n=>`${n} perfume${n>1?'s':''} acaba${n>1?'n':''} de llegar a nuestro almacén de Miami. Disponible${n>1?'s':''} ya para nuestros socios.`,prix:'Precios a solicitud',cta:'Envíenos el código de barras y la cantidad por WhatsApp — respondemos el mismo día.',g:{M:'Hombre',W:'Mujer',F:'Mujer',U:'Unisex'},fic:'Nuevos-arribos',}};
+  en:{direct:'Direct line',titre:'New Arrivals',intro:n=>`${n} fragrance${n>1?'s':''} just landed in our Miami warehouse. Available now for our partners.`,prix:'Prices on request',cta:'Send us the barcode and the quantity on WhatsApp — we reply the same day.',g:{M:'Men',W:'Women',F:'Women',U:'Unisex'},fic:'New-Arrivals',},
+  fr:{direct:'Ligne directe',titre:'Nouveaux arrivages',intro:n=>`${n} parfum${n>1?'s':''} vien${n>1?'nent':'t'} d'arriver dans notre entrepôt de Miami. Disponible${n>1?'s':''} dès maintenant pour nos partenaires.`,prix:'Prix sur demande',cta:'Envoyez-nous le code-barres et la quantité sur WhatsApp — réponse le jour même.',g:{M:'Homme',W:'Femme',F:'Femme',U:'Mixte'},fic:'Nouveaux-arrivages',},
+  es:{direct:'Línea directa',titre:'Nuevos arribos',intro:n=>`${n} perfume${n>1?'s':''} acaba${n>1?'n':''} de llegar a nuestro almacén de Miami. Disponible${n>1?'s':''} ya para nuestros socios.`,prix:'Precios a solicitud',cta:'Envíenos el código de barras y la cantidad por WhatsApp — respondemos el mismo día.',g:{M:'Hombre',W:'Mujer',F:'Mujer',U:'Unisex'},fic:'Nuevos-arribos',}};
 /* le message qui part avec le lien : celui des Réglages (Ma société › Message des nouveaux arrivages), sinon celui d'origine.
    {prenom} = le prénom du client, {lien} = le lien du PDF ; sans {lien}, le lien est ajouté à la fin (il ne peut pas manquer) */
 const ARR_MSG_DEF=__MSG_DEF__;
@@ -176,18 +179,21 @@ function arrDecoupe(items,cap1,capN){
 function arrFeuilles(items,lg,F,cap1,capN){
   cap1=cap1||2; capN=capN||3;
   /* le trait d'union devient insécable : le photographe (html2canvas) coupait « code-barres » en « code- barres » */
-  const T=ARR_T[lg]||ARR_T.en, e=v=>esc(v).replace(/-/g,'\u2011'), logo=F.logo||'', tel=F.tel||'', PG=arrDecoupe(items,cap1,capN), N=PG.length;
+  const T=ARR_T[lg]||ARR_T.en, e=v=>esc(v).replace(/-/g,'\u2011'), logo=F.logo||'', tel=F.tel||'', cn=String(F.cnom||'').trim(), ct=String(F.ctel||'').trim(), PG=arrDecoupe(items,cap1,capN), N=PG.length;
   const mois=new Date().toLocaleDateString(lg==='fr'?'fr-FR':lg==='es'?'es-ES':'en-US',{month:'long',year:'numeric'});
   const carte=x=>`<div class="ac"><div class="aph">${x.photo?`<img src="${x.photo}">`:`<span class="asans">${e(arrCasse(x.marque||''))}</span>`}</div><div class="am">${e(arrCasse(x.marque||''))}</div><div class="an">${e(arrCasse(x.nom||''))}</div>`
     +`<div class="ad">${e([arrTaille(x.ml),ARR_TYPE[String(x.type||'').toUpperCase()]||x.type||'',T.g[String(x.genre||'').toUpperCase()]||''].filter(Boolean).join(' · '))}</div><div class="abc">${e(String(x.bc||''))}</div></div>`;
+  /* 14 nov. 2026 (Igal : « mettre le numéro de Sam en bas ») : le contact direct choisi dans Réglages, au pied de chaque page
+     et dans l'encadré final ; vide dans Réglages, rien ne s'imprime */
+  const dir=ct?(cn?cn+' · ':'')+ct:'';
   let h='';
   for(let i=0;i<N;i++){ const p=PG[i], plein=p.length>4*((i?capN:cap1)-1);
     h+=`<div class="apg">`+(i===0?`<div class="ah1">${logo?`<img class="alogo" src="${logo}">`:`<div class="alogot">${e(F.enseigne||'Perfumes Trade')}</div>`}<div class="afil"><span></span><b></b><span></span></div>`
         +`<div class="atitre">${e(T.titre)}</div><div class="amois">${e(mois)}</div><p class="aintro">${e(T.intro(items.length))}</p><div class="atel">${e(T.prix)} · WhatsApp <b>${e(tel)}</b></div></div>`
       :`<div class="ah2">${logo?`<img class="alogo2" src="${logo}">`:''}<div class="at2">${e(T.titre)} <span>· ${e(mois)}</span></div></div>`)
       +`<div class="ag${plein?' plein':''}">${p.map(carte).join('')}</div>`
-      +(i===N-1?`<div class="acta"><div class="act1">${e(T.prix)}</div><div class="act2">${e(T.cta)}</div><div class="act3">WhatsApp ${e(tel)}</div></div>`:'')
-      +`<div class="apied"><span>${e(F.enseigne||'')}${F.adresse?' · '+e(F.adresse):''}</span><span>${e(F.email||'')}${tel?' · '+e(tel):''}</span><span>${i+1} / ${N}</span></div></div>`; }
+      +(i===N-1?`<div class="acta"><div class="act1">${e(T.prix)}</div><div class="act2">${e(T.cta)}</div><div class="act3">WhatsApp ${e(tel)}</div>${dir?`<div class="act4">${e(T.direct)} : <b>${e(dir)}</b></div>`:''}</div>`:'')
+      +`<div class="apied"><span>${e(F.enseigne||'')}${F.adresse?' · '+e(F.adresse):''}</span><span>${e(F.email||'')}${tel?' · '+e(tel):''}</span>${dir?`<span class="adir">${e(dir)}</span>`:''}<span>${i+1} / ${N}</span></div></div>`; }
   return h;
 }
 async function arrPolices(){

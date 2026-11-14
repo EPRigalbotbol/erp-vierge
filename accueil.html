@@ -2644,7 +2644,7 @@ setTimeout(()=>{ try{ const c=document.getElementById('ct-taches'); if(!c||!glPe
   fetch(CK_URL+'/api/o/'+CK_ORG+'/galou/taches',{headers:{Authorization:'Bearer '+ckTok()}}).then(r=>r.ok?r.json():null).then(j=>{ if(!j) return; const n=(j.a_faire||[]).length; c.textContent=n?String(n):''; c.className=n?'ct nb':'ct'; }).catch(()=>{}); }catch(e){} },2500);
 
 
-const VER_URL='202611111614';
+const VER_URL='202611140629';
 /* Les trois boutons de langue de la porte. On ne passe pas par lgChange : il
    écrit une ligne au journal au nom du compte connecté, et ici personne ne l'est
    encore. On change la langue, on l'enregistre, on retraduit l'écran. */

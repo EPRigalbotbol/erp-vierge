@@ -166,7 +166,7 @@ try:
             T = pe.inner_text('#recap')
             check(f'7. {lg} — les titres, boutons et légendes sont écrits en {lg}', all(m.lower() in T.lower() for m in mots), [m for m in mots if m.lower() not in T.lower()])
             vu = pe.evaluate("()=>[...document.querySelectorAll('#recap *')].filter(e=>!e.closest('[data-nolang]')&&e.children.length===0&&e.textContent.trim()).map(e=>e.textContent.trim()).concat([...document.querySelectorAll('#recap [title],#recap [aria-label]')].map(e=>(e.title||'')+' '+(e.getAttribute('aria-label')||'')))")
-            fr = sorted({t for t in vu if FR.search(re.sub(r'\b(mié|sáb)\b', '', t) if lg == 'es' else t)})
+            fr = sorted({t for t in vu if FR.search(re.sub(r'\b(mié|sáb|inglés)\b', '', t) if lg == 'es' else t)})
             if lg == 'es': fr = [t for t in fr if t not in ('Canal', 'Mes', 'Total', 'Tout')]   # « Canal » et « Total » s'écrivent pareil en espagnol
             fr = [t for t in fr if not re.fullmatch(r'[\d\s.,$%/—·+-]+', t)]
             check(f'7. LE POINT — {lg} : plus un mot de français dans le récap', not fr, fr)

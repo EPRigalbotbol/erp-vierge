@@ -181,6 +181,8 @@ CORPS = r'''
     + ligne('Nom commercial (sous la raison sociale)', '', texte('f-enseigne', 'Perfumes Trade')) \
     + ligne('Adresse (une ligne)', '', texte('f-adresse', '1881 NW 20th St, Miami, FL 33142', 360)) \
     + ligne('Téléphone', '', texte('f-tel', '+1 305 …')) \
+    + ligne('Contact direct — prénom (en bas de la feuille Nouveaux arrivages)', '', texte('f-cnom', 'Sam', 160)) \
+    + ligne('Contact direct — numéro (en bas de la feuille Nouveaux arrivages)', '', texte('f-ctel', '+1 (305) …')) \
     + ligne('Email sur la facture', '', texte('f-email', 'perfumestradellc@gmail.com')) \
     + ligne('N° de Sales Tax (Florida certificate)', '', texte('f-taxid', '23-…')) \
     + ligne('Taux de sales tax appliqué (%)', '', '<input type="number" id="f-taux" step="0.01" min="0" max="20" placeholder="7"><b>%</b>') \
@@ -378,7 +380,7 @@ const CANAUX_DEF=[{id:'site',nom:'Site perfumestrade.com',maj:0,com:3},
   {id:'sitegros',nom:'Site wholesale.perfumestrade.com',base:'pvw',maj:0,com:3},{id:'amazon',nom:'Amazon',maj:18,com:15},{id:'perfumecity',nom:'Perfume City',maj:0,com:3}];
 const DEF={seuilQte:3,capMin:0,baissePct:30,baisseJours:30,margeMin:10,fondCaisse:200,fondCaissePC:0,societe:'DASY LLC',
   canaux:CANAUX_DEF, signature:'', monMail:'', monTel:'', boite:'defaut',
-  fact:{raison:'',enseigne:'Perfumes Trade',adresse:'',tel:'',email:'',taxid:'',taux:7,carte:2.6,zelle:'',prefixe:'PT',conditions:'',exo:'',logo:''},
+  fact:{raison:'',enseigne:'Perfumes Trade',adresse:'',tel:'',cnom:'',ctel:'',email:'',taxid:'',taux:7,carte:2.6,zelle:'',prefixe:'PT',conditions:'',exo:'',logo:''},
   factPC:{raison:'',enseigne:'Perfume City',adresse:'',tel:'',email:'',insta:'',taxid:'',zelle:'',prefixe:'PC',logo:''}};
 let REG=Object.assign({},DEF);
 try{ const r=JSON.parse(localStorage.getItem(KREG)||'null'); if(r) REG=Object.assign({},DEF,r); }catch(e){}
@@ -691,7 +693,7 @@ amPeint();
 /* Factures et devis : un objet à part, relu par la rubrique Ventes au moment d'imprimer. */
 REG.fact=Object.assign({},DEF.fact,REG.fact||{});
 [['f-raison','raison','raison sociale'],['f-enseigne','enseigne','nom commercial'],['f-adresse','adresse','adresse'],
- ['f-tel','tel','téléphone facture'],['f-email','email','email facture'],['f-taxid','taxid','n° sales tax'],
+ ['f-tel','tel','téléphone facture'],['f-cnom','cnom','contact direct (prénom)'],['f-ctel','ctel','contact direct (numéro)'],['f-email','email','email facture'],['f-taxid','taxid','n° sales tax'],
  ['f-taux','taux','taux de sales tax'],['f-carte','carte','frais carte'],['f-zelle','zelle','coordonnées Zelle'],
  ['f-prefixe','prefixe','préfixe des factures']].forEach(([id,k,lib])=>{
   const el=$(id); if(!el) return;

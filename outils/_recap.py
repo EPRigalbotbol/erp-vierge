@@ -33,6 +33,7 @@ RECAP_CSS = r'''
 .rc-bar select.on{border-color:var(--iris);color:var(--iris);font-weight:600}
 .rc-bar input[type=date]{font-family:inherit;font-size:13px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:5px 8px}
 .rc-bar input[type=date].on{border-color:var(--iris);color:var(--iris);font-weight:600}
+.rc-expo{margin-top:-6px}.rc-expo b{font-size:12.5px;font-weight:600;color:var(--ink-2)}.rc-expo small{font-size:12px;color:var(--ink-3);margin-right:4px}.rc-expo .ga-btn{padding:5px 14px;font-size:12.5px}.rc-expo-m{font-size:12.5px;color:var(--ink-3)}
 .rc-perso{margin-top:-6px}.rc-perso b{font-size:12.5px;font-weight:600;color:var(--ink-2)}.rc-perso b.rc-ou{margin-left:18px}
 .rc .kpis{margin-bottom:18px}
 .rc .kpi .e{font-size:12.5px;font-weight:600;margin-top:4px}
@@ -746,7 +747,9 @@ function rcDessine(){
       <label for="rc-au">${L3('au','to','al')}</label><input type="date" id="rc-au" class="${selD?'on':''}" value="${selD?esc(P.b):''}" max="${rcISO(auj)}">
       <b class="rc-ou">${L3('Entre deux mois','Between two months','Entre dos meses')}</b>
       <label for="rc-m1">${L3('de','from','de')}</label><select id="rc-m1" class="${selM2?'on':''}"><option value="">—</option>${mois.map(x=>`<option value="${x}" ${selM2&&P.a.slice(0,7)===x?'selected':''}>${esc(rcMoisLib(+x.slice(0,4),+x.slice(5,7)-1))}</option>`).join('')}</select>
-      <label for="rc-m2">${L3('à','to','a')}</label><select id="rc-m2" class="${selM2?'on':''}"><option value="">—</option>${mois.map(x=>`<option value="${x}" ${selM2&&P.b.slice(0,7)===x?'selected':''}>${esc(rcMoisLib(+x.slice(0,4),+x.slice(5,7)-1))}</option>`).join('')}</select></div>`;
+      <label for="rc-m2">${L3('à','to','a')}</label><select id="rc-m2" class="${selM2?'on':''}"><option value="">—</option>${mois.map(x=>`<option value="${x}" ${selM2&&P.b.slice(0,7)===x?'selected':''}>${esc(rcMoisLib(+x.slice(0,4),+x.slice(5,7)-1))}</option>`).join('')}</select></div>`
+    +(rcPeutExpo()&&!P.tout?`<div class="rc-bar rc-expo"><b>${L3('Pour le comptable','For the accountant','Para el contador')}</b><small>${L3('document en anglais, sur la période choisie','document in English, for the chosen period','documento en inglés, del período elegido')}</small>
+      <button type="button" class="ga-btn sec" data-rcx="xlsx">Excel</button><button type="button" class="ga-btn sec" data-rcx="pdf">PDF</button><span class="rc-expo-m" id="rc-expo-m"></span></div>`:'');
   if(!R.S.length){
     h+=`<div class="rc-vide">${L3('Aucune vente sur cette période.','No sale in this period.','Ninguna venta en este período.')} ${L.length?L3('Choisis une autre période ci-dessus.','Pick another period above.','Elige otro período arriba.'):L3('Dès qu\'une vente est saisie, importée d\'un canal ou facturée, elle apparaît ici.','As soon as a sale is entered, imported from a channel or invoiced, it shows up here.','En cuanto una venta se registra, se importa de un canal o se factura, aparece aquí.')}</div>`;
     z.innerHTML=h; rcBranche(); return;
@@ -895,6 +898,136 @@ function rcSansPaPose(x,v){
       ref:x.nom||x.ref,av:'—',ap:money2(v),n,det:nums.slice(0,20).map(z=>({num:z}))}); ecrit(KJOU,J); }catch(e){}
   return {n,fiche,cle:x.fiche?x.cle:''};
 }
+/* ============ L'EXPORT POUR LE COMPTABLE (14 nov. 2026) ============
+   Igal : « quand il sort le chiffre d'affaires sur son dashboard, sur 1 mois, sur 2 mois, qu'il puisse exporter un document à son
+   comptable. En anglais, bien sûr. » — Excel ET PDF, un résumé PAR CANAL (pas le détail des ventes), AVEC le coût d'achat et la marge.
+   Les chiffres sont EXACTEMENT ceux du tableau de bord sur la période choisie (mêmes lignes, mêmes règles) :
+     net sales = ventes − remboursements (le « chiffre d'affaires » du tableau de bord) ; net margin = la « marge nette » ;
+     cost of goods = prix d'achat × flacons, sur les lignes dont le prix d'achat est connu ;
+     fees & shipping = net sales − cost of goods − net margin sur ces mêmes lignes (commissions, frais de carte, envois, moins le
+     port payé par le client) ; les lignes sans prix d'achat sont comptées dans les ventes, pas dans le coût ni la marge (dit en note) ;
+     sales tax = la taxe ENREGISTRÉE dans l'ERP sur les ventes de la période (caisse, Perfume City, factures) — un canal à 0 le dit.
+   Sur plusieurs mois, le même tableau est aussi donné mois par mois. Réservé à qui voit les marges. */
+const rcPeutExpo=()=>{ try{ return typeof peut!=='function'||peut('voirMarge'); }catch(e){ return false; } };
+function rcNomEn(nom){ const n=String(nom||'').toLowerCase();
+  if(n==='gros') return 'Wholesale (in store)'; if(n===RC_HG.toLowerCase()) return 'Wholesale (before the ERP)';
+  if(n==='boutique') return 'Retail (in store)'; if(n==='caisse lightspeed') return 'Retail store (Lightspeed)';
+  if(n==='site perfumestrade.com') return 'perfumestrade.com'; if(n==='site wholesale.perfumestrade.com') return 'wholesale.perfumestrade.com';
+  if(n==='(non précisé)') return '(not specified)';
+  return String(nom||''); }
+const rcEnD=(d,o)=>{ const [Y,M,D]=d.split('-').map(Number); return new Date(Y,M-1,D).toLocaleDateString('en-US',o); };
+function rcLibEn(a,b){ if(a===b) return rcEnD(a,{month:'long',day:'numeric',year:'numeric'});
+  if(a.slice(0,7)===b.slice(0,7)) return rcEnD(a,{month:'long'})+' '+(+a.slice(8))+' – '+(+b.slice(8))+', '+a.slice(0,4);
+  if(a.slice(0,4)===b.slice(0,4)) return rcEnD(a,{month:'long',day:'numeric'})+' – '+rcEnD(b,{month:'long',day:'numeric'})+', '+a.slice(0,4);
+  return rcEnD(a,{month:'long',day:'numeric',year:'numeric'})+' – '+rcEnD(b,{month:'long',day:'numeric',year:'numeric'}); }
+/* 14 nov. 2026 (Igal, après le premier essai : « il faut rajouter les sales tax ; je veux TOUS les canaux de vente de l'ERP ; et surtout
+   les taxes quand il y a eu des taxes à payer ; et les frais de transport aussi ») :
+     • tous les canaux : la caisse, la vente en gros, et chaque canal des Réglages (sites, Amazon, Perfume City…), même à 0 ;
+     • la sales tax collectée, canal par canal : caisse et Perfume City (taxe du ticket), factures faites à la main (taxe du document),
+       sites (taxe de chaque commande, relue chez WooCommerce par le cockpit : site-taxes-v1) ; Amazon la collecte lui-même : « n/a » ;
+     • le transport à part : le port payé par les clients, et ce que coûtent les envois ; les commissions et frais de carte à part. */
+const RC_EXPO_FIXES=['Caisse Lightspeed','Gros'];
+function rcExpoAgg(L,F,TXS,ORD){
+  const G={}, zero=()=>({orders:new Set(),refunds:new Set(),gross:0,refAmt:0,net:0,tax:0,taxNA:false,taxInc:0,port:0,envoi:0,frais:0,q:0,cost:0,mg:0,withCost:0,sansN:0,sansMt:0});
+  const add=(c)=>G[c]=G[c]||Object.assign({canal:c},zero());
+  RC_EXPO_FIXES.concat(rcCanauxReg().map(c=>c.nom)).forEach(c=>{ if(c) add(c); });
+  L.forEach(v=>{ const o=add(v.canal), k=(v.fid||v.num||'')+'|'+(v.cmd||'');
+    if(v.ret){ o.refunds.add(k); o.refAmt-=v.mt; } else { o.orders.add(k); o.gross+=v.mt; }
+    o.net+=v.mt; o.q+=v.q||0;
+    o.port+=+v.portMt||0; o.envoi+=+v.envoiMt||0; o.frais+=(+v.comMt||0)+(+v.carteMt||0);
+    if(v.mg!=null){ o.cost+=(v.pa||0)*(v.q||0); o.mg+=v.mg; o.withCost+=v.mt; }
+    else if(!v.ret){ o.sansN++; o.sansMt+=v.mt; } });
+  const TX=TXS||{}, dep=TX._depuis||{};
+  F.forEach(f=>{ const o=add(f.canal||'(non précisé)'), src=String(f.auto||'');
+    if(/^amazon$/i.test(src)||/^amazon$/i.test(String(f.canal||''))){ o.taxNA=true; return; }
+    let t;
+    if(/^woocommerce(-gros)?$/.test(src)){ const d0=String(dep[src]||'').slice(0,10);
+      if(!d0||String(f.d||'')<d0){ o.taxInc++; return; } const k=src+'|'+String(f.num||''); t=+TX[k]||0;
+      /* un remboursement du site rend la taxe au prorata de ce qui est remboursé (1 flacon sur 2 = la moitié de la taxe) */
+      if(f.retour&&t){ const rm=(f.lignes||[]).reduce((a,l)=>a+Math.abs((+l.q||0)*(+l.p||0)),0), om=(ORD||{})[k]||0; t=om>0?Math.round(t*Math.min(1,rm/om)*100)/100:t; } }
+    else t=+f.taxe||(f.doc&&+f.doc.taxe)||0;
+    if(t) o.tax+=f.retour?-Math.abs(t):t; });
+  Object.values(G).forEach(o=>{ if(/^amazon$/i.test(o.canal)) o.taxNA=true; });
+  const rows=Object.values(G).map(o=>Object.assign(o,{nO:o.orders.size,nR:o.refunds.size})).sort((a,b)=>b.net-a.net||a.canal.localeCompare(b.canal));
+  const T=Object.assign({canal:'TOTAL'},zero()); delete T.orders; delete T.refunds; T.nO=0; T.nR=0;
+  rows.forEach(o=>{ ['gross','refAmt','net','tax','port','envoi','frais','q','cost','mg','withCost','sansN','sansMt','nO','nR','taxInc'].forEach(k=>{ T[k]+=o[k]; }); });
+  return {rows,T};
+}
+function rcExpoDonnees(){
+  const P=rcPlage(RC.sel), L=rcLignes().filter(v=>v.d>=P.a&&v.d<=P.b);
+  let F=[]; try{ F=lit(KFACT,[])||[]; }catch(e){} if(!Array.isArray(F)) F=[];
+  F=F.filter(f=>f&&f.sens==='vente'&&String(f.d||'').slice(0,10)>=P.a&&String(f.d||'').slice(0,10)<=P.b);
+  let TXS={}; try{ TXS=lit('site-taxes-v1',{})||{}; }catch(e){}
+  /* le montant de chaque commande des sites (toutes dates), pour la part de taxe d'un remboursement */
+  const ORD={}; (lit(KFACT,[])||[]).forEach(f=>{ if(!f||f.sens!=='vente'||f.retour||!/^woocommerce(-gros)?$/.test(String(f.auto||''))) return; const k=f.auto+'|'+String(f.num||''); ORD[k]=(ORD[k]||0)+(f.lignes||[]).reduce((a,l)=>a+(+l.q||0)*(+l.p||0),0); });
+  const all=rcExpoAgg(L,F,TXS,ORD), mois=[];
+  const ms=[...new Set(L.map(v=>v.d.slice(0,7)).concat(F.map(f=>String(f.d).slice(0,7))))].sort();
+  if(ms.length>1) ms.forEach(m=>mois.push(Object.assign({m,lib:rcEnD(m+'-01',{month:'long',year:'numeric'})},rcExpoAgg(L.filter(v=>v.d.slice(0,7)===m),F.filter(f=>String(f.d).slice(0,7)===m),TXS,ORD))));
+  const Fe=Object.assign({enseigne:'Perfumes Trade'},(typeof REG!=='undefined'&&REG&&REG.fact)||{});
+  const notes=['All amounts in US dollars. Net sales = gross sales - refunds, products only: before sales tax and shipping.',
+    'Sales tax collected: as recorded in the ERP for each sale (register ticket, Perfume City, invoices, website orders). Website refunds deduct their share of the order\'s sales tax; register and Perfume City refunds deduct it only when the refund records it.',
+    'Shipping charged = shipping paid by customers. Shipping costs = what the shipments cost. Commissions & card fees = sales-channel commissions and card processing fees.',
+    'Net margin = net sales - cost of goods - commissions & card fees + shipping charged - shipping costs, on lines with a known purchase price. Margin % = net margin / net sales.'];
+  const na=all.rows.filter(o=>o.taxNA).map(o=>rcNomEn(o.canal));
+  if(na.length) notes.push('n/a: '+na.join(', ')+' collects the sales tax on its own marketplace orders; it is not recorded in the ERP.');
+  const inc=all.rows.filter(o=>o.taxInc).map(o=>rcNomEn(o.canal)+' ('+o.taxInc+' order'+(o.taxInc>1?'s':'')+')');
+  if(inc.length) notes.push('Sales tax not yet available in the ERP for: '+inc.join(', ')+'. The figure shown for these channels is incomplete.');
+  if(all.T.sansN) notes.push(all.T.sansN+' sale line'+(all.T.sansN>1?'s':'')+' ('+rcUsd(all.T.sansMt)+' of sales) had no purchase price: included in sales, excluded from cost of goods and margin.');
+  return {P,lib:rcLibEn(P.a,P.b),all,mois,Fe,notes,fait:rcEnD(rcISO(new Date()),{month:'long',day:'numeric',year:'numeric'})};
+}
+const rcUsd=v=>{ const n=Math.round((+v||0)*100)/100; return (n<0?'-':'')+'$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); };
+const rcPctEn=(o)=>(o.net&&o.withCost)?(Math.round(o.mg/o.net*1000)/10).toFixed(1)+'%':'-';
+const RC_EXPO_COLS=['Channel','Orders','Refunds','Gross sales','Refunds ($)','Net sales','Sales tax collected','Shipping charged','Bottles','Cost of goods','Commissions & card fees','Shipping costs','Net margin','Margin %'];
+const rcTaxV=o=>o.taxNA&&!o.tax?null:o.tax;
+const rcExpoNom=D=>('Perfumes-Trade-sales-'+D.P.a+'_'+D.P.b);
+function rcExpoXlsx(){
+  const D=rcExpoDonnees();
+  const r2=v=>Math.round((+v||0)*100)/100;
+  const ligne=(per,o,nom)=>[per,nom||rcNomEn(o.canal),o.nO,o.nR,r2(o.gross),r2(-o.refAmt),r2(o.net),rcTaxV(o)==null?'n/a':r2(o.tax),r2(o.port),o.q,r2(o.cost),r2(o.frais),r2(o.envoi),r2(o.mg),(o.net&&o.withCost)?Math.round(o.mg/o.net*1000)/10:null];
+  const L=[];
+  D.all.rows.forEach(o=>L.push(ligne(D.lib,o))); L.push(ligne(D.lib,D.all.T,'TOTAL'));
+  if(D.mois.length){ L.push([]); L.push(['BY MONTH']); D.mois.forEach(M=>{ M.rows.forEach(o=>L.push(ligne(M.lib,o))); L.push(ligne(M.lib,M.T,'Total '+M.lib)); }); }
+  L.push([]); L.push([(D.Fe.raison||D.Fe.enseigne)+' — Sales report by channel — '+D.lib+' — prepared on '+D.fait]); D.notes.forEach(n=>L.push([n]));
+  const col=[{t:'Period'},{t:'Channel'},{t:'Orders',y:'n'},{t:'Refunds',y:'n'},{t:'Gross sales',y:'m'},{t:'Refunds ($)',y:'m'},{t:'Net sales',y:'m'},{t:'Sales tax collected',y:'m'},{t:'Shipping charged',y:'m'},{t:'Bottles',y:'n'},{t:'Cost of goods',y:'m'},{t:'Commissions & card fees',y:'m'},{t:'Shipping costs',y:'m'},{t:'Net margin',y:'m'},{t:'Margin %',y:'p'}];
+  sortieXlsx({titre:'Sales report',fichier:rcExpoNom(D),colonnes:col,lignes:L.map(r=>{ const x=r.slice(); while(x.length<col.length) x.push(''); return x; })});
+}
+async function rcExpoPdf(){
+  if(!window.jspdf){ await new Promise((res,rej)=>{ const sc=document.createElement('script'); sc.src='lib/pdf/jspdf.umd.min.js'; sc.onload=res; sc.onerror=()=>rej(new Error('PDF engine not found')); document.head.appendChild(sc); }); }
+  const D=rcExpoDonnees(), F=D.Fe;
+  const {jsPDF}=window.jspdf; const pdf=new jsPDF({unit:'pt',format:'letter',orientation:'landscape',compress:true});
+  const W=pdf.internal.pageSize.getWidth(), H=pdf.internal.pageSize.getHeight(), m=32, lh=15, bas=H-40;
+  const wv=[136,34,38,58,54,60,54,54,36,58,62,54,58,40], tot=wv.reduce((a,b)=>a+b,0);   /* le nom du canal en entier */ const ws=wv.map(w=>w*(W-2*m)/tot);
+  let y=m, page=1;
+  const coupe=(t,w)=>{ t=String(t); if(pdf.getTextWidth(t)<=w) return t; while(t.length&&pdf.getTextWidth(t+'…')>w) t=t.slice(0,-1); return t+'…'; };
+  const pied=()=>{ pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(120); pdf.text((F.raison||F.enseigne)+' · Sales report · '+D.lib,m,H-20); pdf.text('Page '+page,W-m,H-20,{align:'right'}); pdf.setTextColor(0); };
+  const saut=h=>{ if(y+h>bas){ pied(); pdf.addPage(); page++; y=m; } };
+  if(F.logo){ try{ const im=await new Promise(r=>{ const i=new Image(); i.onload=()=>r({w:i.naturalWidth,h:i.naturalHeight}); i.onerror=()=>r(null); i.src=F.logo; });
+    if(im){ const h=40, w=Math.min(150,h*im.w/im.h); try{ pdf.addImage(F.logo,'PNG',W-m-w,y,w,h); }catch(e){ try{ pdf.addImage(F.logo,'JPEG',W-m-w,y,w,h); }catch(_){} } } }catch(e){} }
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(16); pdf.text(F.raison||F.enseigne||'Perfumes Trade',m,y+14);
+  pdf.setFont('helvetica','normal'); pdf.setFontSize(9); pdf.setTextColor(90);
+  const co=[F.adresse,F.tel,F.email,F.taxid?'Tax ID '+F.taxid:''].filter(Boolean).join('  ·  '); if(co) pdf.text(coupe(co,W-2*m-170),m,y+28);
+  pdf.setTextColor(0); y+=56;
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(13); pdf.text('Sales report by channel',m,y);
+  pdf.setFont('helvetica','normal'); pdf.setFontSize(10); pdf.text('Period: '+D.lib,m,y+15); pdf.setTextColor(110); pdf.text('Prepared on '+D.fait,W-m,y+15,{align:'right'}); pdf.setTextColor(0);
+  y+=34;
+  /* les titres de colonnes tiennent sur deux lignes (14 colonnes sur une page en largeur) */
+  const entete=()=>{ saut(lh*4); pdf.setFont('helvetica','bold'); pdf.setFontSize(7.2); const T=RC_EXPO_COLS.map((c,j)=>pdf.splitTextToSize(c,ws[j]-6)); const n=Math.max(...T.map(t=>t.length));
+    pdf.setFillColor(238,238,242); pdf.rect(m,y-10,W-2*m,9*n+6,'F');
+    let x=m; T.forEach((t,j)=>{ t.forEach((l,i)=>{ const yy=y+i*9-(t.length<n?-(n-t.length)*9:0); if(j) pdf.text(l,x+ws[j]-4,yy,{align:'right'}); else pdf.text(l,x+4,yy); }); x+=ws[j]; }); y+=9*n+8; };
+  const ligne=(o,nom,gras)=>{ saut(lh); pdf.setFont('helvetica',gras?'bold':'normal'); pdf.setFontSize(7.6);
+    const v=[nom||rcNomEn(o.canal),o.nO.toLocaleString('en-US'),o.nR.toLocaleString('en-US'),rcUsd(o.gross),o.refAmt?rcUsd(-o.refAmt):'$0.00',rcUsd(o.net),rcTaxV(o)==null?'n/a':rcUsd(o.tax),rcUsd(o.port),o.q.toLocaleString('en-US'),rcUsd(o.cost),rcUsd(o.frais),rcUsd(o.envoi),rcUsd(o.mg),rcPctEn(o)];
+    if(gras){ pdf.setDrawColor(150); pdf.line(m,y-10,W-m,y-10); }
+    let x=m; v.forEach((t,j)=>{ if(j) pdf.text(String(t),x+ws[j]-4,y,{align:'right'}); else pdf.text(coupe(t,ws[0]-8),x+4,y); x+=ws[j]; }); y+=lh; };
+  const tableau=(A,totNom)=>{ entete(); A.rows.forEach(o=>ligne(o)); ligne(A.T,totNom||'TOTAL',true); y+=10; };
+  tableau(D.all);
+  if(D.mois.length){ saut(40); pdf.setFont('helvetica','bold'); pdf.setFontSize(11.5); pdf.text('By month',m,y+4); y+=20;
+    D.mois.forEach(M=>{ saut(lh*4); pdf.setFont('helvetica','bold'); pdf.setFontSize(9.5); pdf.text(M.lib,m,y); y+=12; tableau(M,'Total '+M.lib); }); }
+  saut(30); pdf.setFont('helvetica','bold'); pdf.setFontSize(9); pdf.text('Notes',m,y+4); y+=16;
+  pdf.setFont('helvetica','normal'); pdf.setFontSize(8.2);
+  D.notes.forEach(n=>{ pdf.splitTextToSize('• '+n,W-2*m).forEach(t=>{ saut(12); pdf.text(t,m,y); y+=11; }); y+=2; });
+  pied();
+  pdf.save(rcExpoNom(D)+'.pdf');
+}
 function rcBranche(){
   const z=document.getElementById('recap'); if(!z) return;
   z.querySelectorAll('[data-rc]').forEach(b=>b.onclick=()=>{ RC.sel=b.dataset.rc; rcSauve(); gaAnime=true; rcDessine(); });
@@ -910,6 +1043,10 @@ function rcBranche(){
   const moisDeux=()=>{ if(m1.value&&m2.value){ RC.sel='mois2:'+m1.value+':'+m2.value; rcSauve(); gaAnime=true; rcDessine(); } };
   if(du&&au){ du.onchange=dates; au.onchange=dates; }
   if(m1&&m2){ m1.onchange=moisDeux; m2.onchange=moisDeux; }
+  z.querySelectorAll('[data-rcx]').forEach(b=>b.onclick=async()=>{ const m=document.getElementById('rc-expo-m'); b.disabled=true;
+    try{ if(b.dataset.rcx==='pdf') await rcExpoPdf(); else rcExpoXlsx(); if(m) m.textContent=L3('✓ téléchargé','✓ downloaded','✓ descargado'); }
+    catch(e){ if(m) m.textContent=L3('Le fichier n\'a pas pu être fait : ','The file could not be made: ','No se pudo crear el archivo: ')+((e&&e.message)||e); }
+    finally{ b.disabled=false; } });
   if(!_rcTip){ _rcTip=document.createElement('div'); _rcTip.className='rc-tip'; document.body.appendChild(_rcTip); }
   const montre=(el,ev)=>{ _rcTip.innerHTML=el.dataset.tip||''; _rcTip.style.display='block';
     const r=el.getBoundingClientRect(); let x=(ev&&ev.clientX!=null?ev.clientX:r.left+r.width/2)+12, yy=(ev&&ev.clientY!=null?ev.clientY:r.top)-10;

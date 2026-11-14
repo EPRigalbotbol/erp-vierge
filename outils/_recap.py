@@ -76,6 +76,22 @@ RECAP_CSS = r'''
 .rc-leg span{display:inline-flex;align-items:center;gap:6px}
 .rc-tip{position:fixed;z-index:50;pointer-events:none;background:var(--ink);color:var(--surface);font-size:12.5px;line-height:1.5;padding:8px 11px;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.18);max-width:260px;display:none}
 .rc-tip .t{display:block;font-weight:700;margin-bottom:3px}
+/* 14 nov. 2026 : les lignes sans prix d'achat — la mention se clique, une fenêtre s'ouvre sur la droite */
+.rc-sanspa{cursor:pointer;text-decoration:underline;text-underline-offset:2px}.rc-sanspa:hover,.rc-sanspa:focus-visible{text-decoration-thickness:2px;outline:none}
+.rc-pan-o{position:fixed;inset:0;background:rgba(15,15,20,.32);z-index:60}
+.rc-pan{position:fixed;top:0;right:0;bottom:0;width:min(460px,100vw);background:var(--surface);color:var(--ink);z-index:61;box-shadow:-10px 0 30px rgba(0,0,0,.18);overflow-y:auto;padding:18px 20px 28px}
+.rc-pan-h{display:flex;align-items:center;justify-content:space-between;gap:10px}.rc-pan-h h3{margin:0;font-size:17px}
+.rc-pan-x{border:0;background:none;font-size:26px;line-height:1;color:var(--ink-3);cursor:pointer;padding:2px 6px}
+.rc-pan-s{margin:6px 0 14px;font-size:13px;color:var(--ink-3)}
+.rc-pan-ok{margin:0 0 12px;padding:9px 12px;border-radius:10px;font-size:13.5px;font-weight:600;color:var(--good);background:var(--good-soft)}
+.rc-pan-vide{border:1px dashed var(--line);border-radius:12px;padding:20px;text-align:center;color:var(--ink-3);font-size:14px}.rc-pan-vide b{display:block;color:var(--good);margin-bottom:3px}
+.rc-pl{border:1px solid var(--line);border-left:4px solid var(--crit);border-radius:12px;padding:12px 14px;margin:0 0 10px}
+.rc-pl-n b{display:block;font-size:14.5px}.rc-pl-n small{display:block;margin-top:2px;font-size:12.5px;color:var(--ink-3)}
+.rc-pl-t{margin:8px 0 0;font-size:12.5px;color:var(--ink-2);line-height:1.45}.rc-pl-nf{color:var(--warn)}
+.rc-pl-f{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin-top:10px}
+.rc-pl-f label{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--ink-2)}
+.rc-pl-f input{width:96px;font:inherit;font-size:14px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.rc-pl-m{flex-basis:100%;font-size:12.5px;color:var(--crit)}
 .rc-tip div{display:flex;justify-content:space-between;gap:14px}
 .rc-tip .tot{border-top:1px solid rgba(255,255,255,.25);margin-top:4px;padding-top:4px;font-weight:700}
 .rc-tip .rc-sw{width:8px;height:8px;margin-right:5px}
@@ -499,9 +515,9 @@ function rcLignes(){
   const fige=String((REG&&REG.paFigeDepuis)||'2026-10-01');
   F.filter(f=>f&&f.sens==='vente').forEach(f=>{
     const canal=f.canal||'(non précisé)';
-    (f.lignes||[]).forEach(l=>{
+    (f.lignes||[]).forEach((l,li)=>{
       const paV=(l.cle&&String(f.d||'')<fige&&rcPaAct(l.cle)!=null)?rcPaAct(l.cle):l.paAv;
-      const base={canal,num:f.num,cle:l.cle,pa:paV,fid:f.id,ret:!!f.retour,auto:f.auto||'',portF:rcPortDe(f),paie:rcPaie(f),ou:orig(f)};
+      const base={canal,num:f.num,cle:l.cle,pa:paV,fid:f.id,ret:!!f.retour,auto:f.auto||'',portF:rcPortDe(f),paie:rcPaie(f),ou:orig(f),li,ref:l.ref||l.des||''};
       if(l.cmds&&l.cmds.length) l.cmds.forEach(c=>L.push(Object.assign({},base,{d:c.d||f.d,cmd:c.cmd||'',q:c.q||0,p:c.p!=null?c.p:l.p})));
       else L.push(Object.assign({},base,{d:f.d,cmd:'',q:l.q||0,p:l.p}));
     });
@@ -747,7 +763,7 @@ function rcDessine(){
   /* 9 nov. 2026 (Igal : « je n'aime pas du tout les organigrammes… plus animé, plus clair, plus professionnel, qui ressemble plus
      à du Google ») : les quatre chiffres deviennent les onglets d'une carte ; l'onglet choisi trace sa courbe juste dessous */
   const tabs=[['ca',L3("Chiffre d'affaires",'Revenue','Facturación'),T.ca,'$',L3('remboursements déduits','refunds deducted','reembolsos deducidos'),evo(T.ca,TP&&TP.ca)],
-    ['mg',L3('Marge nette','Net margin','Margen neto'),T.mg,'$',(pctMg!=null?nf(Math.round(pctMg*10)/10)+' %':'')+(T.sansPa?' · <span class="neg">'+L3(`${T.sansPa} ligne${T.sansPa>1?'s':''} sans prix d'achat`,`${T.sansPa} line${T.sansPa>1?'s':''} without purchase price`,`${T.sansPa} línea${T.sansPa>1?'s':''} sin precio de compra`)+'</span>':''),evo(T.mg,TP&&TP.mg)],
+    ['mg',L3('Marge nette','Net margin','Margen neto'),T.mg,'$',(pctMg!=null?nf(Math.round(pctMg*10)/10)+' %':'')+(T.sansPa?' · <span class="neg rc-sanspa" role="button" tabindex="0" title="'+esc(L3('Voir ces lignes et poser le prix d\'achat','See these lines and enter the purchase price','Ver estas líneas y poner el precio de compra'))+'">'+L3(`${T.sansPa} ligne${T.sansPa>1?'s':''} sans prix d'achat`,`${T.sansPa} line${T.sansPa>1?'s':''} without purchase price`,`${T.sansPa} línea${T.sansPa>1?'s':''} sin precio de compra`)+'</span>':''),evo(T.mg,TP&&TP.mg)],
     ['q',L3('Flacons vendus','Bottles sold','Frascos vendidos'),T.q,'n','',evo(T.q,TP&&TP.q,nf)],
     ['n',L3('Ventes','Sales','Ventas'),T.n,'n',(panier!=null?L3('panier moyen','average basket','cesta media')+' '+money(panier):'')+(T.nR?' · '+nf(T.nR)+' '+L3('remboursement'+(T.nR>1?'s':''),'refund'+(T.nR>1?'s':''),'reembolso'+(T.nR>1?'s':'')):''),evo(T.n,TP&&TP.n,nf)]];
   if(!tabs.some(t=>t[0]===RC.metric)) RC.metric='ca';
@@ -807,10 +823,83 @@ function rcFigs(P,R,ordre,metric){
       return `<tr><td data-nolang>${esc(k.lib)}</td>${vus.map(n=>`<td class="r ${c[n]<0?'neg':''}">${c[n]?fm(c[n]):'·'}</td>`).join('')}<td class="r ${t<0?'neg':''}"><b>${fm(t)}</b></td></tr>`; }).join('')}</tbody></table></details>`;
 }
 let _rcTip=null;
+/* ============ LES LIGNES SANS PRIX D'ACHAT (14 nov. 2026) ============
+   Igal : « en cliquant sur les 5 prix manquants, qu'une fenêtre latérale s'ouvre, que je puisse mettre le prix d'achat, et qu'il
+   s'enregistre sur la fiche ». Même règle que la fenêtre d'une vente (Ventes › « Prix d'achat inconnu ») :
+     • le prix est posé sur la FICHE du parfum si elle n'en a pas (fiches-modifiees-v1) — une fiche qui en a déjà un ne change pas ;
+     • et sur cette vente, ainsi que sur toutes les autres ventes de ce parfum qui n'en avaient pas (paAv) ; signé au Journal ;
+     • une ligne vendue SANS fiche (le parfum n'a pas été reconnu) n'a pas de fiche où l'écrire : le prix va sur cette ligne seule,
+       et le panneau le dit ;
+     • droit « Modifie les prix » (Patron, Admin) ; sinon le panneau montre les lignes sans case. */
+const rcPeutPa=()=>{ try{ return typeof peut!=='function'||peut('modPrix'); }catch(e){ return false; } };
+function rcNomFiche(cle){ const v=IDX[cle], m=MOD[cle]||{}; if(!v&&!m.nom) return ''; return ((m.marque||(v&&v[2])||'')+' '+(m.nom||(v&&v[1])||'')).trim(); }
+function rcSansPaLignes(){
+  const P=rcPlage(RC.sel), L=rcLignes();
+  return L.filter(v=>v.d>=P.a&&v.d<=P.b&&v.mg==null&&!v.ret&&!v.hist).map(v=>({fid:v.fid,li:v.li,num:v.num,d:v.d,canal:v.canal,cle:v.cle||'',
+    fiche:!!(v.cle&&(IDX[v.cle]||MOD[v.cle])),nom:(v.cle&&rcNomFiche(v.cle))||v.ref||'',ref:v.ref||'',q:v.q,p:v.p,paFiche:v.cle?rcPaAct(v.cle):null}))
+    .sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0);
+}
+function rcSansPaFerme(){ const z=document.getElementById('rc-pan'); if(z) z.remove(); const o=document.getElementById('rc-pan-o'); if(o) o.remove(); document.body.style.overflow=''; }
+function rcSansPaOuvre(msg){
+  rcSansPaFerme();
+  const X=rcSansPaLignes(), ok=rcPeutPa();
+  const o=document.createElement('div'); o.id='rc-pan-o'; o.className='rc-pan-o'; o.onclick=rcSansPaFerme; document.body.appendChild(o);
+  const z=document.createElement('aside'); z.id='rc-pan'; z.className='rc-pan'; z.setAttribute('role','dialog'); z.setAttribute('aria-label',L3("Lignes sans prix d'achat",'Lines without purchase price','Líneas sin precio de compra'));
+  const dt=d=>{ try{ const [Y,M,D]=d.split('-').map(Number); return new Date(Y,M-1,D).toLocaleDateString(RC_LOC(),{day:'numeric',month:'short',year:'numeric'}); }catch(e){ return d; } };
+  const val=x=>x.paFiche!=null?String(x.paFiche):'';
+  let h=`<div class="rc-pan-h"><h3>${L3("Lignes sans prix d'achat",'Lines without purchase price','Líneas sin precio de compra')}</h3><button type="button" class="rc-pan-x" aria-label="${esc(L3('Fermer','Close','Cerrar'))}">×</button></div>
+    <p class="rc-pan-s"><span data-nolang>${esc(rcLib(RC.sel,rcPlage(RC.sel)))}</span> · ${L3('sans prix d\'achat, la marge de ces lignes n\'est pas comptée.','without a purchase price, the margin of these lines is not counted.','sin precio de compra, el margen de estas líneas no se cuenta.')}</p>`;
+  if(msg) h+=`<p class="rc-pan-ok">${msg}</p>`;
+  if(!X.length) h+=`<div class="rc-pan-vide"><b>${L3('Tout est complet.','Everything is complete.','Todo está completo.')}</b>${L3("Plus aucune ligne sans prix d'achat sur cette période.",'No more lines without a purchase price in this period.','Ya no hay líneas sin precio de compra en este período.')}</div>`;
+  h+=X.map((x,i)=>`<div class="rc-pl" data-i="${i}">
+      <div class="rc-pl-n"><b data-nolang>${esc(x.nom||L3('(parfum sans nom)','(unnamed perfume)','(perfume sin nombre)'))}</b>
+        <small><span data-nolang>${esc(dt(x.d))} · ${esc(rcNomVu(x.canal))} · ${esc(String(x.num||''))}</span> · ${nf(x.q)} × ${money2(x.p)}</small></div>
+      ${x.fiche?(x.paFiche!=null?`<p class="rc-pl-t">${L3('La fiche a déjà un prix d\'achat','The sheet already has a purchase price','La ficha ya tiene un precio de compra')} : <b>${money2(x.paFiche)}</b>. ${L3('Il sera posé sur cette vente.','It will be put on this sale.','Se pondrá en esta venta.')}</p>`
+          :`<p class="rc-pl-t">${L3("Le prix sera enregistré sur la fiche du parfum et sur ses ventes sans prix d'achat.","The price will be saved on the perfume's sheet and on its sales without a purchase price.",'El precio se guardará en la ficha del perfume y en sus ventas sin precio de compra.')}</p>`)
+        :`<p class="rc-pl-t rc-pl-nf">${L3("Cette vente n'est reliée à aucune fiche (le parfum n'a pas été reconnu) : le prix sera posé sur cette ligne seulement.",'This sale is not linked to any sheet (the perfume was not recognised): the price will be put on this line only.','Esta venta no está vinculada a ninguna ficha (el perfume no se reconoció): el precio se pondrá solo en esta línea.')}</p>`}
+      ${ok?`<div class="rc-pl-f"><label>${L3("Prix d'achat","Purchase price",'Precio de compra')} <input type="text" inputmode="decimal" autocomplete="off" value="${esc(val(x))}" data-pa="${i}"> $</label><button type="button" class="ga-btn" data-pok="${i}">${L3('Enregistrer','Save','Guardar')}</button><span class="rc-pl-m" data-pm="${i}"></span></div>`
+          :`<p class="rc-pl-t">${L3('Seuls le Patron et l\'Admin posent un prix d\'achat.','Only the Owner and the Admin enter a purchase price.','Solo el Dueño y el Admin ponen un precio de compra.')}</p>`}
+    </div>`).join('');
+  z.innerHTML=h; document.body.appendChild(z); document.body.style.overflow='hidden';
+  z.querySelector('.rc-pan-x').onclick=rcSansPaFerme;
+  z.addEventListener('keydown',e=>{ if(e.key==='Escape') rcSansPaFerme(); });
+  z.querySelectorAll('[data-pok]').forEach(b=>b.onclick=()=>{ const i=+b.dataset.pok, inp=z.querySelector(`[data-pa="${i}"]`), m=z.querySelector(`[data-pm="${i}"]`);
+    const v=Math.round(parseFloat(String(inp.value).replace(',','.'))*100)/100;
+    if(!(v>0)){ m.textContent=L3('Écris un prix plus grand que 0.','Enter a price above 0.','Escribe un precio mayor que 0.'); inp.focus(); return; }
+    const r=rcSansPaPose(X[i],v); if(!r){ m.textContent=L3('Vente introuvable : recharge la page.','Sale not found: reload the page.','Venta no encontrada: recarga la página.'); return; }
+    gaAnime=false; rcDessine();
+    rcSansPaOuvre(r.fiche?L3(`✓ ${money2(v)} enregistré sur la fiche et sur ${r.n} vente${r.n>1?'s':''}.`,`✓ ${money2(v)} saved on the sheet and on ${r.n} sale${r.n>1?'s':''}.`,`✓ ${money2(v)} guardado en la ficha y en ${r.n} venta${r.n>1?'s':''}.`)
+      :r.cle?L3(`✓ ${money2(v)} posé sur ${r.n} vente${r.n>1?'s':''} (la fiche garde son prix).`,`✓ ${money2(v)} put on ${r.n} sale${r.n>1?'s':''} (the sheet keeps its price).`,`✓ ${money2(v)} puesto en ${r.n} venta${r.n>1?'s':''} (la ficha conserva su precio).`)
+      :L3(`✓ ${money2(v)} posé sur cette ligne.`,`✓ ${money2(v)} put on this line.`,`✓ ${money2(v)} puesto en esta línea.`)); });
+  z.querySelectorAll('[data-pa]').forEach(inp=>inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); const b=z.querySelector(`[data-pok="${inp.dataset.pa}"]`); if(b) b.click(); } }));
+  const f=z.querySelector('[data-pa]'); if(f) f.focus(); else z.querySelector('.rc-pan-x').focus();
+}
+/* pose le prix : sur la fiche (si elle n'en a pas), sur les ventes de ce parfum qui n'en ont pas — ou sur la seule ligne sans fiche */
+function rcSansPaPose(x,v){
+  let F=[]; try{ F=lit(KFACT,[])||[]; }catch(e){ F=[]; } if(!Array.isArray(F)) return null;
+  let n=0, fiche=false; const nums=[];
+  if(x.cle&&x.fiche){
+    try{ MOD=lit(KMOD,{})||{}; }catch(e){}
+    if(rcPaAct(x.cle)==null){ const m=Object.assign({},MOD[x.cle]||{}); m.pa=v; MOD[x.cle]=m; ecrit(KMOD,MOD); fiche=true; }
+    F.forEach(f=>{ if(!f||f.sens!=='vente'||!Array.isArray(f.lignes)) return; let t=false;
+      f.lignes.forEach(l=>{ if(l&&l.cle===x.cle&&(l.paAv==null||l.paAv==='')){ l.paAv=v; t=true; } }); if(t){ n++; nums.push(f.num); } });
+  } else {
+    const f=F.find(z=>z&&z.id===x.fid), l=f&&Array.isArray(f.lignes)?f.lignes[x.li]:null;
+    if(!l||(l.ref||l.des||'')!==x.ref) return null;
+    l.paAv=v; n=1; nums.push(f.num);
+  }
+  if(!n&&!fiche) return null;
+  ecrit(KFACT,F); try{ FACT=F; }catch(e){}
+  try{ const s=(typeof session==='function'&&session())||{}; const J=lit(KJOU,[])||[];
+    J.push({t:new Date().toISOString(),u:s.nom||'(non renseigné)',act:'prix',champ:'pa',lib:"prix d'achat saisi depuis le tableau de bord"+(x.fiche?(fiche?' (fiche et ventes)':' (ventes ; la fiche avait déjà '+money2(x.paFiche)+')'):' (vente sans fiche)'),
+      ref:x.nom||x.ref,av:'—',ap:money2(v),n,det:nums.slice(0,20).map(z=>({num:z}))}); ecrit(KJOU,J); }catch(e){}
+  return {n,fiche,cle:x.fiche?x.cle:''};
+}
 function rcBranche(){
   const z=document.getElementById('recap'); if(!z) return;
   z.querySelectorAll('[data-rc]').forEach(b=>b.onclick=()=>{ RC.sel=b.dataset.rc; rcSauve(); gaAnime=true; rcDessine(); });
   z.querySelectorAll('[data-rcm]').forEach(b=>b.onclick=()=>{ RC.metric=b.dataset.rcm; rcSauve(); gaAnime=true; rcDessine(); });
+  z.querySelectorAll('.rc-sanspa').forEach(e=>{ const o=ev=>{ ev.stopPropagation(); ev.preventDefault(); rcSansPaOuvre(); }; e.onclick=o; e.onkeydown=ev=>{ if(ev.key==='Enter'||ev.key===' ') o(ev); }; });
   z.querySelectorAll('[data-rcc]').forEach(b=>b.onclick=()=>{ RC.canal=b.dataset.rcc; gaAnime=true; rcDessine(); });
   const sm=document.getElementById('rc-mois'), sa=document.getElementById('rc-an');
   if(sm) sm.onchange=()=>{ if(sm.value){ RC.sel=sm.value; rcSauve(); gaAnime=true; rcDessine(); } };

@@ -1774,6 +1774,10 @@ MOTS3.update({
 # ---- 9 nov. 2026 : Analytique (rubrique des administrateurs, en français et en anglais seulement : l'espagnol lit l'anglais) ----
 MOTS3.update({
     "Analytique": ["Analytics", "Analytics"],
+    "Mailing": ["Mailing", "Mailing"],
+    "Envoyer une offre à chaque secteur : les grossistes et les particuliers, chacun avec ses parfums et dans sa langue. Réservé aux administrateurs de l'ERP.":
+        ["Send an offer to each segment: wholesale and retail customers, each with their own fragrances and in their own language. For the ERP administrators only.",
+         "Enviar una oferta a cada sector: los mayoristas y los particulares, cada uno con sus perfumes y en su idioma. Reservado a los administradores del ERP."],
     "D'où viennent les commandes des sites, et ce que la publicité Google rapporte vraiment. Réservé aux administrateurs de l'ERP.":
         ["Where website orders come from, and what Google ads really bring in. For the ERP administrators only.",
          "Where website orders come from, and what Google ads really bring in. For the ERP administrators only."],

@@ -146,7 +146,7 @@ function mnPilotage(){
     { const s=(typeof session==='function')?session():null; const adm=!!s&&/^(admin|patron)$/.test(String(s.role||''));
       document.documentElement.classList.toggle('mn-pasadmin',!adm);
       nav.querySelectorAll('a.nv').forEach(a=>{ const h=(a.getAttribute('href')||'').replace(/[?#].*$/,'').split('/').pop();
-        if(h==='analytique.html'&&!adm) a.style.display='none'; }); }
+        if((h==='analytique.html'||h==='mailing.html')&&!adm) a.style.display='none'; }); }   /* 15 nov. 2026 : la Mailing aussi (Igal) */
     const large=!!(peut('voirMarge')||peut('acces')||peut('reglages'));
     /* 7 nov. 2026 (Igal) : le rôle réel tranche — la classe mn-cial (posée dès l'entête d'après la session, pour qu'un Commercial
        n'aperçoive jamais Pilotage ni Léa, même une seconde) est confirmée ou retirée ici */

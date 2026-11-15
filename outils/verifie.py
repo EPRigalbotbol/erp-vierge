@@ -21,10 +21,10 @@ D = pathlib.Path(__file__).parent.resolve()
 SCRIPTS = ['build_html.py','build_stock.py','build_ventes.py','build_factures.py',
            'build_clients.py','build_frn.py','build_journal.py','build_tableau.py',
            'build_reglages.py','build_connecteurs.py','build_acces.py','build_accueil.py',
-           'build_etude.py','build_messages.py','build_retail.py','build_expeditions.py','build_taches.py','build_demandes_pc.py','build_analytique.py']
+           'build_etude.py','build_messages.py','build_retail.py','build_expeditions.py','build_taches.py','build_demandes_pc.py','build_analytique.py','build_mailing.py']
 PAGES = ['catalogue.html','stock.html','inventaire_pc.html','ventes.html','quotes.html','factures.html',
          'clients.html','fournisseurs.html','journal.html','tableau.html','reglages.html',
-         'connecteurs.html','acces.html','expeditions.html','taches.html','demandes_pc.html','analytique.html','offres.html']
+         'connecteurs.html','acces.html','expeditions.html','taches.html','demandes_pc.html','analytique.html','offres.html','mailing.html']
 
 ok = []
 ko = []

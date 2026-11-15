@@ -50,6 +50,7 @@ _IC = {
  'journal.html':'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
  'tableau.html':'<rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/>',
  'analytique.html':'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+ 'mailing.html':'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/><path d="M16 3.5l4 1.5"/>',
  'acces.html':'<path d="M12 3 4 6v6c0 4.5 3.3 8 8 9 4.7-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/>',
  'https://app.gusto.com':'<circle cx="12" cy="12" r="9"/><path d="M14.5 9a2.5 2 0 0 0-2.5-1.5c-1.4 0-2.5.8-2.5 2s1 1.7 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2A2.7 2 0 0 1 9.5 15M12 6v1.5M12 16.5V18"/>',
  'reglages.html':'<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/>',
@@ -76,6 +77,9 @@ def barre(actif):
          # entrait par le tableau de bord, et personne ne la retrouvait.
          ('etude.html','⌕','Étude de devis',''),
          ('clients.html','◉','Clients', '!'+str(NCLI)),
+         # 15 nov. 2026 (Igal) : « une rubrique Mailing… pour le wholesale et pour le particulier, envoyer une offre à chaque secteur » ;
+         # réservée aux administrateurs (Admin, Patron), comme l'Analytique (_menu.py, mn-pasadmin) (build_mailing.py)
+         ('mailing.html','✉','Mailing',''),
          ('connecteurs.html','⇄','Connecteurs',''),
          # 3 nov. 2026 (Igal) : Galou, l'assistant d'Igal — une fenêtre pour lui parler, sur n'importe quelle page (_galou.py)
          ('#galou','✦','Parler à Léa',''),
@@ -144,7 +148,7 @@ var _s=JSON.parse(localStorage.getItem('sam-session-v1')||'null');if(_s&&_s.role
 /* 9 nov. 2026 : « Analytique » est aux seuls administrateurs (Admin, Patron) — cachée avant la première peinture pour tout autre rôle */
 if(!_s||!/^(patron|admin)$/.test(String(_s.role||''))){{document.documentElement.classList.add('mn-pasadmin');}}}}catch(e){{}}</script>
 <script>/* le contenu de la page reste caché jusqu'à ce que son code l'ait dessiné (voir _serveur.py) */try{{document.documentElement.classList.add('pg-attente');setTimeout(function(){{document.documentElement.classList.remove('pg-attente');}},4000);}}catch(e){{}}</script>
-<style>.mn-attente .side nav{{visibility:hidden}} .pg-attente .main{{visibility:hidden}} html.mn-cial .side nav [data-pilotage],html.mn-cial .side nav #gl-btn{{display:none!important}} html.mn-pasadmin .side nav a.nv[href^="analytique.html"]{{display:none!important}}</style>
+<style>.mn-attente .side nav{{visibility:hidden}} .pg-attente .main{{visibility:hidden}} html.mn-cial .side nav [data-pilotage],html.mn-cial .side nav #gl-btn{{display:none!important}} html.mn-pasadmin .side nav a.nv[href^="analytique.html"],html.mn-pasadmin .side nav a.nv[href^="mailing.html"]{{display:none!important}}</style>
 
 <title>{titre} — Perfumes Trade</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">

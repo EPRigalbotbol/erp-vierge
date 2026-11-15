@@ -101,6 +101,14 @@ try:
         J = pg.evaluate("()=>JSON.parse(localStorage.getItem('crm-journal-v1')||'[]')")
         check('chaque envoi est signé au Journal', sum(1 for j in J if 'Mailing' in j.get('lib', '') and j.get('u') == 'Sam') >= 2, J[-3:])
         check('les lignes envoyées sont marquées « Envoyé le »', pg.locator('.mlt tr.fait').count() == 2 and 'Envoyé le' in pg.inner_text('.mlt'))
+        # 15 nov. 2026 : « Pas envoyé » — WhatsApp ouvert mais message pas parti : la ligne redevient à envoyer
+        pg.locator('[data-mlnon]').first.click(); pg.wait_for_timeout(300)
+        st2 = pg.evaluate("()=>JSON.parse(localStorage.getItem('mailing-v1'))")
+        check('LE POINT — « Pas envoyé » : la marque est effacée, la ligne redevient normale, le bouton « client suivant » revient',
+              len(st2['envois'][off]) == 1 and pg.locator('.mlt tr.fait').count() == 1 and not pg.locator('#ml-suiv').is_disabled(), [st2['envois'][off], pg.locator('.mlt tr.fait').count()])
+        J2 = pg.evaluate("()=>JSON.parse(localStorage.getItem('crm-journal-v1')||'[]')")
+        check('« Pas envoyé » est noté au Journal', any('pas envoyé' in j.get('lib', '') for j in J2), J2[-2:])
+        pg.locator('#ml-suiv').click(); pg.wait_for_timeout(300)
         # le fichier pour Klaviyo / Brevo
         pg.locator('#ml-csv').click(); pg.wait_for_timeout(300)
         csv = pg.evaluate("()=>window.__mlCsv||''")
@@ -136,6 +144,9 @@ try:
                              ('es', ['La oferta', 'Particulares', 'Perfumes ofrecidos y precio ofrecido', 'Archivo para Klaviyo o Brevo'], ['Particuliers', "L'offre", 'prix offert', 'Les clients'])):
             pg, ctx = ouvre(lg=lg); t = pg.evaluate("()=>document.querySelector('.main').textContent")
             check(f'{lg} : la page est traduite', all(x in t for x in mots) and not any(x in t for x in fr), [x for x in mots if x not in t] + [x for x in fr if x in t])
+            pg.locator('#ml-suiv').click(); pg.wait_for_timeout(300)
+            nn = pg.locator('[data-mlnon]').first.inner_text() if pg.locator('[data-mlnon]').count() else ''
+            check(f'{lg} : le bouton « Pas envoyé » est traduit', nn == {'en': 'Not sent', 'es': 'No enviado'}[lg], nn)
             ctx.close()
         check('aucune erreur JS', not err, err[:3])
         b.close()

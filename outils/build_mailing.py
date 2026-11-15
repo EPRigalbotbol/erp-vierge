@@ -86,6 +86,7 @@ table.mlt{width:100%;border-collapse:collapse;font-size:13px}
 .mlt .wa{background:#25d366;border-color:#25d366;color:#fff;font-weight:600}
 .mlt .wa:hover{background:#1ebe5b;color:#fff}
 .mlt .ok{color:var(--good);font-size:11.5px;display:block;margin-top:4px}
+.mlt .ok .nenv{padding:2px 8px;font-size:11px;margin-left:6px}
 .mlt select{padding:4px 6px;font-size:12px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}
 .mlt .ap td{background:var(--surface-2)}
 .mlt .ap pre{white-space:pre-wrap;font-family:inherit;font-size:12.5px;margin:0;line-height:1.5}
@@ -328,7 +329,7 @@ function mlDessine(){
           return `<div><span data-nolang>${esc(mlLib(x.f))}</span> <small>${sec==='gros'?`· ${x.qt} ${T('fl. achetés','bottles bought','fr. comprados')} · ${x.f.q} ${T('en stock','in stock','en stock')}`:`· ${T('acheté le','bought on','comprado el')} ${dUS(x.d)}`}</small>
             <span class="px">${P.p<P.base-0.005?`<span class="av">${money2(P.base)} →</span> <em>${money2(P.p)}</em>`:`<b>${money2(P.p)}</b>`}${P.bloque?` <span class="pl" title="${T('La remise est arrêtée au prix plancher de ce parfum','The discount stops at this fragrance\'s floor price','El descuento se detiene en el precio mínimo de este perfume')}">${T('plancher','floor','mínimo')}</span>`:''}</span></div>`; }).join('')}</td>
         <td class="act"><button class="btn wa" data-mlwa="${i}"${o.tel?'':' disabled'}>WhatsApp</button> <button class="btn" data-mlap="${i}">${T('Aperçu','Preview','Vista previa')}</button> <button class="btn" data-mlstop="${i}" title="${T('Ne plus jamais lui envoyer d\'offres','Never send them offers again','No volver a enviarle ofertas')}">${T('Désinscrire','Unsubscribe','Dar de baja')}</button>
-          ${e?`<span class="ok">${T('Envoyé le','Sent on','Enviado el')} ${dUS(e.t)} ${esc(e.h||'')}</span>`:''}</td></tr>
+          ${e?`<span class="ok">${T('Envoyé le','Sent on','Enviado el')} ${dUS(e.t)} ${esc(e.h||'')} <button class="btn nenv" data-mlnon="${i}" title="${T('WhatsApp a été ouvert mais le message n\'est pas parti : la ligne redevient à envoyer','WhatsApp was opened but the message was not sent: the line goes back to « to send »','WhatsApp se abrió pero el mensaje no salió: la línea vuelve a « por enviar »')}">${T('Pas envoyé','Not sent','No enviado')}</button></span>`:''}</td></tr>
         ${ML_VUE.ap[o.nom]?`<tr class="ap"><td colspan="6"><pre data-nolang>${esc(mlMessage(o))}</pre></td></tr>`:''}`; }).join('')}</tbody></table></div>`
       :`<div class="mlvide">${T('Aucun client dans cette liste.','No customer in this list.','Ningún cliente en esta lista.')}</div>`}
   </div>
@@ -395,6 +396,12 @@ document.addEventListener('click',e=>{
   const w=e.target.closest('[data-mlwa]'); if(w){ mlEnvoieWa(R()[+w.dataset.mlwa]); return; }
   const p=e.target.closest('[data-mlap]'); if(p){ const o=R()[+p.dataset.mlap]; if(o){ ML_VUE.ap[o.nom]=!ML_VUE.ap[o.nom]; mlDessine(); } return; }
   const x=e.target.closest('[data-mlstop]'); if(x){ mlStop(R()[+x.dataset.mlstop]); return; }
+  /* 15 nov. 2026 (Igal : « j'ai fait un test, je ne l'ai pas envoyé, mais la ligne reste en vert ») : WhatsApp s'ouvre, mais c'est
+     dans WhatsApp qu'on appuie sur Envoyer — si le message n'est pas parti, « Pas envoyé » efface la marque, la ligne redevient à envoyer */
+  const nn=e.target.closest('[data-mlnon]'); if(nn){ const o=R()[+nn.dataset.mlnon], id=mlOffre().id;
+    if(o&&id&&ML.envois[id]&&ML.envois[id][o.nom]){ delete ML.envois[id][o.nom]; mlSauve();
+      mlJournal('envoi marqué « pas envoyé » (Mailing '+(ML_VUE.sec==='gros'?'Wholesale':'Particuliers')+')',o.nom); mlDessine();
+      mlDit(T(o.nom+' : marqué « pas envoyé ».',o.nom+': marked « not sent ».',o.nom+': marcado « no enviado ».')); } return; }
   if(e.target.closest('#ml-suiv')){ const o=R().find(o=>o.tel&&!mlEnvoye(o)); if(o) mlEnvoieWa(o); return; }
   if(e.target.closest('#ml-csv')){ mlCsv(); return; }
   if(e.target.closest('#ml-defaut')){ mlOffre().msg=null; mlSauve(); mlDessine(); const d=document.querySelector('.mlmsg'); if(d) d.open=true; return; }

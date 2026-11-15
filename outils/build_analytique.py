@@ -28,6 +28,30 @@ CSS = RECAP_CSS + r'''
 .mur{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:34px 32px;max-width:640px;margin:26px auto}
 .mur h2{margin:0 0 10px;font-size:20px;font-weight:700;letter-spacing:-.015em}
 .mur p{margin:0;color:var(--ink-2);font-size:14.5px;line-height:1.65}
+/* 15 nov. 2026 (Igal : « la page est trop grande et mal faite… le graphisme en haut prend de la place… le pop-up est énorme… la stratégie,
+   je ne sais pas qui le fait, qui ne le fait pas : plus clair, avec des cases cochées… les parfums plus en stock, un bouton ») :
+   - la bulle des courbes ne dépasse plus 300 px et revient à la ligne ;
+   - la stratégie : une case par action (cochée = faite, vide = à faire), qui la fait en clair, le détail replié ;
+   - les quatre chiffres de « La pub, parfum par parfum » sont des boutons qui ouvrent la liste filtrée. */
+.ga-tip{max-width:300px;white-space:normal}
+.st-acts{gap:6px}
+.st-acts>li.st-k{grid-template-columns:22px minmax(0,1fr) auto;padding:9px 12px;gap:4px 12px;border-left-width:3px}
+.st-box{grid-row:1/span 3;width:20px;height:20px;border-radius:5px;border:2px solid var(--ink-3);display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;margin-top:1px}
+.st-k.fait .st-box{background:#188038;border-color:#188038}
+.st-k.attente .st-box{border-style:dashed}
+.st-acts .st-ah b{font-size:14px}
+.st-acts .st-ah .st-qui{display:inline;text-transform:none;letter-spacing:0;font-size:12px;font-weight:600;background:none;padding:0;margin-left:10px;color:var(--ink-3)}
+.st-acts .st-etat{font-size:12.5px}.st-acts .st-etat small.st-aide{display:block;font-size:12px;color:var(--ink-3);margin-top:1px}
+.st-acts .st-att{font-size:12px;color:var(--ink-3);margin:1px 0}
+.st-acts .st-det summary{font-size:12px}
+.st-acts .st-ka .ga-btn{padding:5px 10px;font-size:12.5px}
+.st-legende{font-size:12.5px;color:var(--ink-3);margin:-2px 0 8px}
+.st-legende b{color:var(--ink-2)}
+.st-res table{width:100%}.st-res tbody tr:nth-child(even) td{background:var(--surface-2)}.st-res td,.st-res th{padding:6px 12px 6px 6px}
+.ga-stats4>button{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:2px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2)}
+.ga-stats4>button:hover,.ga-stats4>button.on{border-color:var(--an-1,#1a73e8);background:var(--surface)}
+.ga-stats4>button>span{font-size:12.5px;color:var(--ink-3)}.ga-stats4>button>b{font-size:22px;color:var(--ink)}.ga-stats4>button>small{font-size:11.5px;color:var(--ink-3)}
+.ga-stats4>button>em{font-style:normal;font-size:12px;font-weight:600;color:var(--an-1,#1a73e8);margin-top:4px}
 '''
 
 CORPS = '<div id="an"></div>'
@@ -300,13 +324,14 @@ function anDessine(){
   const m=M.find(x=>x.k===AN.met);
   const cur=anSerieK(B,C,m.val), prev=CP?anSeriePrec(B,Q,CP,m.val):null;
   const REP=anReperes(B,P);
-  gaCourbe(document.getElementById('ga-c1'),B.K,[{v:cur,c:'var(--an-1)',nom:m.nom,nomTip:rcLib(AN.sel,P),aire:true}].concat(prev?[{v:prev,c:'var(--ga-prec)',nom:lib,nomTip:lib,pointille:true}]:[]),m.f,{id:'a',h:270,titre:m.nom,reperes:REP,
-    tipPlus:i=>(REP[i]||[]).length?`<div class="ga-tip-j">${REP[i].slice(0,4).map(e=>`<p><i></i>${esc(e.quoi)}</p>`).join('')}${REP[i].length>4?`<p>+ ${REP[i].length-4}</p>`:''}</div>`:''});
+  gaCourbe(document.getElementById('ga-c1'),B.K,[{v:cur,c:'var(--an-1)',nom:m.nom,nomTip:rcLib(AN.sel,P),aire:true}].concat(prev?[{v:prev,c:'var(--ga-prec)',nom:lib,nomTip:lib,pointille:true}]:[]),m.f,{id:'a',h:190,titre:m.nom,reperes:REP,
+    /* 15 nov. 2026 (Igal : « le pop-up est énorme ») : la bulle ne recopie plus les actions du jour, elle les compte */
+    tipPlus:i=>{ const n=(REP[i]||[]).length; return n?`<div class="ga-tip-j"><p><i></i>${n} ${A3(n>1?'actions notées ce jour-là':'action notée ce jour-là',n>1?'actions logged that day':'action logged that day')} · ${A3('voir le Journal en bas','see the Log below')}</p></div>`:''; }});
   if(ads){ const cum=a=>{ let s=0; return a.map(v=>s+=v); };
     const BB=ads.B, PP=ads.P;
     const pubJ=BB.K.map(k=>{ let s=0; Object.keys(ads.pub.J).forEach(d=>{ if((BB.jour?d:d.slice(0,7))===k.k&&d>=PP.a&&d<=PP.b) s+=+(ads.pub.J[d]||[])[0]||0; }); return s; });
     const mgJ=anSerieK(BB,ads.A,o=>o.mg);
-    gaCourbe(document.getElementById('ga-c2'),BB.K,[{v:cum(mgJ),c:'var(--an-3)',nom:A3('Marge des commandes de la pub','Margin of ad orders'),aire:true,etiquette:true},{v:cum(pubJ),c:'var(--an-2)',nom:A3('Pub dépensée','Ad spend'),etiquette:true}],'$',{id:'b',h:210,droite:16,titre:A3('Marge cumulée et pub cumulée','Cumulative margin and ad spend')}); }
+    gaCourbe(document.getElementById('ga-c2'),BB.K,[{v:cum(mgJ),c:'var(--an-3)',nom:A3('Marge des commandes de la pub','Margin of ad orders'),aire:true,etiquette:true},{v:cum(pubJ),c:'var(--an-2)',nom:A3('Pub dépensée','Ad spend'),etiquette:true}],'$',{id:'b',h:170,droite:16,titre:A3('Marge cumulée et pub cumulée','Cumulative margin and ad spend')}); }
   /* les barres se remplissent */
   if(GA_MOUV&&gaAnime){ z.querySelectorAll('.ga-bf,.ga-pb i').forEach(b=>{ b.style.width='0'; }); requestAnimationFrame(()=>requestAnimationFrame(()=>z.querySelectorAll('.ga-bf,.ga-pb i').forEach(b=>{ b.style.width=''; }))); }
   try{ anCampDessine(); }catch(e){}
@@ -324,7 +349,9 @@ function anBranche(){
   const xl=document.getElementById('an-xl'); if(xl) xl.onclick=anExportPub;
   anGcBranche();
   if(document.getElementById('pp-liste')){ anPPListe();
-    z.querySelectorAll('[data-ppf]').forEach(b=>b.onclick=()=>{ AN.ppf=b.dataset.ppf; AN.ppn=8; z.querySelectorAll('[data-ppf]').forEach(x=>x.classList.toggle('on',x===b)); anSauve(); anPPListe(); });
+    z.querySelectorAll('[data-ppf]').forEach(b=>b.onclick=()=>{ AN.ppf=b.dataset.ppf; AN.ppn=8; z.querySelectorAll('[data-ppf]').forEach(x=>x.classList.toggle('on',x.dataset.ppf===AN.ppf)); anSauve(); anPPListe();
+      /* un clic sur un des quatre chiffres : la liste filtrée s'ouvre sous les yeux (15 nov. 2026) */
+      if(b.dataset.pptuile){ const l=document.getElementById('pp-f'); if(l&&l.scrollIntoView) l.scrollIntoView({behavior:'smooth',block:'start'}); } });
     const t=document.getElementById('pp-tri'); if(t) t.onchange=()=>{ AN.pptri=t.value; AN.ppn=8; anSauve(); anPPListe(); };
     const q=document.getElementById('pp-q'); if(q) q.oninput=()=>{ AN.ppq=q.value; AN.ppn=8; anPPListe(); }; }
   clearInterval(window._anChrono); const ch=document.querySelector('.sc-chrono');
@@ -518,7 +545,7 @@ function anCampSuivi(D){
   const sansHeure=D.h0&&anJM(D.h0)>d0;
   h+=`<div class="ga-plot ga-plot2" id="st-camp-c"></div><p class="ga-note">${A3('La courbe part du redémarrage et additionne tout depuis : ce que la pub a coûté, et la marge des commandes qu\'elle a amenées. Quand la ligne verte passe au-dessus de la ligne orange, la pub rapporte plus qu\'elle ne coûte. Un point par relevé (toutes les heures, quand les chiffres ont bougé) : passez la souris dessus.','The curve starts at the restart and adds everything up since: what the ads cost, and the margin of the orders they brought. When the green line goes above the orange line, the ads bring in more than they cost. One point per reading (every hour, when the figures moved): hover over it.')}${(!D.h0||sansHeure)?' '+A3(`Le détail heure par heure commence ${D.h0?'le '+anJC(anJM(D.h0),{day:'numeric',month:'long'})+' à '+anHM(D.h0):'au prochain relevé'} : avant, l'ERP ne gardait qu'un total par jour.`,`The hour-by-hour detail starts ${D.h0?'on '+anJC(anJM(D.h0),{day:'numeric',month:'long'})+' at '+anHM(D.h0):'at the next reading'}: before that, the ERP only kept one total per day.`):''}</p>`;
   const jl=d=>anJC(d,{weekday:'short',day:'numeric',month:'short'});
-  h+=`<details class="ga-calc st-jours"${nJ<=7?' open':''}><summary>${A3('Jour par jour','Day by day')}</summary><div class="st-res"><table><thead><tr><th>${A3('Jour','Day')}</th><th>${A3('Dépensé','Spent')}</th><th>${A3('Affichages','Impressions')}</th><th>${A3('Clics','Clicks')}</th><th>${A3('Commandes','Orders')}</th><th>${A3('Ventes','Sales')}</th><th>${A3('Marge','Margin')}</th><th>${A3('Résultat','Result')}</th></tr></thead><tbody>
+  h+=`<details class="ga-calc st-jours"><summary>${A3('Jour par jour','Day by day')}</summary><div class="st-res"><table><thead><tr><th>${A3('Jour','Day')}</th><th>${A3('Dépensé','Spent')}</th><th>${A3('Affichages','Impressions')}</th><th>${A3('Clics','Clicks')}</th><th>${A3('Commandes','Orders')}</th><th>${A3('Ventes','Sales')}</th><th>${A3('Marge','Margin')}</th><th>${A3('Résultat','Result')}</th></tr></thead><tbody>
     ${depuis.slice().reverse().map(x=>`<tr><td><span data-nolang>${esc(jl(x.d))}</span>${x.d===auj?` <i class="st-cours">${A3('en cours','in progress')}</i>`:''}</td><td>${anM(x.pub)}</td><td>${nf(Math.round(x.aff))}</td><td>${nf(Math.round(x.clics))}</td><td>${nf(x.n)}</td><td>${anM(x.ca)}</td><td>${anM(x.mg)}</td><td class="${x.res>=0?'st-up':'st-down'}"><b>${anM(x.res)}</b></td></tr>`).join('')}
     <tr class="st-tot"><td>${A3('Total','Total')}</td><td>${anM(T.pub)}</td><td>${nf(Math.round(T.aff))}</td><td>${nf(Math.round(T.clics))}</td><td>${nf(T.n)}</td><td>${anM(T.ca)}</td><td>${anM(T.mg)}</td><td class="${res>=0?'st-up':'st-down'}"><b>${anM(res)}</b></td></tr></tbody></table></div></details>`;
   if(D.heures.length) h+=`<details class="ga-calc st-heures"><summary>${A3('Heure par heure','Hour by hour')} <small>${A3(`les ${D.heures.length} derniers relevés`,`the last ${D.heures.length} readings`)}</small></summary><div class="st-res"><table><thead><tr><th>${A3('Relevé (heure de Miami)','Reading (Miami time)')}</th><th>${A3('Dépensé depuis le relevé d\'avant','Spent since the previous reading')}</th><th>${A3('Affichages','Impressions')}</th><th>${A3('Clics','Clicks')}</th><th>${A3('Dépensé dans la journée','Spent that day')}</th></tr></thead><tbody>
@@ -544,7 +571,7 @@ function anCampDessine(){
   const el=document.getElementById('st-camp-c'); if(!el||!AN_CAMP) return;
   const P=AN_CAMP.pts;
   gaCourbe(el,AN_CAMP.K,[{v:AN_CAMP.sm,c:'var(--an-3)',nom:A3('Marge des commandes de la pub, depuis le redémarrage','Margin of ad orders, since the restart'),nomTip:A3('Marge des commandes de la pub','Margin of ad orders'),aire:true,etiquette:true},{v:AN_CAMP.sp,c:'var(--an-2)',nom:A3('Pub dépensée, depuis le redémarrage','Ad spend, since the restart'),nomTip:A3('Pub dépensée','Ad spend'),etiquette:true}],'$c',
-    {id:'c',h:230,droite:46,titre:A3('Pub dépensée et marge des commandes de la pub, additionnées depuis le redémarrage','Ad spend and margin of ad orders, added up since the restart'),reperes:{0:[{}]},
+    {id:'c',h:180,droite:46,titre:A3('Pub dépensée et marge des commandes de la pub, additionnées depuis le redémarrage','Ad spend and margin of ad orders, added up since the restart'),reperes:{0:[{}]},
      tipPlus:i=>{ const p=P[i]||{}; return `<div><span>${A3('Résultat','Result')}</span><b>${anM((p.mg||0)-(p.pub||0))}</b></div><div><span>${A3('Clics','Clicks')}</span><b>${nf(Math.round(p.clics||0))}</b></div><div><span>${A3('Affichages','Impressions')}</span><b>${nf(Math.round(p.aff||0))}</b></div><div><span>${A3('Commandes de la pub','Orders from the ads')}</span><b>${nf(p.n||0)}</b></div>`; }});
 }
 function anStratResultats(C,tous){
@@ -606,18 +633,20 @@ function anStrategie(L,tous){
       /* 12 nov. 2026 (Igal : « il faut que ce soit signé : fait par l'ERP à telle date ») : ce que l'ERP a fait ou constaté lui-même
          porte sa signature en toutes lettres, la date, ce qu'il a vu, et l'heure où Google a relu la sélection quand elle est connue */
       let cl='afaire', etat='', btn='';
+      /* 15 nov. 2026 : la case — cochée = faite, vide = à faire (une case dessinée, pas une case à cliquer : c'est l'ERP, ou le bouton
+         « C'est fait », qui coche) */
       if(f){ cl='fait';
         etat=`<span class="st-fait${f.par==='ERP'?' st-erp':''}">✓ ${f.par==='ERP'?A3('Fait par l\'ERP','Done by the ERP'):A3('Fait','Done')} ${f.date?esc(anQuand(f.date)):''}${f.par&&f.par!=='ERP'?' · '+esc(f.par):''}${f.comment&&f.par==='ERP'?`<small data-nolang>${esc(f.comment)}</small>`:''}${f.lu&&f.par==='ERP'?`<small>${A3('Google a relu la sélection','Google re-read the selection')} ${esc(anQuand(f.lu))}</small>`:''}</span>`;
         if(f.par!=='ERP'&&C.active) btn=`<button type="button" class="st-annule" data-stf="${i}" data-f="0">${A3('annuler','undo')}</button>`; }
       else if(!C.active){ cl='attente'; etat=`<span class="st-afaire">${A3('À faire après l\'activation','To do after activation')}</span>`; }
-      else if(v==='manuel'){ etat=`<span class="st-afaire">${A3('À faire','To do')}</span><small class="st-aide">${A3('L\'ERP ne peut pas voir cette action tout seul : cliquez « C\'est fait » quand elle est faite.','The ERP cannot see this action by itself: click “It\'s done” once it is done.')}</small>`;
+      else if(v==='manuel'){ etat=`<span class="st-afaire">${A3('À faire — à cocher à la main','To do — to tick by hand')}</span><small class="st-aide">${A3('L\'ERP ne peut pas la voir : « C\'est fait » quand elle est faite.','The ERP cannot see it: “It\'s done” once it is done.')}</small>`;
         btn=`<button type="button" class="ga-btn sec st-cfait" data-stf="${i}" data-f="1">${A3('C\'est fait ✓','It\'s done ✓')}</button>`; }
       else if(v==='selection_marge') etat=`<span class="st-afaire">${A3('À faire — c\'est l\'ERP qui le fait','To do — the ERP does it')}</span><small class="st-aide">${A3('Bouton « Renvoyer la sélection à jour », plus bas dans cette page (bloc « La pub, parfum par parfum »). Dès l\'envoi avec la règle des 40 $, l\'ERP signe l\'action lui-même, avec la date.','Button “Send the updated selection”, further down this page (“Ads, perfume by perfume”). Once sent with the $40 rule, the ERP signs the action itself, with the date.')}</small>`;
       else if(v==='selection') etat=`<span class="st-afaire">${A3('À faire — c\'est l\'ERP qui le fait','To do — the ERP does it')}</span><small class="st-aide">${A3('Bouton « Ne garder en pub que les parfums à bonne marge » (ou « Renvoyer la sélection à jour »), plus bas dans cette page. Dès l\'envoi, l\'ERP signe l\'action lui-même, avec la date.','Button “Keep only the high-margin perfumes in the ads” (or “Send the updated selection”), further down this page. Once sent, the ERP signs the action itself, with the date.')}</small>`;
       else etat=`<span class="st-afaire">${v==='campagne'?A3('À faire — l\'ERP le verra seul dans Google Ads','To do — the ERP will see it in Google Ads by itself'):A3('À faire — l\'ERP le verra seul dans les Réglages','To do — the ERP will see it in Settings by itself')}</span>`;
       /* une action pas encore faite dit en une ligne ce qu'on en attend et pour quand */
       const att=(!f&&(a.gain||a.delai))?`<p class="st-att">${a.gain?`<i>${A3('Gain attendu','Expected gain')}</i> ${esc(a.gain)}`:''}${a.gain&&a.delai?' · ':''}${a.delai?`<i>${A3('Délai','Timing')}</i> ${esc(a.delai)}`:''}</p>`:'';
-      return `<li class="st-k ${cl}" data-sti="${i}"><div class="st-kc"><div class="st-ah"><b>${esc(a.titre||'')}</b>${qui?`<span class="st-qui" data-nolang>${esc(qui)}</span>`:''}</div><div class="st-etat">${etat}</div>${att}
+      return `<li class="st-k ${cl}" data-sti="${i}"><span class="st-box" aria-hidden="true">${f?'✓':''}</span><div class="st-kc"><div class="st-ah"><b>${esc(a.titre||'')}</b>${qui?`<span class="st-qui"><span>${A3('par','by')}</span> <span data-nolang>${esc(qui)}</span></span>`:''}</div><div class="st-etat">${etat}</div>${att}
         <details class="st-det"><summary>${A3('Pourquoi, comment, et ce qu\'on en attend','Why, how, and what we expect')}</summary>
         ${a.pourquoi?`<p><span>${A3('Pourquoi','Why')}</span>${esc(a.pourquoi)}</p>`:''}${(a.comment||[]).length?`<div><span>${A3('Comment','How')}</span>${anLi(a.comment)}</div>`:''}
         <div class="st-kv">${a.cout?`<div><span>${A3('Coût','Cost')}</span>${esc(a.cout)}</div>`:''}${a.gain?`<div><span>${A3('Gain attendu','Expected gain')}</span>${esc(a.gain)}</div>`:''}${a.mesure?`<div><span>${A3('Ce qu\'on mesurera dans un mois','What we will measure in a month')}</span>${esc(a.mesure)}</div>`:''}${a.delai?`<div><span>${A3('Délai','Timing')}</span>${esc(a.delai)}</div>`:''}</div></details></div><div class="st-ka">${btn}</div></li>`; };
@@ -630,6 +659,7 @@ function anStrategie(L,tous){
       ${C.active?anCampTuiles(D,nbF,acts.length):''}
       ${anCampSuivi(D)}
       <div class="st-sec"><b>${A3('À faire','To do')}</b><em>${aF.length?pl(aF.length,A3('action','action'),A3('actions','actions')):''}</em></div>
+      <p class="st-legende">${A3('<b>Case vide</b> = à faire · <b>case cochée</b> = faite, avec la date et qui l\'a faite. L\'ERP coche tout seul ce qu\'il peut voir (pub, réglages) ; les autres se cochent avec « C\'est fait ».','<b>Empty box</b> = to do · <b>ticked box</b> = done, with the date and who did it. The ERP ticks by itself what it can see (ads, settings); the others are ticked with “It\'s done”.')}</p>
       ${aF.length?`<ol class="st-acts">${aF.map(i=>carte(acts[i],i)).join('')}</ol>`:`<div class="st-vide"><b>${A3('Tout est fait.','Everything is done.')}</b>${A3('Il ne reste qu\'à mesurer le résultat.','All that is left is to measure the result.')}</div>`}
       ${dF.length?`<div class="st-sec"><b>${A3('Fait','Done')}</b><em>${pl(dF.length,A3('action','action'),A3('actions','actions'))} · ${A3('la plus récente en premier','most recent first')}</em></div><ol class="st-acts st-faites">${dF.map(i=>carte(acts[i],i)).join('')}</ol>`:''}
       <div class="st-sec"><b>${A3('Pour aller plus loin','To go further')}</b><em>${A3('cliquez sur une ligne pour l\'ouvrir','click a line to open it')}</em></div>
@@ -903,11 +933,8 @@ function anParfumsPub(tous){
   const mois=A.gain90/3, pubMois=A.pub90/3;
   const nS=A.sortir.length+A.stock.length;
   h+=`<div class="ga-verdict ${mois>0?'bon':'mal'}"><span class="ga-vv">${gaCnt(Math.round(mois),'$')}</span><span class="ga-vt">${A3(`par mois en plus pour Sam, en sortant de la pub ${nf(nS)} parfums à marge trop faible ou plus en stock (sur ${money(pubMois)} de pub par mois)`,`more per month for Sam, by taking out of the ads ${nf(nS)} perfumes with too little margin or out of stock (out of ${money(pubMois)} of ads per month)`)}</span></div>
-  <div class="ga-stats ga-stats4">
-    <div><span>${A3('À garder dans la pub','Keep in the ads')}</span><b>${nf(A.garder.length)}</b><small>${money(A.garder.reduce((a,o)=>a+o.pub,0)/3)} ${A3('de pub par mois','of ads per month')}</small></div>
-    <div><span>${A3('À sortir : marge trop faible','Take out: margin too low')}</span><b>${nf(A.sortir.length)}</b><small>${money(A.sortir.reduce((a,o)=>a+o.pub,0)/3)} ${A3('de pub par mois','of ads per month')}</small></div>
-    <div><span>${A3('À sortir : plus en stock','Take out: out of stock')}</span><b>${nf(A.stock.length)}</b><small>${money(A.stock.reduce((a,o)=>a+o.pub,0)/3)} ${A3('de pub par mois','of ads per month')}</small></div>
-    <div><span>${A3('À vérifier (prix manquant dans l\'ERP)','To check (price missing in the ERP)')}</span><b>${nf(A.verif.length)}</b><small>${money(A.verif.reduce((a,o)=>a+o.pub,0)/3)} ${A3('de pub par mois','of ads per month')}</small></div>
+  <div class="ga-stats ga-stats4">${[['garder',A3('À garder dans la pub','Keep in the ads'),A.garder],['sortir',A3('À sortir : marge trop faible','Take out: margin too low'),A.sortir],['stock',A3('Plus en stock','Out of stock'),A.stock],['verif',A3('À vérifier (prix manquant dans l\'ERP)','To check (price missing in the ERP)'),A.verif]].map(([k,l,X])=>
+    `<button type="button" data-ppf="${k}" data-pptuile="1" class="${(AN.ppf||'tous')===k?'on':''}"><span>${l}</span><b>${nf(X.length)}</b><small>${money(X.reduce((a,o)=>a+o.pub,0)/3)} ${A3('de pub par mois','of ads per month')}</small><em>${X.length>1?A3(`Voir les ${nf(X.length)} parfums →`,`See the ${nf(X.length)} perfumes →`):X.length?A3('Voir le parfum →','See the perfume →'):A3('Aucun parfum','No perfume')}</em></button>`).join('')}
   </div>`;
   /* 9 nov. 2026 (Igal : « pourquoi on ne peut pas tous les voir, avec un filtre… ceux qui coûtent le plus en pub, ceux où il gagne le
      plus de marge ») : TOUS les parfums, avec un filtre par décision, un tri, une recherche ; 25 lignes, puis « voir plus » */

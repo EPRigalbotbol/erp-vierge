@@ -439,6 +439,11 @@ h2.sec em{font-style:normal;font-size:12.5px;letter-spacing:0;text-transform:non
 .tk-px label{display:flex;flex-direction:column;gap:3px;font-size:11.5px;color:var(--ink-3);font-weight:600}
 .tk-px input{width:92px;font:inherit;font-size:14px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
 .tk-px .tk-vente{flex-basis:100%;font-size:12.5px;color:var(--ink-2)}.tk-px .tk-vente b{color:var(--crit)}
+/* 15 nov. 2026 (Igal : « sur les tâches j'ai besoin d'avoir plus de détails ») : la vente en entier sous une tâche de prix */
+.tk-px .tk-det{flex-basis:100%;font-size:12.5px;color:var(--ink-2);line-height:1.6;padding:8px 10px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface)}
+.tk-px .tk-det b{color:var(--ink);font-weight:600}.tk-px .tk-det .z{color:var(--warn);font-weight:600}
+.tk-px .tk-det ul{margin:4px 0 2px;padding-left:18px}.tk-px .tk-det li{margin:1px 0}
+.tk-px .tk-det a{color:var(--iris);font-weight:600;text-decoration:none}.tk-px .tk-det a:hover{text-decoration:underline}
 .tk-px .tk-msg{flex-basis:100%;font-size:12.5px;color:var(--ink-2)}
 .tk-px .tk-can{flex-basis:100%;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;font-size:13px}
 .tk-px .tk-can label{flex-direction:row;align-items:center;gap:6px;font-size:13px;color:var(--ink);font-weight:500}
@@ -462,34 +467,34 @@ details.tk-ign summary{cursor:pointer;color:var(--ink-3);font-size:13px;font-wei
   <div class="logo"><div class="n">Perfumes Trade</div><div class="s">ERP</div></div>
   <nav>
     <div class="navlab">Produits</div>
-    <a class="nv" href="catalogue.html?v=202611151004"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>Catalogue<span class="ct nu" id="ct-catalogue">0</span></a>
-    <a class="nv" href="stock.html?v=202611151004"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg></span>Inventaire<span class="ct nu" id="ct-inventaire">0</span></a>
-    <a class="nv" href="inventaire_pc.html?v=202611151004"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h16l-1-5H5z"/><path d="M5 9v11h14V9"/><path d="M10 20v-5h4v5"/></svg></span>Inventaire Perfume City<span class="ct" id="ct-pcity"></span></a>
-    <a class="nv" href="demandes_pc.html?v=202611151004"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></span>Transfert interstore<span class="ct" id="ct-demandes"></span></a>
+    <a class="nv" href="catalogue.html?v=202611151333"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>Catalogue<span class="ct nu" id="ct-catalogue">0</span></a>
+    <a class="nv" href="stock.html?v=202611151333"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg></span>Inventaire<span class="ct nu" id="ct-inventaire">0</span></a>
+    <a class="nv" href="inventaire_pc.html?v=202611151333"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h16l-1-5H5z"/><path d="M5 9v11h14V9"/><path d="M10 20v-5h4v5"/></svg></span>Inventaire Perfume City<span class="ct" id="ct-pcity"></span></a>
+    <a class="nv" href="demandes_pc.html?v=202611151333"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></span>Transfert interstore<span class="ct" id="ct-demandes"></span></a>
     <div class="navlab">Commerce</div>
-    <a class="nv" href="quotes.html?v=202611151004"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>Cote<span class="ct" id="ct-devis"></span></a>
-    <a class="nv" href="offres.html?v=202611151004"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="8" cy="8" r="1.5"/></svg></span>Offre<span class="ct" id="ct-offre"></span></a>
-    <a class="nv" href="factures.html?v=202611151004"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span>Factures<span class="ct" id="ct-factures"></span></a>
-    <a class="nv" href="ventes.html?v=202611151004"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/></svg></span>Ventes<span class="ct" id="ct-ventes"></span></a>
-    <a class="nv" href="fournisseurs.html?v=202611151004"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></svg></span>Fournisseurs<span class="ct" id="ct-fournisseurs"></span></a>
-    <a class="nv" href="etude.html?v=202611151004"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg></span>Étude de cote<span class="ct" id="ct-étude"></span></a>
-    <a class="nv" href="clients.html?v=202611151004"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></span>Clients<span class="ct nb" id="ct-clients">0</span></a>
-    <a class="nv sub" href="clients.html?v=202611151004#vip" data-id="clients-vip" data-sous="clients.html">Clients VIP</a>
-    <a class="nv" href="mailing.html?v=202611151004"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/><path d="M16 3.5l4 1.5"/></svg></span>Mailing<span class="ct" id="ct-mailing"></span></a>
-    <a class="nv" data-pilotage="1" href="connecteurs.html?v=202611151004"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10l-3-3M17 17H7l3 3"/></svg></span>Connecteurs<span class="ct" id="ct-connecteurs"></span></a>
+    <a class="nv" href="quotes.html?v=202611151333"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>Cote<span class="ct" id="ct-devis"></span></a>
+    <a class="nv" href="offres.html?v=202611151333"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="8" cy="8" r="1.5"/></svg></span>Offre<span class="ct" id="ct-offre"></span></a>
+    <a class="nv" href="factures.html?v=202611151333"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span>Factures<span class="ct" id="ct-factures"></span></a>
+    <a class="nv" href="ventes.html?v=202611151333"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/></svg></span>Ventes<span class="ct" id="ct-ventes"></span></a>
+    <a class="nv" href="fournisseurs.html?v=202611151333"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></svg></span>Fournisseurs<span class="ct" id="ct-fournisseurs"></span></a>
+    <a class="nv" href="etude.html?v=202611151333"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg></span>Étude de cote<span class="ct" id="ct-étude"></span></a>
+    <a class="nv" href="clients.html?v=202611151333"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></span>Clients<span class="ct nb" id="ct-clients">0</span></a>
+    <a class="nv sub" href="clients.html?v=202611151333#vip" data-id="clients-vip" data-sous="clients.html">Clients VIP</a>
+    <a class="nv" href="mailing.html?v=202611151333"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/><path d="M16 3.5l4 1.5"/></svg></span>Mailing<span class="ct" id="ct-mailing"></span></a>
+    <a class="nv" data-pilotage="1" href="connecteurs.html?v=202611151333"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10l-3-3M17 17H7l3 3"/></svg></span>Connecteurs<span class="ct" id="ct-connecteurs"></span></a>
     <a class="nv" href="#galou" id="gl-btn" data-id="galou" onclick="if(typeof galouOuvre==='function')galouOuvre();return false"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v10H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg></span>Parler à Léa<span class="ct" id="ct-parler"></span></a>
     <div class="navlab" data-pilotage="1">Pilotage</div>
     <a class="nv" href="#support" id="aid-btn" data-id="support" onclick="if(typeof aidOuvre==='function')aidOuvre();return false"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="m9.5 9.5-4-4M14.5 9.5l4-4M14.5 14.5l4 4M9.5 14.5l-4 4"/></svg></span>Support technique<span class="ct" id="ct-support"></span></a>
-    <a class="nv" data-pilotage="1" href="journal.html?v=202611151004"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Journal<span class="ct" id="ct-journal"></span></a>
-    <a class="nv" data-pilotage="1" href="tableau.html?v=202611151004"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/></svg></span>Tableau de bord<span class="ct" id="ct-tableau"></span></a>
-    <a class="nv" data-pilotage="1" href="analytique.html?v=202611151004"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>Analytique<span class="ct" id="ct-analytique"></span></a>
-    <a class="nv on" data-pilotage="1" href="taches.html?v=202611151004"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m8 12 3 3 5-6"/></svg></span>Tâches<span class="ct" id="ct-taches"></span></a>
-    <a class="nv" data-pilotage="1" href="acces.html?v=202611151004"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.3 8 8 9 4.7-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></span>Accès<span class="ct" id="ct-accès"></span></a>
+    <a class="nv" data-pilotage="1" href="journal.html?v=202611151333"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Journal<span class="ct" id="ct-journal"></span></a>
+    <a class="nv" data-pilotage="1" href="tableau.html?v=202611151333"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/></svg></span>Tableau de bord<span class="ct" id="ct-tableau"></span></a>
+    <a class="nv" data-pilotage="1" href="analytique.html?v=202611151333"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>Analytique<span class="ct" id="ct-analytique"></span></a>
+    <a class="nv on" data-pilotage="1" href="taches.html?v=202611151333"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m8 12 3 3 5-6"/></svg></span>Tâches<span class="ct" id="ct-taches"></span></a>
+    <a class="nv" data-pilotage="1" href="acces.html?v=202611151333"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.3 8 8 9 4.7-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></span>Accès<span class="ct" id="ct-accès"></span></a>
     <a class="nv" data-pilotage="1" href="https://app.gusto.com" target="_blank" rel="noopener" title="Ouvre Gusto dans un nouvel onglet"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M14.5 9a2.5 2 0 0 0-2.5-1.5c-1.4 0-2.5.8-2.5 2s1 1.7 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2A2.7 2 0 0 1 9.5 15M12 6v1.5M12 16.5V18"/></svg></span>Paie<span class="ct" id="ct-paie"></span></a>
-    <a class="nv" data-pilotage="1" href="reglages.html?v=202611151004"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg></span>Réglages<span class="ct" id="ct-réglages"></span></a>
+    <a class="nv" data-pilotage="1" href="reglages.html?v=202611151333"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg></span>Réglages<span class="ct" id="ct-réglages"></span></a>
   </nav>
   <div class="sfoot"><div id="sfu" class="sfu"></div><span id="sfoot"></span>
-    <div class="ver" title="Si cette date n'est pas la derni&egrave;re, recharge avec Cmd+Option+R">version du 11/15/2026 à 10h04</div>
+    <div class="ver" title="Si cette date n'est pas la derni&egrave;re, recharge avec Cmd+Option+R">version du 11/15/2026 à 13h33</div>
     <div class="sfline" id="sfline"></div></div>
 </aside>
 <main class="main"><div class="wrap">
@@ -573,7 +578,7 @@ try{
 }catch(e){}
 })();
 </script>
-<script src="donnees/langue.js?v=202611151004"></script>
+<script src="donnees/langue.js?v=202611151333"></script>
 <script>
 /* le menu réglé et la langue de l'écran, AVANT le code de la page : rien ne saute, rien n'est vu dans une autre langue */
 
@@ -1543,7 +1548,7 @@ const LG_FR_PARCOURS=!/catalogue|stock|inventaire/.test(location.pathname);
 })();
 
 </script>
-<script src="donnees/produits.js?v=202611151004"></script>
+<script src="donnees/produits.js?v=202611151333"></script>
 <script>
 if (typeof window.D_PROD==='undefined') {
   /* Le code de la page est lancé plus tard par l'amorce (voir _serveur.py) : ce drapeau
@@ -1565,7 +1570,7 @@ if (typeof window.D_PROD==='undefined') {
 }
 </script>
 <script type="text/plain" id="page-js">
-const VER_URL='202611151004';
+const VER_URL='202611151333';
 const $=i=>document.getElementById(i);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const nf=v=>Number(v||0).toLocaleString('fr-FR');
@@ -5756,6 +5761,37 @@ function tkTitre(t){
   }
   return null;
 }
+/* 15 nov. 2026 (Igal, sur « Vendu à perte : Lattafa Mini Set Yara… vendu 0 $ » : « sur les tâches j'ai besoin d'avoir plus de
+   détails ») : sous une tâche de prix, LA VENTE EN ENTIER — n° de facture, jour et heure, canal, qui l'a enregistrée, le client,
+   comment il a payé, et le ticket : nombre de lignes et de flacons, total, les lignes à 0 $, les plus grosses lignes, et un lien vers
+   la facture. Un parfum à 0 $ au milieu d'un ticket de 1 489 $ se lit alors tout de suite : un cadeau, pas une erreur de prix.
+   La vente est retrouvée par son identifiant (envoyé par le cockpit depuis ck152) ; pour une tâche d'avant, par le jour, le canal,
+   le parfum, le prix et la quantité. */
+function tkVenteDe(t){
+  const w=t.vente||{}; let F=[]; try{ F=lit('factures-v1',[])||[]; }catch(e){} if(!Array.isArray(F)) F=[];
+  if(w.fid){ const f=F.find(f=>f&&f.id===w.fid); if(f) return f; }
+  const L=F.filter(f=>f&&f.sens==='vente'&&!f.retour&&String(f.d||'').slice(0,10)===String(w.d||'').slice(0,10)&&String(f.canal||'')===String(w.canal||'')
+    &&(f.lignes||[]).some(l=>l&&l.cle===t.cle&&Math.abs((+l.p||0)-(+w.p||0))<0.01&&(w.q==null||(+l.q||0)===+w.q)));
+  return L.length===1?L[0]:null;   /* deux ventes possibles : on ne devine pas */
+}
+function tkVenteDetail(t){
+  const f=tkVenteDe(t); if(!f) return '';
+  const D=f.doc||{}, L=(f.lignes||[]).filter(Boolean), tot=+(D.total!=null?D.total:f.montant)||0, fl=L.reduce((a,l)=>a+(+l.q||0),0);
+  const cli=(typeof faNomClient==='function'?faNomClient(f.tiers):(f.tiers&&f.tiers.nom)||f.tiers)||'';
+  const P=f.paie&&typeof f.paie==='object'?f.paie:null;
+  const pay=P?[+P.especes>0?tkT('espèces','cash','efectivo')+' '+m2(P.especes):'',+P.carte>0?tkT('carte','card','tarjeta')+' '+m2(P.carte):'',+P.autre>0?tkT('autre','other','otro')+' '+m2(P.autre):''].filter(Boolean).join(' + '):'';
+  const zero=L.filter(l=>!(+l.p>0)), gros=L.filter(l=>+l.p>0).sort((a,b)=>(+b.q||0)*(+b.p||0)-(+a.q||0)*(+a.p||0)).slice(0,5);
+  const lig=l=>`<li><span data-nolang>${esc(l.ref||l.bc||'')}</span> × ${nf(+l.q||0)} — ${+l.p>0?m2(l.p):'<span class="z">0,00 $</span>'}</li>`;
+  const ici=zero.some(l=>l.cle===t.cle);
+  return `<div class="tk-det">
+    <div><b data-nolang>${esc(D.num||'')}</b>${D.num?' · ':''}<span data-nolang>${esc(tkDate(f.d))}${f.h?' '+tkT('à','at','a las')+' '+esc(f.h):''}</span> · <span data-nolang>${esc(f.canal||'')}</span>${f.auto?` · ${tkT('reçue automatiquement','received automatically','recibida automáticamente')}`:f.par?` · ${tkT('enregistrée par','entered by','registrada por')} <span data-nolang>${esc(f.par)}</span>`:''}</div>
+    <div>${tkT('Client','Customer','Cliente')} : <b data-nolang>${esc(cli||tkT('non renseigné','not entered','sin nombre'))}</b>${pay?` · ${tkT('payé','paid','pagado')} <span data-nolang>${pay}</span>`:''}</div>
+    <div>${tkT('Le ticket','The ticket','El ticket')} : ${nf(L.length)} ${L.length>1?tkT('lignes','lines','líneas'):tkT('ligne','line','línea')}, ${nf(fl)} ${fl>1?tkT('flacons','bottles','frascos'):tkT('flacon','bottle','frasco')}, ${tkT('total','total','total')} <b>${m2(tot)}</b>.${ici&&tot>0?` <span class="z">${zero.length===1?tkT('Ce parfum est la seule ligne à 0 $ du ticket : un cadeau ?','This fragrance is the only $0 line on the ticket: a gift?','Este perfume es la única línea a 0 $ del ticket: ¿un regalo?'):tkT(`${zero.length} lignes à 0 $ dans ce ticket : des cadeaux ?`,`${zero.length} lines at $0 on this ticket: gifts?`,`${zero.length} líneas a 0 $ en este ticket: ¿regalos?`)}</span>`:''}</div>
+    ${zero.length&&L.length>1?`<div>${tkT('À 0 $','At $0','A 0 $')} :<ul>${zero.slice(0,5).map(lig).join('')}</ul></div>`:''}
+    ${gros.length&&L.length>1?`<div>${tkT('Les plus grosses lignes','The biggest lines','Las líneas más grandes')} :<ul>${gros.map(lig).join('')}</ul>${L.length-zero.length>gros.length?`<span>${tkT(`… et ${L.length-zero.length-gros.length} autres`,`… and ${L.length-zero.length-gros.length} more`,`… y ${L.length-zero.length-gros.length} más`)}</span>`:''}</div>`:''}
+    ${f.doc?`<div><a href="ventes.html?v=${esc(typeof VER_URL!=='undefined'?VER_URL:'')}#doc=${encodeURIComponent(f.id)}" target="_blank" rel="noopener">${tkT('Voir la facture en entier','See the full invoice','Ver la factura completa')} ↗</a></div>`:''}
+  </div>`;
+}
 function tkLigne(t){
   { const tp=tkTitre(t); if(tp){ t=Object.assign({},t,tp); } }
   const typ=TYPES[t.type]?tkT(...TYPES[t.type]):t.type;
@@ -5798,7 +5834,7 @@ function tkLigne(t){
   if(t.etat==='a_faire'&&px){ const P=tkPrix(t.cle), w=t.vente||{};
     const frais=[w.com?tkT('commission','commission','comisión')+' '+m2(w.com):'',w.carte?tkT('frais de carte','card fees','comisión de tarjeta')+' '+m2(w.carte):'',w.envoi?tkT('envoi','shipping','envío')+' '+m2(w.envoi):'',w.port?tkT('port payé par le client','shipping paid by the customer','portes pagados por el cliente')+' +'+m2(w.port):''].filter(Boolean);
     const vente=w.d?`<div class="tk-vente" data-nolang>${esc(tkDate(w.d))} · ${esc(w.canal||'')} : ${tkT('vendu','sold','vendido')} ${m2(w.p)}${w.q>1?' × '+w.q:''}, ${tkT('acheté','bought','comprado')} ${m2(w.pa)}${w.q>1?' × '+w.q:''}${frais.length?', '+frais.join(', '):''} → ${w.perte?`<b>${tkT('perte de','loss of','pérdida de')} ${m2(-w.mg)}</b>`:`<b>${w.pct!=null?w.pct+' %':''}</b> ${tkT('de marge','margin','de margen')}`}${w.n>1?`, ${w.n} ${tkT('ventes cette semaine','sales this week','ventas esta semana')}`:''}</div>`:'';
-    bloc=`<div class="tk-px" data-px="${esc(t.cle)}" data-id="${esc(t.id)}" data-titre="${esc(t.titre)}">${vente}
+    bloc=`<div class="tk-px" data-px="${esc(t.cle)}" data-id="${esc(t.id)}" data-titre="${esc(t.titre)}">${vente}${tkVenteDetail(t)}
       <label>${tkT("Prix d'achat","Purchase price","Precio de compra")}<input type="number" step="0.01" min="0" data-pxa value="${P.pa==null?'':P.pa}"></label>
       <label>${tkT('Prix de gros','Wholesale price','Precio mayorista')}<input type="number" step="0.01" min="0" data-pxw value="${P.pvw==null?'':P.pvw}"></label>
       <label>${tkT('Prix retail','Retail price','Precio retail')}<input type="number" step="0.01" min="0" data-pxr value="${P.pvr==null?'':P.pvr}"></label>

@@ -41,6 +41,11 @@ h2.sec em{font-style:normal;font-size:12.5px;letter-spacing:0;text-transform:non
 .tk-px label{display:flex;flex-direction:column;gap:3px;font-size:11.5px;color:var(--ink-3);font-weight:600}
 .tk-px input{width:92px;font:inherit;font-size:14px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
 .tk-px .tk-vente{flex-basis:100%;font-size:12.5px;color:var(--ink-2)}.tk-px .tk-vente b{color:var(--crit)}
+/* 15 nov. 2026 (Igal : « sur les tâches j'ai besoin d'avoir plus de détails ») : la vente en entier sous une tâche de prix */
+.tk-px .tk-det{flex-basis:100%;font-size:12.5px;color:var(--ink-2);line-height:1.6;padding:8px 10px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface)}
+.tk-px .tk-det b{color:var(--ink);font-weight:600}.tk-px .tk-det .z{color:var(--warn);font-weight:600}
+.tk-px .tk-det ul{margin:4px 0 2px;padding-left:18px}.tk-px .tk-det li{margin:1px 0}
+.tk-px .tk-det a{color:var(--iris);font-weight:600;text-decoration:none}.tk-px .tk-det a:hover{text-decoration:underline}
 .tk-px .tk-msg{flex-basis:100%;font-size:12.5px;color:var(--ink-2)}
 .tk-px .tk-can{flex-basis:100%;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;font-size:13px}
 .tk-px .tk-can label{flex-direction:row;align-items:center;gap:6px;font-size:13px;color:var(--ink);font-weight:500}
@@ -140,6 +145,37 @@ function tkTitre(t){
   }
   return null;
 }
+/* 15 nov. 2026 (Igal, sur « Vendu à perte : Lattafa Mini Set Yara… vendu 0 $ » : « sur les tâches j'ai besoin d'avoir plus de
+   détails ») : sous une tâche de prix, LA VENTE EN ENTIER — n° de facture, jour et heure, canal, qui l'a enregistrée, le client,
+   comment il a payé, et le ticket : nombre de lignes et de flacons, total, les lignes à 0 $, les plus grosses lignes, et un lien vers
+   la facture. Un parfum à 0 $ au milieu d'un ticket de 1 489 $ se lit alors tout de suite : un cadeau, pas une erreur de prix.
+   La vente est retrouvée par son identifiant (envoyé par le cockpit depuis ck152) ; pour une tâche d'avant, par le jour, le canal,
+   le parfum, le prix et la quantité. */
+function tkVenteDe(t){
+  const w=t.vente||{}; let F=[]; try{ F=lit('factures-v1',[])||[]; }catch(e){} if(!Array.isArray(F)) F=[];
+  if(w.fid){ const f=F.find(f=>f&&f.id===w.fid); if(f) return f; }
+  const L=F.filter(f=>f&&f.sens==='vente'&&!f.retour&&String(f.d||'').slice(0,10)===String(w.d||'').slice(0,10)&&String(f.canal||'')===String(w.canal||'')
+    &&(f.lignes||[]).some(l=>l&&l.cle===t.cle&&Math.abs((+l.p||0)-(+w.p||0))<0.01&&(w.q==null||(+l.q||0)===+w.q)));
+  return L.length===1?L[0]:null;   /* deux ventes possibles : on ne devine pas */
+}
+function tkVenteDetail(t){
+  const f=tkVenteDe(t); if(!f) return '';
+  const D=f.doc||{}, L=(f.lignes||[]).filter(Boolean), tot=+(D.total!=null?D.total:f.montant)||0, fl=L.reduce((a,l)=>a+(+l.q||0),0);
+  const cli=(typeof faNomClient==='function'?faNomClient(f.tiers):(f.tiers&&f.tiers.nom)||f.tiers)||'';
+  const P=f.paie&&typeof f.paie==='object'?f.paie:null;
+  const pay=P?[+P.especes>0?tkT('espèces','cash','efectivo')+' '+m2(P.especes):'',+P.carte>0?tkT('carte','card','tarjeta')+' '+m2(P.carte):'',+P.autre>0?tkT('autre','other','otro')+' '+m2(P.autre):''].filter(Boolean).join(' + '):'';
+  const zero=L.filter(l=>!(+l.p>0)), gros=L.filter(l=>+l.p>0).sort((a,b)=>(+b.q||0)*(+b.p||0)-(+a.q||0)*(+a.p||0)).slice(0,5);
+  const lig=l=>`<li><span data-nolang>${esc(l.ref||l.bc||'')}</span> × ${nf(+l.q||0)} — ${+l.p>0?m2(l.p):'<span class="z">0,00 $</span>'}</li>`;
+  const ici=zero.some(l=>l.cle===t.cle);
+  return `<div class="tk-det">
+    <div><b data-nolang>${esc(D.num||'')}</b>${D.num?' · ':''}<span data-nolang>${esc(tkDate(f.d))}${f.h?' '+tkT('à','at','a las')+' '+esc(f.h):''}</span> · <span data-nolang>${esc(f.canal||'')}</span>${f.auto?` · ${tkT('reçue automatiquement','received automatically','recibida automáticamente')}`:f.par?` · ${tkT('enregistrée par','entered by','registrada por')} <span data-nolang>${esc(f.par)}</span>`:''}</div>
+    <div>${tkT('Client','Customer','Cliente')} : <b data-nolang>${esc(cli||tkT('non renseigné','not entered','sin nombre'))}</b>${pay?` · ${tkT('payé','paid','pagado')} <span data-nolang>${pay}</span>`:''}</div>
+    <div>${tkT('Le ticket','The ticket','El ticket')} : ${nf(L.length)} ${L.length>1?tkT('lignes','lines','líneas'):tkT('ligne','line','línea')}, ${nf(fl)} ${fl>1?tkT('flacons','bottles','frascos'):tkT('flacon','bottle','frasco')}, ${tkT('total','total','total')} <b>${m2(tot)}</b>.${ici&&tot>0?` <span class="z">${zero.length===1?tkT('Ce parfum est la seule ligne à 0 $ du ticket : un cadeau ?','This fragrance is the only $0 line on the ticket: a gift?','Este perfume es la única línea a 0 $ del ticket: ¿un regalo?'):tkT(`${zero.length} lignes à 0 $ dans ce ticket : des cadeaux ?`,`${zero.length} lines at $0 on this ticket: gifts?`,`${zero.length} líneas a 0 $ en este ticket: ¿regalos?`)}</span>`:''}</div>
+    ${zero.length&&L.length>1?`<div>${tkT('À 0 $','At $0','A 0 $')} :<ul>${zero.slice(0,5).map(lig).join('')}</ul></div>`:''}
+    ${gros.length&&L.length>1?`<div>${tkT('Les plus grosses lignes','The biggest lines','Las líneas más grandes')} :<ul>${gros.map(lig).join('')}</ul>${L.length-zero.length>gros.length?`<span>${tkT(`… et ${L.length-zero.length-gros.length} autres`,`… and ${L.length-zero.length-gros.length} more`,`… y ${L.length-zero.length-gros.length} más`)}</span>`:''}</div>`:''}
+    ${f.doc?`<div><a href="ventes.html?v=${esc(typeof VER_URL!=='undefined'?VER_URL:'')}#doc=${encodeURIComponent(f.id)}" target="_blank" rel="noopener">${tkT('Voir la facture en entier','See the full invoice','Ver la factura completa')} ↗</a></div>`:''}
+  </div>`;
+}
 function tkLigne(t){
   { const tp=tkTitre(t); if(tp){ t=Object.assign({},t,tp); } }
   const typ=TYPES[t.type]?tkT(...TYPES[t.type]):t.type;
@@ -182,7 +218,7 @@ function tkLigne(t){
   if(t.etat==='a_faire'&&px){ const P=tkPrix(t.cle), w=t.vente||{};
     const frais=[w.com?tkT('commission','commission','comisión')+' '+m2(w.com):'',w.carte?tkT('frais de carte','card fees','comisión de tarjeta')+' '+m2(w.carte):'',w.envoi?tkT('envoi','shipping','envío')+' '+m2(w.envoi):'',w.port?tkT('port payé par le client','shipping paid by the customer','portes pagados por el cliente')+' +'+m2(w.port):''].filter(Boolean);
     const vente=w.d?`<div class="tk-vente" data-nolang>${esc(tkDate(w.d))} · ${esc(w.canal||'')} : ${tkT('vendu','sold','vendido')} ${m2(w.p)}${w.q>1?' × '+w.q:''}, ${tkT('acheté','bought','comprado')} ${m2(w.pa)}${w.q>1?' × '+w.q:''}${frais.length?', '+frais.join(', '):''} → ${w.perte?`<b>${tkT('perte de','loss of','pérdida de')} ${m2(-w.mg)}</b>`:`<b>${w.pct!=null?w.pct+' %':''}</b> ${tkT('de marge','margin','de margen')}`}${w.n>1?`, ${w.n} ${tkT('ventes cette semaine','sales this week','ventas esta semana')}`:''}</div>`:'';
-    bloc=`<div class="tk-px" data-px="${esc(t.cle)}" data-id="${esc(t.id)}" data-titre="${esc(t.titre)}">${vente}
+    bloc=`<div class="tk-px" data-px="${esc(t.cle)}" data-id="${esc(t.id)}" data-titre="${esc(t.titre)}">${vente}${tkVenteDetail(t)}
       <label>${tkT("Prix d'achat","Purchase price","Precio de compra")}<input type="number" step="0.01" min="0" data-pxa value="${P.pa==null?'':P.pa}"></label>
       <label>${tkT('Prix de gros','Wholesale price','Precio mayorista')}<input type="number" step="0.01" min="0" data-pxw value="${P.pvw==null?'':P.pvw}"></label>
       <label>${tkT('Prix retail','Retail price','Precio retail')}<input type="number" step="0.01" min="0" data-pxr value="${P.pvr==null?'':P.pvr}"></label>

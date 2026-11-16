@@ -175,6 +175,14 @@ box-shadow:-12px 0 40px rgba(0,0,0,.18);transform:translateX(102%);transition:tr
 .avert b{color:var(--ink)}
 .ed{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;max-width:640px}
 .pjs{margin-top:22px;padding-top:16px;border-top:1px solid var(--line-2);max-width:640px}
+/* 15 nov. 2026 : l'accès du client à la price list en direct (cockpit /pl/…) */
+.plb{margin-top:22px;padding:14px 16px;border:1px solid var(--line-2);border-radius:12px;max-width:640px;background:var(--bg-2,#fafafb)}
+.plb h4{margin:0 0 8px;font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+.plb label.pl-c{display:flex;align-items:center;gap:10px;font-weight:700;cursor:pointer}
+.plb label.pl-c input{width:18px;height:18px}
+.plb p{margin:8px 0 0;font-size:13px;color:var(--ink-2)}
+.plb .pl-att{color:var(--crit);font-weight:600}
+.plb .pl-bt{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .pjs h4{margin:0 0 10px;font-size:13px;letter-spacing:.06em;text-transform:uppercase}
 .pjadd{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
 .pjadd label.btn{cursor:pointer}.pjmsg{font-size:13px;color:var(--ink-3)}
@@ -676,6 +684,7 @@ function ouvre(nom){
     </div>
     <p style="margin:14px 0 0"><button class="btn pri" id="e-ok">Enregistrer</button> <span id="e-msg" style="font-size:13px;color:var(--good);margin-left:8px"></span></p>
     <p class="ecr">${co.fiscal?`Statut fiscal retenu sur ses factures : <b>${esc(FISC[co.fiscal]||co.fiscal)}</b>${co.fiscalRef?' — n° <span data-nolang>'+esc(co.fiscalRef)+'</span>':''}. `:''}Ces coordonnées sont gardées dans l'outil.${o.ecritures.length?`<br>Dans le tableur, ce client est écrit : <b data-nolang>${o.ecritures.slice(0,6).map(esc).join('</b>, <b data-nolang>')}</b>${o.ecritures.length>6?' …':''}.`:''}${o.site?'<br>Inscrit sur le site.':''}</p>
+    <div class="plb" id="pl-box" data-nolang></div>
     <div class="pjs"><h4>Pièces jointes : resale certificate, passeport</h4>
       <div id="pj-liste"></div>
       <div class="pjadd"><select id="pj-type"><option value="resale">Resale certificate</option><option value="passeport">Passeport</option><option value="autre">Autre pièce</option></select>
@@ -683,15 +692,79 @@ function ouvre(nom){
         <span id="pj-msg" class="pjmsg"></span></div>
       <p class="ecr" style="margin:6px 0 0">Ces pièces ne sont jamais publiques : seuls les comptes de l'ERP peuvent les ouvrir.</p></div>`;
   pjPeint(o.nom);
+  plPeint(o.nom);
   $('pj-f').onchange=e=>{ const f=e.target.files[0]; e.target.value=''; if(f) pjDepose(o.nom,f,$('pj-type').value); };
   $('e-ok').onclick=()=>{
     /* 7 nov. 2026 (Igal) : trois numéros de téléphone ; une case vidée efface le numéro (avant, un champ vidé gardait l'ancien) */
     const n={nom:o.nom}; ['prenom','nomfam','tel','tel2','tel3','email','raison','adresse','ville','pays','note'].forEach(k=>{ const val=$('e-'+k).value.trim(); if(val) n[k]=val; else if(/^tel[23]$/.test(k)) n[k]=undefined; });
     CLI[o.nom]=Object.assign({},CLI[o.nom]||{},n,{maj:new Date().toISOString()}); Object.keys(CLI[o.nom]).forEach(k=>{ if(CLI[o.nom][k]===undefined) delete CLI[o.nom][k]; }); sauveCLI();
     journal('client','fiche client modifiée',o.nom,'coordonnées');
-    $('e-msg').textContent='enregistré'; setTimeout(()=>$('e-msg').textContent='',2000); construit(); dessine(); };
+    $('e-msg').textContent='enregistré'; setTimeout(()=>$('e-msg').textContent='',2000); construit(); dessine(); plAccesPublie(); plPeint(o.nom); };
   onglet('cmd');
   $('dr').classList.add('on'); $('drov').classList.add('on'); document.querySelector('.db').scrollTop=0;
+}
+/* ---------- l'accès à la price list en direct (15 nov. 2026) ----------
+   Sam, via Igal : une price list de gros « en live », comme celle de son fournisseur MTZ, que ses clients ouvrent avec leur
+   email et un code à 6 chiffres, et d'où ils peuvent commander. Choix d'Igal : seuls les clients que Sam a autorisés ici
+   entrent. La case est gardée dans la fiche (clients-v1 › plAcces) ; la liste des emails autorisés part au cockpit
+   (pricelist-acces-v1), qui la relit à chaque visite : décocher coupe l'accès tout de suite. Seuls le Patron et un admin
+   cochent. Un client sans email ne peut pas entrer : la fiche le dit. */
+const KPLA='pricelist-acces-v1';
+const plPeut=()=>{ try{ const s=(typeof session==='function')?session():null; return !!s&&/^(admin|patron)$/.test(String(s.role||'')); }catch(e){ return false; } };
+const plMail=m=>/^[^@\s]+@[^@\s.]+(\.[^@\s.]+)+$/.test(String(m||'').trim());
+function plAccesListe(){
+  const L=[], vus=new Set();
+  (TOUS||[]).forEach(o=>{ const c=CLI[o.nom]||{}; if(!c.plAcces) return;
+    const e=String((o.co&&o.co.email)||c.email||'').trim().toLowerCase(); if(!plMail(e)||vus.has(e)) return; vus.add(e);
+    const lg=String(c.langue||'').toLowerCase().slice(0,2);
+    L.push({nom:o.nom,email:e,lg:['en','es','fr'].includes(lg)?lg:'en'}); });
+  return L.sort((a,b)=>a.nom.localeCompare(b.nom));
+}
+function plAccesPublie(){
+  try{ if(!plPeut()) return;
+    const L=plAccesListe(), av=lit(KPLA,null);
+    if(av&&Array.isArray(av.L)&&JSON.stringify(av.L)===JSON.stringify(L)) return;
+    ecrit(KPLA,{t:new Date().toISOString(),L}); }catch(e){ try{ console.warn('accès price list non publié',e); }catch(_){} }
+}
+/* ses connexions (journal tenu par le cockpit, pricelist-visites-v1) : la dernière, et combien d'ouvertures sur 7 jours */
+function plVisites(nom,e){
+  let V=[]; try{ V=(lit('pricelist-visites-v1',[])||[]).filter(x=>x&&(x.quoi==='visite'||x.quoi==='entree')&&(x.nom===nom||(e&&String(x.email||'')===String(e).toLowerCase()))); }catch(_){}
+  if(!V.length) return '';
+  const n7=V.filter(x=>Date.now()-Date.parse(x.t)<7*864e5).length;
+  return `<p>${L3('Dernière connexion','Last sign-in','Última conexión')} : <b>${esc((()=>{ try{ return new Date(V[0].t).toLocaleString(L3('fr-FR','en-US','es-ES'),{timeZone:'America/New_York',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}); }catch(_){ return V[0].t; } })())}</b> · ${n7} ${L3('ouverture(s) ces 7 derniers jours','opening(s) in the last 7 days','apertura(s) en los últimos 7 días')}</p>`;
+}
+let PL_LIEN='';
+async function plLien(){
+  if(PL_LIEN) return PL_LIEN;
+  try{ if(typeof CK_URL!=='undefined'&&typeof CK_ORG!=='undefined'){ const r=await fetch(CK_URL+'/api/pl/'+CK_ORG+'/lien'); const j=await r.json(); if(j&&j.url) PL_LIEN=j.url; } }catch(e){}
+  return PL_LIEN;
+}
+function plPeint(nom){
+  const el=$('pl-box'); if(!el) return;
+  const o=(TOUS||[]).find(x=>x.nom===nom)||{co:{}}, c=CLI[nom]||{}, on=!!c.plAcces, peut=plPeut();
+  const e=String((o.co&&o.co.email)||c.email||'').trim();
+  el.innerHTML=`<h4>${L3('Price list en direct','Live price list','Lista de precios en vivo')}</h4>
+    <label class="pl-c"><input type="checkbox" id="pl-on" ${on?'checked':''} ${peut?'':'disabled'}> ${L3('Ce client a accès à la price list en direct','This customer has access to the live price list','Este cliente tiene acceso a la lista de precios en vivo')}</label>
+    ${!peut?`<p>${L3('Seuls le Patron et un admin peuvent changer cet accès.','Only the Owner or an admin can change this access.','Solo el Dueño o un admin puede cambiar este acceso.')}</p>`:''}
+    ${on&&!plMail(e)?`<p class="pl-att">${L3('Il n\'a pas d\'email valable dans sa fiche : ajoute-le ci-dessus, sinon il ne peut pas entrer.','There is no valid email on this customer: add it above, otherwise they cannot sign in.','No tiene un correo válido en su ficha: agréguelo arriba, si no, no puede entrar.')}</p>`
+      :on?`<p>${L3('Il ouvre la price list avec son email','They open the price list with their email','Abre la lista con su correo')} <b>${esc(e)}</b> ${L3('et un code à 6 chiffres reçu par email. Il voit les prix de gros et le stock en direct, et peut envoyer une commande (elle arrive dans la Cote).','and a 6-digit code sent by email. They see wholesale prices and live stock, and can send an order (it arrives in Quote).','y un código de 6 cifras enviado por correo. Ve los precios mayoristas y el stock en vivo, y puede enviar un pedido (llega a Cotización).')}</p>
+        <div class="pl-bt"><button class="btn sm" id="pl-copie">${L3('Copier le lien','Copy the link','Copiar el enlace')}</button>${(o.co&&o.co.tel)?`<button class="btn sm" id="pl-wa">${L3('Envoyer le lien par WhatsApp','Send the link on WhatsApp','Enviar el enlace por WhatsApp')}</button>`:''}<span id="pl-msg" style="font-size:12.5px;color:var(--good)"></span></div>`
+      :`<p>${L3('Coche la case pour qu\'il puisse ouvrir la price list avec son email.','Tick the box so they can open the price list with their email.','Marque la casilla para que pueda abrir la lista con su correo.')}</p>`}
+    ${plVisites(nom,e)}`;
+  const cb=$('pl-on'); if(cb) cb.onchange=()=>{ if(!plPeut()){ cb.checked=on; return; }
+    CLI[nom]=Object.assign({},CLI[nom]||{},{nom,plAcces:cb.checked,maj:new Date().toISOString()}); if(!cb.checked) delete CLI[nom].plAcces;
+    sauveCLI(); journal('client',cb.checked?'accès à la price list en direct donné':'accès à la price list en direct retiré',nom,cb.checked?'oui':'non');
+    construit(); plAccesPublie(); plPeint(nom); };
+  const cp=$('pl-copie'); if(cp) cp.onclick=async()=>{ const u=await plLien(); const m=$('pl-msg');
+    if(!u){ m.textContent=L3('Le lien se donne depuis l\'ERP en ligne.','The link comes from the online ERP.','El enlace se obtiene desde el ERP en línea.'); return; }
+    try{ await navigator.clipboard.writeText(u); m.textContent=L3('lien copié','link copied','enlace copiado'); }catch(_){ m.textContent=u; } setTimeout(()=>{ if(m.textContent!==u) m.textContent=''; },2500); };
+  const wa=$('pl-wa'); if(wa) wa.onclick=async()=>{ const u=await plLien(); if(!u){ $('pl-msg').textContent=L3('Le lien se donne depuis l\'ERP en ligne.','The link comes from the online ERP.','El enlace se obtiene desde el ERP en línea.'); return; }
+    let d=String(o.co.tel||'').replace(/\D/g,''); if(d.length===10) d='1'+d;
+    const lg=String(c.langue||'en').slice(0,2), pre=String(c.prenom||o.co.prenom||'').trim();
+    const T={fr:`Bonjour${pre?' '+pre:''}, voici notre price list de gros en direct (prix et stock à jour) : ${u}\nEntrez votre email (${e}) : vous recevez un code pour ouvrir la liste, et vous pouvez commander directement.`,
+      es:`Hola${pre?' '+pre:''}, aquí está nuestra lista de precios mayorista en vivo (precios y stock al día): ${u}\nEscriba su correo (${e}): recibirá un código para abrir la lista, y puede hacer su pedido directamente.`,
+      en:`Hi${pre?' '+pre:''}, here is our live wholesale price list (up-to-date prices and stock): ${u}\nEnter your email (${e}): you will get a code to open the list, and you can order directly.`};
+    window.open('https://web.whatsapp.com/send?phone='+d+'&text='+encodeURIComponent(T[lg]||T.en),'_blank'); };
 }
 /* ---------- pièces jointes du client (2 oct. 2026) ----------
    Sam : « une pièce jointe pour le resale certificate ou le passeport des acheteurs étrangers,
@@ -845,6 +918,7 @@ $('notetxt').innerHTML=`Trois sources, fondues par le nom du client.<br>
 $('sfu').innerHTML = USR ? `Connecté : <b>${esc(USR)}</b>` : '';
 $('sfoot').innerHTML='tous les clients<br>gros, site, boutique';
 construit(); dessine();
+setTimeout(plAccesPublie,3000);   /* la liste des clients autorisés à la price list en direct, tenue à jour au cockpit */
 $('selrien').onclick=()=>{ COCHES.clear(); dessine(); };
 $('selvip').onclick=()=>{ COCHES.forEach(n=>basculeVip(n,true)); dessine(); };
 $('selnon').onclick=()=>{ COCHES.forEach(n=>basculeVip(n,false)); dessine(); };

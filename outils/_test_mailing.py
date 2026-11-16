@@ -49,7 +49,9 @@ s = socket.socket(); s.bind(('127.0.0.1', 0)); port = s.getsockname()[1]; s.clos
 srv = subprocess.Popen(['python3', '-m', 'http.server', str(port), '--bind', '127.0.0.1'], cwd=D, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL); time.sleep(1)
 SESS = """([F,CLI,lg,role])=>{ localStorage.clear(); localStorage.setItem('sam-comptes-demo-v1','0');
   localStorage.setItem('sam-session-v1',JSON.stringify({id:'sam',nom:'Sam',role:role,depuis:new Date().toISOString()}));
-  localStorage.setItem('langue-v1',lg); localStorage.setItem('factures-v1',JSON.stringify(F)); localStorage.setItem('clients-v1',JSON.stringify(CLI)); }"""
+  localStorage.setItem('langue-v1',lg); localStorage.setItem('factures-v1',JSON.stringify(F)); localStorage.setItem('clients-v1',JSON.stringify(CLI));
+  /* 15 nov. 2026 : le parfum A est sur les deux sites (n° 7001 au détail, 8001 en gros) — les liens des messages en dépendent */
+  localStorage.setItem('site-stock-v1',JSON.stringify(Object.assign({_base:{d:'https://perfumestrade.com',g:'https://wholesale.perfumestrade.com'}},{[window.__BCA]:{d:{id:7001,q:3,etat:'instock'},g:{id:8001,q:3,etat:'instock'}}}))); }"""
 def plancher(r):  # le prix plancher d'un particulier, avec les réglages par défaut (2,9 % + 0,30 $, envoi 8 $)
     return math.ceil((r[12] + 8 + 0.3 + 15) / (1 - 0.029))
 try:
@@ -59,8 +61,8 @@ try:
             ctx = b.new_context(viewport={'width': 1500, 'height': 1000}); ctx.on('page', lambda q: None)
             pg = ctx.new_page(); pg.on('pageerror', lambda e: err.append(str(e)))
             base = f'http://127.0.0.1:{port}/'
-            pg.goto(base + 'accueil.html'); pg.wait_for_timeout(300); pg.evaluate(SESS, [F, CLI, lg, role])
-            ctx.route('https://wa.me/**', lambda r: r.abort())
+            pg.goto(base + 'accueil.html'); pg.wait_for_timeout(300); pg.evaluate("b=>{ window.__BCA=b; }", A[0]); pg.evaluate(SESS, [F, CLI, lg, role])
+            ctx.route('https://wa.me/**', lambda r: r.abort()); ctx.route('https://web.whatsapp.com/**', lambda r: r.abort())
             pg.goto(base + 'mailing.html'); pg.wait_for_timeout(2200); return pg, ctx
         pg, ctx = ouvre()
         noms = lambda: pg.evaluate("()=>__ml.mlListe().L.map(o=>o.nom)")
@@ -87,13 +89,18 @@ try:
         m = __import__('urllib.parse').parse.unquote(u.split('text=')[1]) if 'text=' in u else ''
         prem = noms()[0]
         exp_tel = '13055550101' if prem == 'Laura Testa' else '33612345678'
-        check('LE POINT — « client suivant » ouvre WhatsApp au bon numéro', u.startswith('https://wa.me/' + exp_tel + '?text='), u[:80])
+        check('LE POINT — « client suivant » ouvre WhatsApp WEB (pas l\'application du Mac) au bon numéro', u.startswith('https://web.whatsapp.com/send?phone=' + exp_tel + '&text='), u[:80])
         o = pg.evaluate("()=>{ const o=__ml.CL().find(o=>o.nom==='Laura Testa'); return __ml.mlMessage(o); }")
         check('LE POINT — le message de Laura est en espagnol, avec son prénom, son parfum, le prix et « en lugar de », et la ligne STOP',
               o.startswith('Hola Laura') and A[13].split()[0] in o and 'en lugar de' in o and 'STOP' in o and '$' in o, o)
         pg.locator('#ml-suiv').click(); pg.wait_for_timeout(400)
         u2 = pg.evaluate("()=>window.__mlDernier||''")
-        check('le client suivant n\'est pas le même : l\'envoi est noté', u2 != u and 'wa.me/' in u2, [u[:40], u2[:40]])
+        check('le client suivant n\'est pas le même : l\'envoi est noté', u2 != u and 'web.whatsapp.com/send' in u2, [u[:40], u2[:40]])
+        # 15 nov. 2026 (Igal : « un lien pour qu'ils accèdent directement à leur parfum… et l'analytique de ce qui s'est passé ») 
+        ml = pg.evaluate("()=>{ const o=__ml.CL().find(o=>o.nom==='Laura Testa'); return __ml.mlMessage(o); }")
+        lien = re.search(r'https://perfumestrade\.com/\?post_type=product&p=7001&utm_source=whatsapp&utm_medium=mailing&utm_campaign=retail-o[0-9a-z]+&utm_content=(c[0-9a-z]+)', ml)
+        check('LE POINT — le message porte le lien de la page du parfum, avec l\'étiquette de suivi (WhatsApp, Mailing, l\'offre, le code du client)', lien is not None, ml)
+        check('le code du client n\'est ni son nom ni son téléphone, et il est gardé avec l\'envoi', lien and 'Laura' not in lien.group(0) and '3055550101' not in lien.group(0) and pg.evaluate("c=>{ const S=JSON.parse(localStorage.getItem('mailing-v1')); const id=S.offre.detail.id; return S.envois[id]['Laura Testa'].code===c; }", lien.group(1)), lien and lien.group(0))
         check('plus personne à envoyer : le bouton le dit et se grise', pg.locator('#ml-suiv').is_disabled(), pg.inner_text('#ml-suiv'))
         st = pg.evaluate("()=>JSON.parse(localStorage.getItem('mailing-v1'))")
         off = st['offre']['detail']['id']
@@ -119,6 +126,7 @@ try:
         check('LE POINT — Wholesale : le grossiste y est, Laura n\'y est pas', 'Grossiste Uno' in gl and 'Laura Testa' not in gl, gl[:10])
         g = pg.evaluate("()=>{ const o=__ml.CL().find(o=>o.nom==='Grossiste Uno'); return {pf:o.pf.map(x=>[x.f.cle,x.qt]), msg:__ml.mlMessage(o)}; }")
         check('grossiste : ses parfums les plus achetés en premier (18 puis 3 flacons), au prix de gros', g['pf'] == [[G[15], 18], [A[15], 3]], g['pf'])
+        check('grossiste : le lien mène au site de GROS (wholesale.perfumestrade.com, n° 8001)', 'https://wholesale.perfumestrade.com/?post_type=product&p=8001&utm_source=whatsapp' in g['msg'] and 'utm_campaign=wholesale-' in g['msg'], g['msg'])
         check('grossiste : le message (anglais) liste ses parfums avec le prix de gros, sans « instead of » quand il n\'y a pas de remise',
               g['msg'].startswith('Hello Uno') and ('$' + (str(int(G[8])) if G[8] == int(G[8]) else f"{G[8]:.2f}")) in g['msg'] and 'instead of' not in g['msg'], g['msg'])
         pgw = pg.evaluate("()=>{ const f=__ml.CL().find(o=>o.nom==='Grossiste Uno').pf[0].f; return __ml.mlPrix(f,'gros',25); }")
@@ -130,6 +138,10 @@ try:
         # désinscrire depuis la Mailing : la fiche client garde nodiff
         pg.once('dialog', lambda d: d.accept()); pg.locator('[data-mlstop]').first.click(); pg.wait_for_timeout(300)
         nd = pg.evaluate("()=>Object.values(JSON.parse(localStorage.getItem('clients-v1'))).filter(c=>c.nodiff).map(c=>c.nom)")
+        us = pg.evaluate("()=>window.__mlDernier||''"); ms = __import__('urllib.parse').parse.unquote(us.split('text=')[1]) if 'text=' in us else ''
+        check('LE POINT — « Désinscrire (STOP) » ouvre WhatsApp Web avec la réponse de remerciement, dans la langue du client', us.startswith('https://web.whatsapp.com/send?phone=') and ('bien noté' in ms or 'Queda anotado' in ms) and 'bienvenu' in ms.replace('bienvenido','bienvenu'), [us[:60], ms])
+        rs = pg.evaluate("()=>[['fr','Marc'],['en','Uno'],['es','Laura']].map(([lg,p])=>__ml.mlStopTexte({lg,prenom:p}))")
+        check('la réponse STOP existe en français, anglais et espagnol, avec le prénom', rs[0].startswith('Bonjour Marc') and 'bienvenu' in rs[0] and rs[1].startswith('Hello Uno') and 'always welcome' in rs[1] and rs[2].startswith('Hola Laura') and 'bienvenido' in rs[2], rs)
         check('« Désinscrire » : le client sort de la liste et sa fiche est marquée (même case que la liste de diffusion)', len(nd) == 2 and len(noms()) == 1, [nd, noms()])
         ctx.close()
         # Commercial : un mur, et la ligne du menu cachée
@@ -140,8 +152,8 @@ try:
         pg, ctx = ouvre()
         check('Patron : la ligne « Mailing » est dans le menu', pg.locator('.side nav a.nv[href^="mailing.html"]').is_visible())
         ctx.close()
-        for lg, mots, fr in (('en', ['The offer', 'Retail customers', 'Fragrances offered and offer price', 'File for Klaviyo or Brevo'], ['Particuliers', "L'offre", 'prix offert', 'Les clients']),
-                             ('es', ['La oferta', 'Particulares', 'Perfumes ofrecidos y precio ofrecido', 'Archivo para Klaviyo o Brevo'], ['Particuliers', "L'offre", 'prix offert', 'Les clients'])):
+        for lg, mots, fr in (('en', ['The offer', 'Retail customers', 'Fragrances offered and offer price', 'File for Klaviyo or Brevo', 'Unsubscribe (STOP)'], ['Particuliers', "L'offre", 'prix offert', 'Les clients']),
+                             ('es', ['La oferta', 'Particulares', 'Perfumes ofrecidos y precio ofrecido', 'Archivo para Klaviyo o Brevo', 'Dar de baja (STOP)'], ['Particuliers', "L'offre", 'prix offert', 'Les clients'])):
             pg, ctx = ouvre(lg=lg); t = pg.evaluate("()=>document.querySelector('.main').textContent")
             check(f'{lg} : la page est traduite', all(x in t for x in mots) and not any(x in t for x in fr), [x for x in mots if x not in t] + [x for x in fr if x in t])
             pg.locator('#ml-suiv').click(); pg.wait_for_timeout(300)

@@ -249,12 +249,29 @@ const dUS=d=>{ if(!d) return '—'; const [a,m,j]=String(d).slice(0,10).split('-
 const dMot=(d,lg)=>{ try{ return new Date(String(d).slice(0,10)+'T12:00:00').toLocaleDateString(lg==='fr'?'fr-FR':lg==='es'?'es-ES':'en-US',{day:'numeric',month:'long'}); }catch(e){ return d; } };
 const pxMot=(v,lg)=>{ const s=(Math.round(v*100)%100)?v.toFixed(2):String(Math.round(v)); return lg==='fr'?s.replace('.',',')+' $':'$'+s; };
 
+/* 15 nov. 2026 (Igal : « rajouter un lien pour qu'ils accèdent directement à leur parfum… et avoir l'analytique de ce qui s'est
+   passé lorsqu'ils ont cliqué ») : chaque parfum du message porte le lien de SA page sur le site (perfumestrade.com pour un particulier,
+   wholesale.perfumestrade.com pour un grossiste), avec une étiquette de suivi :
+     utm_source=whatsapp · utm_medium=mailing · utm_campaign=<secteur>-<n° de l'offre> · utm_content=<code du client>
+   Le code du client est un numéro calculé à partir de son nom (jamais son nom, son téléphone ni son email dans l'adresse) ; il est gardé
+   avec l'envoi (mailing-v1) pour relier ensuite les visites (Google Analytics) et les commandes (attribution WooCommerce) au client.
+   Vérifié le 15 nov. sur le site : l'adresse ?post_type=product&p=<n°> mène à la page du parfum en GARDANT l'étiquette. */
+function mlCode(nom){ let h=2166136261; const t=cNorm(nom); for(let i=0;i<t.length;i++){ h^=t.charCodeAt(i); h=Math.imul(h,16777619)>>>0; } return 'c'+h.toString(36); }
+function mlLienSite(f,sec,o){
+  let S={}; try{ S=lit('site-stock-v1',{})||{}; }catch(e){}
+  const cote=sec==='gros'?'g':'d', k0=String(f.bc||''), k=S[k0]?k0:Object.keys(S).find(x=>!x.startsWith('_')&&x.replace(/^0+/,'')===k0.replace(/^0+/,''));
+  const e=k&&S[k], c=e&&e[cote]; if(!c||c.id==null||c.id===''||c.etat==='brouillon') return '';
+  const B=(S._base&&typeof S._base==='object')?S._base:{}, base=String(B[cote]||(cote==='g'?'https://wholesale.perfumestrade.com':'https://perfumestrade.com')).replace(/\/+$/,'');
+  const off=mlOffre(), camp=(sec==='gros'?'wholesale':'retail')+'-'+(off.id||'apercu');
+  return base+'/?post_type=product&p='+encodeURIComponent(c.id)+'&utm_source=whatsapp&utm_medium=mailing&utm_campaign='+encodeURIComponent(camp)+'&utm_content='+mlCode(o.nom);
+}
 /* le message d'un client, dans SA langue, avec SES parfums */
 function mlMessage(o){
   const off=mlOffre(), lg=o.lg, sec=ML_VUE.sec;
   let t=String((off.msg&&off.msg[lg])||ML_MSG[sec][lg]);
   const lignes=o.pf.map(x=>{ const P=mlPrix(x.f,sec,off.remise);
-    return '• '+mlLib(x.f)+' — '+pxMot(P.p,lg)+(P.p<P.base-0.005?' ('+ML_AU_LIEU[lg]+' '+pxMot(P.base,lg)+')':''); }).join('\n');
+    const u=mlLienSite(x.f,sec,o);
+    return '• '+mlLib(x.f)+' — '+pxMot(P.p,lg)+(P.p<P.base-0.005?' ('+ML_AU_LIEU[lg]+' '+pxMot(P.base,lg)+')':'')+(u?'\n'+u:''); }).join('\n');
   t=t.replace(/\{prenom\}/gi,o.prenom||'').replace(/\{fin\}/gi,dMot(off.fin,lg)).replace(/\{parfums\}/gi,lignes);
   if(!/\{parfums\}/i.test(String((off.msg&&off.msg[lg])||ML_MSG[sec][lg]))) t=t.replace(/\s+$/,'')+'\n\n'+lignes;
   return t.replace(/\s+$/,'')+'\n\n'+(typeof CT_STOP!=='undefined'?CT_STOP[lg]:'');
@@ -328,7 +345,7 @@ function mlDessine(){
           /* pas de prix barré (Sam, 11 nov. 2026) : le prix habituel, une flèche, le prix offert */
           return `<div><span data-nolang>${esc(mlLib(x.f))}</span> <small>${sec==='gros'?`· ${x.qt} ${T('fl. achetés','bottles bought','fr. comprados')} · ${x.f.q} ${T('en stock','in stock','en stock')}`:`· ${T('acheté le','bought on','comprado el')} ${dUS(x.d)}`}</small>
             <span class="px">${P.p<P.base-0.005?`<span class="av">${money2(P.base)} →</span> <em>${money2(P.p)}</em>`:`<b>${money2(P.p)}</b>`}${P.bloque?` <span class="pl" title="${T('La remise est arrêtée au prix plancher de ce parfum','The discount stops at this fragrance\'s floor price','El descuento se detiene en el precio mínimo de este perfume')}">${T('plancher','floor','mínimo')}</span>`:''}</span></div>`; }).join('')}</td>
-        <td class="act"><button class="btn wa" data-mlwa="${i}"${o.tel?'':' disabled'}>WhatsApp</button> <button class="btn" data-mlap="${i}">${T('Aperçu','Preview','Vista previa')}</button> <button class="btn" data-mlstop="${i}" title="${T('Ne plus jamais lui envoyer d\'offres','Never send them offers again','No volver a enviarle ofertas')}">${T('Désinscrire','Unsubscribe','Dar de baja')}</button>
+        <td class="act"><button class="btn wa" data-mlwa="${i}"${o.tel?'':' disabled'}>WhatsApp</button> <button class="btn" data-mlap="${i}">${T('Aperçu','Preview','Vista previa')}</button> <button class="btn" data-mlstop="${i}" title="${T('Le client a répondu STOP : il ne reçoit plus d\'offres, et WhatsApp s\'ouvre avec la réponse de remerciement','The customer replied STOP: no more offers, and WhatsApp opens with the thank-you reply','El cliente respondió STOP: no recibe más ofertas, y WhatsApp se abre con la respuesta de agradecimiento')}">${T('Désinscrire (STOP)','Unsubscribe (STOP)','Dar de baja (STOP)')}</button>
           ${e?`<span class="ok">${T('Envoyé le','Sent on','Enviado el')} ${dUS(e.t)} ${esc(e.h||'')} <button class="btn nenv" data-mlnon="${i}" title="${T('WhatsApp a été ouvert mais le message n\'est pas parti : la ligne redevient à envoyer','WhatsApp was opened but the message was not sent: the line goes back to « to send »','WhatsApp se abrió pero el mensaje no salió: la línea vuelve a « por enviar »')}">${T('Pas envoyé','Not sent','No enviado')}</button></span>`:''}</td></tr>
         ${ML_VUE.ap[o.nom]?`<tr class="ap"><td colspan="6"><pre data-nolang>${esc(mlMessage(o))}</pre></td></tr>`:''}`; }).join('')}</tbody></table></div>`
       :`<div class="mlvide">${T('Aucun client dans cette liste.','No customer in this list.','Ningún cliente en esta lista.')}</div>`}
@@ -353,9 +370,11 @@ function mlEnvoieWa(o){
   if(!o||!o.tel) return;
   const off=mlOffre();
   if(!off.id){ off.id='o'+Date.now().toString(36); off.t=new Date().toISOString(); off.u=USR||''; }
-  mlLance('https://wa.me/'+o.tel+'?text='+encodeURIComponent(mlMessage(o)));
+  /* 15 nov. 2026 (Igal) : toujours WhatsApp WEB — le lien wa.me pouvait ouvrir l'application WhatsApp du Mac, à un autre nom que celui
+     de l'entreprise ; WhatsApp Web montre le compte branché par le QR code (comme les New Arrivals) */
+  mlLance('https://web.whatsapp.com/send?phone='+o.tel+'&text='+encodeURIComponent(mlMessage(o)));
   const E=ML.envois[off.id]=ML.envois[off.id]||{};
-  E[o.nom]={t:auj(),h:(typeof heureMiami==='function'?heureMiami(new Date().toISOString()):''),u:USR||'',par:'whatsapp',sec:ML_VUE.sec};
+  E[o.nom]={t:auj(),h:(typeof heureMiami==='function'?heureMiami(new Date().toISOString()):''),u:USR||'',par:'whatsapp',sec:ML_VUE.sec,code:mlCode(o.nom)};
   mlSauve();
   mlJournal('offre envoyée par WhatsApp (Mailing '+(ML_VUE.sec==='gros'?'Wholesale':'Particuliers')+', remise '+(+off.remise||0)+' %, '+o.pf.length+' parfum'+(o.pf.length>1?'s':'')+')',o.nom);
   mlDessine();
@@ -376,13 +395,24 @@ function mlCsv(){
   mlJournal('fichier email préparé pour Klaviyo ou Brevo (Mailing '+(sec==='gros'?'Wholesale':'Particuliers')+', '+L.length+' adresses)','');
   mlDit(T(L.length+' adresses dans le fichier. Importe-le dans Klaviyo ou Brevo.',L.length+' addresses in the file. Import it into Klaviyo or Brevo.',L.length+' direcciones en el archivo. Impórtalo en Klaviyo o Brevo.'));
 }
+/* 15 nov. 2026 (Igal : « si le client répond STOP, qu'on puisse lui répondre qu'on a bien compris, qu'on lui souhaite une bonne
+   continuation et qu'il est toujours le bienvenu ») : WhatsApp Web ne laisse pas l'ERP lire les réponses — c'est la personne qui voit
+   le STOP et clique « Désinscrire (STOP) ». L'ERP le retire alors de toutes les offres (la même case que la liste de diffusion de
+   Clients) et ouvre WhatsApp avec la réponse toute prête, dans la langue du client. */
+const ML_STOP_REP={
+  fr:"Bonjour {prenom},\n\nC'est bien noté : vous ne recevrez plus nos offres. Merci pour votre confiance, et très bonne continuation. Vous serez toujours le bienvenu chez Perfumes Trade.\n\nPerfumes Trade",
+  en:"Hello {prenom},\n\nNoted: you will no longer receive our offers. Thank you for your trust, and all the best. You are always welcome at Perfumes Trade.\n\nPerfumes Trade",
+  es:"Hola {prenom},\n\nQueda anotado: ya no recibirá nuestras ofertas. Gracias por su confianza, y que le vaya muy bien. Siempre será bienvenido en Perfumes Trade.\n\nPerfumes Trade"};
+const mlStopTexte=o=>ML_STOP_REP[o.lg]?ML_STOP_REP[o.lg].replace(/\{prenom\}/g,o.prenom||''):ML_STOP_REP.en.replace(/\{prenom\}/g,o.prenom||'');
 function mlStop(o){
   if(!o) return;
   if(!confirm(T(o.nom+' ne recevra plus jamais d\'offres. Continuer ?',o.nom+' will never receive offers again. Continue?',o.nom+' no volverá a recibir ofertas. ¿Continuar?'))) return;
   let C={}; try{ C=lit(KCLI,{})||{}; }catch(e){}
   C[o.nom]=Object.assign({},C[o.nom]||{},{nom:o.nom,nodiff:true,maj:new Date().toISOString()}); ecrit(KCLI,C);
-  mlJournal('client désinscrit des offres (Mailing)',o.nom);
+  mlJournal('client désinscrit des offres (Mailing — STOP)',o.nom);
+  if(o.tel) mlLance('https://web.whatsapp.com/send?phone='+o.tel+'&text='+encodeURIComponent(mlStopTexte(o)));
   mlConstruit(); mlDessine();
+  mlDit(o.tel?T(o.nom+' est désinscrit. WhatsApp est ouvert avec la réponse prête : appuie sur Envoyer.',o.nom+' is unsubscribed. WhatsApp is open with the reply ready: press Send.',o.nom+' está dado de baja. WhatsApp está abierto con la respuesta lista: pulsa Enviar.'):T(o.nom+' est désinscrit.',o.nom+' is unsubscribed.',o.nom+' está dado de baja.'));
 }
 function mlLangue(o,lg){
   let C={}; try{ C=lit(KCLI,{})||{}; }catch(e){}
@@ -421,7 +451,7 @@ document.addEventListener('change',e=>{
 
 /* les administrateurs de l'ERP : les rôles Admin et Patron, et eux seuls (comme l'Analytique) */
 function mlAdmin(){ const s=session(); return !!s&&/^(admin|patron)$/.test(String(s.role||'')); }
-window.__ml={mlConstruit,mlListe,mlPrix,mlMessage,mlDessine,ML_VUE,CL:()=>ML_CL,ETAT:()=>ML};
+window.__ml={mlStopTexte,mlConstruit,mlListe,mlPrix,mlMessage,mlDessine,ML_VUE,CL:()=>ML_CL,ETAT:()=>ML};
 try{ piedSession(); }catch(e){}
 (function(){
   const s=session(); if(!s) return;

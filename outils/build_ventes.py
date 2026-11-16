@@ -487,6 +487,24 @@ padding:11px 14px;font-size:13.5px;color:var(--ink-2);line-height:1.6}
 
 CSS_QUOTES = r'''
 .lsc{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:0 0 22px}
+.plc{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--iris);border-radius:14px;padding:18px 20px;margin:0 0 22px}
+.plc .plc-h{font-size:18px;font-weight:700;margin:0}
+.plc .plc-t p{color:var(--ink-2);font-size:14px;margin:4px 0 12px}
+.plc .plc-n{display:inline-block;background:var(--iris);color:#fff;border-radius:999px;padding:1px 9px;font-size:12.5px;font-weight:700;margin-left:8px;vertical-align:2px}
+.plc-l td{vertical-align:middle}.plc-l small{display:block;color:var(--ink-3);font-size:12px}
+.plc-l .et.nouvelle{background:var(--iris);color:#fff}
+.plc-d{background:var(--surface-2);border-radius:10px;padding:10px 14px;margin:4px 0 8px}
+.plc-d .lg{display:grid;grid-template-columns:50px minmax(0,1fr) 110px 110px;gap:10px;padding:5px 0;border-bottom:1px solid var(--line)}
+.plc-d .lg:last-child{border-bottom:0}
+.plc-d .att{color:var(--crit);font-weight:600}
+.plc-b{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.plc-dem{margin-top:12px;font-size:13px;color:var(--ink-2)}.plc-dem summary{cursor:pointer;font-weight:600}
+.plc-j{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
+.plc-j h3{font-size:15px;margin:0 0 6px}.plc-j .plc-jr{font-size:13.5px;color:var(--ink-2);margin:0 0 8px}
+.plc-j .plc-jc{display:grid;grid-template-columns:minmax(0,220px) 70px minmax(0,1fr);gap:4px 12px;font-size:13.5px;margin:0 0 10px}
+.plc-j .plc-jc b{font-weight:700}.plc-j .plc-jc span{color:var(--ink-2)}
+.plc-jt{width:100%;border-collapse:collapse;font-size:13px}.plc-jt td{padding:5px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.plc-jt td.h{white-space:nowrap;color:var(--ink-2)}.plc-jt .ko{color:var(--crit);font-weight:600}.plc-jt .bon{color:var(--good);font-weight:600}
 .lsc .lsc-h{font-size:18px;font-weight:700;margin:0}
 .lsc-erp{display:flex;gap:10px;margin:18px 0}
 .lsc-maj{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:0 0 12px;color:var(--ink-2);font-size:13.5px}
@@ -3774,6 +3792,113 @@ async function lsqAide(){
     $('lsq-fl').innerHTML=`${r3('En secours, sans extension : fais glisser ce bouton dans la barre des favoris de Chrome, puis clique-le sur la page Devis de Lightspeed.','As a fallback, without the extension: drag this button into Chrome\'s bookmarks bar, then click it on Lightspeed\'s Quotes page.','De respaldo, sin extensión: arrastra este botón a la barra de marcadores de Chrome y púlsalo en la página de cotizaciones de Lightspeed.')} <a class="btn lsq-fv" href="${esc(j.lien)}" onclick="event.preventDefault();alert('${r3('Fais-le glisser dans la barre des favoris (ne clique pas dessus ici).','Drag it to the bookmarks bar (do not click it here).','Arrástralo a la barra de marcadores (no pulses aquí).')}')">Devis → ERP</a>`;
   }catch(e){ $('lsq-fl').textContent=''; }
 }
+/* ================= LES COMMANDES REÇUES DE LA PRICE LIST EN DIRECT (15 nov. 2026) =================
+   Sam, via Igal : ses clients de gros ouvrent la price list en direct (cockpit /pl/…, email + code), mettent des parfums dans
+   leur panier — jamais plus que le disponible — et envoient la commande. Choix d'Igal : la commande devient une COTE À VALIDER.
+   Le cockpit range les commandes (pricelist-commandes-v1, lui seul y écrit) ; ce que Sam en fait est noté ici
+   (pricelist-suivi-v1, l'ERP seul y écrit) : « Faire la cote » prépare la cote (client, canal Gros, parfums, quantités, prix de
+   la commande) dans la fenêtre habituelle — Sam vérifie et enregistre ; « Archiver » la range sans cote. Tant que Sam ne l'a
+   pas traitée, la price list retire ses flacons du disponible (7 jours au plus) ; rien ne sort du stock avant la facture. */
+const KPLC='pricelist-commandes-v1', KPLS='pricelist-suivi-v1', KPLD='pricelist-demandes-v1', KPLV='pricelist-visites-v1';
+/* 15 nov. 2026 (Igal : « un journal des horaires auxquels les clients se sont connectés… voir s'ils se sont connectés à plusieurs
+   reprises dans la journée et si ce système fonctionne bien ») : le cockpit note chaque geste (pricelist-visites-v1) — code envoyé
+   ou pas parti, email non autorisé, code faux, entrée, ouverture de la page, commande, déconnexion. Ici : aujourd'hui, client par
+   client, combien de fois et à quelles heures ; puis le journal complet (les 150 derniers). Heures de Miami. */
+const PLV_LIB={visite:['A ouvert la price list','Opened the price list','Abrió la lista de precios'],entree:['Entré avec son code','Signed in with the code','Entró con su código'],
+  code:['Code envoyé par email','Code sent by email','Código enviado por correo'],'code-echec':['L\'email du code n\'est pas parti','The code email was not sent','El correo del código no salió'],
+  refuse:['Email non autorisé : rien envoyé','Email without access: nothing sent','Correo sin acceso: no se envió nada'],faux:['Code faux','Wrong code','Código incorrecto'],
+  commande:['Commande envoyée','Order sent','Pedido enviado'],sortie:['S\'est déconnecté','Signed out','Cerró sesión']};
+const PLV_APP={telephone:['téléphone','phone','teléfono'],ordinateur:['ordinateur','computer','computadora'],tablette:['tablette','tablet','tableta']};
+const plvJour=t=>{ try{ return new Date(t).toLocaleDateString('en-CA',{timeZone:'America/New_York'}); }catch(e){ return ''; } };
+const plvHeure=t=>{ try{ return new Date(t).toLocaleTimeString(r3('fr-FR','en-US','es-ES'),{timeZone:'America/New_York',hour:'numeric',minute:'2-digit'}); }catch(e){ return ''; } };
+function plvBloc(V){
+  if(!V.length) return '';
+  const auj=plvJour(new Date().toISOString()), A=V.filter(x=>plvJour(x.t)===auj&&(x.quoi==='visite'||x.quoi==='entree'));
+  const parC={}; A.forEach(x=>{ const k=x.nom||x.email; (parC[k]=parC[k]||[]).push(x); });
+  const C=Object.entries(parC).sort((a,b)=>b[1].length-a[1].length);
+  return `<div class="plc-j"><h3>${r3('Journal des connexions','Sign-in log','Registro de conexiones')}</h3>
+    <p class="plc-jr">${C.length?r3('Aujourd\'hui','Today','Hoy')+` : <b data-nolang>${nf(A.length)}</b> ${r3('ouverture(s) de la price list par','price list opening(s) by','apertura(s) de la lista por')} <b data-nolang>${nf(C.length)}</b> ${r3('client(s)','customer(s)','cliente(s)')}.`:r3('Aucune connexion aujourd\'hui.','No sign-in today.','Ninguna conexión hoy.')}</p>
+    ${C.length?`<div class="plc-jc" data-nolang>${C.map(([k,L])=>`<b>${esc(k)}</b><span>${nf(L.length)} ${r3('fois','times','veces')}</span><span>${L.slice().reverse().map(x=>esc(plvHeure(x.t))).join(' · ')}</span>`).join('')}</div>`:''}
+    <details><summary style="cursor:pointer;font-weight:600;font-size:13.5px">${r3('Tout le journal','Full log','Registro completo')} (${nf(Math.min(V.length,150))})</summary>
+      <table class="plc-jt"><tbody>${V.slice(0,150).map(x=>{ const lib=PLV_LIB[x.quoi]||[x.quoi,x.quoi,x.quoi];
+        const cl=(x.quoi==='code-echec'||x.quoi==='refuse'||x.quoi==='faux')?'ko':x.quoi==='commande'?'bon':'';
+        return `<tr><td class="h" data-nolang>${esc(quandMiami(x.t))}</td><td data-nolang><b>${esc(x.nom||'—')}</b><br><small>${esc(x.email||'')}</small></td>
+          <td><span class="${cl}">${r3(...lib)}</span>${x.num?` <b data-nolang>${esc(x.num)}</b> <span data-nolang>${money2(x.total||0)}</span>`:''}</td>
+          <td class="h">${x.app&&PLV_APP[x.app]?r3(...PLV_APP[x.app]):''}</td></tr>`; }).join('')}</tbody></table></details></div>`;
+}
+let PLC_OUV='', PLC_TOUT=false;
+const plcTous=()=>{ const L=lit(KPLC,[]); return Array.isArray(L)?L.filter(c=>c&&c.num):[]; };
+const plcSuivi=()=>{ const S=lit(KPLS,{}); return S&&typeof S==='object'&&!Array.isArray(S)?S:{}; };
+const plcEtat=(c,S)=>(S[c.num]&&S[c.num].etat)||'nouvelle';
+const PLC_LIB={nouvelle:['Nouvelle','New','Nueva'],cote:['Cote faite','Quote made','Cotización hecha'],archive:['Archivée','Archived','Archivada']};
+const plcNb=c=>(c.lignes||[]).reduce((a,l)=>a+(+l.q||0),0);
+function plcPeint(){
+  const el=$('plc'); if(!el) return;
+  const S=plcSuivi(), T=plcTous(), nouv=T.filter(c=>plcEtat(c,S)==='nouvelle');
+  const V=PLC_TOUT?T:T.filter(c=>plcEtat(c,S)==='nouvelle'||Date.now()-Date.parse(c.t||0)<14*864e5&&plcEtat(c,S)!=='archive');
+  const D=(lit(KPLD,[])||[]).filter(x=>x&&x.email), VIS=(lit(KPLV,[])||[]).filter(x=>x&&x.t&&x.quoi);
+  el.hidden=!T.length&&!D.length&&!VIS.length;
+  if(el.hidden) return;
+  el.innerHTML=`<div class="plc-t"><h2 class="plc-h">${r3('Commandes reçues de la price list','Orders received from the price list','Pedidos recibidos de la lista de precios')}${nouv.length?`<span class="plc-n">${nf(nouv.length)}</span>`:''}</h2>
+      <p>${r3('Vos clients autorisés commandent depuis la price list en direct (jamais plus que le stock disponible). Rien n\'est payé en ligne et rien ne sort du stock : « Faire la cote » prépare la cote, vous vérifiez, puis vous l\'enregistrez.','Your authorized customers order from the live price list (never more than the available stock). Nothing is paid online and nothing leaves the stock: “Make the quote” prepares the quote, you check it, then you save it.','Sus clientes autorizados piden desde la lista de precios en vivo (nunca más que el stock disponible). Nada se paga en línea y nada sale del stock: «Hacer la cotización» la prepara, usted la revisa y luego la guarda.')}</p></div>
+    ${V.length?`<table class="ql plc-l"><thead><tr><th></th><th>${r3('Commande','Order','Pedido')}</th><th>${r3('Client','Customer','Cliente')}</th><th class="r">${r3('Flacons','Bottles','Frascos')}</th><th class="r">Total</th><th>${r3('État','Status','Estado')}</th><th></th></tr></thead><tbody>
+      ${V.slice(0,80).map(c=>{ const e=plcEtat(c,S), on=PLC_OUV===c.num, s=S[c.num]||{};
+        const ligne=`<tr class="qr ${on?'on':''}" data-plc="${esc(c.num)}"><td class="chev">${on?'⌄':'›'}</td>
+          <td data-nolang><b>${esc(c.num)}</b><small>${esc(quandMiami(c.t))}</small></td>
+          <td data-nolang><b>${esc(c.client||'—')}</b><small>${esc(c.email||'')}</small></td>
+          <td class="r" data-nolang>${nf(plcNb(c))}<small>${nf((c.lignes||[]).length)} ${r3('parfums','perfumes','perfumes')}</small></td>
+          <td class="r" data-nolang><b>${money2(c.total||0)}</b></td>
+          <td><span class="et ${e}">${r3(...PLC_LIB[e])}</span>${s.par?`<small data-nolang>${esc(s.par)} · ${esc(quandMiami(s.t))}</small>`:''}</td>
+          <td class="r">${e==='nouvelle'?`<button class="btn pri sm" data-plca="cote" data-plc-n="${esc(c.num)}">${r3('Faire la cote','Make the quote','Hacer la cotización')}</button>`:''}</td></tr>`;
+        return on?ligne+`<tr class="qd"><td colspan="7">${plcDetail(c,e)}</td></tr>`:ligne; }).join('')}
+      </tbody></table>`:`<p class="ecr">${r3('Aucune commande en attente.','No order waiting.','Ningún pedido pendiente.')}</p>`}
+    <div class="plc-b">${T.length>V.length||PLC_TOUT?`<button class="btn sm" id="plc-tout">${PLC_TOUT?r3('Voir seulement les récentes','Show recent only','Ver solo las recientes'):r3('Voir toutes les commandes','Show all orders','Ver todos los pedidos')+' ('+nf(T.length)+')'}</button>`:''}
+      <button class="btn sm" id="plc-lien">${r3('Copier le lien de la price list','Copy the price list link','Copiar el enlace de la lista')}</button><span id="plc-msg" style="font-size:12.5px;color:var(--good)"></span></div>
+    ${D.length?`<details class="plc-dem"><summary>${nf(D.length)} ${r3('demande(s) d\'accès d\'emails non autorisés','access request(s) from emails without access','solicitud(es) de acceso de correos sin acceso')}</summary>
+      <p>${r3('Ces emails ont demandé un code sans être autorisés : ils n\'ont rien reçu. Pour donner l\'accès : Clients › la fiche du client › Coordonnées › case « price list en direct ».','These emails asked for a code without access: they received nothing. To give access: Customers › the customer’s card › Contact details › “live price list” box.','Estos correos pidieron un código sin acceso: no recibieron nada. Para dar acceso: Clientes › la ficha del cliente › Coordenadas › casilla «lista de precios en vivo».')}</p>
+      <div data-nolang>${D.slice(0,30).map(x=>`${esc(x.email)} <small>· ${esc(quandMiami(x.t))}</small>`).join('<br>')}</div></details>`:''}
+    ${plvBloc(VIS)}`;
+  el.querySelectorAll('tr.qr[data-plc]').forEach(tr=>tr.onclick=ev=>{ if(ev.target.closest('button')) return; PLC_OUV=PLC_OUV===tr.dataset.plc?'':tr.dataset.plc; plcPeint(); });
+  el.querySelectorAll('[data-plca]').forEach(b=>b.onclick=ev=>{ ev.stopPropagation(); plcAction(b.dataset.plca,b.dataset.plcN); });
+  const t=$('plc-tout'); if(t) t.onclick=()=>{ PLC_TOUT=!PLC_TOUT; plcPeint(); };
+  $('plc-lien').onclick=async()=>{ const m=$('plc-msg');
+    try{ const r=await fetch(CK_URL+'/api/pl/'+CK_ORG+'/lien'); const j=await r.json(); await navigator.clipboard.writeText(j.url); m.textContent=r3('lien copié','link copied','enlace copiado'); }
+    catch(e){ m.textContent=r3('Le lien se donne depuis l\'ERP en ligne.','The link comes from the online ERP.','El enlace se obtiene desde el ERP en línea.'); }
+    setTimeout(()=>{ m.textContent=''; },2500); };
+}
+function plcDetail(c,e){
+  return `<div class="plc-d">${(c.lignes||[]).map(l=>{ const ok=!!IDX[l.k];
+      return `<div class="lg" data-nolang><span><b>${nf(l.q)}</b> ×</span><span><b>${esc(ok?fNomComplet(l.k):[l.marque,l.nom,l.ml?l.ml+' oz':'',l.type].filter(Boolean).join(' '))}</b><small>UPC ${esc(l.bc||'')}${ok?'':' — <span class="att">'+r3('fiche introuvable dans le catalogue','card not found in the catalog','ficha no encontrada en el catálogo')+'</span>'}</small></span><span class="r">@ ${money2(l.p)}</span><span class="r"><b>${money2((+l.q||0)*(+l.p||0))}</b></span></div>`; }).join('')}
+    ${c.note?`<div class="note"><b>${r3('Note du client','Customer note','Nota del cliente')}</b> — <span data-nolang>${esc(c.note)}</span></div>`:''}
+    <div class="plc-b">${e==='nouvelle'?`<button class="btn pri" data-plca="cote" data-plc-n="${esc(c.num)}">${r3('Faire la cote','Make the quote','Hacer la cotización')}</button><button class="btn" data-plca="arch" data-plc-n="${esc(c.num)}">${r3('Archiver sans cote','Archive without a quote','Archivar sin cotización')}</button>`
+      :e==='archive'?`<button class="btn" data-plca="rouvre" data-plc-n="${esc(c.num)}">${r3('Remettre en attente','Put back as waiting','Volver a pendiente')}</button>`:''}</div></div>`;
+}
+function plcMarque(num,etat){
+  const S=plcSuivi(); if(etat) S[num]={etat,par:USR||'(non renseigné)',t:new Date().toISOString()}; else delete S[num]; ecrit(KPLS,S);
+  try{ const J=lit(KJOU,[]); J.push({t:new Date().toISOString(),u:USR||'(non renseigné)',act:'vente',lib:'commande '+num+' de la price list : '+(etat==='cote'?'cote préparée':etat==='archive'?'archivée sans cote':'remise en attente'),n:0,impact:0,det:[]}); ecrit(KJOU,J); }catch(e){}
+}
+function plcAction(a,num){
+  const c=plcTous().find(x=>x.num===num); if(!c) return;
+  if(a==='arch'){ if(!confirm(r3('Archiver la commande '+num+' sans en faire une cote ?','Archive order '+num+' without making a quote?','¿Archivar el pedido '+num+' sin hacer una cotización?'))) return; plcMarque(num,'archive'); PLC_OUV=''; plcPeint(); return; }
+  if(a==='rouvre'){ plcMarque(num,''); plcPeint(); return; }
+  if(a!=='cote') return;
+  const L=(c.lignes||[]).filter(l=>l&&l.k&&IDX[l.k]&&+l.q>0).map(l=>({cle:l.k,q:+l.q,p:+l.p,pf:true}));
+  const manque=(c.lignes||[]).length-L.length;
+  if(!L.length){ alert(r3('Aucun parfum de cette commande n\'est retrouvé dans le catalogue.','None of the perfumes in this order is found in the catalog.','Ningún perfume de este pedido se encuentra en el catálogo.')); return; }
+  if(manque&&!confirm(r3(manque+' parfum(s) de la commande ne sont plus dans le catalogue et ne seront pas dans la cote. Continuer ?',manque+' perfume(s) of the order are no longer in the catalog and will not be in the quote. Continue?',manque+' perfume(s) del pedido ya no están en el catálogo y no estarán en la cotización. ¿Continuar?'))) return;
+  try{ const br=JSON.parse(localStorage.getItem('cote-brouillon')||'null');
+    if(br&&Date.now()-(+br.t||0)<24*3600e3&&Array.isArray(br.lignes)&&br.lignes.length
+      &&!confirm(r3('Une cote est déjà en cours sur cet ordinateur (non enregistrée). La remplacer par la commande '+num+' ?','A quote is already in progress on this computer (not saved). Replace it with order '+num+'?','Ya hay una cotización en curso en esta computadora (sin guardar). ¿Reemplazarla por el pedido '+num+'?'))) return; }catch(e){}
+  const note=('Commande '+num+' (price list)'+(c.note?' — '+c.note:'')).slice(0,500);
+  try{ localStorage.setItem('cote-brouillon',JSON.stringify({t:Date.now(),client:c.client||'',note,canal:'Gros',lignes:L,pl:num})); }catch(e){ return; }
+  plcMarque(num,'cote');
+  location.href='quotes.html';
+}
+function plcInit(){
+  if(!$('plc')){ const s=document.createElement('section'); s.id='plc'; s.className='plc'; s.hidden=true; $('docs').before(s); }
+  plcPeint();
+  window.addEventListener('ck-maj',e=>{ try{ const k=(e.detail&&e.detail.cles)||[]; if(k.includes(KPLC)||k.includes(KPLS)||k.includes(KPLD)||k.includes(KPLV)) plcPeint(); }catch(_){} });
+}
 function lscInit(){
   if(!$('lsc')){ const s=document.createElement('section'); s.id='lsc'; s.className='lsc'; $('docs').after(s); }  /* ordre : la fenêtre d'une cote (si ouverte), les cotes de l'ERP, puis celles de Lightspeed */
   lscPeint();
@@ -3975,7 +4100,7 @@ if(MODE_QUOTES) setTimeout(()=>{
         try{ if(br.canal&&[...$('v-canal').options].some(o=>o.value===br.canal)) $('v-canal').value=br.canal; majAide(); }catch(e){}
         peintPanier(); try{ recap(); }catch(e){}
         $('v-msg').textContent=MODE_OFFRE?r3('Offre en cours retrouvée (brouillon gardé sur cet ordinateur) — vérifie-la, puis enregistre-la ou clique « Vider ».','Offer in progress recovered (draft kept on this computer) — check it, then save it or click “Clear”.','Oferta en curso recuperada (borrador guardado en este ordenador) — revísala, luego guárdala o haz clic en «Vaciar».')
-          :(br.offre?r3('Cote faite depuis l\'offre '+br.offre+' — les parfums sont aux prix de l\'offre : ajuste les quantités, puis enregistre.','Quote made from offer '+br.offre+' — perfumes are at the offer prices: adjust the quantities, then save.','Cotización hecha desde la oferta '+br.offre+' — los perfumes están a los precios de la oferta: ajusta las cantidades y guarda.')
+          :br.pl?r3('Cote faite depuis la commande '+br.pl+' reçue de la price list — vérifie les quantités et les prix, puis enregistre-la.','Quote made from order '+br.pl+' received from the price list — check the quantities and prices, then save it.','Cotización hecha desde el pedido '+br.pl+' recibido de la lista de precios — verifique las cantidades y los precios, luego guárdela.'):(br.offre?r3('Cote faite depuis l\'offre '+br.offre+' — les parfums sont aux prix de l\'offre : ajuste les quantités, puis enregistre.','Quote made from offer '+br.offre+' — perfumes are at the offer prices: adjust the quantities, then save.','Cotización hecha desde la oferta '+br.offre+' — los perfumes están a los precios de la oferta: ajusta las cantidades y guarda.')
           :r3('Cote en cours retrouvée (brouillon gardé sur cet ordinateur) — vérifie-la, puis enregistre-la ou clique « Vider ».','Quote in progress recovered (draft kept on this computer) — check it, then save it or click “Clear”.','Cotización en curso recuperada (borrador guardado en este ordenador) — revísala y guárdala, o pulsa «Vaciar».')); } } catch(e){} }
   /* ---- la liste des devis, comme dans la caisse Lightspeed que Sam connaît ----
      Filtres (état, client, numéro), une ligne par devis : numéro et heure, client
@@ -4142,6 +4267,7 @@ if(MODE_QUOTES) setTimeout(()=>{
   }
   try{ DOCS_F='devis'; peintDocs(); }catch(e){}
   if(!MODE_OFFRE) try{ lscInit(); }catch(e){ try{ console.error('cotes Lightspeed :',e); }catch(_){} }
+  if(!MODE_OFFRE) try{ plcInit(); }catch(e){ try{ console.error('commandes de la price list :',e); }catch(_){} }
   /* le devis emis et refermé : on repart propre pour le suivant */
   $('doc-x').addEventListener('click',()=>{ try{ ouvreVente(); }catch(e){} });
   /* depuis le document ouvert d'une cote : « Modifier les parfums et les prix » le rouvre dans le formulaire */

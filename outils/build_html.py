@@ -7336,5 +7336,6 @@ for i in range(1,10):
     out=out.replace(f'__A{i}__', n(S['an'].get(str(i),0)))
 open('catalogue.html','w').write(enligne(out))
 import _prixsites; _prixsites.ecrit('.')   # lib/prixsites.js : les prix des fiches publiés pour le cockpit
+import _pricelist; _pricelist.ecrit('.')   # lib/pricelist.js : la price list en direct des clients de gros (15 nov. 2026)
 import _arrivage; _arrivage.ecrit('.')   # lib/arrivage.js : la fenêtre des nouveaux arrivages (chargée à la demande)
 import os;print('catalogue.html',round(os.path.getsize('catalogue.html')/1024),'Ko')

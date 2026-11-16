@@ -33,12 +33,16 @@ try:
         def ouvre(lg='fr'):
             pg = b.new_page(viewport={'width': 1500, 'height': 1000}); pg.on('pageerror', lambda e: err.append(str(e)))
             pg.goto(f'http://127.0.0.1:{port}/accueil.html'); pg.wait_for_timeout(300); pg.evaluate(SESS, [STOCK, TEST, MODPC, lg])
-            pg.goto(f'http://127.0.0.1:{port}/inventaire_pc.html'); pg.wait_for_timeout(2500); return pg
+            pg.goto(f'http://127.0.0.1:{port}/inventaire_pc.html'); pg.wait_for_timeout(2500)
+            # 16 nov. 2026 : la page porte maintenant toutes les lignes du Catalogue — on cherche les parfums du test (codes inconnus du Catalogue)
+            pg.fill('#q', 'Marque'); pg.wait_for_timeout(500); return pg
         pg = ouvre()
         q = lambda bc: pg.evaluate("b=>(lit('pc-stock-v1',{})[b]||{}).q", bc)
         tst = lambda bc: pg.evaluate("b=>lit('testeurs-pc-v1',{})[b]||null", bc)
         ligne = lambda bc: pg.locator(f'tr[data-bc="{bc}"]').inner_text()
         case = lambda bc: pg.locator(f'tr[data-bc="{bc}"] input.tck')
+        # 16 nov. 2026 (Igal : « enlève le théorique sur l'inventaire ») : la colonne s'appelle « Tester » et ne montre plus de chiffre
+        check('LE POINT — la colonne s\'appelle « Tester », sans chiffre théorique', pg.locator('thead th.thc').inner_text().strip().lower() == 'tester' and pg.locator(f'tr[data-bc="{A}"] td.thc').inner_text().strip().lower() == 'tester', [pg.locator('thead th.thc').inner_text(), pg.locator(f'tr[data-bc="{A}"] td.thc').inner_text()])
         check('chaque ligne porte une case « tester » ; Alpha ne l\'a pas, Beta (ancien fichier) l\'a', case(A).count() == 1 and not case(A).is_checked() and case(B).is_checked(), ligne(A))
         case(A).check(); pg.wait_for_timeout(500)
         t = tst(A)
@@ -66,12 +70,18 @@ try:
         # 5. la page montre le stock partagé
         v = pg.evaluate("b=>{ const p=P.find(x=>x.bc===b); return [qteTh(p), cpt(p)===undefined]; }", E)
         check('LE POINT — la page montre le stock partagé (2), pas une ancienne copie du comptage (9), et ce vieux comptage est dit périmé', v == [2, True], v)
-        pg.reload(); pg.wait_for_timeout(2500)
+        pg.reload(); pg.wait_for_timeout(2500); pg.fill('#q', 'Marque'); pg.wait_for_timeout(500)
         check('après rechargement : Alpha 4 en vente et son tester', q(A) == 4 and case(A).is_checked() and '+1 tester' in ligne(A), ligne(A))
         pg.close()
         for lg, mot in (('en', 'on sale: 5 → 4'), ('es', 'a la venta: 5 → 4')):
             pg = ouvre(lg); case(A).check(); pg.wait_for_timeout(500); t = ligne(A)
             check(f'traduit ({lg})', mot in t and 'en vente' not in t, t); pg.close()
+        # l'entrepôt garde sa colonne « Théorique » (Sam, 30 oct. 2026 : voir le stock actuel quand il recompte)
+        pg = b.new_page(viewport={'width': 1500, 'height': 1000}); pg.on('pageerror', lambda e: err.append(str(e)))
+        pg.goto(f'http://127.0.0.1:{port}/accueil.html'); pg.wait_for_timeout(300); pg.evaluate(SESS, [STOCK, TEST, MODPC, 'fr'])
+        pg.goto(f'http://127.0.0.1:{port}/stock.html'); pg.wait_for_timeout(2500)
+        check('l\'entrepôt garde « Théorique » avec son chiffre, sans case tester', pg.locator('thead th.thc').inner_text().strip().lower().startswith('théorique') and pg.locator('#tb input.tck').count() == 0 and pg.evaluate("()=>/\\d/.test(document.querySelector('#tb td.thc').innerText)"), pg.locator('thead th.thc').inner_text())
+        pg.close()
         check('aucune erreur JS', not err, err[:3])
         b.close()
 finally:

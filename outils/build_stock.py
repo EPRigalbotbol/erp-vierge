@@ -243,6 +243,7 @@ input.cnt.filled{background:var(--iris-soft);border-color:var(--iris)}
 .vit{display:block;font-family:Inter,sans-serif;font-size:10px;font-weight:600;
 color:var(--iris);letter-spacing:.02em;margin-top:1px}
 /* 16 nov. 2026 : la case « tester » de Perfume City, cochée par la boutique */
+.hcat{display:inline-block;margin-left:8px;font-family:Inter,sans-serif;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:99px;background:var(--crit-soft,#fde8e8);color:var(--crit,#b42318)}
 .tstl{cursor:pointer;white-space:nowrap}.tstl input{margin:0 4px 0 0;vertical-align:-2px;accent-color:var(--iris)}
 .tstl.off{color:var(--ink-3);font-weight:500}
 .tstn{display:block;font-family:Inter,sans-serif;font-size:10px;font-weight:600;color:var(--good)}
@@ -437,7 +438,7 @@ __BARRE__
 
   <div class="tw"><div class="tscroll af"><table>
     <thead><tr>
-      <th class="no o3">N°</th><th data-tri="nom">Produit</th><th data-tri="statut" class="o4">Statut</th><th class="num" data-tri="th">Théorique</th>
+      <th class="no o3">N°</th><th data-tri="nom">Produit</th><th data-tri="statut" class="o4">Statut</th><th class="num thc" data-tri="th">Théorique</th>
       <th class="num" data-tri="compte">Compté</th><th class="num" data-tri="ecart">Écart</th><th class="num o2" data-tri="val">Valeur écart</th>
       <th class="num o1" data-tri="cap">Capital</th>
       <th class="num pv o5" hidden data-tri="pvr">PV détail</th><th class="num pv o5" hidden data-tri="pvw">PV gros</th>
@@ -475,7 +476,7 @@ __IDENT_TOT__
 __MENU__
 __LANGUE__
 </script>
-<script src="donnees/inventaire.js?v=__VER__"></script>__GARDE__
+<script src="donnees/inventaire.js?v=__VER__"></script>__INVPT____GARDE__
 <script>
 __FUSION__
 __COMPTES__
@@ -495,6 +496,40 @@ let P=__DATA__.map(r=>({bc:r[0],nom:r[1],marque:r[2],ml:r[3],type:r[4],
   if(Array.isArray(L)) P=L.map(r=>({bc:r[0],nom:r[1],marque:r[2],ml:r[3],type:r[4],
     qte:r[5],pa:r[6],cap:r[7],v:r[8],cle:r[9],pvr:r[10],pvw:r[11]}));
 }catch(e){} })();
+/* 16 nov. 2026 (Igal : « je veux que l'inventaire de Perfume City soit exactement comme l'inventaire de Perfumes Trade… les mêmes
+   noms à l'identique ») : la boutique ne voyait que les parfums qu'elle avait déjà eus, sous les noms de son ancien fichier — un
+   parfum jamais reçu n'avait pas de ligne, on ne pouvait ni le trouver ni saisir son stock ; 671 lignes portaient un autre nom que
+   le Catalogue. Sa page part maintenant de la MÊME liste que l'entrepôt (le fichier + les fiches créées dans l'ERP, sans les fiches
+   retirées), avec le nom, la marque, la contenance et le type du Catalogue ; la quantité est la sienne (pc-stock-v1), 0 si elle
+   n'en a pas. Rien n'est écrit tant qu'on ne compte pas : une ligne à 0 n'existe pas dans son stock et ne touche pas Shopify.
+   Ce que la boutique a en stock sous un code que le Catalogue ne connaît pas reste affiché, marqué « absent du Catalogue ». */
+if('__CIBLE__'==='pc'){ try{
+  const nz=x=>String(x||'').replace(/[^0-9A-Za-z]/g,'').replace(/^0+/,''), nu=x=>(x==null||x==='')?null:+x;
+  const FMC=lit('fiches-modifiees-v1',{})||{}, m=pcsCarte();
+  const base=(Array.isArray(window.D_INV)?window.D_INV:[]).map(r=>({bc:String(r[0]||''),nom:r[1],marque:r[2],ml:r[3],type:r[4],pa:r[6],cle:r[9],pvr:r[10],pvw:r[11]}));
+  if(base.length){
+    const A=lit('articles-ajoutes-v1',[])||[], deja=new Set(base.map(p=>p.cle));
+    (Array.isArray(A)?A:[]).forEach(o=>{ if(!o||!o.id||deja.has(o.id)) return;
+      base.push({bc:String(o.bc||''),nom:o.nom||'',marque:o.marque||'',ml:String(o.ml||''),type:String(o.type||'').toUpperCase(),pa:nu(o.pa),cle:o.id,pvr:nu(o.pvr),pvw:nu(o.pvw)}); });
+    const pris=new Set(), L=[];
+    base.forEach(p=>{ const f=FMC[p.cle]||{}; if(f.masque) return;
+      ['nom','marque','ml','type'].forEach(k=>{ if(f[k]!=null&&f[k]!=='') p[k]=(k==='type')?String(f[k]).toUpperCase():String(f[k]); });
+      const bcF=(f.bc&&String(f.bc).trim())||p.bc;
+      const k=[bcF,p.bc].concat(String(f.bcs||'').split(/[\s,;]+/)).map(nz).filter(Boolean).concat([String(p.cle||'')]).find(x=>m[x]&&!pris.has(x));
+      const o=k?m[k]:null; if(k) pris.add(k);
+      const pick=(a,b,c)=>nu(a)!=null?nu(a):(nu(b)!=null?nu(b):nu(c));
+      L.push({bc:o?String(o.bc||bcF):bcF, nom:p.nom, marque:p.marque, ml:p.ml, type:p.type,
+        qte:o?Math.max(0,Math.round(+o.q||0)):0, pa:pick(f.pa,p.pa,o&&o.pa), cap:null, v:'non',
+        cle:(o&&o.cle)||p.cle, fiche:p.cle, pvr:pick(f.pvr,p.pvr,o&&o.pvr), pvw:pick(f.pvw,p.pvw,o&&o.pvw), pck:k||null}); });
+    Object.keys(m).forEach(k=>{ if(pris.has(k)) return; const o=m[k]||{};
+      L.push({bc:String(o.bc||''),nom:o.nom||'',marque:o.m||'',ml:o.ml||'',type:o.ty||'',qte:Math.max(0,Math.round(+o.q||0)),pa:nu(o.pa),cap:null,v:'non',
+        cle:o.cle||(o.bc?'b'+o.bc:k),pvr:nu(o.pvr),pvw:nu(o.pvw),pck:k,horsCat:true}); });
+    /* ce que la boutique a en stock d'abord (le plus gros capital en tête, comme à l'entrepôt), puis le reste dans l'ordre du Catalogue */
+    L.forEach((p,i)=>{ p._o=i; });
+    L.sort((a,b)=>((b.qte||0)*(b.pa||0))-((a.qte||0)*(a.pa||0))||((b.qte>0)-(a.qte>0))||a._o-b._o);
+    P=L;
+  }
+}catch(e){ try{ console.warn('inventaire Perfume City : liste du Catalogue non lue',e); }catch(_){} } }
 /* Les parfums ajoutés dans l'ERP (fiche créée à la main, ou par la mise à jour du Sheet
    du 30 sept. 2026) n'étaient pas dans l'inventaire de l'entrepôt : on ne pouvait ni les
    voir ni les compter. Ils y entrent, avec leur quantité. */
@@ -672,11 +707,11 @@ function ligne(p,i){
   const gcls=ec==null?'zero':ec>0?'pos':ec<0?'neg':'zero';
   return `<tr class="${cls}" data-bc="${esc(kc(p))}">
    <td class="no o3">${nf((i||0)+1)}</td>
-   <td><div class="pd" data-fiche="${esc(p.cle||'')}" title="${esc(typeof L3==='function'?L3('Ouvrir la fiche du parfum','Open the perfume card','Abrir la ficha del perfume'):'Ouvrir la fiche du parfum')}"><span class="b">${esc(p.marque)}</span>
-     <span class="n">${esc(p.nom)}</span>
+   <td><div class="pd" data-fiche="${esc(p.fiche||p.cle||'')}" title="${esc(typeof L3==='function'?L3('Ouvrir la fiche du parfum','Open the perfume card','Abrir la ficha del perfume'):'Ouvrir la fiche du parfum')}"><span class="b">${esc(p.marque)}</span>
+     <span class="n">${esc(p.nom)}</span>${p.horsCat?`<span class="hcat">${T3('absent du Catalogue','not in the Catalog','no está en el Catálogo')}</span>`:''}
      <span class="m">${[p.ml?p.ml+' oz':'',p.type].filter(Boolean).join(' · ')} &nbsp;<span class="code">${p.bc}</span></span></div></td>
    <td class="o4"><span class="tag ${vl(p.v)[1]}">${vl(p.v)[0]}</span></td>
-   <td class="num">${qteAtt(p)===0?'<span style="color:var(--ink-3)">0</span>':nf(qteAtt(p))}${tstHtml(p)}</td>
+   <td class="num thc">${'__CIBLE__'==='pc'?tstHtml(p):(qteAtt(p)===0?'<span style="color:var(--ink-3)">0</span>':nf(qteAtt(p)))}</td>
    <td class="num"><input class="cnt${rempli?' filled':''}" type="number" min="0" inputmode="numeric"
        value="${rempli?c:''}" data-bc="${esc(kc(p))}" aria-label="Quantité comptée"></td>
    <td class="num"><span class="gap ${gcls}">${ec==null?'—':(ec>0?'+':'')+nf(ec)}</span></td>
@@ -789,7 +824,7 @@ window.__rafraichir=()=>{ const y=window.scrollY;
 if('__CIBLE__'==='pt') P.forEach(p=>{ const m=MOD[p.cle]; if(!m) return; if(m.pvr!=null&&m.pvr!=='') p.pvr=+m.pvr; if(m.pvw!=null&&m.pvw!=='') p.pvw=+m.pvw; });
   if('__CIBLE__'==='pt') P=P.filter(p=>!(MOD[p.cle]&&MOD[p.cle].masque));
   { const s=lit(KEY,{}); if(s&&typeof s==='object') saisie=s; } rangeDup();
-  if('__CIBLE__'==='pc'){ try{ const m=pcsCarte(); P.forEach(p=>{ const o=m[pcsCle([p.bc0!==undefined?p.bc0:p.bc,0,0,0,0,0,0,0,0,p.cle])]; if(o) p.qte=Math.max(0,Math.round(+o.q||0)); });
+  if('__CIBLE__'==='pc'){ try{ const m=pcsCarte(); P.forEach(p=>{ const k=p.pck||pcsCle([p.bc0!==undefined?p.bc0:p.bc,0,0,0,0,0,0,0,0,p.cle]), o=m[k]; if(o){ p.qte=Math.max(0,Math.round(+o.q||0)); if(!p.pck) p.pck=k; } });
     const t=lit('testeurs-pc-v1',{}); if(t&&typeof t==='object'&&!Array.isArray(t)) TSTPC=t; }catch(e){} }
   { const j=lit(KJOU,[]); if(Array.isArray(j)) JOU=j; }
   try{ rend(false); }catch(e){} try{ chiffres(); }catch(e){} window.scrollTo(0,y); };
@@ -814,10 +849,16 @@ function qteAtt(p){ return qteTh(p); }
    la colonne « Théorique » affiche le vendable et signale la vitrine, et l'écart
    se calcule sur le total physique — sinon chaque comptage annonce un faux écart. */
 const CIBLE='__CIBLE__';
+/* 16 nov. 2026 (Igal : « enlève le théorique sur l'inventaire, ça ne sert à rien ») : chez Perfume City, la colonne « Théorique »
+   ne montre plus de chiffre — elle devient la colonne « Tester » (la case que la boutique coche). La cellule reste à sa place
+   (les autres colonnes sont repérées par leur rang) ; le comptage garde son écart et son journal.
+   L'entrepôt garde la sienne : Sam a demandé le 30 oct. 2026 de voir le stock actuel quand il recompte. */
+(function(){ try{ const th=document.querySelector('thead th.thc');
+  if(CIBLE==='pc'&&th){ th.textContent='Tester'; th.setAttribute('data-nolang',''); } }catch(e){} })();
 let TSTPC={}; if(CIBLE==='pc'){ const t=lit('testeurs-pc-v1',{}); if(t&&typeof t==='object'&&!Array.isArray(t)) TSTPC=t; }
 function tst(p){
   if(CIBLE!=='pc') return 0;
-  const b0=p.bc0||p.bc, k=b0?String(b0).replace(/^0+/,''):'';
+  const k=tstCle(p);
   const e=(k&&TSTPC[k])||TSTPC[p.cle];
   /* 10 nov. 2026 (Igal : « sur tous les parfums, un tester chez Perfume City, pas plus ») : le Sheet importé le 13 oct. portait 95, 72, 60… dans la colonne des testers. Un parfum a un tester, ou aucun : jamais plus, à la lecture comme à l'écriture. */
   return e&&(+e.n>0)?1:0;
@@ -830,7 +871,7 @@ function tst(p){
        l'ancien fichier ne crée jamais de stock en le décochant.
    La quantité en vente est écrite dans le stock partagé : Shopify la reçoit (le gardien du stock). */
 const T3=(a,b,c)=>(typeof L3==='function'?L3(a,b,c):a);
-function tstCle(p){ const b0=p.bc0!==undefined?p.bc0:p.bc; return b0?String(b0).replace(/^0+/,''):String(p.cle||''); }
+function tstCle(p){ if(p.pck) return p.pck; const b0=p.bc0!==undefined?p.bc0:p.bc; return b0?String(b0).replace(/^0+/,''):String(p.cle||''); }
 function tstHtml(p){
   if(CIBLE!=='pc') return '';
   const v=tst(p);
@@ -838,10 +879,15 @@ function tstHtml(p){
 }
 /* écrit la quantité en vente d'un parfum dans le stock partagé de Perfume City */
 function pcPoseQte(p,q){
-  try{ const m=pcsCarte(), o=m[pcsCle([p.bc0!==undefined?p.bc0:p.bc,0,0,0,0,0,0,0,0,p.cle])]; if(!o) return false;
+  try{ const m=pcsCarte(); let o=m[p.pck||pcsCle([p.bc0!==undefined?p.bc0:p.bc,0,0,0,0,0,0,0,0,p.cle])];
+    /* un parfum du Catalogue que la boutique n'avait pas encore : sa ligne naît au premier comptage */
+    if(!o) o={bc:String(p.bc||''),q:0,pa:p.pa==null?null:+p.pa,pvr:p.pvr==null?null:+p.pvr,pvw:p.pvw==null?null:+p.pvw,cle:p.cle};
     const n=Object.assign({},o,{q:Math.max(0,Math.round(+q||0))});
-    if(!pcsSauve([pcsVers(n)])) return false;
-    p.qte=n.q; return true;
+    /* la ligne garde le nom du Catalogue : le stock de la boutique et l'entrepôt parlent du même parfum avec les mêmes mots */
+    if(!p.horsCat){ n.nom=p.nom||''; n.m=p.marque||''; n.ml=String(p.ml||''); n.ty=p.type||''; }
+    const r=pcsVers(n);
+    if(!pcsSauve([r])) return false;
+    p.qte=n.q; p.pck=pcsCle(r); return true;
   }catch(e){ return false; }
 }
 function tstBascule(p,veut){
@@ -1287,7 +1333,8 @@ function majLigne(p){
      s'écrivait dans « Écart » et le capital dans « PV gros ». */
   if(td.length>=8){
     const ta=qteAtt(p), vit=tst(p);
-    td[3].innerHTML = (ta===0?'<span style="color:var(--ink-3)">0</span>':nf(ta))+tstHtml(p);   /* « tester » et non « vitrine » (Igal, 31 oct. 2026) */
+    /* 16 nov. 2026 : chez Perfume City, plus de chiffre théorique — il ne reste que la case « tester » ; l'entrepôt garde son stock */
+    td[3].innerHTML = '__CIBLE__'==='pc' ? tstHtml(p) : (ta===0?'<span style="color:var(--ink-3)">0</span>':nf(ta));
     td[5].innerHTML = `<span class="gap ${gcls}">${ec==null?'—':(ec>0?'+':'')+nf(ec)}</span>`;
     td[6].innerHTML = `<span class="gap ${gcls}">${val==null?'—':(val>0?'+':'')+money(val)}</span>`;
     td[7].innerHTML = money(capEff(p));
@@ -1506,6 +1553,8 @@ for C in CIBLES:
                .replace('__IDENT__', IDENT).replace('__IDENT_TOT__', _identite.TOT).replace('__FILE_AUTO__', _file_auto.FILE_AUTO)
                .replace('__GARDE__', _donnees.garde([C['donnees']]))
                .replace('donnees/inventaire.js', 'donnees/' + C['donnees'] + '.js')
+               # Perfume City affiche les mêmes lignes que l'entrepôt : sa page charge aussi la liste de l'entrepôt
+               .replace('__INVPT__', ('<script src="donnees/inventaire.js?v=%s"></script>' % __import__('datetime').datetime.now().strftime('%Y%m%d%H%M')) if C['cible'] == 'pc' else '')
                .replace('__DATA__', C['variable'])
                .replace("const KEY='comptage-parfums-v1';", "const KEY='%s';" % C['cle'])
                .replace('__CIBLE__', C['cible'])

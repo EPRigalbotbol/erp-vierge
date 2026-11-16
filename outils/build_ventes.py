@@ -3837,7 +3837,9 @@ function plcPeint(){
   const S=plcSuivi(), T=plcTous(), nouv=T.filter(c=>plcEtat(c,S)==='nouvelle');
   const V=PLC_TOUT?T:T.filter(c=>plcEtat(c,S)==='nouvelle'||Date.now()-Date.parse(c.t||0)<14*864e5&&plcEtat(c,S)!=='archive');
   const D=(lit(KPLD,[])||[]).filter(x=>x&&x.email), VIS=(lit(KPLV,[])||[]).filter(x=>x&&x.t&&x.quoi);
-  el.hidden=!T.length&&!D.length&&!VIS.length;
+  /* 16 nov. 2026 : combien de clients ont accès, et le lien vers l'onglet de Clients où on les coche ou décoche */
+  let NACC=0; try{ const CL=lit('clients-v1',{})||{}; NACC=Object.keys(CL).filter(n=>CL[n]&&CL[n].plAcces).length; }catch(_){}
+  el.hidden=!T.length&&!D.length&&!VIS.length&&!NACC;
   if(el.hidden) return;
   el.innerHTML=`<div class="plc-t"><h2 class="plc-h">${r3('Commandes reçues de la price list','Orders received from the price list','Pedidos recibidos de la lista de precios')}${nouv.length?`<span class="plc-n">${nf(nouv.length)}</span>`:''}</h2>
       <p>${r3('Vos clients autorisés commandent depuis la price list en direct (jamais plus que le stock disponible). Rien n\'est payé en ligne et rien ne sort du stock : « Faire la cote » prépare la cote, vous vérifiez, puis vous l\'enregistrez.','Your authorized customers order from the live price list (never more than the available stock). Nothing is paid online and nothing leaves the stock: “Make the quote” prepares the quote, you check it, then you save it.','Sus clientes autorizados piden desde la lista de precios en vivo (nunca más que el stock disponible). Nada se paga en línea y nada sale del stock: «Hacer la cotización» la prepara, usted la revisa y luego la guarda.')}</p></div>
@@ -3852,6 +3854,7 @@ function plcPeint(){
           <td class="r">${e==='nouvelle'?`<button class="btn pri sm" data-plca="cote" data-plc-n="${esc(c.num)}">${r3('Faire la cote','Make the quote','Hacer la cotización')}</button>`:''}</td></tr>`;
         return on?ligne+`<tr class="qd"><td colspan="7">${plcDetail(c,e)}</td></tr>`:ligne; }).join('')}
       </tbody></table>`:`<p class="ecr">${r3('Aucune commande en attente.','No order waiting.','Ningún pedido pendiente.')}</p>`}
+    <p style="margin:0 0 10px;font-size:14px"><b data-nolang>${nf(NACC)}</b> ${r3('client(s) ont accès à la price list en direct','customer(s) have access to the live price list','cliente(s) tienen acceso a la lista en vivo')} — <a href="clients.html#pricelist">${r3('voir et gérer la liste','see and manage the list','ver y gestionar la lista')}</a></p>
     <div class="plc-b">${T.length>V.length||PLC_TOUT?`<button class="btn sm" id="plc-tout">${PLC_TOUT?r3('Voir seulement les récentes','Show recent only','Ver solo las recientes'):r3('Voir toutes les commandes','Show all orders','Ver todos los pedidos')+' ('+nf(T.length)+')'}</button>`:''}
       <button class="btn sm" id="plc-lien">${r3('Copier le lien de la price list','Copy the price list link','Copiar el enlace de la lista')}</button><span id="plc-msg" style="font-size:12.5px;color:var(--good)"></span></div>
     ${D.length?`<details class="plc-dem"><summary>${nf(D.length)} ${r3('demande(s) d\'accès d\'emails non autorisés','access request(s) from emails without access','solicitud(es) de acceso de correos sin acceso')}</summary>

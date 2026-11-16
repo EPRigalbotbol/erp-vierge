@@ -117,12 +117,53 @@ try:
         check('un Commercial voit la case mais ne peut pas la cocher', pg.locator('#pl-on').is_disabled() and 'Seuls le Patron' in pg.inner_text('#pl-box'))
         ctx.close()
 
+        # ---- 2 bis. l'onglet « Price list en direct » en haut de Clients (Igal, 16 nov. 2026) ----
+        CLI2 = json.loads(json.dumps(CLI)); CLI2['Grossiste Uno'].update({'plAcces': True, 'plDepuis': '2026-11-15T15:00:00Z', 'plPar': 'Igal'})
+        def ouvre2(lg='fr', role='patron', hashe='#pricelist'):
+            ctx = b.new_context(viewport={'width': 1500, 'height': 1000}); pg = ctx.new_page(); pg.on('pageerror', lambda e: err.append('clients-pl ' + str(e)))
+            base = f'http://127.0.0.1:{port}/'
+            pg.goto(base + 'accueil.html'); pg.wait_for_timeout(300); pg.evaluate(SESS, [F, CLI2, lg, role, {'pricelist-visites-v1': VIS, 'pricelist-commandes-v1': CMD, 'pricelist-demandes-v1': DEM}])
+            pg.goto(base + 'clients.html' + hashe); pg.wait_for_timeout(2200); return pg, ctx
+        pg, ctx = ouvre2(hashe='')
+        o = pg.inner_text('#cl-ong')
+        check('LE POINT (onglet) — tout en haut de Clients : « Tous les clients » et « Price list en direct » avec le nombre', 'Tous les clients' in o and 'Price list en direct' in o and '1' in o, o)
+        pg.locator('#cl-ong button[data-o="pl"]').click(); pg.wait_for_timeout(300)
+        t = pg.inner_text('#plv')
+        check('l\'onglet liste les clients qui ont accès : nom, email, depuis quand et par qui, dernière connexion, commandes',
+              'Grossiste Uno' in t and 'uno@exemple.com' in t and 'Igal' in t and '3 ouverture(s)' in t and 'PL-1001' in t and 'Grossiste Sans Mail' not in t, t[:800])
+        check('la liste générale est cachée pendant ce temps', pg.locator('#corps').is_hidden(), '')
+        check('les emails non autorisés qui ont demandé un code sont montrés', 'inconnu@exemple.com' in pg.evaluate("()=>document.querySelector('#plv details').textContent"))
+        pg.once('dialog', lambda d: d.accept())
+        pg.locator('#plv [data-pl="Grossiste Uno"]').uncheck(); pg.wait_for_timeout(300)
+        A3 = LS(pg, 'pricelist-acces-v1')
+        check('LE POINT (onglet) — décocher retire l\'accès tout de suite (le cockpit reçoit la liste vide)', A3 and A3['L'] == [] and 'plAcces' not in LS(pg, 'clients-v1')['Grossiste Uno'], A3)
+        check('la ligne décochée reste visible, grisée, pour pouvoir se raviser ; le compteur passe à 0', pg.locator('#plv tr.off').count() == 1 and pg.locator('#cl-ong button[data-o="pl"] b').inner_text() == '0', pg.inner_text('#plv')[:300])
+        pg.locator('#plv [data-pl="Grossiste Uno"]').check(); pg.wait_for_timeout(300)
+        check('recocher redonne l\'accès (date et auteur notés)', LS(pg, 'pricelist-acces-v1')['L'] == [{'nom': 'Grossiste Uno', 'email': 'uno@exemple.com', 'lg': 'es'}] and LS(pg, 'clients-v1')['Grossiste Uno'].get('plPar') == 'Sam', LS(pg, 'clients-v1')['Grossiste Uno'])
+        pg.fill('#plv-q', 'Grossiste Sans Mail'); pg.locator('#plv-ok').click(); pg.wait_for_timeout(300)
+        check('donner l\'accès depuis l\'onglet ; un client sans email est signalé', LS(pg, 'clients-v1')['Grossiste Sans Mail'].get('plAcces') is True and 'pas d\'email' in pg.inner_text('#plv'), pg.inner_text('#plv-err'))
+        J = LS(pg, 'crm-journal-v1') or []
+        check('chaque geste est signé au Journal', sum(1 for x in J if 'price list en direct' in (x.get('lib') or '')) >= 3, [x.get('lib') for x in J[-4:]])
+        ctx.close()
+        pg, ctx = ouvre2()
+        check('clients.html#pricelist ouvre directement l\'onglet (lien depuis la Cote)', pg.locator('#plv').is_visible() and 'Grossiste Uno' in pg.inner_text('#plv'))
+        ctx.close()
+        for lg, mot in (('en', 'Last sign-in'), ('es', 'Última conexión')):
+            pg, ctx = ouvre2(lg=lg)
+            t = pg.inner_text('#plv') + pg.inner_text('#cl-ong')
+            check(f'l\'onglet est traduit ({lg})', mot.lower() in t.lower() and 'dernière connexion' not in t.lower() and 'Tous les clients' not in t, t[:300])
+            ctx.close()
+        pg, ctx = ouvre2(role='commercial')
+        check('un Commercial voit la liste mais ne peut rien cocher', pg.locator('#plv [data-pl]').first.is_disabled() and pg.locator('#plv-ok').count() == 0)
+        ctx.close()
+
         # ---- 3. Cote : les commandes reçues ----
         X = {'pricelist-commandes-v1': CMD, 'pricelist-demandes-v1': DEM, 'pricelist-visites-v1': VIS}
         pg, ctx = ouvre('quotes.html', X=X)
         t = pg.inner_text('#plc')
         check('LE POINT — la Cote montre les commandes reçues de la price list, avec le nombre en attente', 'Commandes reçues de la price list' in t and 'PL-1001' in t and 'PL-1002' in t and pg.locator('#plc .plc-n').inner_text() == '2', t[:600])
         check('la section passe avant les cotes de l\'ERP', pg.evaluate("()=>!!(document.getElementById('plc').compareDocumentPosition(document.getElementById('docs'))&Node.DOCUMENT_POSITION_FOLLOWING)"))
+        check('la Cote dit combien de clients ont accès, avec le lien vers l\'onglet de Clients', pg.locator('#plc a[href="clients.html#pricelist"]').count() == 1)
         check('les demandes d\'emails non autorisés sont montrées', 'inconnu@exemple.com' in pg.evaluate("()=>document.querySelector('.plc-dem').textContent"))
         j = pg.inner_text('#plc .plc-j')
         check('LE POINT (journal) — aujourd\'hui, client par client : combien de fois il a ouvert la price list', 'Journal des connexions' in j and '3 ouverture(s)' in j and 'Grossiste Uno' in j and '3 fois' in j, j[:500])
@@ -151,7 +192,7 @@ try:
         for lg, mot in (('en', 'Orders received from the price list'), ('es', 'Pedidos recibidos de la lista de precios')):
             pg, ctx = ouvre('quotes.html', lg=lg, X=X)
             t = pg.inner_text('#plc')
-            check(f'la section est traduite ({lg})', mot in t and 'Commandes reçues' not in t and 'Faire la cote' not in t, t[:400])
+            check(f'la section est traduite ({lg})', mot in t and 'Commandes reçues' not in t and 'Faire la cote' not in t and 'voir et gérer' not in t, t[:400])
             check(f'le journal est traduit ({lg})', ('Sign-in log' if lg == 'en' else 'Registro de conexiones') in t and 'Journal des connexions' not in t, t[-400:])
             ctx.close()
         check('aucune erreur JS', not err, err[:5])

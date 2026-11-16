@@ -49,6 +49,25 @@ border:1px solid var(--line);border-radius:3px;padding:8px 10px}
 
 .sous{margin:5px 0 0;font-size:14px;color:var(--ink-2);max-width:74ch;line-height:1.5}
 .tools{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+/* 16 nov. 2026 : en haut de Clients, deux onglets — tous les clients / ceux qui ont accès à la price list en direct */
+.cl-ong{display:flex;gap:8px;margin:0 0 16px;border-bottom:1px solid var(--line-2)}
+.cl-ong button{border:0;background:none;padding:10px 14px;font:inherit;font-weight:700;font-size:14.5px;color:var(--ink-3);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px}
+.cl-ong button.on{color:var(--ink);border-bottom-color:var(--iris,#5b2bd9)}
+.cl-ong button b{display:inline-block;margin-left:6px;background:var(--surface-2,#f1f1f4);border-radius:99px;padding:0 8px;font-size:12.5px}
+.cl-ong button.on b{background:var(--iris,#5b2bd9);color:#fff}
+#plv .plv-t{width:100%;border-collapse:collapse;font-size:14px;background:var(--surface,#fff);border:1px solid var(--line-2);border-radius:12px;overflow:hidden}
+#plv .plv-t th{text-align:left;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);padding:10px 12px;border-bottom:1px solid var(--line-2)}
+#plv .plv-t td{padding:10px 12px;border-bottom:1px solid var(--line-2);vertical-align:middle}
+#plv .plv-t tr.off td{opacity:.45}
+#plv .plv-t td.c{width:44px;text-align:center}#plv .plv-t td.c input{width:20px;height:20px;cursor:pointer}
+#plv .plv-t small{display:block;color:var(--ink-3);font-size:12px}
+#plv .plv-n{cursor:pointer;font-weight:700}#plv .plv-n:hover{text-decoration:underline}
+#plv .plv-h{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 12px}
+#plv .plv-h p{margin:0;color:var(--ink-2);font-size:14px;flex:1;min-width:260px}
+#plv .plv-aj{display:flex;gap:8px;align-items:center;margin:14px 0}
+#plv .plv-aj input{padding:8px 10px;border:1px solid var(--line-2);border-radius:8px;font:inherit;min-width:260px}
+#plv .att{color:var(--crit);font-weight:600}
+#plv details{margin-top:16px;font-size:13.5px;color:var(--ink-2)}#plv details summary{cursor:pointer;font-weight:600}
 .tools .sp{margin-left:auto}
 .srch{position:relative;flex:1 1 220px;max-width:360px}
 .srch input{width:100%;padding:10px 12px 10px 34px;font-family:inherit;font-size:14px;
@@ -225,6 +244,8 @@ box-shadow:-12px 0 40px rgba(0,0,0,.18);transform:translateX(102%);transition:tr
 """
 
 CORPS = r"""
+<div class="cl-ong" id="cl-ong" data-nolang></div>
+<section id="plv" hidden></section>
 <div class="tools">
   <div class="srch"><input id="q" autocomplete="off" placeholder="Chercher un client, un e-mail, une ville…"></div>
   <select id="typ" class="sel">
@@ -733,6 +754,77 @@ function plVisites(nom,e){
   const n7=V.filter(x=>Date.now()-Date.parse(x.t)<7*864e5).length;
   return `<p>${L3('Dernière connexion','Last sign-in','Última conexión')} : <b>${esc((()=>{ try{ return new Date(V[0].t).toLocaleString(L3('fr-FR','en-US','es-ES'),{timeZone:'America/New_York',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}); }catch(_){ return V[0].t; } })())}</b> · ${n7} ${L3('ouverture(s) ces 7 derniers jours','opening(s) in the last 7 days','apertura(s) en los últimos 7 días')}</p>`;
 }
+
+/* poser ou retirer l'accès d'un client (fiche ou onglet) : la date et qui l'a donné sont gardés, le Journal le signe,
+   le cockpit reçoit la liste à jour tout de suite */
+function plPose(nom,on){
+  const c=Object.assign({},CLI[nom]||{},{nom,maj:new Date().toISOString()});
+  if(on){ c.plAcces=true; c.plDepuis=new Date().toISOString(); c.plPar=USR||''; } else { delete c.plAcces; delete c.plDepuis; delete c.plPar; }
+  CLI[nom]=c; sauveCLI();
+  journal('client',on?'accès à la price list en direct donné':'accès à la price list en direct retiré',nom,on?'oui':'non');
+  construit(); plAccesPublie(); plOngPeint();
+}
+/* ---------- l'onglet « Price list en direct » en haut de Clients (Igal, 16 nov. 2026 : « tout en haut de Clients, un
+   onglet avec les clients qui ont accès à la price list en live ; si demain je ne veux plus leur donner accès, je le
+   décoche ») : qui a accès, avec quel email, depuis quand et par qui, sa dernière connexion, ses commandes ; décocher
+   coupe l'accès à la minute (après confirmation) ; une ligne décochée reste visible jusqu'à ce qu'on quitte l'onglet,
+   pour pouvoir se raviser. En dessous : les emails non autorisés qui ont demandé un code. */
+let CL_ONG='tous', PL_VUS=[];
+const plNoms=()=>Object.keys(CLI).filter(n=>CLI[n]&&CLI[n].plAcces);
+function plOngPeint(){
+  const el=$('cl-ong'); if(!el) return;
+  const n=plNoms().length;
+  el.innerHTML=`<button data-o="tous" class="${CL_ONG==='tous'?'on':''}">${L3('Tous les clients','All customers','Todos los clientes')}</button>
+    <button data-o="pl" class="${CL_ONG==='pl'?'on':''}">${L3('Price list en direct','Live price list','Lista de precios en vivo')}<b>${n}</b></button>`;
+  el.querySelectorAll('button').forEach(b=>b.onclick=()=>plOnglet(b.dataset.o));
+  if(CL_ONG==='pl') plvPeint();
+}
+function plOnglet(o){
+  CL_ONG=o; PL_VUS=o==='pl'?plNoms():[];
+  const pl=o==='pl';
+  ['.tools','#kpis','#selbar','#corps','#note'].forEach(q=>{ const e=document.querySelector(q); if(e) e.style.display=pl?'none':''; });
+  $('plv').hidden=!pl;
+  try{ history.replaceState(null,'',location.pathname+location.search+(pl?'#pricelist':'')); }catch(e){}
+  plOngPeint();
+}
+const plQuand=t=>{ try{ return new Date(t).toLocaleString(L3('fr-FR','en-US','es-ES'),{timeZone:'America/New_York',day:'numeric',month:'short',year:'numeric',hour:'numeric',minute:'2-digit'}); }catch(_){ return ''; } };
+function plvPeint(){
+  const el=$('plv'); if(!el) return;
+  const peut=plPeut();
+  let V=[], C=[], D=[]; try{ V=lit('pricelist-visites-v1',[])||[]; C=lit('pricelist-commandes-v1',[])||[]; D=lit('pricelist-demandes-v1',[])||[]; }catch(_){}
+  const noms=[...new Set(PL_VUS.concat(plNoms()))].sort((a,b)=>a.localeCompare(b));
+  const ligne=nom=>{ const c=CLI[nom]||{}, on=!!c.plAcces, o=(TOUS||[]).find(x=>x.nom===nom)||{co:{}};
+    const e=String((o.co&&o.co.email)||c.email||'').trim().toLowerCase();
+    const mes=V.filter(x=>x&&(x.quoi==='visite'||x.quoi==='entree')&&(x.nom===nom||(e&&String(x.email||'')===e)));
+    const n7=mes.filter(x=>Date.now()-Date.parse(x.t)<7*864e5).length;
+    const cmd=C.filter(x=>x&&(x.client===nom||(e&&x.email===e)));
+    return `<tr class="${on?'':'off'}"><td class="c"><input type="checkbox" data-pl="${esc(nom)}" ${on?'checked':''} ${peut?'':'disabled'} title="${esc(L3('Décocher retire l\'accès','Untick to remove access','Desmarcar quita el acceso'))}"></td>
+      <td><span class="plv-n" data-plo="${esc(nom)}">${esc(nom)}</span>${plMail(e)?`<small>${esc(e)}</small>`:`<small class="att">${L3('pas d\'email valable : il ne peut pas entrer','no valid email: cannot sign in','sin correo válido: no puede entrar')}</small>`}</td>
+      <td>${c.plDepuis?esc(plQuand(c.plDepuis)):'—'}${c.plPar?`<small>${L3('par','by','por')} ${esc(c.plPar)}</small>`:''}</td>
+      <td>${mes.length?esc(plQuand(mes[0].t)):`<span style="color:var(--ink-3)">${L3('jamais','never','nunca')}</span>`}${mes.length?`<small>${n7} ${L3('ouverture(s) ces 7 jours','opening(s) in 7 days','apertura(s) en 7 días')}</small>`:''}</td>
+      <td>${cmd.length?`<b>${cmd.length}</b><small>${L3('dernière','last','última')} : ${esc(cmd[0].num||'')}</small>`:'0'}</td></tr>`; };
+  const autres=(TOUS||[]).filter(o=>!(CLI[o.nom]||{}).plAcces).map(o=>o.nom).sort((a,b)=>a.localeCompare(b));
+  el.innerHTML=`<div class="plv-h"><p>${L3('Les clients qui ouvrent la price list en direct avec leur email et un code à 6 chiffres. Décocher une case lui retire l\'accès tout de suite.','Customers who open the live price list with their email and a 6-digit code. Untick a box to remove access right away.','Los clientes que abren la lista de precios en vivo con su correo y un código de 6 cifras. Desmarcar una casilla quita el acceso de inmediato.')}</p>
+      <button class="btn sm" id="plv-lien">${L3('Copier le lien de la price list','Copy the price list link','Copiar el enlace de la lista')}</button><span id="plv-msg" style="font-size:12.5px;color:var(--good)"></span></div>
+    ${noms.length?`<table class="plv-t"><thead><tr><th>${L3('Accès','Access','Acceso')}</th><th>${L3('Client','Customer','Cliente')}</th><th>${L3('Accès donné le','Access given on','Acceso dado el')}</th><th>${L3('Dernière connexion','Last sign-in','Última conexión')}</th><th>${L3('Commandes','Orders','Pedidos')}</th></tr></thead><tbody>${noms.map(ligne).join('')}</tbody></table>`
+      :`<p class="ecr">${L3('Aucun client n\'a encore accès.','No customer has access yet.','Ningún cliente tiene acceso todavía.')}</p>`}
+    ${peut?`<div class="plv-aj"><input id="plv-q" list="plv-dl" placeholder="${esc(L3('Donner l\'accès à un client…','Give access to a customer…','Dar acceso a un cliente…'))}"><datalist id="plv-dl">${autres.slice(0,3000).map(n=>`<option value="${esc(n)}">`).join('')}</datalist><button class="btn pri sm" id="plv-ok">${L3('Donner l\'accès','Give access','Dar acceso')}</button><span id="plv-err" class="att" style="font-size:13px"></span></div>`:''}
+    ${D.length?`<details><summary>${D.length} ${L3('email(s) non autorisé(s) ont demandé un code (ils n\'ont rien reçu)','email(s) without access asked for a code (they received nothing)','correo(s) sin acceso pidieron un código (no recibieron nada)')}</summary>
+      <div>${D.slice(0,40).map(x=>`${esc(x.email)} <small style="display:inline;color:var(--ink-3)">· ${esc(plQuand(x.t))}</small>`).join('<br>')}</div>
+      <p>${L3('Pour lui donner l\'accès : mettre cet email dans la fiche du bon client, puis cocher sa case ici.','To give access: put this email on the right customer card, then tick the box here.','Para dar acceso: poner este correo en la ficha del cliente correcto y luego marcar su casilla aquí.')}</p></details>`:''}`;
+  el.querySelectorAll('[data-pl]').forEach(cb=>cb.onchange=()=>{ const nom=cb.dataset.pl;
+    if(!plPeut()){ cb.checked=!cb.checked; return; }
+    if(!cb.checked&&!confirm(L3('Retirer l\'accès à la price list en direct pour '+nom+' ? Il ne pourra plus l\'ouvrir.','Remove live price list access for '+nom+'? They will no longer be able to open it.','¿Quitar el acceso a la lista en vivo de '+nom+'? Ya no podrá abrirla.'))){ cb.checked=true; return; }
+    plPose(nom,cb.checked); });
+  el.querySelectorAll('[data-plo]').forEach(s=>s.onclick=()=>{ ouvre(s.dataset.plo); onglet('coord'); });
+  const ok=$('plv-ok'); if(ok) ok.onclick=()=>{ const nom=$('plv-q').value.trim(), err=$('plv-err'); err.textContent='';
+    const o=(TOUS||[]).find(x=>x.nom===nom); if(!o){ err.textContent=L3('Client introuvable : choisis-le dans la liste.','Customer not found: pick one from the list.','Cliente no encontrado: elíjalo de la lista.'); return; }
+    if(!PL_VUS.includes(nom)) PL_VUS.push(nom); plPose(nom,true);
+    const e=String((o.co&&o.co.email)||(CLI[nom]||{}).email||'').trim(); if(!plMail(e)){ err.textContent=L3('Accès donné, mais il n\'a pas d\'email : ajoute-le dans sa fiche (Coordonnées).','Access given, but no email: add it on their card (Contact details).','Acceso dado, pero sin correo: agréguelo en su ficha (Coordenadas).'); } };
+  $('plv-lien').onclick=async()=>{ const u=await plLien(), m=$('plv-msg');
+    if(!u){ m.textContent=L3('Le lien se donne depuis l\'ERP en ligne.','The link comes from the online ERP.','El enlace se obtiene desde el ERP en línea.'); return; }
+    try{ await navigator.clipboard.writeText(u); m.textContent=L3('lien copié','link copied','enlace copiado'); }catch(_){ m.textContent=u; } };
+}
 let PL_LIEN='';
 async function plLien(){
   if(PL_LIEN) return PL_LIEN;
@@ -752,9 +844,8 @@ function plPeint(nom){
       :`<p>${L3('Coche la case pour qu\'il puisse ouvrir la price list avec son email.','Tick the box so they can open the price list with their email.','Marque la casilla para que pueda abrir la lista con su correo.')}</p>`}
     ${plVisites(nom,e)}`;
   const cb=$('pl-on'); if(cb) cb.onchange=()=>{ if(!plPeut()){ cb.checked=on; return; }
-    CLI[nom]=Object.assign({},CLI[nom]||{},{nom,plAcces:cb.checked,maj:new Date().toISOString()}); if(!cb.checked) delete CLI[nom].plAcces;
-    sauveCLI(); journal('client',cb.checked?'accès à la price list en direct donné':'accès à la price list en direct retiré',nom,cb.checked?'oui':'non');
-    construit(); plAccesPublie(); plPeint(nom); };
+    plPose(nom,cb.checked);
+    plPeint(nom); };
   const cp=$('pl-copie'); if(cp) cp.onclick=async()=>{ const u=await plLien(); const m=$('pl-msg');
     if(!u){ m.textContent=L3('Le lien se donne depuis l\'ERP en ligne.','The link comes from the online ERP.','El enlace se obtiene desde el ERP en línea.'); return; }
     try{ await navigator.clipboard.writeText(u); m.textContent=L3('lien copié','link copied','enlace copiado'); }catch(_){ m.textContent=u; } setTimeout(()=>{ if(m.textContent!==u) m.textContent=''; },2500); };
@@ -919,6 +1010,7 @@ $('sfu').innerHTML = USR ? `Connecté : <b>${esc(USR)}</b>` : '';
 $('sfoot').innerHTML='tous les clients<br>gros, site, boutique';
 construit(); dessine();
 setTimeout(plAccesPublie,3000);   /* la liste des clients autorisés à la price list en direct, tenue à jour au cockpit */
+plOngPeint(); if(/(^|[#&])pricelist\b/.test(location.hash)) plOnglet('pl');
 $('selrien').onclick=()=>{ COCHES.clear(); dessine(); };
 $('selvip').onclick=()=>{ COCHES.forEach(n=>basculeVip(n,true)); dessine(); };
 $('selnon').onclick=()=>{ COCHES.forEach(n=>basculeVip(n,false)); dessine(); };
@@ -1038,7 +1130,8 @@ function clRafraichit(){
 }
 window.__rafraichir=clRafraichit;
 window.addEventListener('ck-maj',e=>{ try{ const k=(e.detail&&e.detail.cles)||[];
-  if(k.includes(KCLI)||k.includes(KFACT)||k.includes(KPAY)||k.includes(KRET)) clRafraichit(); }catch(_){} });
+  if(k.includes(KCLI)||k.includes(KFACT)||k.includes(KPAY)||k.includes(KRET)) clRafraichit();
+  if(k.some(x=>/^pricelist-/.test(x))||k.includes(KCLI)) plOngPeint(); }catch(_){} });
 /* « Clients VIP » du menu de gauche : clients.html#vip ouvre la liste des favoris (le même filtre que
    « Favoris (VIP) » plus haut). Le menu et le filtre se suivent dans les deux sens. */
 function vipSync(){ window.__filtreVip=($('typ').value==='vip'); if(typeof mnSous==='function') mnSous(); }

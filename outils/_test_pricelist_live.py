@@ -126,7 +126,7 @@ try:
             pg.goto(base + 'clients.html' + hashe); pg.wait_for_timeout(2200); return pg, ctx
         pg, ctx = ouvre2(hashe='')
         o = pg.inner_text('#cl-ong')
-        check('LE POINT (onglet) — tout en haut de Clients : « Tous les clients » et « Price list en direct » avec le nombre', 'Tous les clients' in o and 'Price list en direct' in o and '1' in o, o)
+        check('LE POINT (onglet) — tout en haut de Clients : « Wholesale », « Retail » et « Price list en direct » avec le nombre', 'Wholesale' in o and 'Retail' in o and 'Price list en direct' in o and '1' in o, o)
         pg.locator('#cl-ong button[data-o="pl"]').click(); pg.wait_for_timeout(300)
         t = pg.inner_text('#plv')
         check('l\'onglet liste les clients qui ont accès : nom, email, depuis quand et par qui, dernière connexion, commandes',

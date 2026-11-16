@@ -1838,4 +1838,9 @@ MOTS2 = {
     "· dont {n} pas encore facturées": ["· incl. {n} not invoiced yet", "· de ellas {n} aún sin facturar"],
     "Sales tax {n} %": ["Sales tax {n}%", "Impuesto {n} %"],
     "Prix de la caisse hors taxe, sales tax encaissée au ticket": ["Register price before tax, sales tax collected on the receipt", "Precio de caja sin impuestos, impuesto cobrado en el ticket"],
+    "Achats de gros enregistrés": ["Recorded wholesale purchases", "Compras mayoristas registradas"],
+    "Ont commandé sur le site de gros": ["Ordered on the wholesale site", "Pidieron en el sitio mayorista"],
+    "Compte sur le site de gros, jamais commandé": ["Wholesale site account, never ordered", "Cuenta en el sitio mayorista, nunca pidió"],
+    "Ont commandé sur le site détail": ["Ordered on the retail site", "Pidieron en el sitio minorista"],
+    "Compte sur le site détail, jamais commandé": ["Retail site account, never ordered", "Cuenta en el sitio minorista, nunca pidió"],
 }

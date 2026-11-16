@@ -51,6 +51,7 @@ border:1px solid var(--line);border-radius:3px;padding:8px 10px}
 .tools{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
 .sitec{display:block;font-size:11.5px;color:var(--ink-3);margin-top:2px}
 .tg.sitegros{background:#efe9ff;color:#5b2bd9}
+.tg.compte{background:#f3f3f5;color:#6b6b76}
 /* 16 nov. 2026 : en haut de Clients, deux onglets — tous les clients / ceux qui ont accès à la price list en direct */
 .cl-ong{display:flex;gap:8px;margin:0 0 16px;border-bottom:1px solid var(--line-2)}
 .cl-ong button{border:0;background:none;padding:10px 14px;font:inherit;font-weight:700;font-size:14.5px;color:var(--ink-3);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px}
@@ -253,11 +254,13 @@ CORPS = r"""
   <select id="typ" class="sel">
     <option value="">Tous les clients</option>
     <option value="vip">Favoris (VIP)</option>
-    <option value="gros">Grossistes</option>
-    <option value="site">Clients du site détail</option>
-    <option value="sitegros">Clients du site de gros</option>
-    <option value="boutique">Boutique et caisse</option>
-    <option value="amazon">Amazon</option>
+    <option value="gros" data-cote="gros">Achats de gros enregistrés</option>
+    <option value="sitegros" data-cote="gros">Ont commandé sur le site de gros</option>
+    <option value="compteg" data-cote="gros">Compte sur le site de gros, jamais commandé</option>
+    <option value="site" data-cote="detail">Ont commandé sur le site détail</option>
+    <option value="compted" data-cote="detail">Compte sur le site détail, jamais commandé</option>
+    <option value="boutique" data-cote="detail">Boutique et caisse</option>
+    <option value="amazon" data-cote="detail">Amazon</option>
     <option value="sans">Sans achat enregistré</option></select>
   <select id="per" class="sel">
     <option value="0">Toute la période</option>
@@ -478,7 +481,7 @@ function construit(){
     c.cmds.forEach(x=>{
       if(x.douteux){ o.douteux.push(x); return; }
       if(x.devis){ o.devis.push({src:'tableur',d:x.d||'',num:x.num||'',total:x.total||0}); return; }
-      o.achats.push({src:'tableur',id:pkey(c.nom,x),cnom:c.nom,x,d:x.d||'',de:!!x.de,h:'',num:x.num||'',canal:'Gros (tableur)',montant:+x.total||0,
+      o.achats.push({src:'tableur',ty:'gros',id:pkey(c.nom,x),cnom:c.nom,x,d:x.d||'',de:!!x.de,h:'',num:x.num||'',canal:'Gros (tableur)',montant:+x.total||0,
         fl:x.l.reduce((s,l)=>s+(+l[Q]||0),0),
         lignes:x.l.map(l=>({nom:l[NOM],marque:l[MARQUE],ml:l[ML],type:l[TYPE]||'',bc:l[BC],q:+l[Q]||0,p:l[P]==null?null:+l[P],t:+l[T]||0,cle:BC2CLE[String(l[BC]||'').replace(/^0+/,'')]||''})),
         pay:payInit(c.nom,x),f:/x/i.test(x.f)||(x.l.length&&x.l.every(l=>/x/i.test(l[FACTC]))),s:/x/i.test(x.s)||(x.l.length&&x.l.every(l=>/x/i.test(l[SORTI]))),note:x.note||''}); }); });
@@ -489,11 +492,11 @@ function construit(){
     if(f.sens==='devis'||(f.doc&&f.doc.type==='devis')){ o.devis.push({src:'erp',d:f.d||'',num:(f.doc&&f.doc.num)||f.num||'',total:+((f.doc&&f.doc.total)||f.montant)||0}); return; }
     /* le statut fiscal retenu sur sa dernière facture (resale, passeport) */
     if(f.doc&&f.doc.fiscal&&!o.co.fiscal){ o.co.fiscal=f.doc.fiscal; if(f.doc.fref) o.co.fiscalRef=f.doc.fref; }
-    const canal=f.canal||'Boutique'; o.types.add(typeCanal(canal,f));
+    const canal=f.canal||'Boutique', ty=typeCanal(canal,f); o.types.add(ty);
     const L=(f.lignes||[]).map(l=>{ const fi=fiche(l.cle);
       return {nom:l.ref||'',marque:(fi&&fi[2])||'',ml:(fi&&fi[3])||'',type:(fi&&fi[4])||'',
               bc:l.bc||'',q:+l.q||0,p:l.p==null?null:+l.p,t:(+l.q||0)*(+l.p||0),cle:l.cle||''}; });
-    o.achats.push({src:'erp',id:f.id,d:f.d||'',h:f.h||(f.t&&typeof heureMiami==='function'?heureMiami(f.t):''),num:f.doc?f.doc.num:(f.num||''),canal,
+    o.achats.push({src:'erp',ty,id:f.id,d:f.d||'',h:f.h||(f.t&&typeof heureMiami==='function'?heureMiami(f.t):''),num:f.doc?f.doc.num:(f.num||''),canal,
       montant:+(f.doc?f.doc.total:f.montant)||0,fl:L.reduce((s,l)=>s+l.q,0),lignes:L,pay:payErp(f),retour:!!f.retour,motif:f.motif||'',f}); });
   /* 3. la liste des clients du site : des coordonnées, et ce que le site dit d'eux */
   let RET=[]; try{ const t=lit(KRET,null); RET=Array.isArray(t)?t:(Array.isArray(window.D_RETAIL)?window.D_RETAIL:[]); }catch(e){}
@@ -514,21 +517,58 @@ function construit(){
   return TOUS;
 }
 const parNom=nom=>TOUS.find(o=>o.k===cNorm(canon(nom)))||null;
+/* 16 nov. 2026 — deux sous-rubriques, Wholesale et Retail (Igal : « dans la rubrique Clients, deux sous-rubriques,
+   wholesale et retail… comme ça on pourra gérer le mailing pour le wholesale et pour le retail »).
+   Wholesale : les achats de gros (ERP, tableur), les comptes et commandes du site de gros, et les fiches créées à la main.
+   Retail : le site détail, la boutique, Amazon. Un client qui achète des deux côtés est dans les deux listes ;
+   chaque liste ne compte que les achats de SON côté. La liste de diffusion part de la liste affichée. */
+const COTE_A={gros:'gros',site:'detail',boutique:'detail',amazon:'detail'};
+const coteAchat=a=>COTE_A[a.ty||'gros']||'detail';
+const deCote=(o,c)=>c==='detail'?(o.types.has('site')||o.types.has('boutique')||o.types.has('amazon'))
+  :(o.types.has('gros')||o.types.has('sitegros')||!o.types.size);
+const siteDe=(o,c)=>{ const S=siteRes(o); return c==='detail'?S.d:S.g; };
+const coteVue=()=>CL_ONG==='detail'?'detail':'gros';
+/* le filtre du haut, dans la sous-rubrique affichée. « Ont commandé » = au moins une commande payée ;
+   « compte, jamais commandé » = un compte ouvert sur le site, sans aucune commande payée de ce côté */
+function passeFiltre(o,typ,c){
+  const S=siteDe(o,c), cmdS=!!(S&&S.cmd), aC=o.achats.some(a=>coteAchat(a)===c&&!a.retour);
+  switch(typ){
+    case '': return true;
+    case 'vip': return estVip(o.nom);
+    case 'gros': return o.achats.some(a=>a.ty==='gros');
+    case 'sitegros': return cmdS;
+    case 'site': return cmdS||o.achats.some(a=>a.ty==='site');
+    case 'compteg': return o.types.has('sitegros')&&!cmdS&&!aC;
+    case 'compted': return !!o.site&&!cmdS&&!aC;
+    case 'sans': return !aC&&!cmdS;
+    default: return o.types.has(typ);
+  }
+}
 
 function lignes(){
   const per=+$('per').value, q=cNorm($('q').value), typ=$('typ').value;
   const lim=per?isoJour(new Date(AUJ.getTime()-per*864e5)):null;
-  return TOUS.filter(o=>!q||[o.nom,o.co.prenom,o.co.nomfam,o.co.email,o.co.ville,o.co.tel,o.co.tel2,o.co.tel3,o.co.raison].some(v=>cNorm(v).includes(q)))
-    .filter(o=>typ==='vip'?estVip(o.nom):typ==='sans'?(!o.achats.length&&!siteRes(o).n):typ==='gros'?(o.types.has('gros')||o.types.has('sitegros')):(!typ||o.types.has(typ)))
-    .map(o=>{ const A=o.achats.filter(a=>!lim||(a.d&&a.d>=lim)), v=A.filter(a=>!a.retour);
-      return {o,A,vip:estVip(o.nom),total:A.reduce((s,a)=>s+a.montant,0),nb:v.length,fl:A.reduce((s,a)=>s+(a.retour?-Math.abs(a.fl):a.fl),0),der:v.reduce((m,a)=>a.d>m?a.d:m,'')}; })
+  const c=coteVue();
+  return TOUS.filter(o=>deCote(o,c)).filter(o=>!q||[o.nom,o.co.prenom,o.co.nomfam,o.co.email,o.co.ville,o.co.tel,o.co.tel2,o.co.tel3,o.co.raison].some(v=>cNorm(v).includes(q)))
+    .filter(o=>passeFiltre(o,typ,c))
+    .map(o=>{ const A=o.achats.filter(a=>coteAchat(a)===c&&(!lim||(a.d&&a.d>=lim))), v=A.filter(a=>!a.retour);
+      let total=A.reduce((s,a)=>s+a.montant,0), nb=v.length, der=v.reduce((m,a)=>a.d>m?a.d:m,''), viaSite=false;
+      /* un acheteur du site que l'ERP n'a pas dans ses ventes (commandes d'avant l'ERP, invités) : on montre ce que dit le site */
+      const S=siteDe(o,c); if(!nb&&!lim&&S&&S.cmd){ nb=S.cmd; total=+S.total||0; der=S.der||''; viaSite=true; }
+      return {o,A,vip:estVip(o.nom),total,nb,viaSite,fl:A.reduce((s,a)=>s+(a.retour?-Math.abs(a.fl):a.fl),0),der}; })
     /* un favori reste visible même s'il n'a rien acheté sur la période :
        c'est justement pour le retrouver vite qu'on l'a mis en favori */
     .filter(r=>typ==='sans'||typ==='vip'||r.vip||r.nb||!lim&&(r.o.site||r.o.devis.length||Object.keys(r.o.co).length));
 }
-const badges=o=>[...o.types].map(t=>`<span class="tg ${t}">${TYPES[t]||t}</span>`).join('')
-  +(()=>{ const S=siteRes(o), f=(x,lib)=>x&&(x.cmd||x.tent)?`<span class="sitec" data-nolang>${lib} : ${x.cmd} ${L3('commande(s)','order(s)','pedido(s)')}${x.cmd&&typeof voitCA==='function'&&voitCA()?' · '+money(x.total||0):''}${x.der?' · '+L3('dernière','last','último')+' '+dfr(x.der):''}${!x.cmd&&x.tent?' · '+L3('paiement échoué seulement','failed payment only','solo pago fallido'):''}</span>`:'';
-    return f(S.d,L3('Site détail','Retail site','Sitio minorista'))+f(S.g,L3('Site de gros','Wholesale site','Sitio mayorista')); })();
+/* l'étiquette du site dit ce qui s'est passé, pas seulement « a un compte » (Igal, 16 nov. 2026 : Valérie Gilbert
+   portait « Site de gros » sans avoir jamais commandé) ; seule celle de la sous-rubrique affichée est montrée */
+const badges=o=>[...o.types].filter(t=>t!=='sitegros'&&(t!=='site'||(coteVue()==='detail'&&o.achats.some(a=>a.ty==='site')&&!(siteRes(o).d&&siteRes(o).d.cmd)))).map(t=>`<span class="tg ${t}">${TYPES[t]||t}</span>`).join('')
+  +(()=>{ const c=coteVue(), S=siteDe(o,c), aC=o.achats.some(a=>coteAchat(a)===c&&!a.retour);
+    if(S&&(S.cmd||S.tent)) return '';
+    const compte=c==='detail'?!!o.site:o.types.has('sitegros');
+    return compte&&!aC?`<span class="tg compte">${c==='detail'?L3('Compte site détail · jamais commandé','Retail site account · never ordered','Cuenta sitio minorista · nunca pidió'):L3('Compte site de gros · jamais commandé','Wholesale site account · never ordered','Cuenta sitio mayorista · nunca pidió')}</span>`:''; })()
+  +(()=>{ const c=coteVue(), S=siteRes(o), f=(x,lib)=>x&&(x.cmd||x.tent)?`<span class="sitec" data-nolang>${lib} : ${x.cmd} ${L3('commande(s)','order(s)','pedido(s)')}${x.cmd&&typeof voitCA==='function'&&voitCA()?' · '+money(x.total||0):''}${x.der?' · '+L3('dernière','last','último')+' '+dfr(x.der):''}${!x.cmd&&x.tent?' · '+L3('paiement échoué seulement','failed payment only','solo pago fallido'):''}</span>`:'';
+    return c==='detail'?f(S.d,L3('Site détail','Retail site','Sitio minorista')):f(S.g,L3('Site de gros','Wholesale site','Sitio mayorista')); })();
 
 function dessine(){
   _ALX=null;
@@ -540,10 +580,10 @@ function dessine(){
     const va=a.vip?0:1, vb=b.vip?0:1; if(va!==vb) return va-vb;
     return TRI==='nb'?b.nb-a.nb : TRI==='dt'?(b.der||'').localeCompare(a.der||'') : TRI==='az'?a.o.nom.localeCompare(b.o.nom,'fr') : TRI==='fl'?b.fl-a.fl : b.total-a.total; });
   const tot=R.reduce((a,r)=>a+r.total,0), ncmd=R.reduce((a,r)=>a+r.nb,0), max=Math.max(...R.map(r=>r.total),0);
-  const nGros=TOUS.filter(o=>o.types.has('gros')||o.types.has('sitegros')).length, nSite=TOUS.filter(o=>o.types.has('site')).length;
+  const cv=coteVue(), nCote=TOUS.filter(o=>deCote(o,cv)).length;
   const du=TOUS.reduce((s,o)=>s+o.reste,0);
   $('kpis').innerHTML=`<div class="kpis">
-    <div class="kpi"><div class="v">${nf(TOUS.length)}</div><div class="k">clients — ${nf(nGros)} en gros, ${nf(nSite)} du site</div></div>
+    <div class="kpi"><div class="v">${nf(nCote)}</div><div class="k">${cv==='detail'?L3('clients retail','retail customers','clientes minoristas'):L3('clients wholesale','wholesale customers','clientes mayoristas')}</div></div>
     ${voitCA()?`<div class="kpi"><div class="v i">${money(tot)}</div><div class="k">vendu aux clients affichés</div></div>`:''}
     <div class="kpi"><div class="v">${nf(ncmd)}</div><div class="k">achats sur la période</div></div>
     ${voitCA()?`<div class="kpi"><div class="v${du>0?' c':''}" style="${du>0?'color:var(--crit)':''}">${money(du)}</div><div class="k">reste à encaisser, tous clients</div></div>`:''}</div>`;
@@ -555,7 +595,7 @@ function dessine(){
         <td class="fav"><button class="et${r.vip?' on':''}" data-fav="${esc(r.o.nom)}" title="${r.vip?'Retirer des favoris':'Mettre en favoris'}">${r.vip?'★':'☆'}</button></td>
         <td class="nom"><span data-nolang>${esc(r.o.nom)}</span>${badges(r.o)}${r.o.douteux.length?'<span class="warn">à vérifier</span>':''}${r.o.reste>0&&voitCA()?`<span class="warn">${money(r.o.reste)} à payer</span>`:''}<small data-nolang>${esc([r.o.co.raison,r.o.co.email,r.o.co.tel,r.o.co.ville].filter(Boolean).join(' · '))}</small></td>
         ${voitCA()?`<td class="n mt">${r.nb||r.total?money(r.total):'<span class="non">—</span>'}<div class="bar"><i style="width:${max?Math.max(1,r.total/max*100):0}%"></i></div></td>`:''}
-        <td class="n">${r.nb?nf(r.nb):'<span class="non">—</span>'}${r.o.devis.length&&!r.nb?`<small style="display:block;color:var(--ink-3)">${r.o.devis.length} devis</small>`:''}</td>
+        <td class="n">${r.nb?nf(r.nb)+(r.viaSite?' <span title="'+L3('d\'après le site','according to the website','según el sitio')+'">≈</span>':''):'<span class="non">—</span>'}${r.o.devis.length&&!r.nb?`<small style="display:block;color:var(--ink-3)">${r.o.devis.length} devis</small>`:''}</td>
         <td class="n dim">${r.fl?nf(Math.round(r.fl)):'—'}</td><td class="n dim">${r.der?dfr(r.der):(r.o.site&&r.o.site.der?'<span title="d\'après le fichier du site">'+dfr(r.o.site.der)+' ≈</span>':(siteRes(r.o).d&&siteRes(r.o).d.der?'<span title="dernière commande sur le site">'+dfr(siteRes(r.o).d.der)+' ≈</span>':(siteRes(r.o).g&&siteRes(r.o).g.der?'<span title="dernière commande sur le site de gros">'+dfr(siteRes(r.o).g.der)+' ≈</span>':'—')))}</td></tr>`).join('')}</tbody>
       <tfoot><tr><td></td><td></td><td style="font-weight:700">${R.length} clients</td>${voitCA()?`<td class="n mt">${money(tot)}</td>`:''}<td class="n" style="font-weight:700">${nf(ncmd)}</td><td class="n dim">${nf(Math.round(R.reduce((a,r)=>a+r.fl,0)))}</td><td></td></tr></tfoot></table></div>`
     : `<div class="vide">Aucun client ne correspond.</div>`;
@@ -777,22 +817,28 @@ function plPose(nom,on){
    décoche ») : qui a accès, avec quel email, depuis quand et par qui, sa dernière connexion, ses commandes ; décocher
    coupe l'accès à la minute (après confirmation) ; une ligne décochée reste visible jusqu'à ce qu'on quitte l'onglet,
    pour pouvoir se raviser. En dessous : les emails non autorisés qui ont demandé un code. */
-let CL_ONG='tous', PL_VUS=[];
+let CL_ONG='gros', PL_VUS=[];
 const plNoms=()=>Object.keys(CLI).filter(n=>CLI[n]&&CLI[n].plAcces);
 function plOngPeint(){
   const el=$('cl-ong'); if(!el) return;
   const n=plNoms().length;
-  el.innerHTML=`<button data-o="tous" class="${CL_ONG==='tous'?'on':''}">${L3('Tous les clients','All customers','Todos los clientes')}</button>
+  const T0=Array.isArray(TOUS)?TOUS:[], nG=T0.filter(o=>deCote(o,'gros')).length, nD=T0.filter(o=>deCote(o,'detail')).length;
+  el.innerHTML=`<button data-o="gros" class="${CL_ONG==='gros'?'on':''}">Wholesale<b>${nf(nG)}</b></button>
+    <button data-o="detail" class="${CL_ONG==='detail'?'on':''}">Retail<b>${nf(nD)}</b></button>
     <button data-o="pl" class="${CL_ONG==='pl'?'on':''}">${L3('Price list en direct','Live price list','Lista de precios en vivo')}<b>${n}</b></button>`;
   el.querySelectorAll('button').forEach(b=>b.onclick=()=>plOnglet(b.dataset.o));
   if(CL_ONG==='pl') plvPeint();
 }
-function plOnglet(o){
+function plOnglet(o,init){
   CL_ONG=o; PL_VUS=o==='pl'?plNoms():[];
   const pl=o==='pl';
   ['.tools','#kpis','#selbar','#corps','#note'].forEach(q=>{ const e=document.querySelector(q); if(e) e.style.display=pl?'none':''; });
   $('plv').hidden=!pl;
-  try{ history.replaceState(null,'',location.pathname+location.search+(pl?'#pricelist':'')); }catch(e){}
+  if(!pl){ /* le filtre ne propose que les choix de la sous-rubrique */
+    const sel=$('typ'); sel.querySelectorAll('option[data-cote]').forEach(op=>{ const non=op.dataset.cote!==o; op.hidden=non; op.disabled=non; });
+    if(sel.selectedOptions[0]&&sel.selectedOptions[0].disabled) sel.value='';
+    COCHES.clear(); dessine(); }
+  if(!init) try{ history.replaceState(null,'',location.pathname+location.search+(pl?'#pricelist':o==='detail'?'#retail':'')); }catch(e){}
   plOngPeint();
 }
 const plQuand=t=>{ try{ return new Date(t).toLocaleString(L3('fr-FR','en-US','es-ES'),{timeZone:'America/New_York',day:'numeric',month:'short',year:'numeric',hour:'numeric',minute:'2-digit'}); }catch(_){ return ''; } };
@@ -1018,7 +1064,7 @@ $('sfu').innerHTML = USR ? `Connecté : <b>${esc(USR)}</b>` : '';
 $('sfoot').innerHTML='tous les clients<br>gros, site, boutique';
 construit(); dessine();
 setTimeout(plAccesPublie,3000);   /* la liste des clients autorisés à la price list en direct, tenue à jour au cockpit */
-plOngPeint(); if(/(^|[#&])pricelist\b/.test(location.hash)) plOnglet('pl');
+plOnglet(/(^|[#&])pricelist\b/.test(location.hash)?'pl':/(^|[#&])retail\b/.test(location.hash)?'detail':'gros',true);
 $('selrien').onclick=()=>{ COCHES.clear(); dessine(); };
 $('selvip').onclick=()=>{ COCHES.forEach(n=>basculeVip(n,true)); dessine(); };
 $('selnon').onclick=()=>{ COCHES.forEach(n=>basculeVip(n,false)); dessine(); };
@@ -1033,7 +1079,7 @@ $('selecr').onclick=()=>{ const L=selClients(); if(!L.length) return;
 function offreCherche(q){
   q=cNorm(q); if(q.length<2) return [];
   let M={}; try{ M=lit('fiches-modifiees-v1',{})||{}; }catch(e){}
-  const gros=$('typ').value==='gros', out=[];
+  const gros=CL_ONG!=='detail', out=[];
   let T=[]; try{ T=D_TOUS(); }catch(e){}
   for(const r of T){
     const m=M[r[15]||r[14]]||{}, nom=String(r[13]||r[1]||'').trim(), marque=String(r[2]||'').trim(), ml=String(r[3]||'').trim();
@@ -1053,7 +1099,7 @@ function offreCherche(q){
    importe : le message se remplit tout seul. */
 function offreStock(){
   const M=lit('fiches-modifiees-v1',{})||{}; let X={q:{}}; try{ X=Object.assign({q:{}},JSON.parse(localStorage.getItem('stock-externe-v1')||'{}')); }catch(e){}
-  const gros=$('typ').value==='gros', out=[];
+  const gros=CL_ONG!=='detail', out=[];
   let T=[]; try{ T=D_TOUS(); }catch(e){}
   T.forEach(r=>{ const m=M[r[15]||r[14]]||{}, bc=String(r[0]||'').trim();
     let q=(m.qte!=null)?+m.qte:(X.q&&X.q[bc]!=null?+X.q[bc]:(+r[6]||0)); if(!(q>0)) return;
@@ -1110,7 +1156,7 @@ function ouvreDiffusion(){
   const avec=R.filter(o=>!o.co.nodiff&&(ctMail(o.co.email)||ctNum(o.co.tel)));
   const stops=new Set(R.filter(o=>o.co.nodiff).map(o=>(ctMail(o.co.email)?o.co.email.trim().toLowerCase():'')||ctNum(o.co.tel)||o.nom)).size;
   if(!avec.length){ alert('Aucun client de cette liste n\'a d\'email ni de numéro WhatsApp. Change le filtre, ou complète les coordonnées dans les fiches.'); return; }
-  const lib=$('typ').selectedOptions[0].textContent;
+  const lib=(CL_ONG==='detail'?'Retail':'Wholesale')+($('typ').value?' · '+$('typ').selectedOptions[0].textContent:'');
   contacteGroupe({liste:avec.map(o=>({nom:o.nom,email:o.co.email||'',tel:o.co.tel||''})), titre:'Liste de diffusion — '+lib, modele:'promo', pied:true,
     desinscrits:stops, catalogue:offreCherche, modeleOffre:offreModele, importeOffre:offreImporte,
     onStop:nom=>{ /* la personne, pas la fiche : toutes les fiches qui portent la même adresse ou le même numéro */
@@ -1148,7 +1194,7 @@ function vipDepuisAdresse(){ const h=location.hash; if(/nom=/.test(h)) return;
   if($('typ').value!==cible){ $('typ').value=cible; dessine(); }
   vipSync(); }
 $('typ').addEventListener('input',()=>{ try{ if(!/nom=/.test(location.hash))
-  history.replaceState(null,'',location.pathname+location.search+($('typ').value==='vip'?'#vip':'')); }catch(e){} vipSync(); });
+  history.replaceState(null,'',location.pathname+location.search+($('typ').value==='vip'?'#vip':CL_ONG==='detail'?'#retail':'')); }catch(e){} vipSync(); });
 window.addEventListener('hashchange',vipDepuisAdresse);
 vipDepuisAdresse();
 /* une fiche demandée par l'adresse : clients.html#nom=Maria%20Lopez */

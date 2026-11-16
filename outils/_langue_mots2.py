@@ -1843,4 +1843,5 @@ MOTS2 = {
     "Compte sur le site de gros, jamais commandé": ["Wholesale site account, never ordered", "Cuenta en el sitio mayorista, nunca pidió"],
     "Ont commandé sur le site détail": ["Ordered on the retail site", "Pidieron en el sitio minorista"],
     "Compte sur le site détail, jamais commandé": ["Retail site account, never ordered", "Cuenta en el sitio minorista, nunca pidió"],
+    "Fiches à compléter (non diffusables)": ["Incomplete records (cannot be messaged)", "Fichas incompletas (no se puede enviar)"],
 }

@@ -5434,12 +5434,9 @@ function pcStockFiche(p){
   return null;
 }   /* le stock de Perfume City est un magasin partagé (voir _fusion.py) */
 /* n flacons partent : combien deviennent vendables chez Perfume City, combien en vitrine */
-function pcRepartit(p,n,forceT){
-  const k=pcClef(p), T=pcTesteurs();
-  const deja=+(T[k]&&T[k].n||0);
-  const t = forceT==null ? (deja>0?0:(n>0?1:0)) : (forceT?1:0);
-  return {k, deja, t:Math.min(t,n), vend:Math.max(0,n-Math.min(t,n))};
-}
+/* 16 nov. 2026 (Igal, à la demande de Sam) : plus de tester automatique. Tous les flacons livrés partent en vente ;
+   c'est Perfume City qui déclare son tester, dans son inventaire (case « Tester »). */
+function pcRepartit(p,n){ return {k:pcClef(p), deja:0, t:0, vend:Math.max(0,n)}; }
 function pcPeint(){
   const el=$('ajpc'); if(!el) return;
   const p=AJC.p;
@@ -5449,17 +5446,11 @@ function pcPeint(){
   AJC.pc=r;
   const inv=pcLignes();
   el.hidden=false;
-  el.innerHTML=`<h4>Ce que Perfume City reçoit</h4>
-    <div class="rep">
-      <div><b>${nf(r.vend)}</b><span class="k">en vente</span></div>
-      <div><b>${nf(r.t)}</b><span class="k">tester</span></div>
-      <div><b>${nf(n)}</b><span class="k">flacons livrés</span></div>
-    </div>
-    <label class="sw"><input type="checkbox" id="ajpct" ${r.t?'checked':''}>
-      <span>Un flacon part comme tester${r.deja?' — <b>attention : la boutique en a déjà un</b> pour cette référence'
-        :''}. Décoche si les ${nf(n)} flacons partent tous en vente.</span></label>
-    ${inv===null?`<p class="dj">L'inventaire de Perfume City est encore vide : cette sortie va le créer.</p>`:''}`;
-  const c=$('ajpct'); if(c) c.onchange=()=>{ AJC.pcT=c.checked; pcPeint(); recapAjust(); };
+  el.setAttribute('data-nolang','');
+  el.innerHTML=`<h4>${L3('Ce que Perfume City reçoit','What Perfume City receives','Lo que recibe Perfume City')}</h4>
+    <div class="rep"><div><b>${nf(n)}</b><span class="k">${L3('flacons, tous en vente','bottles, all on sale','frascos, todos a la venta')}</span></div></div>
+    <p class="dj">${L3('Le tester se déclare chez Perfume City, dans son inventaire.','The tester is declared at Perfume City, in its inventory.','El tester se declara en Perfume City, en su inventario.')}</p>
+    ${inv===null?`<p class="dj">${L3("L'inventaire de Perfume City est encore vide : cette sortie va le créer.","Perfume City's inventory is still empty: this transfer will create it.","El inventario de Perfume City aún está vacío: esta salida lo creará.")}</p>`:''}`;
 }
 /* écrit dans l'inventaire de la boutique : la ligne existe, on ajoute ; sinon on la crée */
 function pcDepose(p,r){

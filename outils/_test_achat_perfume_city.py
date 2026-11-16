@@ -4,8 +4,9 @@
 #   1. sur une réception qui met le stock à jour, chaque ligne a DEUX cases qui se complètent (somme = quantité reçue) ;
 #   2. LE POINT — le stock de Perfumes Trade n'augmente que de sa part (16 reçus, 6 à Perfume City → +10) ;
 #   3. LE POINT — la part de Perfume City entre dans SON stock (pc-stock-v1), pas dans celui de Perfumes Trade ; depuis le
-#      3 nov. 2026 (Igal), même règle que le transfert depuis la fiche : le premier flacon d'une référence part en tester (vitrine),
-#      noté à part, et seul le vendable entre dans son stock et part sur Shopify ;
+#      16 nov. 2026 (Igal, à la demande de Sam) : plus de tester automatique — toute la part part en vente, la boutique déclare son tester.
+#      (avant, règle du 3 nov. 2026 : le premier flacon d'une référence partait en tester (vitrine),
+#      noté à part, et seul le vendable entrait dans son stock et partait sur Shopify) ;
 #   4. LE POINT — l'ERP envoie au cockpit exactement ce qui est donné à Perfume City, avec l'identifiant de la facture
 #      (c'est lui qui empêche de compter deux fois) ;
 #   5. si l'envoi à Shopify échoue : l'ERP est déjà à jour, la facture le dit, « Renvoyer à Shopify » refait l'envoi ;
@@ -80,7 +81,7 @@ try:
         t = pg.locator('#apercu').inner_text()
         # 3 nov. 2026 (Sam : « j'ai besoin de savoir combien Perfume City a en stock aussi »)
         pcs = pg.evaluate("()=>document.querySelector('input.rp[data-i=\"0\"][data-rp=\"pc\"]').parentElement.querySelector('small.pcs').innerText.replace(/\u00a0/g,' ')")
-        check('LE POINT — sous la case Perfume City : son stock actuel (0) et ce qu\'il deviendra (5 + 1 tester)', 'en stock 0' in pcs and '→ 5' in pcs and '1 tester' in pcs, pcs)
+        check('LE POINT — sous la case Perfume City : son stock actuel (0) et ce qu\'il deviendra (6, tout en vente — plus de tester automatique, 16 nov. 2026)', 'en stock 0' in pcs and '→ 6' in pcs and 'tester' not in pcs, pcs)
         pts = pg.evaluate("()=>document.querySelector('input.rp[data-i=\"0\"][data-rp=\"pt\"]').parentElement.querySelector('small.pcs').innerText.replace(/\u00a0/g,' ')")
         check('… et sous la case Perfumes Trade, son stock actuel (10)', 'en stock 10' in pts, pts)
         check('l\'aperçu : le stock de Perfumes Trade passe de 10 à 20 (+10), pas à 26', '10 → 20' in t.replace('\n', ' ') or '10 → 20' in t, t[:700])
@@ -92,14 +93,14 @@ try:
         check('la confirmation dit la répartition (13 pour Perfumes Trade, 8 pour Perfume City)', '13' in conf and 'Perfumes Trade' in conf and '8' in conf and 'Perfume City' in conf, conf)
         mA, mB = mod(A[15]), mod(A2[15])
         check('LE POINT — Perfumes Trade : 10 + 10 = 20 (et non 26), 4 + 3 = 7', mA.get('qte') == 20 and mB.get('qte') == 7, [mA, mB])
-        check('LE POINT — le stock de Perfume City reçoit sa part EN VENTE : 6 → 5 et 2 → 1 (le premier flacon part en tester, règle du 3 nov. 2026)', pcq(A[0]) == 5 and pcq(A2[0]) == 1, [pcq(A[0]), pcq(A2[0])])
+        check('LE POINT — le stock de Perfume City reçoit TOUTE sa part en vente : 6 et 2 (16 nov. 2026 : plus de tester automatique)', pcq(A[0]) == 6 and pcq(A2[0]) == 2, [pcq(A[0]), pcq(A2[0])])
         T = pg.evaluate("()=>JSON.parse(localStorage.getItem('testeurs-pc-v1')||'{}')")
-        check('… et un tester est noté pour chacun des deux parfums', T.get(A[0].lstrip('0'), {}).get('n') == 1 and T.get(A2[0].lstrip('0'), {}).get('n') == 1, T)
+        check('LE POINT — aucun tester n\'est posé tout seul : c\'est la boutique qui le déclare dans son inventaire', not T.get(A[0].lstrip('0')) and not T.get(A2[0].lstrip('0')), T)
         check('prix moyen de Perfumes Trade calculé sur ses 10 flacons seulement : (10×30 + 10×36)/20 = 33', mA.get('pa') == 33, mA)
         F = facts(); f = next(x for x in F if x['num'] == 'PC-1')
         la = next(l for l in f['lignes'] if l['bc'] == A[0])
-        check('la facture garde la part de chaque ligne (6 donnés = 5 en vente + 1 tester) et le stock de Perfume City avant/après', la.get('pc') == 6 and la.get('pcVend') == 5 and la.get('pcT') == 1 and la.get('pcAv') in (0, None) and la.get('pcAp') == 5 and la['q'] == 16, la)
-        check('LE POINT — l\'ERP envoie au cockpit exactement le vendable, 5 et 1 (pas les testers), avec l\'identifiant de la facture', len(ENVOIS) == 1 and ENVOIS[0]['cle'] == f['id'] and sorted((i['bc'], i['ajout']) for i in ENVOIS[0]['items']) == sorted([(A[0], 5), (A2[0], 1)]), ENVOIS)
+        check('la facture garde la part de chaque ligne (6 donnés = 6 en vente, aucun tester) et le stock de Perfume City avant/après', la.get('pc') == 6 and la.get('pcVend') == 6 and not la.get('pcT') and la.get('pcAv') in (0, None) and la.get('pcAp') == 6 and la['q'] == 16, la)
+        check('LE POINT — l\'ERP envoie au cockpit toute la part, 6 et 2, avec l\'identifiant de la facture', len(ENVOIS) == 1 and ENVOIS[0]['cle'] == f['id'] and sorted((i['bc'], i['ajout']) for i in ENVOIS[0]['items']) == sorted([(A[0], 6), (A2[0], 2)]), ENVOIS)
         check('la facture note que Shopify est à jour', f.get('pcShopify', {}).get('etat') == 'ok', f.get('pcShopify'))
         check('le message le dit', 'Shopify' in pg.inner_text('#msg') and 'mis à jour' in pg.inner_text('#msg'), pg.inner_text('#msg'))
         j = pg.evaluate("()=>JSON.parse(localStorage.getItem('crm-journal-v1')||'[]')")
@@ -108,17 +109,18 @@ try:
         print('3. Shopify en panne, puis renvoi')
         facture('PC-2', 4, 4); pg.fill('input.rp[data-i="0"][data-rp="pc"]', '4'); pg.locator('input.rp[data-i="0"][data-rp="pc"]').blur(); pg.wait_for_timeout(300)
         pcs = pg.evaluate("()=>document.querySelector('input.rp[data-i=\"0\"][data-rp=\"pc\"]').parentElement.querySelector('small.pcs').innerText.replace(/\u00a0/g,' ')")
-        check('la 2e réception montre le stock de Perfume City d\'après la 1re : 5 + 1 tester → 9', 'en stock 5 + 1 tester' in pcs and '→ 9' in pcs, pcs)
+        check('la 2e réception montre le stock de Perfume City d\'après la 1re : 6 → 10', 'en stock 6' in pcs and 'tester' not in pcs and '→ 10' in pcs, pcs)
         # 10 nov. 2026 (Igal : « sur tous les parfums, un tester chez Perfume City, pas plus ») : une donnée ancienne à 6 ne compte que pour 1
-        pg.evaluate("bc=>{ const T=JSON.parse(localStorage.getItem('testeurs-pc-v1')||'{}'); T[bc.replace(/^0+/,'')].n=6; localStorage.setItem('testeurs-pc-v1',JSON.stringify(T)); }", A[0])
+        # la boutique a déclaré un tester entre-temps (ici une donnée ancienne à 6)
+        pg.evaluate("bc=>{ const T=JSON.parse(localStorage.getItem('testeurs-pc-v1')||'{}'); T[bc.replace(/^0+/,'')]={n:6,bc:bc,ref:'x'}; localStorage.setItem('testeurs-pc-v1',JSON.stringify(T)); }", A[0])
         pg.fill('input.rp[data-i="0"][data-rp="pc"]', '3'); pg.locator('input.rp[data-i="0"][data-rp="pc"]').blur(); pg.wait_for_timeout(300)
         pcs6 = pg.evaluate("()=>document.querySelector('input.rp[data-i=\"0\"][data-rp=\"pc\"]').parentElement.querySelector('small.pcs').innerText.replace(/\u00a0/g,' ')")
-        check('LE POINT — un tester par parfum, jamais plus : une donnée ancienne à 6 s\'affiche « + 1 tester », et la livraison n\'en met pas un de plus de côté', 'en stock 5 + 1 tester' in pcs6 and '6 tester' not in pcs6 and '→ 8' in pcs6, pcs6)
+        check('LE POINT — un tester par parfum, jamais plus : une donnée ancienne à 6 s\'affiche « + 1 tester », et la livraison n\'en met aucun de côté', 'en stock 6 + 1 tester' in pcs6 and '6 tester' not in pcs6 and '→ 9' in pcs6, pcs6)
         pg.evaluate("bc=>{ const T=JSON.parse(localStorage.getItem('testeurs-pc-v1')||'{}'); T[bc.replace(/^0+/,'')].n=1; localStorage.setItem('testeurs-pc-v1',JSON.stringify(T)); }", A[0])
         pg.fill('input.rp[data-i="0"][data-rp="pc"]', '4'); pg.locator('input.rp[data-i="0"][data-rp="pc"]').blur(); pg.wait_for_timeout(300)
         MODE['v'] = 'panne'; ENVOIS.clear(); pg.click('#ok'); pg.wait_for_timeout(1500)
         f2 = next(x for x in facts() if x['num'] == 'PC-2')
-        check('LE POINT — Shopify en panne : l\'ERP est quand même à jour (Perfume City 5 + 4 = 9 : la boutique a déjà son tester, tout entre en vente)', pcq(A[0]) == 9, pcq(A[0]))
+        check('LE POINT — Shopify en panne : l\'ERP est quand même à jour (Perfume City 6 + 4 = 10, tout entre en vente)', pcq(A[0]) == 10, pcq(A[0]))
         check('la facture note l\'échec et le message dit « PAS encore sur Shopify » et « Renvoyer »', f2.get('pcShopify', {}).get('etat') == 'echec' and 'PAS encore sur Shopify' in pg.inner_text('#msg') and 'Renvoyer' in pg.inner_text('#msg'), [f2.get('pcShopify'), pg.inner_text('#msg')])
         pg.goto(base + 'factures.html'); pg.wait_for_timeout(2500)
         pg.locator(f'#liste tr[data-d="{f2["id"]}"]').click(); pg.wait_for_timeout(600)
@@ -126,22 +128,22 @@ try:
         MODE['v'] = 'ok'; ENVOIS.clear(); pg.click('#d-pc-renvoi'); pg.wait_for_timeout(1500)
         f2 = next(x for x in facts() if x['num'] == 'PC-2')
         check('LE POINT — le renvoi part avec LA MÊME clé (le cockpit ne compte pas deux fois) et la facture passe à « envoyé »', len(ENVOIS) == 1 and ENVOIS[0]['cle'] == f2['id'] and f2['pcShopify']['etat'] == 'ok', [ENVOIS, f2.get('pcShopify')])
-        check('le renvoi ne touche plus au stock de l\'ERP (toujours 9)', pcq(A[0]) == 9)
+        check('le renvoi ne touche plus au stock de l\'ERP (toujours 10)', pcq(A[0]) == 10)
         print('4. un parfum absent de la boutique Perfume City')
         facture('PC-3', 2, 2); pg.fill('input.rp[data-i="1"][data-rp="pc"]', '2'); pg.locator('input.rp[data-i="1"][data-rp="pc"]').blur(); pg.wait_for_timeout(300)
         MODE['v'] = 'absent'; pg.click('#ok'); pg.wait_for_timeout(1500)
         f3 = next(x for x in facts() if x['num'] == 'PC-3')
-        check('LE POINT — le parfum absent de Shopify est signalé par son nom, l\'ERP est à jour', f3['pcShopify']['etat'] == 'partiel' and "pas (encore) chez Perfume City" in pg.inner_text('#msg') and pcq(A2[0]) == 3, [f3.get('pcShopify'), pg.inner_text('#msg')])
+        check('LE POINT — le parfum absent de Shopify est signalé par son nom, l\'ERP est à jour', f3['pcShopify']['etat'] == 'partiel' and "pas (encore) chez Perfume City" in pg.inner_text('#msg') and pcq(A2[0]) == 4, [f3.get('pcShopify'), pg.inner_text('#msg')])
         MODE['v'] = 'ok'
 
         print('5. annuler une facture')
         pg.goto(base + 'factures.html'); pg.wait_for_timeout(2500)
         f1 = next(x for x in facts() if x['num'] == 'PC-1'); ENVOIS.clear(); DIAL.clear()
         pg.locator(f'#liste tr[data-d="{f1["id"]}"] button[data-x]').click(); pg.wait_for_timeout(1500)
-        check('LE POINT — l\'annulation retire le vendable, 5 et 1, chez Shopify, sous une clé « annule » distincte', len(ENVOIS) == 1 and ENVOIS[0]['cle'] == f1['id'] + '-annule' and sorted((i['bc'], i['ajout']) for i in ENVOIS[0]['items']) == sorted([(A[0], -5), (A2[0], -1)]), ENVOIS)
-        check('Perfume City dans l\'ERP : 9 − 5 = 4, et 3 − 1 = 2', pcq(A[0]) == 4 and pcq(A2[0]) == 2, [pcq(A[0]), pcq(A2[0])])
+        check('LE POINT — l\'annulation retire ce qui avait été donné, 6 et 2, chez Shopify, sous une clé « annule » distincte', len(ENVOIS) == 1 and ENVOIS[0]['cle'] == f1['id'] + '-annule' and sorted((i['bc'], i['ajout']) for i in ENVOIS[0]['items']) == sorted([(A[0], -6), (A2[0], -2)]), ENVOIS)
+        check('Perfume City dans l\'ERP : 10 − 6 = 4, et 4 − 2 = 2', pcq(A[0]) == 4 and pcq(A2[0]) == 2, [pcq(A[0]), pcq(A2[0])])
         T = pg.evaluate("()=>JSON.parse(localStorage.getItem('testeurs-pc-v1')||'{}')")
-        check('… et les deux testers de PC-1 sont retirés', not T.get(A[0].lstrip('0')) and not T.get(A2[0].lstrip('0')), T)
+        check('… et le tester déclaré par la boutique reste : annuler une facture n\'y touche pas', bool(T.get(A[0].lstrip('0'))) and not T.get(A2[0].lstrip('0')), T)
         check('LE POINT — Perfumes Trade perd exactement ce que PC-1 lui avait donné (10 et 3) : 22 − 10 = 12, 11 − 3 = 8 (les autres factures restent)', mod(A[15]).get('qte') == 12 and mod(A2[15]).get('qte') == 8, [mod(A[15]), mod(A2[15])])
         check('la facture a disparu de la liste', not any(x['num'] == 'PC-1' for x in facts()))
         f2 = next(x for x in facts() if x['num'] == 'PC-2'); MODE['v'] = 'panne'; ENVOIS.clear(); DIAL.clear(); REPS[:] = [True, False]

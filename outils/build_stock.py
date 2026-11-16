@@ -242,6 +242,10 @@ input.cnt:focus{outline:2px solid var(--iris);outline-offset:1px;background:var(
 input.cnt.filled{background:var(--iris-soft);border-color:var(--iris)}
 .vit{display:block;font-family:Inter,sans-serif;font-size:10px;font-weight:600;
 color:var(--iris);letter-spacing:.02em;margin-top:1px}
+/* 16 nov. 2026 : la case « tester » de Perfume City, cochée par la boutique */
+.tstl{cursor:pointer;white-space:nowrap}.tstl input{margin:0 4px 0 0;vertical-align:-2px;accent-color:var(--iris)}
+.tstl.off{color:var(--ink-3);font-weight:500}
+.tstn{display:block;font-family:Inter,sans-serif;font-size:10px;font-weight:600;color:var(--good)}
 .gap{font-family:Inter,sans-serif;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
 .gap.pos{color:var(--good)} .gap.neg{color:var(--crit)} .gap.zero{color:var(--ink-3);font-weight:400}
 /* Igal, 30 sept. 2026 : une ligne comptée devient VIOLET PÂLE — c'est la preuve que le
@@ -672,8 +676,7 @@ function ligne(p,i){
      <span class="n">${esc(p.nom)}</span>
      <span class="m">${[p.ml?p.ml+' oz':'',p.type].filter(Boolean).join(' · ')} &nbsp;<span class="code">${p.bc}</span></span></div></td>
    <td class="o4"><span class="tag ${vl(p.v)[1]}">${vl(p.v)[0]}</span></td>
-   <td class="num">${qteAtt(p)===0?'<span style="color:var(--ink-3)">0</span>':nf(qteAtt(p))}${
-       vit?`<span class="vit" title="${nf(vit)} tester${vit>1?'s':''}, non vendable${vit>1?'s':''} — à compter quand même">+${nf(vit)} tester${vit>1?'s':''}</span>`:''}</td>
+   <td class="num">${qteAtt(p)===0?'<span style="color:var(--ink-3)">0</span>':nf(qteAtt(p))}${tstHtml(p)}</td>
    <td class="num"><input class="cnt${rempli?' filled':''}" type="number" min="0" inputmode="numeric"
        value="${rempli?c:''}" data-bc="${esc(kc(p))}" aria-label="Quantité comptée"></td>
    <td class="num"><span class="gap ${gcls}">${ec==null?'—':(ec>0?'+':'')+nf(ec)}</span></td>
@@ -751,6 +754,10 @@ if('__CIBLE__'==='pt') P=P.filter(p=>!(MOD[p.cle]&&MOD[p.cle].masque));
    comptage annonce des écarts qui n'existent pas. */
 let EXT={q:{}}; try{ EXT=Object.assign({q:{}},JSON.parse(localStorage.getItem('stock-externe-v1')||'{}')); }catch(e){}
 function qteTh(p){
+  /* 16 nov. 2026 : chez Perfume City, LE stock est celui du magasin partagé (pc-stock-v1) — celui que les ventes diminuent et
+     que Shopify reçoit. Un comptage y est maintenant écrit (voir confirmeComptage) ; avant, il restait dans une copie à part
+     (fiches-modifiees-pc-v1) : la page montrait le chiffre compté, mais ni le reste de l'ERP ni Shopify ne le recevaient. */
+  if('__CIBLE__'==='pc') return +p.qte||0;
   const m=MOD[p.cle];
   if(m&&m.qte!=null) return +m.qte;
   /* 31 oct. 2026 (Sam : « l'inventaire de Perfume City est faux ») : stock-externe-v1 est le stock de L'ENTREPÔT (import du
@@ -782,6 +789,8 @@ window.__rafraichir=()=>{ const y=window.scrollY;
 if('__CIBLE__'==='pt') P.forEach(p=>{ const m=MOD[p.cle]; if(!m) return; if(m.pvr!=null&&m.pvr!=='') p.pvr=+m.pvr; if(m.pvw!=null&&m.pvw!=='') p.pvw=+m.pvw; });
   if('__CIBLE__'==='pt') P=P.filter(p=>!(MOD[p.cle]&&MOD[p.cle].masque));
   { const s=lit(KEY,{}); if(s&&typeof s==='object') saisie=s; } rangeDup();
+  if('__CIBLE__'==='pc'){ try{ const m=pcsCarte(); P.forEach(p=>{ const o=m[pcsCle([p.bc0!==undefined?p.bc0:p.bc,0,0,0,0,0,0,0,0,p.cle])]; if(o) p.qte=Math.max(0,Math.round(+o.q||0)); });
+    const t=lit('testeurs-pc-v1',{}); if(t&&typeof t==='object'&&!Array.isArray(t)) TSTPC=t; }catch(e){} }
   { const j=lit(KJOU,[]); if(Array.isArray(j)) JOU=j; }
   try{ rend(false); }catch(e){} try{ chiffres(); }catch(e){} window.scrollTo(0,y); };
 /* UN COMPTAGE PÉRIMÉ (Sam, 30 oct. 2026 : « ce parfum, j'en ai acheté plusieurs, l'Inventaire dit 0 et
@@ -791,7 +800,9 @@ if('__CIBLE__'==='pt') P.forEach(p=>{ const m=MOD[p.cle]; if(!m) return; if(m.pv
    est vide, et le prochain comptage repart de ce stock-là. */
 /* ce que la case « compté » contient pour cette ligne — rien si le comptage est périmé */
 function cpt(p){ return comptagePerime(p)?undefined:saisie[kc(p)]; }
-function comptagePerime(p){ const m=MOD[p.cle]; return !!(m&&m.qteC!=null&&(m.qte==null||+m.qte!==+m.qteC)); }
+function comptagePerime(p){ const m=MOD[p.cle];
+  if('__CIBLE__'==='pc') return !!(m&&m.qteC!=null&&(+p.qte||0)!==+m.qteC);
+  return !!(m&&m.qteC!=null&&(m.qte==null||+m.qte!==+m.qteC)); }
 /* 11 nov. 2026 (Igal : « quand c'est vérifié, enlève le chiffre théorique, ça me sert à rien ») : la colonne « Théorique » montrait, après
    le comptage, le chiffre d'AVANT (le Google Sheet : 73 quand on en a compté 52). Elle montre maintenant le stock réel. L'ancien chiffre
    reste seulement au Journal (« quantité corrigée par comptage : 73 → 52 »). */
@@ -810,6 +821,43 @@ function tst(p){
   const e=(k&&TSTPC[k])||TSTPC[p.cle];
   /* 10 nov. 2026 (Igal : « sur tous les parfums, un tester chez Perfume City, pas plus ») : le Sheet importé le 13 oct. portait 95, 72, 60… dans la colonne des testers. Un parfum a un tester, ou aucun : jamais plus, à la lecture comme à l'écriture. */
   return e&&(+e.n>0)?1:0;
+}
+/* 16 nov. 2026 (Igal, à la demande de Sam : « c'est elle qui doit sélectionner j'ai un tester… il ne faut pas que ça se fasse
+   automatiquement ») : plus de tester posé tout seul quand Perfumes Trade livre. Chaque ligne de l'inventaire Perfume City porte
+   une case « tester » que la boutique coche elle-même.
+     - cocher : un flacon sort de la vente (5 en vente → 4 + 1 tester) ; s'il n'y a rien en vente, le tester est juste noté ;
+     - décocher : le flacon revient en vente seulement si c'est cette case qui l'en avait sorti (« pris ») — un tester venu de
+       l'ancien fichier ne crée jamais de stock en le décochant.
+   La quantité en vente est écrite dans le stock partagé : Shopify la reçoit (le gardien du stock). */
+const T3=(a,b,c)=>(typeof L3==='function'?L3(a,b,c):a);
+function tstCle(p){ const b0=p.bc0!==undefined?p.bc0:p.bc; return b0?String(b0).replace(/^0+/,''):String(p.cle||''); }
+function tstHtml(p){
+  if(CIBLE!=='pc') return '';
+  const v=tst(p);
+  return `<label class="vit tstl${v?'':' off'}" data-nolang title="${esc(T3('Coche si la boutique a un tester de ce parfum : il n\'est pas en vente, mais il se compte.','Tick if the shop has a tester of this perfume: it is not for sale, but it is counted.','Marca si la tienda tiene un tester de este perfume: no se vende, pero se cuenta.'))}"><input type="checkbox" class="tck" data-tk="${esc(kc(p))}"${v?' checked':''}>${v?'+1 tester':'tester'}</label>`;
+}
+/* écrit la quantité en vente d'un parfum dans le stock partagé de Perfume City */
+function pcPoseQte(p,q){
+  try{ const m=pcsCarte(), o=m[pcsCle([p.bc0!==undefined?p.bc0:p.bc,0,0,0,0,0,0,0,0,p.cle])]; if(!o) return false;
+    const n=Object.assign({},o,{q:Math.max(0,Math.round(+q||0))});
+    if(!pcsSauve([pcsVers(n)])) return false;
+    p.qte=n.q; return true;
+  }catch(e){ return false; }
+}
+function tstBascule(p,veut){
+  const k=tstCle(p), T=Object.assign({},lit('testeurs-pc-v1',{})||{}), ref=((p.marque||'')+' '+(p.nom||'')).trim();
+  const av=qteTh(p); let ap=av;
+  if(veut){ const pris=av>=1?1:0; ap=av-pris;
+    T[k]={n:1,bc:String((p.bc0!==undefined?p.bc0:p.bc)||''),ref,t:new Date().toISOString(),u:USR||(typeof NOM_UTIL==='string'&&NOM_UTIL)||'(non renseigné)',pris}; }
+  else { const e=T[k]||T[p.cle]||{}; ap=av+(e.pris?1:0); delete T[k]; delete T[p.cle]; }
+  if(ap!==av&&!pcPoseQte(p,ap)) return null;
+  ecrit('testeurs-pc-v1',T); TSTPC=T;
+  /* un comptage déjà validé suit, pour ne pas passer pour périmé */
+  const m=MOD[p.cle]; if(m&&m.qteC!=null&&+m.qteC===av&&ap!==av){ m.qteC=ap; m.qte=ap; ecrit(KMOD,MOD); }
+  jlog({act:'stock',lib:veut?('tester déclaré par la boutique'+(ap!==av?' — 1 flacon sorti de la vente':' — aucun flacon en vente à sortir'))
+                           :('tester retiré par la boutique'+(ap!==av?' — le flacon revient en vente':' — la quantité en vente ne change pas')),
+        bc:p.bc,ref,av,ap,n:1,det:[{bc:p.bc,ref,av,ap}]});
+  return {av,ap};
 }
 /* ce qu'on doit trouver en rayon : le vendable plus ce qui est en vitrine */
 function qtePhys(p){ return qteAtt(p)+tst(p); }
@@ -1090,8 +1138,9 @@ function confirmeComptage(p,valeur){
   const id=p.cle, m0=MOD[id]||{};
   const avant=(m0.verif)||p.v||'';
   const m=Object.assign({},m0);
+  const pc='__CIBLE__'==='pc';
   if(m.qteC==null||comptagePerime(p)){       /* premier comptage (ou l'ancien est périmé) : on garde de quoi revenir en arrière */
-    if(m0.qte!=null) m.qteAv=m0.qte; else delete m.qteAv;
+    if(pc) m.qteAv=+p.qte||0; else if(m0.qte!=null) m.qteAv=m0.qte; else delete m.qteAv;
     m.qteTh0=qteTh(p);
   }
   const th=m.qteTh0!=null?+m.qteTh0:qteTh(p);
@@ -1099,6 +1148,7 @@ function confirmeComptage(p,valeur){
   m.qte=vend; m.qteC=vend;
   m.verif='ok'; m.verifPar=USR||(typeof NOM_UTIL==='string'&&NOM_UTIL)||'(non renseigné)'; m.verifLe=new Date().toISOString();
   MOD[id]=m; ecrit(KMOD,MOD); p.v='ok';
+  if(pc) pcPoseQte(p,vend);   /* le stock partagé de Perfume City prend le chiffre compté : Shopify le reçoit */
   const ref=(p.marque||'')+' '+(p.nom||'');
   jlog({act:'verif',lib:'comptage physique',bc:p.bc,ref,av:vl(avant)[0],ap:'comptage vérifié'});
   if(vend!==th){ const pa=paEff(p);
@@ -1113,7 +1163,10 @@ function annuleComptage(p){
   m.verif='non'; p.v='non'; delete m.verifPar; delete m.verifLe;
   /* on ne retire que la quantité posée par CE comptage : celles qui viennent des ventes,
      des réceptions ou de l'import tableur ne doivent pas disparaître avec lui. */
-  if(m.qteC!=null && +m.qte===+m.qteC){
+  if('__CIBLE__'==='pc'){   /* Perfume City : on rend au stock partagé la quantité d'avant, si rien n'a bougé depuis */
+    if(m.qteC!=null && (+p.qte||0)===+m.qteC && m.qteAv!=null) pcPoseQte(p,+m.qteAv);
+    delete m.qte;
+  } else if(m.qteC!=null && +m.qte===+m.qteC){
     if(m.qteAv!=null) m.qte=m.qteAv; else delete m.qte;   /* on rend la quantité d'avant le comptage */
   }
   delete m.qteC; delete m.qteAv; delete m.qteTh0;
@@ -1199,6 +1252,16 @@ document.addEventListener('keydown',e=>{
 const T_CNT={};
 /* la quantité comptée est enregistrée quand on quitte la case (Tab, clic ailleurs, Entrée) */
 document.addEventListener('change',e=>{
+  if(e.target.classList&&e.target.classList.contains('tck')){
+    const p1=P.find(x=>kc(x)===e.target.dataset.tk); if(!p1) return;
+    const r=tstBascule(p1,e.target.checked);
+    majLigne(p1); try{ chiffres(); }catch(_){}
+    if(r){ const l=document.querySelector(kSel(kc(p1))), td=l&&l.closest('tr')?l.closest('tr').querySelectorAll('td')[3]:null;
+      if(td){ const n=document.createElement('span'); n.className='tstn'; n.setAttribute('data-nolang','');
+        n.textContent=r.av!==r.ap?T3('en vente : ','on sale: ','a la venta: ')+r.av+' → '+r.ap:T3('en vente : inchangé','on sale: unchanged','a la venta: sin cambio');
+        td.appendChild(n); setTimeout(()=>{ try{ n.remove(); }catch(_){} },6000); } }
+    return;
+  }
   if(!e.target.classList||!e.target.classList.contains('cnt')) return;
   const bc=e.target.dataset.bc, v=e.target.value, p0=P.find(x=>kc(x)===bc);
   if(!p0) return;
@@ -1224,8 +1287,7 @@ function majLigne(p){
      s'écrivait dans « Écart » et le capital dans « PV gros ». */
   if(td.length>=8){
     const ta=qteAtt(p), vit=tst(p);
-    td[3].innerHTML = (ta===0?'<span style="color:var(--ink-3)">0</span>':nf(ta))
-      +(vit?`<span class="vit">+${nf(vit)} tester${vit>1?'s':''}</span>`:'');   /* « tester » et non « vitrine » (Igal, 31 oct. 2026) */
+    td[3].innerHTML = (ta===0?'<span style="color:var(--ink-3)">0</span>':nf(ta))+tstHtml(p);   /* « tester » et non « vitrine » (Igal, 31 oct. 2026) */
     td[5].innerHTML = `<span class="gap ${gcls}">${ec==null?'—':(ec>0?'+':'')+nf(ec)}</span>`;
     td[6].innerHTML = `<span class="gap ${gcls}">${val==null?'—':(val>0?'+':'')+money(val)}</span>`;
     td[7].innerHTML = money(capEff(p));

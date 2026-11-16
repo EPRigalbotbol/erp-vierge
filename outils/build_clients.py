@@ -260,8 +260,8 @@ CORPS = r"""
     <option value="site" data-cote="detail">Ont commandé sur le site détail</option>
     <option value="compted" data-cote="detail">Compte sur le site détail, jamais commandé</option>
     <option value="boutique" data-cote="detail">Boutique et caisse</option>
-    <option value="amazon" data-cote="detail">Amazon</option>
-    <option value="sans">Sans achat enregistré</option></select>
+    <option value="sans">Sans achat enregistré</option>
+    <option value="acompl">Fiches à compléter (non diffusables)</option></select>
   <select id="per" class="sel">
     <option value="0">Toute la période</option>
     <option value="30">30 derniers jours</option>
@@ -520,14 +520,28 @@ const parNom=nom=>TOUS.find(o=>o.k===cNorm(canon(nom)))||null;
 /* 16 nov. 2026 — deux sous-rubriques, Wholesale et Retail (Igal : « dans la rubrique Clients, deux sous-rubriques,
    wholesale et retail… comme ça on pourra gérer le mailing pour le wholesale et pour le retail »).
    Wholesale : les achats de gros (ERP, tableur), les comptes et commandes du site de gros, et les fiches créées à la main.
-   Retail : le site détail, la boutique, Amazon. Un client qui achète des deux côtés est dans les deux listes ;
+   Retail : le site détail et la boutique au détail ; Amazon a sa propre rubrique. Un client qui achète des deux côtés est dans les deux listes ;
    chaque liste ne compte que les achats de SON côté. La liste de diffusion part de la liste affichée. */
-const COTE_A={gros:'gros',site:'detail',boutique:'detail',amazon:'detail'};
+/* (même jour, Igal) : les onglets portent le nom du site — perfumestrade.com (site détail + boutique au détail),
+   wholesale.perfumestrade.com (site de gros + achats de gros à la boutique) — et Amazon a sa propre rubrique */
+const COTE_A={gros:'gros',site:'detail',boutique:'detail',amazon:'amazon'};
 const coteAchat=a=>COTE_A[a.ty||'gros']||'detail';
-const deCote=(o,c)=>c==='detail'?(o.types.has('site')||o.types.has('boutique')||o.types.has('amazon'))
+const deCote=(o,c)=>c==='amazon'?o.types.has('amazon'):c==='detail'?(o.types.has('site')||o.types.has('boutique'))
   :(o.types.has('gros')||o.types.has('sitegros')||!o.types.size);
-const siteDe=(o,c)=>{ const S=siteRes(o); return c==='detail'?S.d:S.g; };
-const coteVue=()=>CL_ONG==='detail'?'detail':'gros';
+const siteDe=(o,c)=>{ const S=siteRes(o); return c==='detail'?S.d:c==='gros'?S.g:null; };
+const coteVue=()=>CL_ONG==='detail'||CL_ONG==='amazon'?CL_ONG:'gros';
+const COTE_NOM={gros:'wholesale.perfumestrade.com',detail:'perfumestrade.com',amazon:'Amazon'};
+const COTE_HASH={gros:'',detail:'#retail',amazon:'#amazon'};
+/* 16 nov. 2026 (Igal : « beaucoup de numéros de téléphone ou de noms qui manquent… une petite notion en rouge, fiche à
+   compléter, non diffusable ») : on ne diffuse qu'à une fiche qui a un vrai nom ET un moyen de joindre (email ou téléphone).
+   Un « nom » qui est une adresse email ou un identifiant (@, _, ou tout en minuscules collé à des chiffres comme un pseudo
+   du site) ne compte pas — « Parfums360 » ou « Client 001 » restent des noms —, sauf si le
+   prénom est rempli dans les coordonnées. Ce qui manque est dit en clair. */
+const nomOk=o=>!!String(o.co.prenom||'').trim()||(/[A-Za-zÀ-ÿ]{2,}/.test(o.nom)&&!/[@_]/.test(o.nom)&&!/^[a-z][a-z.]*\d{2,}$/.test(String(o.nom).trim()));
+const joignable=o=>ctMail(o.co.email)||!!ctNum(o.co.tel)||!!ctNum(o.co.tel2)||!!ctNum(o.co.tel3);
+const manque=o=>[nomOk(o)?'':L3('le nom','the name','el nombre'),joignable(o)?'':L3('l\'email ou le téléphone','the email or the phone','el email o el teléfono')].filter(Boolean);
+const diffusable=o=>!manque(o).length;
+const marqueACompl=o=>diffusable(o)?'':`<span class="warn" title="${esc(L3('Il manque','Missing','Falta')+' : '+manque(o).join(' + '))}">${L3('Fiche à compléter · non diffusable','Incomplete record · cannot be messaged','Ficha incompleta · no se puede enviar')}</span>`;
 /* le filtre du haut, dans la sous-rubrique affichée. « Ont commandé » = au moins une commande payée ;
    « compte, jamais commandé » = un compte ouvert sur le site, sans aucune commande payée de ce côté */
 function passeFiltre(o,typ,c){
@@ -541,6 +555,7 @@ function passeFiltre(o,typ,c){
     case 'compteg': return o.types.has('sitegros')&&!cmdS&&!aC;
     case 'compted': return !!o.site&&!cmdS&&!aC;
     case 'sans': return !aC&&!cmdS;
+    case 'acompl': return !diffusable(o);
     default: return o.types.has(typ);
   }
 }
@@ -558,17 +573,17 @@ function lignes(){
       return {o,A,vip:estVip(o.nom),total,nb,viaSite,fl:A.reduce((s,a)=>s+(a.retour?-Math.abs(a.fl):a.fl),0),der}; })
     /* un favori reste visible même s'il n'a rien acheté sur la période :
        c'est justement pour le retrouver vite qu'on l'a mis en favori */
-    .filter(r=>typ==='sans'||typ==='vip'||r.vip||r.nb||!lim&&(r.o.site||r.o.devis.length||Object.keys(r.o.co).length));
+    .filter(r=>typ==='sans'||typ==='vip'||typ==='acompl'||r.vip||r.nb||!lim&&(r.o.site||r.o.devis.length||Object.keys(r.o.co).length));
 }
 /* l'étiquette du site dit ce qui s'est passé, pas seulement « a un compte » (Igal, 16 nov. 2026 : Valérie Gilbert
    portait « Site de gros » sans avoir jamais commandé) ; seule celle de la sous-rubrique affichée est montrée */
 const badges=o=>[...o.types].filter(t=>t!=='sitegros'&&(t!=='site'||(coteVue()==='detail'&&o.achats.some(a=>a.ty==='site')&&!(siteRes(o).d&&siteRes(o).d.cmd)))).map(t=>`<span class="tg ${t}">${TYPES[t]||t}</span>`).join('')
   +(()=>{ const c=coteVue(), S=siteDe(o,c), aC=o.achats.some(a=>coteAchat(a)===c&&!a.retour);
     if(S&&(S.cmd||S.tent)) return '';
-    const compte=c==='detail'?!!o.site:o.types.has('sitegros');
+    const compte=c==='detail'?!!o.site:c==='gros'&&o.types.has('sitegros');
     return compte&&!aC?`<span class="tg compte">${c==='detail'?L3('Compte site détail · jamais commandé','Retail site account · never ordered','Cuenta sitio minorista · nunca pidió'):L3('Compte site de gros · jamais commandé','Wholesale site account · never ordered','Cuenta sitio mayorista · nunca pidió')}</span>`:''; })()
   +(()=>{ const c=coteVue(), S=siteRes(o), f=(x,lib)=>x&&(x.cmd||x.tent)?`<span class="sitec" data-nolang>${lib} : ${x.cmd} ${L3('commande(s)','order(s)','pedido(s)')}${x.cmd&&typeof voitCA==='function'&&voitCA()?' · '+money(x.total||0):''}${x.der?' · '+L3('dernière','last','último')+' '+dfr(x.der):''}${!x.cmd&&x.tent?' · '+L3('paiement échoué seulement','failed payment only','solo pago fallido'):''}</span>`:'';
-    return c==='detail'?f(S.d,L3('Site détail','Retail site','Sitio minorista')):f(S.g,L3('Site de gros','Wholesale site','Sitio mayorista')); })();
+    return c==='detail'?f(S.d,L3('Site détail','Retail site','Sitio minorista')):c==='gros'?f(S.g,L3('Site de gros','Wholesale site','Sitio mayorista')):''; })();
 
 function dessine(){
   _ALX=null;
@@ -583,7 +598,7 @@ function dessine(){
   const cv=coteVue(), nCote=TOUS.filter(o=>deCote(o,cv)).length;
   const du=TOUS.reduce((s,o)=>s+o.reste,0);
   $('kpis').innerHTML=`<div class="kpis">
-    <div class="kpi"><div class="v">${nf(nCote)}</div><div class="k">${cv==='detail'?L3('clients retail','retail customers','clientes minoristas'):L3('clients wholesale','wholesale customers','clientes mayoristas')}</div></div>
+    <div class="kpi"><div class="v">${nf(nCote)}</div><div class="k">${L3('clients','customers','clientes')} ${COTE_NOM[cv]}</div></div>
     ${voitCA()?`<div class="kpi"><div class="v i">${money(tot)}</div><div class="k">vendu aux clients affichés</div></div>`:''}
     <div class="kpi"><div class="v">${nf(ncmd)}</div><div class="k">achats sur la période</div></div>
     ${voitCA()?`<div class="kpi"><div class="v${du>0?' c':''}" style="${du>0?'color:var(--crit)':''}">${money(du)}</div><div class="k">reste à encaisser, tous clients</div></div>`:''}</div>`;
@@ -593,7 +608,7 @@ function dessine(){
       <tbody>${R.map((r,i)=>`<tr data-c="${esc(r.o.nom)}"${r.vip?' class="vip"':''}>
         <td class="coch"><input type="checkbox" class="ck" data-ck="${esc(r.o.nom)}"${COCHES.has(r.o.nom)?' checked':''}></td>
         <td class="fav"><button class="et${r.vip?' on':''}" data-fav="${esc(r.o.nom)}" title="${r.vip?'Retirer des favoris':'Mettre en favoris'}">${r.vip?'★':'☆'}</button></td>
-        <td class="nom"><span data-nolang>${esc(r.o.nom)}</span>${badges(r.o)}${r.o.douteux.length?'<span class="warn">à vérifier</span>':''}${r.o.reste>0&&voitCA()?`<span class="warn">${money(r.o.reste)} à payer</span>`:''}<small data-nolang>${esc([r.o.co.raison,r.o.co.email,r.o.co.tel,r.o.co.ville].filter(Boolean).join(' · '))}</small></td>
+        <td class="nom"><span data-nolang>${esc(r.o.nom)}</span>${badges(r.o)}${marqueACompl(r.o)}${r.o.douteux.length?'<span class="warn">à vérifier</span>':''}${r.o.reste>0&&voitCA()?`<span class="warn">${money(r.o.reste)} à payer</span>`:''}<small data-nolang>${esc([r.o.co.raison,r.o.co.email,r.o.co.tel,r.o.co.ville].filter(Boolean).join(' · '))}</small></td>
         ${voitCA()?`<td class="n mt">${r.nb||r.total?money(r.total):'<span class="non">—</span>'}<div class="bar"><i style="width:${max?Math.max(1,r.total/max*100):0}%"></i></div></td>`:''}
         <td class="n">${r.nb?nf(r.nb)+(r.viaSite?' <span title="'+L3('d\'après le site','according to the website','según el sitio')+'">≈</span>':''):'<span class="non">—</span>'}${r.o.devis.length&&!r.nb?`<small style="display:block;color:var(--ink-3)">${r.o.devis.length} devis</small>`:''}</td>
         <td class="n dim">${r.fl?nf(Math.round(r.fl)):'—'}</td><td class="n dim">${r.der?dfr(r.der):(r.o.site&&r.o.site.der?'<span title="d\'après le fichier du site">'+dfr(r.o.site.der)+' ≈</span>':(siteRes(r.o).d&&siteRes(r.o).d.der?'<span title="dernière commande sur le site">'+dfr(siteRes(r.o).d.der)+' ≈</span>':(siteRes(r.o).g&&siteRes(r.o).g.der?'<span title="dernière commande sur le site de gros">'+dfr(siteRes(r.o).g.der)+' ≈</span>':'—')))}</td></tr>`).join('')}</tbody>
@@ -660,6 +675,8 @@ function ouvre(nom){
   const v=o.achats.filter(a=>!a.retour);
   $('dnom').innerHTML=`<span data-nolang>${esc(o.nom)}</span>${badges(o)}`;
   $('dco').innerHTML=[[o.co.prenom,o.co.nomfam].filter(Boolean).join(' '),o.co.raison,o.co.email,o.co.tel,o.co.tel2,o.co.tel3,[o.co.ville,o.co.pays].filter(Boolean).join(', ')].filter(Boolean).map(x=>`<span data-nolang>${esc(x)}</span>`).join(' · ')||'<span class="non">pas de coordonnées — onglet Coordonnées</span>';
+  /* la fiche dit aussi ce qui manque pour pouvoir lui écrire (liste de diffusion, nouveaux arrivages) */
+  if(!diffusable(o)) $('dco').innerHTML+=` <span class="warn acompl">${L3('Fiche à compléter · non diffusable — il manque','Incomplete record · cannot be messaged — missing','Ficha incompleta · no se puede enviar — falta')} ${esc(manque(o).join(' + '))} (${L3('onglet Coordonnées','Contact details tab','pestaña Datos de contacto')})</span>`;
   const dus=o.achats.filter(a=>resteDe(a)>0);
   $('dk').innerHTML=(voitCA()?`<div><b class="i">${money(o.total)}</b><span>vendu à ce client au total</span></div>
     <div><b>${nf(v.length)}</b><span>achats · ${v.length?money(o.total/v.length):'—'} en moyenne</span></div>
@@ -822,9 +839,9 @@ const plNoms=()=>Object.keys(CLI).filter(n=>CLI[n]&&CLI[n].plAcces);
 function plOngPeint(){
   const el=$('cl-ong'); if(!el) return;
   const n=plNoms().length;
-  const T0=Array.isArray(TOUS)?TOUS:[], nG=T0.filter(o=>deCote(o,'gros')).length, nD=T0.filter(o=>deCote(o,'detail')).length;
-  el.innerHTML=`<button data-o="gros" class="${CL_ONG==='gros'?'on':''}">Wholesale<b>${nf(nG)}</b></button>
-    <button data-o="detail" class="${CL_ONG==='detail'?'on':''}">Retail<b>${nf(nD)}</b></button>
+  const T0=Array.isArray(TOUS)?TOUS:[];
+  el.innerHTML=['gros','detail','amazon'].map(c=>`<button data-o="${c}" class="${CL_ONG===c?'on':''}">${COTE_NOM[c]}<b>${nf(T0.filter(o=>deCote(o,c)).length)}</b></button>`).join('')+`
+    
     <button data-o="pl" class="${CL_ONG==='pl'?'on':''}">${L3('Price list en direct','Live price list','Lista de precios en vivo')}<b>${n}</b></button>`;
   el.querySelectorAll('button').forEach(b=>b.onclick=()=>plOnglet(b.dataset.o));
   if(CL_ONG==='pl') plvPeint();
@@ -838,7 +855,7 @@ function plOnglet(o,init){
     const sel=$('typ'); sel.querySelectorAll('option[data-cote]').forEach(op=>{ const non=op.dataset.cote!==o; op.hidden=non; op.disabled=non; });
     if(sel.selectedOptions[0]&&sel.selectedOptions[0].disabled) sel.value='';
     COCHES.clear(); dessine(); }
-  if(!init) try{ history.replaceState(null,'',location.pathname+location.search+(pl?'#pricelist':o==='detail'?'#retail':'')); }catch(e){}
+  if(!init) try{ history.replaceState(null,'',location.pathname+location.search+(pl?'#pricelist':COTE_HASH[o]||'')); }catch(e){}
   plOngPeint();
 }
 const plQuand=t=>{ try{ return new Date(t).toLocaleString(L3('fr-FR','en-US','es-ES'),{timeZone:'America/New_York',day:'numeric',month:'short',year:'numeric',hour:'numeric',minute:'2-digit'}); }catch(_){ return ''; } };
@@ -1064,7 +1081,7 @@ $('sfu').innerHTML = USR ? `Connecté : <b>${esc(USR)}</b>` : '';
 $('sfoot').innerHTML='tous les clients<br>gros, site, boutique';
 construit(); dessine();
 setTimeout(plAccesPublie,3000);   /* la liste des clients autorisés à la price list en direct, tenue à jour au cockpit */
-plOnglet(/(^|[#&])pricelist\b/.test(location.hash)?'pl':/(^|[#&])retail\b/.test(location.hash)?'detail':'gros',true);
+plOnglet(/(^|[#&])pricelist\b/.test(location.hash)?'pl':/(^|[#&])retail\b/.test(location.hash)?'detail':/(^|[#&])amazon\b/.test(location.hash)?'amazon':'gros',true);
 $('selrien').onclick=()=>{ COCHES.clear(); dessine(); };
 $('selvip').onclick=()=>{ COCHES.forEach(n=>basculeVip(n,true)); dessine(); };
 $('selnon').onclick=()=>{ COCHES.forEach(n=>basculeVip(n,false)); dessine(); };
@@ -1079,7 +1096,7 @@ $('selecr').onclick=()=>{ const L=selClients(); if(!L.length) return;
 function offreCherche(q){
   q=cNorm(q); if(q.length<2) return [];
   let M={}; try{ M=lit('fiches-modifiees-v1',{})||{}; }catch(e){}
-  const gros=CL_ONG!=='detail', out=[];
+  const gros=coteVue()==='gros', out=[];
   let T=[]; try{ T=D_TOUS(); }catch(e){}
   for(const r of T){
     const m=M[r[15]||r[14]]||{}, nom=String(r[13]||r[1]||'').trim(), marque=String(r[2]||'').trim(), ml=String(r[3]||'').trim();
@@ -1099,7 +1116,7 @@ function offreCherche(q){
    importe : le message se remplit tout seul. */
 function offreStock(){
   const M=lit('fiches-modifiees-v1',{})||{}; let X={q:{}}; try{ X=Object.assign({q:{}},JSON.parse(localStorage.getItem('stock-externe-v1')||'{}')); }catch(e){}
-  const gros=CL_ONG!=='detail', out=[];
+  const gros=coteVue()==='gros', out=[];
   let T=[]; try{ T=D_TOUS(); }catch(e){}
   T.forEach(r=>{ const m=M[r[15]||r[14]]||{}, bc=String(r[0]||'').trim();
     let q=(m.qte!=null)?+m.qte:(X.q&&X.q[bc]!=null?+X.q[bc]:(+r[6]||0)); if(!(q>0)) return;
@@ -1153,10 +1170,12 @@ async function offreImporte(f){
 }
 function ouvreDiffusion(){
   const R=lignes().map(r=>r.o);
-  const avec=R.filter(o=>!o.co.nodiff&&(ctMail(o.co.email)||ctNum(o.co.tel)));
+  const avec=R.filter(o=>!o.co.nodiff&&diffusable(o)&&(ctMail(o.co.email)||ctNum(o.co.tel)));
+  const aCompl=R.filter(o=>!o.co.nodiff&&!diffusable(o)).length;
   const stops=new Set(R.filter(o=>o.co.nodiff).map(o=>(ctMail(o.co.email)?o.co.email.trim().toLowerCase():'')||ctNum(o.co.tel)||o.nom)).size;
-  if(!avec.length){ alert('Aucun client de cette liste n\'a d\'email ni de numéro WhatsApp. Change le filtre, ou complète les coordonnées dans les fiches.'); return; }
-  const lib=(CL_ONG==='detail'?'Retail':'Wholesale')+($('typ').value?' · '+$('typ').selectedOptions[0].textContent:'');
+  if(!avec.length){ alert(aCompl?L3('Aucun client de cette liste n\'est diffusable : '+aCompl+' fiche(s) à compléter (nom, email ou téléphone).','No customer in this list can be messaged: '+aCompl+' incomplete record(s) (name, email or phone).','Ningún cliente de esta lista puede recibir mensajes: '+aCompl+' ficha(s) incompleta(s) (nombre, email o teléfono).'):L3('Aucun client de cette liste n\'a d\'email ni de numéro WhatsApp. Change le filtre, ou complète les coordonnées dans les fiches.','No customer in this list has an email or a WhatsApp number. Change the filter, or complete the contact details in the records.','Ningún cliente de esta lista tiene email ni número de WhatsApp. Cambia el filtro o completa los datos de contacto en las fichas.')); return; }
+  const lib=COTE_NOM[coteVue()]+($('typ').value?' · '+$('typ').selectedOptions[0].textContent:'')
+    +(aCompl?' — '+L3(aCompl+' fiche(s) à compléter non incluse(s)',aCompl+' incomplete record(s) left out',aCompl+' ficha(s) incompleta(s) no incluida(s)'):'');
   contacteGroupe({liste:avec.map(o=>({nom:o.nom,email:o.co.email||'',tel:o.co.tel||''})), titre:'Liste de diffusion — '+lib, modele:'promo', pied:true,
     desinscrits:stops, catalogue:offreCherche, modeleOffre:offreModele, importeOffre:offreImporte,
     onStop:nom=>{ /* la personne, pas la fiche : toutes les fiches qui portent la même adresse ou le même numéro */
@@ -1194,7 +1213,7 @@ function vipDepuisAdresse(){ const h=location.hash; if(/nom=/.test(h)) return;
   if($('typ').value!==cible){ $('typ').value=cible; dessine(); }
   vipSync(); }
 $('typ').addEventListener('input',()=>{ try{ if(!/nom=/.test(location.hash))
-  history.replaceState(null,'',location.pathname+location.search+($('typ').value==='vip'?'#vip':CL_ONG==='detail'?'#retail':'')); }catch(e){} vipSync(); });
+  history.replaceState(null,'',location.pathname+location.search+($('typ').value==='vip'?'#vip':COTE_HASH[coteVue()]||'')); }catch(e){} vipSync(); });
 window.addEventListener('hashchange',vipDepuisAdresse);
 vipDepuisAdresse();
 /* une fiche demandée par l'adresse : clients.html#nom=Maria%20Lopez */

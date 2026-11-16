@@ -279,6 +279,10 @@ input.cnt:focus{outline:2px solid var(--iris);outline-offset:1px;background:var(
 input.cnt.filled{background:var(--iris-soft);border-color:var(--iris)}
 .vit{display:block;font-family:Inter,sans-serif;font-size:10px;font-weight:600;
 color:var(--iris);letter-spacing:.02em;margin-top:1px}
+/* 16 nov. 2026 : la case « tester » de Perfume City, cochée par la boutique */
+.tstl{cursor:pointer;white-space:nowrap}.tstl input{margin:0 4px 0 0;vertical-align:-2px;accent-color:var(--iris)}
+.tstl.off{color:var(--ink-3);font-weight:500}
+.tstn{display:block;font-family:Inter,sans-serif;font-size:10px;font-weight:600;color:var(--good)}
 .gap{font-family:Inter,sans-serif;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
 .gap.pos{color:var(--good)} .gap.neg{color:var(--crit)} .gap.zero{color:var(--ink-3);font-weight:400}
 /* Igal, 30 sept. 2026 : une ligne comptée devient VIOLET PÂLE — c'est la preuve que le
@@ -423,34 +427,34 @@ color:var(--iris);margin-bottom:3px}
   <div class="logo"><div class="n">Perfumes Trade</div><div class="s">ERP</div></div>
   <nav>
     <span class="navlab">Produits</span>
-<a class="nv" href="catalogue.html?v=202611160728"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>Catalogue<span class="ct nu" id="ct-catalogue">0</span></a>
-    <a class="nv" href="stock.html?v=202611160728"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg></span>Inventaire<span class="ct nu" id="ct-inventaire">0</span></a>
-    <a class="nv on" href="inventaire_pc.html?v=202611160728"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h16l-1-5H5z"/><path d="M5 9v11h14V9"/><path d="M10 20v-5h4v5"/></svg></span>Inventaire Perfume City<span class="ct" id="ct-pcity"></span></a>
-    <a class="nv" href="demandes_pc.html?v=202611160728"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></span>Transfert interstore<span class="ct" id="ct-demandes"></span></a>
+<a class="nv" href="catalogue.html?v=202611161605"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>Catalogue<span class="ct nu" id="ct-catalogue">0</span></a>
+    <a class="nv" href="stock.html?v=202611161605"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg></span>Inventaire<span class="ct nu" id="ct-inventaire">0</span></a>
+    <a class="nv on" href="inventaire_pc.html?v=202611161605"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h16l-1-5H5z"/><path d="M5 9v11h14V9"/><path d="M10 20v-5h4v5"/></svg></span>Inventaire Perfume City<span class="ct" id="ct-pcity"></span></a>
+    <a class="nv" href="demandes_pc.html?v=202611161605"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></span>Transfert interstore<span class="ct" id="ct-demandes"></span></a>
     <div class="navlab">Commerce</div>
-    <a class="nv" href="quotes.html?v=202611160728"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>Cote<span class="ct" id="ct-devis"></span></a>
-    <a class="nv" href="offres.html?v=202611160728"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="8" cy="8" r="1.5"/></svg></span>Offre<span class="ct" id="ct-offre"></span></a>
-    <a class="nv" href="factures.html?v=202611160728"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span>Factures<span class="ct" id="ct-factures"></span></a>
-    <a class="nv" href="ventes.html?v=202611160728"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/></svg></span>Ventes<span class="ct" id="ct-ventes"></span></a>
-    <a class="nv" href="fournisseurs.html?v=202611160728"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></svg></span>Fournisseurs<span class="ct" id="ct-fournisseurs"></span></a>
-    <a class="nv" href="etude.html?v=202611160728"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg></span>Étude de cote<span class="ct" id="ct-étude"></span></a>
-    <a class="nv" href="clients.html?v=202611160728"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></span>Clients<span class="ct nb" id="ct-clients">0</span></a>
-    <a class="nv sub" href="clients.html?v=202611160728#vip" data-id="clients-vip" data-sous="clients.html">Clients VIP</a>
-    <a class="nv" href="mailing.html?v=202611160728"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/><path d="M16 3.5l4 1.5"/></svg></span>Mailing<span class="ct" id="ct-mailing"></span></a>
-    <a class="nv" data-pilotage="1" href="connecteurs.html?v=202611160728"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10l-3-3M17 17H7l3 3"/></svg></span>Connecteurs<span class="ct" id="ct-connecteurs"></span></a>
+    <a class="nv" href="quotes.html?v=202611161605"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>Cote<span class="ct" id="ct-devis"></span></a>
+    <a class="nv" href="offres.html?v=202611161605"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="8" cy="8" r="1.5"/></svg></span>Offre<span class="ct" id="ct-offre"></span></a>
+    <a class="nv" href="factures.html?v=202611161605"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span>Factures<span class="ct" id="ct-factures"></span></a>
+    <a class="nv" href="ventes.html?v=202611161605"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/></svg></span>Ventes<span class="ct" id="ct-ventes"></span></a>
+    <a class="nv" href="fournisseurs.html?v=202611161605"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></svg></span>Fournisseurs<span class="ct" id="ct-fournisseurs"></span></a>
+    <a class="nv" href="etude.html?v=202611161605"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg></span>Étude de cote<span class="ct" id="ct-étude"></span></a>
+    <a class="nv" href="clients.html?v=202611161605"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></span>Clients<span class="ct nb" id="ct-clients">0</span></a>
+    <a class="nv sub" href="clients.html?v=202611161605#vip" data-id="clients-vip" data-sous="clients.html">Clients VIP</a>
+    <a class="nv" href="mailing.html?v=202611161605"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/><path d="M16 3.5l4 1.5"/></svg></span>Mailing<span class="ct" id="ct-mailing"></span></a>
+    <a class="nv" data-pilotage="1" href="connecteurs.html?v=202611161605"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10l-3-3M17 17H7l3 3"/></svg></span>Connecteurs<span class="ct" id="ct-connecteurs"></span></a>
     <a class="nv" href="#galou" id="gl-btn" data-id="galou" onclick="if(typeof galouOuvre==='function')galouOuvre();return false"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v10H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg></span>Parler à Léa<span class="ct" id="ct-parler"></span></a>
     <div class="navlab" data-pilotage="1">Pilotage</div>
     <a class="nv" href="#support" id="aid-btn" data-id="support" onclick="if(typeof aidOuvre==='function')aidOuvre();return false"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="m9.5 9.5-4-4M14.5 9.5l4-4M14.5 14.5l4 4M9.5 14.5l-4 4"/></svg></span>Support technique<span class="ct" id="ct-support"></span></a>
-    <a class="nv" data-pilotage="1" href="journal.html?v=202611160728"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Journal<span class="ct" id="ct-journal"></span></a>
-    <a class="nv" data-pilotage="1" href="tableau.html?v=202611160728"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/></svg></span>Tableau de bord<span class="ct" id="ct-tableau"></span></a>
-    <a class="nv" data-pilotage="1" href="analytique.html?v=202611160728"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>Analytique<span class="ct" id="ct-analytique"></span></a>
-    <a class="nv" data-pilotage="1" href="taches.html?v=202611160728"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m8 12 3 3 5-6"/></svg></span>Tâches<span class="ct" id="ct-taches"></span></a>
-    <a class="nv" data-pilotage="1" href="acces.html?v=202611160728"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.3 8 8 9 4.7-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></span>Accès<span class="ct" id="ct-accès"></span></a>
+    <a class="nv" data-pilotage="1" href="journal.html?v=202611161605"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Journal<span class="ct" id="ct-journal"></span></a>
+    <a class="nv" data-pilotage="1" href="tableau.html?v=202611161605"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/></svg></span>Tableau de bord<span class="ct" id="ct-tableau"></span></a>
+    <a class="nv" data-pilotage="1" href="analytique.html?v=202611161605"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>Analytique<span class="ct" id="ct-analytique"></span></a>
+    <a class="nv" data-pilotage="1" href="taches.html?v=202611161605"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m8 12 3 3 5-6"/></svg></span>Tâches<span class="ct" id="ct-taches"></span></a>
+    <a class="nv" data-pilotage="1" href="acces.html?v=202611161605"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.3 8 8 9 4.7-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></span>Accès<span class="ct" id="ct-accès"></span></a>
     <a class="nv" data-pilotage="1" href="https://app.gusto.com" target="_blank" rel="noopener" title="Ouvre Gusto dans un nouvel onglet"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M14.5 9a2.5 2 0 0 0-2.5-1.5c-1.4 0-2.5.8-2.5 2s1 1.7 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2A2.7 2 0 0 1 9.5 15M12 6v1.5M12 16.5V18"/></svg></span>Paie<span class="ct" id="ct-paie"></span></a>
-    <a class="nv" data-pilotage="1" href="reglages.html?v=202611160728"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg></span>Réglages<span class="ct" id="ct-réglages"></span></a>
+    <a class="nv" data-pilotage="1" href="reglages.html?v=202611161605"><span class="ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg></span>Réglages<span class="ct" id="ct-réglages"></span></a>
   </nav>
   <div class="sfoot"><div id="sfu" class="sfu"></div><span id="sfoot">0 références · 0 en stock · 0 unités</span>
-  <div class="ver" title="Si cette date n'est pas la derni&egrave;re, recharge avec Cmd+Option+R">version du 11/16/2026 à 07h28</div>
+  <div class="ver" title="Si cette date n'est pas la derni&egrave;re, recharge avec Cmd+Option+R">version du 11/16/2026 à 16h05</div>
     <div class="sfline" id="sfline"></div></div>
 </aside>
 
@@ -677,7 +681,7 @@ try{
 }catch(e){}
 })();
 </script>
-<script src="donnees/langue.js?v=202611160728"></script>
+<script src="donnees/langue.js?v=202611161605"></script>
 <script>
 /* le menu réglé et la langue de l'écran, AVANT le code de la page : rien ne saute, rien n'est vu dans une autre langue */
 
@@ -1647,7 +1651,7 @@ const LG_FR_PARCOURS=!/catalogue|stock|inventaire/.test(location.pathname);
 })();
 
 </script>
-<script src="donnees/inventaire_pc.js?v=202611160728"></script><script>
+<script src="donnees/inventaire_pc.js?v=202611161605"></script><script>
 if (typeof window.D_INV_PC==='undefined') {
   /* Le code de la page est lancé plus tard par l'amorce (voir _serveur.py) : ce drapeau
      l'empêche de démarrer sur des données absentes — sinon la page enchaîne les erreurs
@@ -5351,7 +5355,7 @@ if('pc'==='pt'){ try{
 }catch(e){} }
 const PAL={};
 const KEY='comptage-pc-v1';
-const VER_URL='202611160728';
+const VER_URL='202611161605';
 const $=i=>document.getElementById(i);
 const VL={ok:['Vérifiée','ok'],non:['Jamais vérifiée','non'],doute:['À vérifier','doute']};
 const vl=v=>VL[v]||VL.non;
@@ -5519,8 +5523,7 @@ function ligne(p,i){
      <span class="n">${esc(p.nom)}</span>
      <span class="m">${[p.ml?p.ml+' oz':'',p.type].filter(Boolean).join(' · ')} &nbsp;<span class="code">${p.bc}</span></span></div></td>
    <td class="o4"><span class="tag ${vl(p.v)[1]}">${vl(p.v)[0]}</span></td>
-   <td class="num">${qteAtt(p)===0?'<span style="color:var(--ink-3)">0</span>':nf(qteAtt(p))}${
-       vit?`<span class="vit" title="${nf(vit)} tester${vit>1?'s':''}, non vendable${vit>1?'s':''} — à compter quand même">+${nf(vit)} tester${vit>1?'s':''}</span>`:''}</td>
+   <td class="num">${qteAtt(p)===0?'<span style="color:var(--ink-3)">0</span>':nf(qteAtt(p))}${tstHtml(p)}</td>
    <td class="num"><input class="cnt${rempli?' filled':''}" type="number" min="0" inputmode="numeric"
        value="${rempli?c:''}" data-bc="${esc(kc(p))}" aria-label="Quantité comptée"></td>
    <td class="num"><span class="gap ${gcls}">${ec==null?'—':(ec>0?'+':'')+nf(ec)}</span></td>
@@ -5598,6 +5601,10 @@ if('pc'==='pt') P=P.filter(p=>!(MOD[p.cle]&&MOD[p.cle].masque));
    comptage annonce des écarts qui n'existent pas. */
 let EXT={q:{}}; try{ EXT=Object.assign({q:{}},JSON.parse(localStorage.getItem('stock-externe-v1')||'{}')); }catch(e){}
 function qteTh(p){
+  /* 16 nov. 2026 : chez Perfume City, LE stock est celui du magasin partagé (pc-stock-v1) — celui que les ventes diminuent et
+     que Shopify reçoit. Un comptage y est maintenant écrit (voir confirmeComptage) ; avant, il restait dans une copie à part
+     (fiches-modifiees-pc-v1) : la page montrait le chiffre compté, mais ni le reste de l'ERP ni Shopify ne le recevaient. */
+  if('pc'==='pc') return +p.qte||0;
   const m=MOD[p.cle];
   if(m&&m.qte!=null) return +m.qte;
   /* 31 oct. 2026 (Sam : « l'inventaire de Perfume City est faux ») : stock-externe-v1 est le stock de L'ENTREPÔT (import du
@@ -5629,6 +5636,8 @@ window.__rafraichir=()=>{ const y=window.scrollY;
 if('pc'==='pt') P.forEach(p=>{ const m=MOD[p.cle]; if(!m) return; if(m.pvr!=null&&m.pvr!=='') p.pvr=+m.pvr; if(m.pvw!=null&&m.pvw!=='') p.pvw=+m.pvw; });
   if('pc'==='pt') P=P.filter(p=>!(MOD[p.cle]&&MOD[p.cle].masque));
   { const s=lit(KEY,{}); if(s&&typeof s==='object') saisie=s; } rangeDup();
+  if('pc'==='pc'){ try{ const m=pcsCarte(); P.forEach(p=>{ const o=m[pcsCle([p.bc0!==undefined?p.bc0:p.bc,0,0,0,0,0,0,0,0,p.cle])]; if(o) p.qte=Math.max(0,Math.round(+o.q||0)); });
+    const t=lit('testeurs-pc-v1',{}); if(t&&typeof t==='object'&&!Array.isArray(t)) TSTPC=t; }catch(e){} }
   { const j=lit(KJOU,[]); if(Array.isArray(j)) JOU=j; }
   try{ rend(false); }catch(e){} try{ chiffres(); }catch(e){} window.scrollTo(0,y); };
 /* UN COMPTAGE PÉRIMÉ (Sam, 30 oct. 2026 : « ce parfum, j'en ai acheté plusieurs, l'Inventaire dit 0 et
@@ -5638,7 +5647,9 @@ if('pc'==='pt') P.forEach(p=>{ const m=MOD[p.cle]; if(!m) return; if(m.pvr!=null
    est vide, et le prochain comptage repart de ce stock-là. */
 /* ce que la case « compté » contient pour cette ligne — rien si le comptage est périmé */
 function cpt(p){ return comptagePerime(p)?undefined:saisie[kc(p)]; }
-function comptagePerime(p){ const m=MOD[p.cle]; return !!(m&&m.qteC!=null&&(m.qte==null||+m.qte!==+m.qteC)); }
+function comptagePerime(p){ const m=MOD[p.cle];
+  if('pc'==='pc') return !!(m&&m.qteC!=null&&(+p.qte||0)!==+m.qteC);
+  return !!(m&&m.qteC!=null&&(m.qte==null||+m.qte!==+m.qteC)); }
 /* 11 nov. 2026 (Igal : « quand c'est vérifié, enlève le chiffre théorique, ça me sert à rien ») : la colonne « Théorique » montrait, après
    le comptage, le chiffre d'AVANT (le Google Sheet : 73 quand on en a compté 52). Elle montre maintenant le stock réel. L'ancien chiffre
    reste seulement au Journal (« quantité corrigée par comptage : 73 → 52 »). */
@@ -5657,6 +5668,43 @@ function tst(p){
   const e=(k&&TSTPC[k])||TSTPC[p.cle];
   /* 10 nov. 2026 (Igal : « sur tous les parfums, un tester chez Perfume City, pas plus ») : le Sheet importé le 13 oct. portait 95, 72, 60… dans la colonne des testers. Un parfum a un tester, ou aucun : jamais plus, à la lecture comme à l'écriture. */
   return e&&(+e.n>0)?1:0;
+}
+/* 16 nov. 2026 (Igal, à la demande de Sam : « c'est elle qui doit sélectionner j'ai un tester… il ne faut pas que ça se fasse
+   automatiquement ») : plus de tester posé tout seul quand Perfumes Trade livre. Chaque ligne de l'inventaire Perfume City porte
+   une case « tester » que la boutique coche elle-même.
+     - cocher : un flacon sort de la vente (5 en vente → 4 + 1 tester) ; s'il n'y a rien en vente, le tester est juste noté ;
+     - décocher : le flacon revient en vente seulement si c'est cette case qui l'en avait sorti (« pris ») — un tester venu de
+       l'ancien fichier ne crée jamais de stock en le décochant.
+   La quantité en vente est écrite dans le stock partagé : Shopify la reçoit (le gardien du stock). */
+const T3=(a,b,c)=>(typeof L3==='function'?L3(a,b,c):a);
+function tstCle(p){ const b0=p.bc0!==undefined?p.bc0:p.bc; return b0?String(b0).replace(/^0+/,''):String(p.cle||''); }
+function tstHtml(p){
+  if(CIBLE!=='pc') return '';
+  const v=tst(p);
+  return `<label class="vit tstl${v?'':' off'}" data-nolang title="${esc(T3('Coche si la boutique a un tester de ce parfum : il n\'est pas en vente, mais il se compte.','Tick if the shop has a tester of this perfume: it is not for sale, but it is counted.','Marca si la tienda tiene un tester de este perfume: no se vende, pero se cuenta.'))}"><input type="checkbox" class="tck" data-tk="${esc(kc(p))}"${v?' checked':''}>${v?'+1 tester':'tester'}</label>`;
+}
+/* écrit la quantité en vente d'un parfum dans le stock partagé de Perfume City */
+function pcPoseQte(p,q){
+  try{ const m=pcsCarte(), o=m[pcsCle([p.bc0!==undefined?p.bc0:p.bc,0,0,0,0,0,0,0,0,p.cle])]; if(!o) return false;
+    const n=Object.assign({},o,{q:Math.max(0,Math.round(+q||0))});
+    if(!pcsSauve([pcsVers(n)])) return false;
+    p.qte=n.q; return true;
+  }catch(e){ return false; }
+}
+function tstBascule(p,veut){
+  const k=tstCle(p), T=Object.assign({},lit('testeurs-pc-v1',{})||{}), ref=((p.marque||'')+' '+(p.nom||'')).trim();
+  const av=qteTh(p); let ap=av;
+  if(veut){ const pris=av>=1?1:0; ap=av-pris;
+    T[k]={n:1,bc:String((p.bc0!==undefined?p.bc0:p.bc)||''),ref,t:new Date().toISOString(),u:USR||(typeof NOM_UTIL==='string'&&NOM_UTIL)||'(non renseigné)',pris}; }
+  else { const e=T[k]||T[p.cle]||{}; ap=av+(e.pris?1:0); delete T[k]; delete T[p.cle]; }
+  if(ap!==av&&!pcPoseQte(p,ap)) return null;
+  ecrit('testeurs-pc-v1',T); TSTPC=T;
+  /* un comptage déjà validé suit, pour ne pas passer pour périmé */
+  const m=MOD[p.cle]; if(m&&m.qteC!=null&&+m.qteC===av&&ap!==av){ m.qteC=ap; m.qte=ap; ecrit(KMOD,MOD); }
+  jlog({act:'stock',lib:veut?('tester déclaré par la boutique'+(ap!==av?' — 1 flacon sorti de la vente':' — aucun flacon en vente à sortir'))
+                           :('tester retiré par la boutique'+(ap!==av?' — le flacon revient en vente':' — la quantité en vente ne change pas')),
+        bc:p.bc,ref,av,ap,n:1,det:[{bc:p.bc,ref,av,ap}]});
+  return {av,ap};
 }
 /* ce qu'on doit trouver en rayon : le vendable plus ce qui est en vitrine */
 function qtePhys(p){ return qteAtt(p)+tst(p); }
@@ -5937,8 +5985,9 @@ function confirmeComptage(p,valeur){
   const id=p.cle, m0=MOD[id]||{};
   const avant=(m0.verif)||p.v||'';
   const m=Object.assign({},m0);
+  const pc='pc'==='pc';
   if(m.qteC==null||comptagePerime(p)){       /* premier comptage (ou l'ancien est périmé) : on garde de quoi revenir en arrière */
-    if(m0.qte!=null) m.qteAv=m0.qte; else delete m.qteAv;
+    if(pc) m.qteAv=+p.qte||0; else if(m0.qte!=null) m.qteAv=m0.qte; else delete m.qteAv;
     m.qteTh0=qteTh(p);
   }
   const th=m.qteTh0!=null?+m.qteTh0:qteTh(p);
@@ -5946,6 +5995,7 @@ function confirmeComptage(p,valeur){
   m.qte=vend; m.qteC=vend;
   m.verif='ok'; m.verifPar=USR||(typeof NOM_UTIL==='string'&&NOM_UTIL)||'(non renseigné)'; m.verifLe=new Date().toISOString();
   MOD[id]=m; ecrit(KMOD,MOD); p.v='ok';
+  if(pc) pcPoseQte(p,vend);   /* le stock partagé de Perfume City prend le chiffre compté : Shopify le reçoit */
   const ref=(p.marque||'')+' '+(p.nom||'');
   jlog({act:'verif',lib:'comptage physique',bc:p.bc,ref,av:vl(avant)[0],ap:'comptage vérifié'});
   if(vend!==th){ const pa=paEff(p);
@@ -5960,7 +6010,10 @@ function annuleComptage(p){
   m.verif='non'; p.v='non'; delete m.verifPar; delete m.verifLe;
   /* on ne retire que la quantité posée par CE comptage : celles qui viennent des ventes,
      des réceptions ou de l'import tableur ne doivent pas disparaître avec lui. */
-  if(m.qteC!=null && +m.qte===+m.qteC){
+  if('pc'==='pc'){   /* Perfume City : on rend au stock partagé la quantité d'avant, si rien n'a bougé depuis */
+    if(m.qteC!=null && (+p.qte||0)===+m.qteC && m.qteAv!=null) pcPoseQte(p,+m.qteAv);
+    delete m.qte;
+  } else if(m.qteC!=null && +m.qte===+m.qteC){
     if(m.qteAv!=null) m.qte=m.qteAv; else delete m.qte;   /* on rend la quantité d'avant le comptage */
   }
   delete m.qteC; delete m.qteAv; delete m.qteTh0;
@@ -6046,6 +6099,16 @@ document.addEventListener('keydown',e=>{
 const T_CNT={};
 /* la quantité comptée est enregistrée quand on quitte la case (Tab, clic ailleurs, Entrée) */
 document.addEventListener('change',e=>{
+  if(e.target.classList&&e.target.classList.contains('tck')){
+    const p1=P.find(x=>kc(x)===e.target.dataset.tk); if(!p1) return;
+    const r=tstBascule(p1,e.target.checked);
+    majLigne(p1); try{ chiffres(); }catch(_){}
+    if(r){ const l=document.querySelector(kSel(kc(p1))), td=l&&l.closest('tr')?l.closest('tr').querySelectorAll('td')[3]:null;
+      if(td){ const n=document.createElement('span'); n.className='tstn'; n.setAttribute('data-nolang','');
+        n.textContent=r.av!==r.ap?T3('en vente : ','on sale: ','a la venta: ')+r.av+' → '+r.ap:T3('en vente : inchangé','on sale: unchanged','a la venta: sin cambio');
+        td.appendChild(n); setTimeout(()=>{ try{ n.remove(); }catch(_){} },6000); } }
+    return;
+  }
   if(!e.target.classList||!e.target.classList.contains('cnt')) return;
   const bc=e.target.dataset.bc, v=e.target.value, p0=P.find(x=>kc(x)===bc);
   if(!p0) return;
@@ -6071,8 +6134,7 @@ function majLigne(p){
      s'écrivait dans « Écart » et le capital dans « PV gros ». */
   if(td.length>=8){
     const ta=qteAtt(p), vit=tst(p);
-    td[3].innerHTML = (ta===0?'<span style="color:var(--ink-3)">0</span>':nf(ta))
-      +(vit?`<span class="vit">+${nf(vit)} tester${vit>1?'s':''}</span>`:'');   /* « tester » et non « vitrine » (Igal, 31 oct. 2026) */
+    td[3].innerHTML = (ta===0?'<span style="color:var(--ink-3)">0</span>':nf(ta))+tstHtml(p);   /* « tester » et non « vitrine » (Igal, 31 oct. 2026) */
     td[5].innerHTML = `<span class="gap ${gcls}">${ec==null?'—':(ec>0?'+':'')+nf(ec)}</span>`;
     td[6].innerHTML = `<span class="gap ${gcls}">${val==null?'—':(val>0?'+':'')+money(val)}</span>`;
     td[7].innerHTML = money(capEff(p));

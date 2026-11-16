@@ -49,6 +49,8 @@ border:1px solid var(--line);border-radius:3px;padding:8px 10px}
 
 .sous{margin:5px 0 0;font-size:14px;color:var(--ink-2);max-width:74ch;line-height:1.5}
 .tools{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.sitec{display:block;font-size:11.5px;color:var(--ink-3);margin-top:2px}
+.tg.sitegros{background:#efe9ff;color:#5b2bd9}
 /* 16 nov. 2026 : en haut de Clients, deux onglets — tous les clients / ceux qui ont accès à la price list en direct */
 .cl-ong{display:flex;gap:8px;margin:0 0 16px;border-bottom:1px solid var(--line-2)}
 .cl-ong button{border:0;background:none;padding:10px 14px;font:inherit;font-weight:700;font-size:14.5px;color:var(--ink-3);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px}
@@ -252,7 +254,8 @@ CORPS = r"""
     <option value="">Tous les clients</option>
     <option value="vip">Favoris (VIP)</option>
     <option value="gros">Grossistes</option>
-    <option value="site">Clients du site</option>
+    <option value="site">Clients du site détail</option>
+    <option value="sitegros">Clients du site de gros</option>
     <option value="boutique">Boutique et caisse</option>
     <option value="amazon">Amazon</option>
     <option value="sans">Sans achat enregistré</option></select>
@@ -343,7 +346,9 @@ window.__nomChange.push(v=>{ USR=v; });
 const MODES=[['','—'],['especes','Espèces'],['zelle','Zelle'],['virement','Virement'],['carte','Carte'],['cheque','Chèque'],['credit','Crédit / store credit'],['autre','Autre']];
 const MODE_LIB={especes:'Espèces',zelle:'Zelle',virement:'Virement',carte:'Carte bancaire',cheque:'Chèque',credit:'Crédit chez nous',autre:'Autre',enligne:'Payé en ligne',caisse:'Payé à la caisse',aucun:'Rien rendu',avoir:'Avoir',echange:'Échange'};
 const STATUTS=[['','non renseigné'],['du','À payer'],['paye','Payée'],['part','Partielle']];
-const TYPES={gros:'Gros',site:'Site',boutique:'Boutique',amazon:'Amazon'};
+const TYPES={gros:'Gros',site:'Site détail',sitegros:'Site de gros',boutique:'Boutique',amazon:'Amazon'};
+/* 16 nov. 2026 : le résumé des commandes passées sur un site (cockpit, ramasseAcheteurs : toutes les commandes relues, invités compris) */
+const siteRes=o=>{ const a=(o.site&&o.site.siteCmd)||null, b=o.siteGros||null; return {d:a,g:b,n:((a&&a.cmd)||0)+((b&&b.cmd)||0)}; };
 const MOTIFS={retour:'retour du client',erreur:'erreur de saisie',annulation:'commande annulée',defectueux:'produit défectueux',perdu:'colis perdu',autre:'autre'};
 const pkey=(nom,x)=>nom+'|'+(x.num||'l'+x.ls);
 const [BC,NOM,ML,MARQUE,TYPE,P,Q,T,FACTC,SORTI,NOTE]=[0,1,2,3,4,5,6,7,8,9,10];
@@ -497,7 +502,8 @@ function construit(){
   /* 4. les fiches de l'outil : les coordonnées corrigées ici l'emportent ; un nom sans vente reste un client */
   /* les fiches enregistrées sous un ancien nom passent d'abord : celle du nom retenu l'emporte */
   Object.keys(CLI).sort((a,b)=>(canon(a)===a?1:0)-(canon(b)===b?1:0)).forEach(nom=>{ if(!faNomClient(nom)) return; const c=CLI[nom]||{}; const o=get(nom); if(!o) return;
-    ['email','tel','tel2','tel3','prenom','nomfam','raison','adresse','note','fiscal','fiscalRef','pmode','ville','pays','nodiff'].forEach(k=>{ if(c[k]) o.co[k]=c[k]; }); });
+    ['email','tel','tel2','tel3','prenom','nomfam','raison','adresse','note','fiscal','fiscalRef','pmode','ville','pays','nodiff'].forEach(k=>{ if(c[k]) o.co[k]=c[k]; });
+    if(c.src==='site-gros'||c.siteCmd){ o.types.add('sitegros'); if(c.siteCmd) o.siteGros=c.siteCmd; } });
   TOUS=Object.values(M).map(o=>{
     o.achats.sort((a,b)=>(b.d||'').localeCompare(a.d||'')||(b.h||'').localeCompare(a.h||''));
     const v=o.achats.filter(a=>!a.retour);
@@ -513,14 +519,16 @@ function lignes(){
   const per=+$('per').value, q=cNorm($('q').value), typ=$('typ').value;
   const lim=per?isoJour(new Date(AUJ.getTime()-per*864e5)):null;
   return TOUS.filter(o=>!q||[o.nom,o.co.prenom,o.co.nomfam,o.co.email,o.co.ville,o.co.tel,o.co.tel2,o.co.tel3,o.co.raison].some(v=>cNorm(v).includes(q)))
-    .filter(o=>typ==='vip'?estVip(o.nom):typ==='sans'?!o.achats.length:(!typ||o.types.has(typ)))
+    .filter(o=>typ==='vip'?estVip(o.nom):typ==='sans'?(!o.achats.length&&!siteRes(o).n):typ==='gros'?(o.types.has('gros')||o.types.has('sitegros')):(!typ||o.types.has(typ)))
     .map(o=>{ const A=o.achats.filter(a=>!lim||(a.d&&a.d>=lim)), v=A.filter(a=>!a.retour);
       return {o,A,vip:estVip(o.nom),total:A.reduce((s,a)=>s+a.montant,0),nb:v.length,fl:A.reduce((s,a)=>s+(a.retour?-Math.abs(a.fl):a.fl),0),der:v.reduce((m,a)=>a.d>m?a.d:m,'')}; })
     /* un favori reste visible même s'il n'a rien acheté sur la période :
        c'est justement pour le retrouver vite qu'on l'a mis en favori */
     .filter(r=>typ==='sans'||typ==='vip'||r.vip||r.nb||!lim&&(r.o.site||r.o.devis.length||Object.keys(r.o.co).length));
 }
-const badges=o=>[...o.types].map(t=>`<span class="tg ${t}">${TYPES[t]||t}</span>`).join('');
+const badges=o=>[...o.types].map(t=>`<span class="tg ${t}">${TYPES[t]||t}</span>`).join('')
+  +(()=>{ const S=siteRes(o), f=(x,lib)=>x&&(x.cmd||x.tent)?`<span class="sitec" data-nolang>${lib} : ${x.cmd} ${L3('commande(s)','order(s)','pedido(s)')}${x.cmd&&typeof voitCA==='function'&&voitCA()?' · '+money(x.total||0):''}${x.der?' · '+L3('dernière','last','último')+' '+dfr(x.der):''}${!x.cmd&&x.tent?' · '+L3('paiement échoué seulement','failed payment only','solo pago fallido'):''}</span>`:'';
+    return f(S.d,L3('Site détail','Retail site','Sitio minorista'))+f(S.g,L3('Site de gros','Wholesale site','Sitio mayorista')); })();
 
 function dessine(){
   _ALX=null;
@@ -532,7 +540,7 @@ function dessine(){
     const va=a.vip?0:1, vb=b.vip?0:1; if(va!==vb) return va-vb;
     return TRI==='nb'?b.nb-a.nb : TRI==='dt'?(b.der||'').localeCompare(a.der||'') : TRI==='az'?a.o.nom.localeCompare(b.o.nom,'fr') : TRI==='fl'?b.fl-a.fl : b.total-a.total; });
   const tot=R.reduce((a,r)=>a+r.total,0), ncmd=R.reduce((a,r)=>a+r.nb,0), max=Math.max(...R.map(r=>r.total),0);
-  const nGros=TOUS.filter(o=>o.types.has('gros')).length, nSite=TOUS.filter(o=>o.types.has('site')).length;
+  const nGros=TOUS.filter(o=>o.types.has('gros')||o.types.has('sitegros')).length, nSite=TOUS.filter(o=>o.types.has('site')).length;
   const du=TOUS.reduce((s,o)=>s+o.reste,0);
   $('kpis').innerHTML=`<div class="kpis">
     <div class="kpi"><div class="v">${nf(TOUS.length)}</div><div class="k">clients — ${nf(nGros)} en gros, ${nf(nSite)} du site</div></div>
@@ -548,7 +556,7 @@ function dessine(){
         <td class="nom"><span data-nolang>${esc(r.o.nom)}</span>${badges(r.o)}${r.o.douteux.length?'<span class="warn">à vérifier</span>':''}${r.o.reste>0&&voitCA()?`<span class="warn">${money(r.o.reste)} à payer</span>`:''}<small data-nolang>${esc([r.o.co.raison,r.o.co.email,r.o.co.tel,r.o.co.ville].filter(Boolean).join(' · '))}</small></td>
         ${voitCA()?`<td class="n mt">${r.nb||r.total?money(r.total):'<span class="non">—</span>'}<div class="bar"><i style="width:${max?Math.max(1,r.total/max*100):0}%"></i></div></td>`:''}
         <td class="n">${r.nb?nf(r.nb):'<span class="non">—</span>'}${r.o.devis.length&&!r.nb?`<small style="display:block;color:var(--ink-3)">${r.o.devis.length} devis</small>`:''}</td>
-        <td class="n dim">${r.fl?nf(Math.round(r.fl)):'—'}</td><td class="n dim">${r.der?dfr(r.der):(r.o.site&&r.o.site.der?'<span title="d\'après le fichier du site">'+dfr(r.o.site.der)+' ≈</span>':'—')}</td></tr>`).join('')}</tbody>
+        <td class="n dim">${r.fl?nf(Math.round(r.fl)):'—'}</td><td class="n dim">${r.der?dfr(r.der):(r.o.site&&r.o.site.der?'<span title="d\'après le fichier du site">'+dfr(r.o.site.der)+' ≈</span>':(siteRes(r.o).d&&siteRes(r.o).d.der?'<span title="dernière commande sur le site">'+dfr(siteRes(r.o).d.der)+' ≈</span>':(siteRes(r.o).g&&siteRes(r.o).g.der?'<span title="dernière commande sur le site de gros">'+dfr(siteRes(r.o).g.der)+' ≈</span>':'—')))}</td></tr>`).join('')}</tbody>
       <tfoot><tr><td></td><td></td><td style="font-weight:700">${R.length} clients</td>${voitCA()?`<td class="n mt">${money(tot)}</td>`:''}<td class="n" style="font-weight:700">${nf(ncmd)}</td><td class="n dim">${nf(Math.round(R.reduce((a,r)=>a+r.fl,0)))}</td><td></td></tr></tfoot></table></div>`
     : `<div class="vide">Aucun client ne correspond.</div>`;
   document.querySelectorAll('.tbl tbody tr').forEach(el=>el.onclick=e=>{

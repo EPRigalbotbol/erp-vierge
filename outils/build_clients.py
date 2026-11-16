@@ -376,7 +376,10 @@ const dfr=d=>{ if(!d) return '—'; const [a,m,j]=String(d).slice(0,10).split('-
    Les fiches ne sont pas réécrites : Ventes et Cote retrouvent toujours « Juan Carlos » par son nom. */
 const ALIAS_CLI={'juan':'Casa del Perfume','juan carlos':'Casa del Perfume','la casa del perfume':'Casa del Perfume','casa del perfume':'Casa del Perfume','myriam':'Robert','miriam':'Robert',   /* 7 nov. 2026 (Igal) : Miriam et Robert, un seul client */
   /* 31 oct. 2026 (Igal : « c'est le même client ») : le nom de la société, tapé dans Lightspeed, rejoint « Habibi » */
-  'habibi perfumes llc':'Habibi','habibi perfumes':'Habibi','habibi perfume':'Habibi'};
+  'habibi perfumes llc':'Habibi','habibi perfumes':'Habibi','habibi perfume':'Habibi',
+  /* 16 nov. 2026 (Igal : « c'est le même client, fusionne-les ») : la société de Robert, tapée telle quelle dans une vente
+     (même téléphone que sa fiche) — ses ventes, son email et ce qu'elle doit rejoignent « Robert » */
+  'le boutique parfum clothing llc':'Robert','le boutique parfum and clothing llc':'Robert','le boutique parfum clothing':'Robert','le boutique':'Robert'};
 const canon=nom=>ALIAS_CLI[cNorm(nom)]||nom;
 /* 7 nov. 2026 (Igal, rôle Commercial : « enlever le CA des clients et l'argent qu'on lui doit ») : un compte qui ne voit
    pas les marges ne voit ni le chiffre d'affaires par client, ni ce qu'un client doit ; ces blocs sont VIDÉS, pas cachés */
@@ -575,9 +578,12 @@ function lignes(){
        c'est justement pour le retrouver vite qu'on l'a mis en favori */
     .filter(r=>typ==='sans'||typ==='vip'||typ==='acompl'||r.vip||r.nb||!lim&&(r.o.site||r.o.devis.length||Object.keys(r.o.co).length));
 }
+/* 16 nov. 2026 : les étiquettes de la ligne (Gros, Boutique, « à payer », « à vérifier ») restaient en français en anglais et en
+   espagnol — la case du nom est exclue de la traduction automatique (c'est là que vit le nom du client). Elles se traduisent ici. */
+const tyLib=t=>({gros:L3('Gros','Wholesale','Mayorista'),site:L3('Site détail','Retail site','Sitio minorista'),sitegros:L3('Site de gros','Wholesale site','Sitio mayorista'),boutique:L3('Boutique','Shop','Tienda'),amazon:'Amazon'})[t]||TYPES[t]||t;
 /* l'étiquette du site dit ce qui s'est passé, pas seulement « a un compte » (Igal, 16 nov. 2026 : Valérie Gilbert
    portait « Site de gros » sans avoir jamais commandé) ; seule celle de la sous-rubrique affichée est montrée */
-const badges=o=>[...o.types].filter(t=>t!=='sitegros'&&(t!=='site'||(coteVue()==='detail'&&o.achats.some(a=>a.ty==='site')&&!(siteRes(o).d&&siteRes(o).d.cmd)))).map(t=>`<span class="tg ${t}">${TYPES[t]||t}</span>`).join('')
+const badges=o=>[...o.types].filter(t=>t!=='sitegros'&&(t!=='site'||(coteVue()==='detail'&&o.achats.some(a=>a.ty==='site')&&!(siteRes(o).d&&siteRes(o).d.cmd)))).map(t=>`<span class="tg ${t}">${tyLib(t)}</span>`).join('')
   +(()=>{ const c=coteVue(), S=siteDe(o,c), aC=o.achats.some(a=>coteAchat(a)===c&&!a.retour);
     if(S&&(S.cmd||S.tent)) return '';
     const compte=c==='detail'?!!o.site:c==='gros'&&o.types.has('sitegros');
@@ -608,7 +614,7 @@ function dessine(){
       <tbody>${R.map((r,i)=>`<tr data-c="${esc(r.o.nom)}"${r.vip?' class="vip"':''}>
         <td class="coch"><input type="checkbox" class="ck" data-ck="${esc(r.o.nom)}"${COCHES.has(r.o.nom)?' checked':''}></td>
         <td class="fav"><button class="et${r.vip?' on':''}" data-fav="${esc(r.o.nom)}" title="${r.vip?'Retirer des favoris':'Mettre en favoris'}">${r.vip?'★':'☆'}</button></td>
-        <td class="nom"><span data-nolang>${esc(r.o.nom)}</span>${badges(r.o)}${marqueACompl(r.o)}${r.o.douteux.length?'<span class="warn">à vérifier</span>':''}${r.o.reste>0&&voitCA()?`<span class="warn">${money(r.o.reste)} à payer</span>`:''}<small data-nolang>${esc([r.o.co.raison,r.o.co.email,r.o.co.tel,r.o.co.ville].filter(Boolean).join(' · '))}</small></td>
+        <td class="nom"><span data-nolang>${esc(r.o.nom)}</span>${badges(r.o)}${marqueACompl(r.o)}${r.o.douteux.length?`<span class="warn">${L3('à vérifier','to check','a verificar')}</span>`:''}${r.o.reste>0&&voitCA()?`<span class="warn">${money(r.o.reste)} ${L3('à payer','to pay','por pagar')}</span>`:''}<small data-nolang>${esc([r.o.co.raison,r.o.co.email,r.o.co.tel,r.o.co.ville].filter(Boolean).join(' · '))}</small></td>
         ${voitCA()?`<td class="n mt">${r.nb||r.total?money(r.total):'<span class="non">—</span>'}<div class="bar"><i style="width:${max?Math.max(1,r.total/max*100):0}%"></i></div></td>`:''}
         <td class="n">${r.nb?nf(r.nb)+(r.viaSite?' <span title="'+L3('d\'après le site','according to the website','según el sitio')+'">≈</span>':''):'<span class="non">—</span>'}${r.o.devis.length&&!r.nb?`<small style="display:block;color:var(--ink-3)">${r.o.devis.length} devis</small>`:''}</td>
         <td class="n dim">${r.fl?nf(Math.round(r.fl)):'—'}</td><td class="n dim">${r.der?dfr(r.der):(r.o.site&&r.o.site.der?'<span title="d\'après le fichier du site">'+dfr(r.o.site.der)+' ≈</span>':(siteRes(r.o).d&&siteRes(r.o).d.der?'<span title="dernière commande sur le site">'+dfr(siteRes(r.o).d.der)+' ≈</span>':(siteRes(r.o).g&&siteRes(r.o).g.der?'<span title="dernière commande sur le site de gros">'+dfr(siteRes(r.o).g.der)+' ≈</span>':'—')))}</td></tr>`).join('')}</tbody>
